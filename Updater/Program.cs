@@ -14,6 +14,9 @@ static class Program
 
     static void Main()
     {
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+
         Application.EnableVisualStyles();
 
         if (Tools.HasCommandArg(DebugArg))
@@ -39,11 +42,16 @@ static class Program
 
     private static void ShowInfo()
     {
-        string caption = "Pulsar Updater";
-        string message =
-            "This program used by Pulsar when updating and should not be ran directly.\n"
-            + "You are free to delete it - a new copy will be fetched when required.";
-        MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        Console.Error.WriteLine(
+            "[Pulsar Updater] This program is used by Pulsar when updating and should not be run directly.\n"
+            + "You are free to delete it - a new copy will be fetched when required."
+        );
+    }
+
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        Console.Error.WriteLine($"[Pulsar Updater] Unhandled exception: {e.ExceptionObject}");
+        Environment.Exit(1);
     }
 
     private static void Start(string exe)

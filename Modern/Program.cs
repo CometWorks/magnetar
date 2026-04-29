@@ -49,6 +49,10 @@ static class Program
 
     private static void PulsarMain(string[] args)
     {
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        Application.SetUnhandledExceptionMode(System.Windows.Forms.UnhandledExceptionMode.ThrowException);
+        Tools.InstallNativeCrashHandler("Pulsar");
+
         Application.EnableVisualStyles();
 
         if (SharedLauncher.IsOtherPulsarRunning())
@@ -233,6 +237,14 @@ static class Program
     {
         string game2Dir = ConfigManager.Instance.GameDir;
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([game2Dir]);
+    }
+
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        string message = $"Unhandled exception: {e.ExceptionObject}";
+        Console.Error.WriteLine($"[Pulsar] {message}");
+        LogFile.Error(message);
+        Environment.Exit(1);
     }
 
     private static ResolveEventHandler AssemblyResolver(string[] probeDirs)

@@ -4,8 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
-
 namespace Pulsar.Updater;
 
 internal static class Writer
@@ -75,20 +73,13 @@ internal static class Writer
 
     private static bool ContinuePrompt(string folder)
     {
-        string caption = "Pulsar Updater";
         string message =
             "The installation folder could not be validated!\n"
             + "Is this your Pulsar install folder?\n"
             + "It WILL BE CLEANED if you update!\n\n"
             + folder;
 
-        DialogResult response = MessageBox.Show(
-            message,
-            caption,
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Warning
-        );
-
-        return response == DialogResult.Yes;
+        Console.Error.WriteLine($"[Pulsar Updater] {message}");
+        return false;
     }
 }

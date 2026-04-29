@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
-using System.Windows.Forms;
 using HarmonyLib;
 using Keen.Game2.Game.Plugins;
 using Keen.VRage.Library.Diagnostics;
@@ -130,7 +129,7 @@ internal class PluginLoader : IPlugin, IDisposable
 
         if (Flags.CheckAllPlugins)
         {
-            MessageBox.Show("All plugins compiled, log file will now open");
+            LogFile.WriteLine("All plugins compiled, opening log file");
             LogFile.WriteLine(debugCompileResults.ToString());
             LogFile.Open();
         }

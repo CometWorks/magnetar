@@ -210,38 +210,16 @@ public static class Tools
         MessageBoxDefaultButton defaultButton = MessageBoxDefaultButton.Button1
     )
     {
-        if (Application.OpenForms.Count > 0)
-        {
-            Form form = Application.OpenForms[0];
-            if (form.InvokeRequired)
-            {
-                // Form is on a different thread
-                try
-                {
-                    object result = form.Invoke(() =>
-                        MessageBox.Show(form, msg, "Pulsar", buttons, icon, defaultButton)
-                    );
-                    if (result is DialogResult dialogResult)
-                        return dialogResult;
-                }
-                catch (Exception) { }
-            }
-            else
-            {
-                // Form is on the same thread
-                return MessageBox.Show(form, msg, "Pulsar", buttons, icon, defaultButton);
-            }
-        }
+        Console.Error.WriteLine($"[Pulsar] {msg}");
+        LogFile.Error(msg);
 
-        // No form
-        return MessageBox.Show(
-            msg,
-            "Pulsar",
-            buttons,
-            icon,
-            defaultButton,
-            MessageBoxOptions.DefaultDesktopOnly
-        );
+        return buttons switch
+        {
+            MessageBoxButtons.OK => DialogResult.OK,
+            MessageBoxButtons.YesNo => DialogResult.No,
+            MessageBoxButtons.YesNoCancel => DialogResult.No,
+            _ => DialogResult.OK,
+        };
     }
 
     public static IEnumerable<string> GetFiles(
@@ -294,6 +272,28 @@ public static class Tools
 
     public static bool IsNative() =>
         Environment.GetEnvironmentVariable("STEAM_COMPAT_PROTON") is null;
+
+    private delegate int UnhandledExceptionFilterDelegate(IntPtr exceptionInfo);
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr SetUnhandledExceptionFilter(
+        UnhandledExceptionFilterDelegate lpTopLevelExceptionFilter
+    );
+
+    private static UnhandledExceptionFilterDelegate nativeFilterDelegate;
+
+    public static void InstallNativeCrashHandler(string label)
+    {
+        nativeFilterDelegate = exceptionInfo =>
+        {
+            Console.Error.WriteLine($"[{label}] Native crash detected (unhandled SEH exception)");
+            Console.Error.Flush();
+            LogFile.Error("Native crash detected (unhandled SEH exception)");
+            Environment.Exit(-1);
+            return 0;
+        };
+        SetUnhandledExceptionFilter(nativeFilterDelegate);
+    }
 
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int vKey);

@@ -44,6 +44,10 @@ static class Program
 
     static void MagnetarMain(string[] args)
     {
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+        Tools.InstallNativeCrashHandler("Magnetar");
+
         Application.EnableVisualStyles();
 
         if (SharedLauncher.IsOtherPulsarRunning())
@@ -224,6 +228,14 @@ static class Program
     {
         string ds64Dir = ConfigManager.Instance.GameDir;
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([ds64Dir]);
+    }
+
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        string message = $"Unhandled exception: {e.ExceptionObject}";
+        Console.Error.WriteLine($"[Magnetar] {message}");
+        LogFile.Error(message);
+        Environment.Exit(1);
     }
 
     private static ResolveEventHandler AssemblyResolver(string[] probeDirs)
