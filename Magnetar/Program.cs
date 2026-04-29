@@ -216,9 +216,8 @@ static class Program
 
     private static string[] GetCorePlugins()
     {
-        string ds64Dir = ConfigManager.Instance.GameDir;
-        bool isGameFramework = Tools.GetFiles(ds64Dir, ["*.config"], []).Any();
-        return isGameFramework ? ["se-dotnet-compat"] : [];
+        // se-dotnet-compat preloading disabled; user supplies a custom build via the Current profile.
+        return [];
     }
 
     private static void SetupGameResolver()

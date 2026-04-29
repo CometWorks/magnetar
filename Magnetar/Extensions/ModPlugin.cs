@@ -1,5 +1,4 @@
-﻿using Pulsar.Shared.Data;
-using Sandbox.Graphics.GUI;
+using Pulsar.Shared.Data;
 using VRage.Game;
 using VRage.GameServices;
 
@@ -7,14 +6,6 @@ namespace Pulsar.Magnetar.Extensions;
 
 internal static class ModPluginExtensions
 {
-    public static void Show(this ModPlugin modPlugin)
-    {
-        MyGuiSandbox.OpenUrl(
-            $"https://steamcommunity.com/workshop/filedetails/?id={modPlugin.WorkshopId}",
-            UrlOpenMode.SteamOrExternalWithConfirm
-        );
-    }
-
     public static MyObjectBuilder_Checkpoint.ModItem GetModItem(this ModPlugin modPlugin)
     {
         var modItem = new MyObjectBuilder_Checkpoint.ModItem(modPlugin.WorkshopId, "Steam");

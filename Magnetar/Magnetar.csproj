@@ -47,10 +47,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
-    <!-- Required by SpaceEngineers internally; Deserialization is patched to use safer methods. -->
-    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
-  </PropertyGroup>
-  <PropertyGroup>
     <StartAction>Program</StartAction>
     <StartProgram>$(Magnetar)\Magnetar.exe</StartProgram>
     <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
