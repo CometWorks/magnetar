@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modern", "Modern\Modern.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{351C080E-65CE-45E4-AD41-BCFF7D9B143C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Magnetar", "Magnetar\Magnetar.csproj", "{83B32373-E172-4C31-BD31-59E9AE3D42FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,14 @@ Global
 		{351C080E-65CE-45E4-AD41-BCFF7D9B143C}.Release|Any CPU.Build.0 = Release|x64
 		{351C080E-65CE-45E4-AD41-BCFF7D9B143C}.Release|x64.ActiveCfg = Release|x64
 		{351C080E-65CE-45E4-AD41-BCFF7D9B143C}.Release|x64.Build.0 = Release|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Debug|Any CPU.Build.0 = Debug|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Debug|x64.ActiveCfg = Debug|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Debug|x64.Build.0 = Debug|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Release|Any CPU.ActiveCfg = Release|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Release|Any CPU.Build.0 = Release|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Release|x64.ActiveCfg = Release|x64
+		{83B32373-E172-4C31-BD31-59E9AE3D42FC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

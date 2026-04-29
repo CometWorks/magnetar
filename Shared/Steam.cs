@@ -12,6 +12,7 @@ namespace Pulsar.Shared;
 public static class Steam
 {
     public const uint AppIdSe1 = 244850u;
+    public const uint AppIdSe1DS = 298740u;
     public const uint AppIdSe2 = 1133870u;
     private const int SteamTimeout = 30; // seconds
     private const string registryKey = @"SOFTWARE\Valve\Steam";

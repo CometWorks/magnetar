@@ -3,8 +3,15 @@
     <!-- Folder containing Pulsar -->
     <Pulsar>$(APPDATA)\Pulsar</Pulsar>
 
+    <!-- Folder containing Magnetar -->
+    <Magnetar>$(APPDATA)\Magnetar</Magnetar>
+
     <!-- Folder containing SpaceEngineers.exe -->
     <Bin64>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 244850@InstallLocation)\Bin64</Bin64>
+
+    <!-- Folder containing SpaceEngineersDedicated.exe -->
+    <DS64 Condition="'$(DS64)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
+    <DS64 Condition="'$(DS64)' == '\DedicatedServer64'">C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
 
     <!-- Folder containing SpaceEngineers2.exe -->
     <Game2>$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1133870@InstallLocation)\Game2</Game2>
