@@ -282,6 +282,7 @@ static class Program
         if (Tools.IsNative())
             ProgressPollFactory().Start();
 
+        SplashManager.Instance?.Delete();
         Game.StartDedicatedServer(args);
     }
 
