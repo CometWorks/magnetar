@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Pulsar WebUI - Home{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Welcome to Pulsar WebUI</h2>
+    <p>Manage your Space Engineers Dedicated Server and Pulsar plugins from your browser.</p>
+</div>
+
+<div class="stats-grid" id="overview-stats">
+    <div class="stat-card">
+        <div class="stat-value" id="stat-status">--</div>
+        <div class="stat-label">Server Status</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="stat-players">--</div>
+        <div class="stat-label">Players Online</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="stat-simspeed">--</div>
+        <div class="stat-label">Sim Speed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="stat-uptime">--</div>
+        <div class="stat-label">Uptime</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Quick Links</div>
+    <div class="form-grid">
+        <a href="/pulsar/config" class="list-item" style="text-decoration:none;color:inherit">
+            <div class="list-item-info">
+                <span class="list-item-name">Core Configuration</span>
+                <span class="list-item-detail">Network, consent, and general Pulsar settings</span>
+            </div>
+        </a>
+        <a href="/pulsar/profiles" class="list-item" style="text-decoration:none;color:inherit">
+            <div class="list-item-info">
+                <span class="list-item-name">Plugin Profiles</span>
+                <span class="list-item-detail">Manage plugin profiles and active selections</span>
+            </div>
+        </a>
+        <a href="/server/config" class="list-item" style="text-decoration:none;color:inherit">
+            <div class="list-item-info">
+                <span class="list-item-name">Server Configuration</span>
+                <span class="list-item-detail">Server name, ports, networking, auto-restart</span>
+            </div>
+        </a>
+        <a href="/server/dashboard" class="list-item" style="text-decoration:none;color:inherit">
+            <div class="list-item-info">
+                <span class="list-item-name">Server Dashboard</span>
+                <span class="list-item-detail">Live server state, players, chat, and controls</span>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadOverview() {
+    try {
+        const state = await API.get('/api/server/state');
+        document.getElementById('stat-status').textContent = state.is_running ? 'Online' : 'Offline';
+        document.getElementById('stat-status').style.color = state.is_running ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('stat-players').textContent = state.is_running ? `${state.players_online}/${state.max_players}` : '--';
+        document.getElementById('stat-simspeed').textContent = state.is_running ? state.sim_speed.toFixed(2) : '--';
+        document.getElementById('stat-uptime').textContent = state.is_running ? formatUptime(state.uptime_seconds) : '--';
+    } catch {
+        document.getElementById('stat-status').textContent = 'Offline';
+        document.getElementById('stat-status').style.color = 'var(--danger)';
+    }
+}
+loadOverview();
+setInterval(loadOverview, 10000);
+</script>
+{% endblock %}

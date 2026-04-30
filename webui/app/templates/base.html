@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pulsar WebUI{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>Pulsar</h1>
+            <div class="subtitle">Dedicated Server Manager</div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Pulsar Settings</div>
+            <a href="/pulsar/config" class="nav-link">
+                <span class="nav-icon">&#9881;</span>
+                <span>Core Config</span>
+            </a>
+            <a href="/pulsar/profiles" class="nav-link">
+                <span class="nav-icon">&#128100;</span>
+                <span>Profiles</span>
+            </a>
+            <a href="/pulsar/sources" class="nav-link">
+                <span class="nav-icon">&#128230;</span>
+                <span>Plugin Sources</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Dedicated Server</div>
+            <a href="/server/dashboard" class="nav-link">
+                <span class="nav-icon">&#128200;</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="/server/config" class="nav-link">
+                <span class="nav-icon">&#9879;</span>
+                <span>Server Config</span>
+            </a>
+            <a href="/server/world" class="nav-link">
+                <span class="nav-icon">&#127757;</span>
+                <span>World Settings</span>
+            </a>
+            <a href="/server/admin" class="nav-link">
+                <span class="nav-icon">&#128272;</span>
+                <span>Administration</span>
+            </a>
+        </div>
+
+        <div class="server-status">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span class="status-label">Checking...</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

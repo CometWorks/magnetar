@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Server Administration{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Administration</h2>
+    <p>Manage administrators, banned players, reserved slots, and server plugins.</p>
+</div>
+
+<div class="tabs">
+    <div class="tab active" data-tab="tab-admins">Administrators</div>
+    <div class="tab" data-tab="tab-banned">Banned Players</div>
+    <div class="tab" data-tab="tab-reserved">Reserved Slots</div>
+    <div class="tab" data-tab="tab-plugins">Server Plugins</div>
+    <div class="tab" data-tab="tab-worlds">Saved Worlds</div>
+</div>
+
+<div id="tab-admins" class="tab-content active">
+    <div class="card">
+        <div class="card-title">Administrators</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-primary" onclick="addAdmin()">Add Administrator</button>
+        </div>
+        <div id="admin-list"></div>
+    </div>
+</div>
+
+<div id="tab-banned" class="tab-content">
+    <div class="card">
+        <div class="card-title">Banned Players</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-primary" onclick="addBanned()">Ban Player</button>
+        </div>
+        <div id="banned-list"></div>
+    </div>
+</div>
+
+<div id="tab-reserved" class="tab-content">
+    <div class="card">
+        <div class="card-title">Reserved Slots</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-primary" onclick="addReserved()">Add Reserved Slot</button>
+        </div>
+        <div id="reserved-list"></div>
+    </div>
+</div>
+
+<div id="tab-plugins" class="tab-content">
+    <div class="card">
+        <div class="card-title">Server Plugins (DLL paths)</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-primary" onclick="addPlugin()">Add Plugin</button>
+        </div>
+        <div id="plugin-list"></div>
+    </div>
+</div>
+
+<div id="tab-worlds" class="tab-content">
+    <div class="card">
+        <div class="card-title">Saved Worlds</div>
+        <div id="worlds-list"></div>
+    </div>
+</div>
+
+<div class="btn-group">
+    <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
+    <button class="btn btn-secondary" onclick="loadConfig()">Reset</button>
+</div>
+
+<div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+        <div class="modal-title" id="modal-title">Input</div>
+        <div class="form-group">
+            <label id="modal-label">Value</label>
+            <input type="text" id="modal-input">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="modal-ok">OK</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let config = null;
+
+async function loadConfig() {
+    try {
+        config = await API.get('/api/server/config');
+        renderAdmins();
+        renderBanned();
+        renderReserved();
+        renderPlugins();
+        loadWorlds();
+    } catch (e) {
+        showToast('Failed to load config', 'error');
+    }
+}
+
+function renderAdmins() {
+    const el = document.getElementById('admin-list');
+    el.innerHTML = config.administrators.map((id, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">Steam ID: ${id}</span>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeAdmin(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No administrators configured</p>';
+}
+
+function renderBanned() {
+    const el = document.getElementById('banned-list');
+    el.innerHTML = config.banned.map((id, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">Steam ID: ${id}</span>
+            </div>
+            <button class="btn btn-sm btn-success" onclick="removeBanned(${i})">Unban</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No banned players</p>';
+}
+
+function renderReserved() {
+    const el = document.getElementById('reserved-list');
+    el.innerHTML = config.reserved.map((id, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">Steam ID: ${id}</span>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeReserved(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No reserved slots</p>';
+}
+
+function renderPlugins() {
+    const el = document.getElementById('plugin-list');
+    el.innerHTML = config.plugins.map((path, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${path}</span>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removePlugin(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No server plugins configured</p>';
+}
+
+async function loadWorlds() {
+    try {
+        const worlds = await API.get('/api/server/worlds');
+        const el = document.getElementById('worlds-list');
+        el.innerHTML = worlds.map(w => `
+            <div class="list-item">
+                <div class="list-item-info">
+                    <span class="list-item-name">${w.name}</span>
+                    <span class="list-item-detail">Size: ${w.size_mb} MB | Path: ${w.path}</span>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="selectWorld('${w.path.replace(/\\/g, '\\\\')}')">Select</button>
+            </div>`).join('') || '<p style="color:var(--text-secondary)">No saved worlds found</p>';
+    } catch {
+        document.getElementById('worlds-list').innerHTML = '<p style="color:var(--text-secondary)">Could not load worlds</p>';
+    }
+}
+
+function selectWorld(path) {
+    config.load_world = path;
+    showToast('World selected. Save to apply.', 'info');
+}
+
+function openModal(title, label, callback) {
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-label').textContent = label;
+    document.getElementById('modal-input').value = '';
+    document.getElementById('modal-ok').onclick = () => {
+        const val = document.getElementById('modal-input').value.trim();
+        if (val) callback(val);
+        closeModal();
+    };
+}
+
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+function addAdmin() { openModal('Add Administrator', 'Steam ID (64-bit)', v => { config.administrators.push(v); renderAdmins(); }); }
+function addBanned() { openModal('Ban Player', 'Steam ID (64-bit)', v => { config.banned.push(parseInt(v)); renderBanned(); }); }
+function addReserved() { openModal('Add Reserved Slot', 'Steam ID (64-bit)', v => { config.reserved.push(parseInt(v)); renderReserved(); }); }
+function addPlugin() { openModal('Add Plugin', 'DLL Path', v => { config.plugins.push(v); renderPlugins(); }); }
+
+function removeAdmin(i) { config.administrators.splice(i, 1); renderAdmins(); }
+function removeBanned(i) { config.banned.splice(i, 1); renderBanned(); }
+function removeReserved(i) { config.reserved.splice(i, 1); renderReserved(); }
+function removePlugin(i) { config.plugins.splice(i, 1); renderPlugins(); }
+
+async function saveConfig() {
+    try {
+        await API.put('/api/server/config', config);
+        showToast('Configuration saved', 'success');
+    } catch (e) {
+        showToast('Failed to save', 'error');
+    }
+}
+
+loadConfig();
+</script>
+{% endblock %}

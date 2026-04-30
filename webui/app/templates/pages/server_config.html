@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Server Configuration{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Server Configuration</h2>
+    <p>Dedicated Server settings from SpaceEngineers-Dedicated.cfg</p>
+</div>
+
+<form id="server-config-form">
+    <div class="card">
+        <div class="card-title">Server Identity</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="server_name">Server Name</label>
+                <input type="text" id="server_name">
+            </div>
+            <div class="form-group">
+                <label for="world_name">World Name</label>
+                <input type="text" id="world_name">
+            </div>
+            <div class="form-group">
+                <label for="server_description">Server Description</label>
+                <textarea id="server_description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="message_of_the_day">Message of the Day</label>
+                <textarea id="message_of_the_day"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="message_of_the_day_url">MOTD URL</label>
+                <input type="text" id="message_of_the_day_url">
+            </div>
+            <div class="form-group">
+                <label for="group_id">Steam Group ID</label>
+                <input type="number" id="group_id" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Network</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="ip">IP Address</label>
+                <input type="text" id="ip">
+            </div>
+            <div class="form-group">
+                <label for="server_port">Server Port</label>
+                <input type="number" id="server_port" min="1" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="steam_port">Steam Port</label>
+                <input type="number" id="steam_port" min="1" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="network_type">Network Type</label>
+                <input type="text" id="network_type">
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="cross_platform">
+                <label for="cross_platform">Cross Platform</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="verbose_network_logging">
+                <label for="verbose_network_logging">Verbose Network Logging</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="console_compatibility">
+                <label for="console_compatibility">Console Compatibility</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Remote API</div>
+        <div class="form-grid">
+            <div class="form-check">
+                <input type="checkbox" id="remote_api_enabled">
+                <label for="remote_api_enabled">Enable Remote API</label>
+            </div>
+            <div class="form-group">
+                <label for="remote_api_port">Remote API Port</label>
+                <input type="number" id="remote_api_port" min="1" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="remote_api_ip">Remote API IP</label>
+                <input type="text" id="remote_api_ip">
+            </div>
+            <div class="form-group">
+                <label for="remote_security_key">Remote Security Key</label>
+                <input type="password" id="remote_security_key">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Auto-Restart & Updates</div>
+        <div class="form-grid">
+            <div class="form-check">
+                <input type="checkbox" id="auto_restart_enabled">
+                <label for="auto_restart_enabled">Enable Auto-Restart</label>
+            </div>
+            <div class="form-group">
+                <label for="auto_restart_time_in_min">Auto-Restart Interval (minutes)</label>
+                <input type="number" id="auto_restart_time_in_min" min="0">
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="auto_restart_save">
+                <label for="auto_restart_save">Save Before Auto-Restart</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="auto_update_enabled">
+                <label for="auto_update_enabled">Enable Auto-Update</label>
+            </div>
+            <div class="form-group">
+                <label for="auto_update_check_interval_in_min">Update Check Interval (minutes)</label>
+                <input type="number" id="auto_update_check_interval_in_min" min="1">
+            </div>
+            <div class="form-group">
+                <label for="auto_update_restart_delay_in_min">Update Restart Delay (minutes)</label>
+                <input type="number" id="auto_update_restart_delay_in_min" min="0">
+            </div>
+            <div class="form-group">
+                <label for="auto_update_steam_branch">Steam Branch</label>
+                <input type="text" id="auto_update_steam_branch">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Behavior</div>
+        <div class="form-grid">
+            <div class="form-check">
+                <input type="checkbox" id="pause_game_when_empty">
+                <label for="pause_game_when_empty">Pause When Empty</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="autodetect_dependencies">
+                <label for="autodetect_dependencies">Auto-Detect Dependencies</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="save_chat_to_log">
+                <label for="save_chat_to_log">Save Chat to Log</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="ignore_last_session">
+                <label for="ignore_last_session">Ignore Last Session</label>
+            </div>
+            <div class="form-group">
+                <label for="asteroid_amount">Asteroid Amount</label>
+                <input type="number" id="asteroid_amount" min="0">
+            </div>
+            <div class="form-group">
+                <label for="load_world">Load World Path</label>
+                <input type="text" id="load_world">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Watchdog</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="watcher_interval">Watcher Interval (seconds)</label>
+                <input type="number" id="watcher_interval" min="1" step="1">
+            </div>
+            <div class="form-group">
+                <label for="watcher_simulation_speed_minimum">Min Simulation Speed</label>
+                <input type="number" id="watcher_simulation_speed_minimum" min="0" max="1" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="manual_action_delay">Manual Action Delay (minutes)</label>
+                <input type="number" id="manual_action_delay" min="0">
+            </div>
+            <div class="form-group">
+                <label for="manual_action_chat_message">Shutdown Chat Message</label>
+                <input type="text" id="manual_action_chat_message">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Chat Anti-Spam</div>
+        <div class="form-grid">
+            <div class="form-check">
+                <input type="checkbox" id="chat_anti_spam_enabled">
+                <label for="chat_anti_spam_enabled">Enable Chat Anti-Spam</label>
+            </div>
+            <div class="form-group">
+                <label for="same_message_timeout">Same Message Timeout (seconds)</label>
+                <input type="number" id="same_message_timeout" min="0">
+            </div>
+            <div class="form-group">
+                <label for="spam_messages_time">Spam Detection Window (seconds)</label>
+                <input type="number" id="spam_messages_time" min="0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="spam_messages_timeout">Spam Timeout (seconds)</label>
+                <input type="number" id="spam_messages_timeout" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary">Save Server Config</button>
+        <button type="button" class="btn btn-secondary" onclick="loadServerConfig()">Reset</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let serverConfig = null;
+
+const TEXT_FIELDS = ['server_name','world_name','server_description','message_of_the_day','message_of_the_day_url','ip','network_type','remote_api_ip','remote_security_key','auto_update_steam_branch','load_world','manual_action_chat_message'];
+const NUM_FIELDS = ['group_id','server_port','steam_port','remote_api_port','auto_restart_time_in_min','auto_update_check_interval_in_min','auto_update_restart_delay_in_min','asteroid_amount','watcher_interval','watcher_simulation_speed_minimum','manual_action_delay','same_message_timeout','spam_messages_time','spam_messages_timeout'];
+const BOOL_FIELDS = ['cross_platform','verbose_network_logging','console_compatibility','remote_api_enabled','auto_restart_enabled','auto_restart_save','auto_update_enabled','pause_game_when_empty','autodetect_dependencies','save_chat_to_log','ignore_last_session','chat_anti_spam_enabled'];
+
+async function loadServerConfig() {
+    try {
+        serverConfig = await API.get('/api/server/config');
+        TEXT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.value = serverConfig[f] || ''; });
+        NUM_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.value = serverConfig[f]; });
+        BOOL_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.checked = serverConfig[f]; });
+    } catch (e) {
+        showToast('Failed to load server config', 'error');
+    }
+}
+
+document.getElementById('server-config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!serverConfig) return;
+    TEXT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) serverConfig[f] = el.value; });
+    NUM_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) serverConfig[f] = parseFloat(el.value); });
+    BOOL_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) serverConfig[f] = el.checked; });
+    try {
+        await API.put('/api/server/config', serverConfig);
+        showToast('Server config saved', 'success');
+    } catch (e) {
+        showToast('Failed to save server config', 'error');
+    }
+});
+
+loadServerConfig();
+</script>
+{% endblock %}

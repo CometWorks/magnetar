@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}Pulsar - Plugin Profiles{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Plugin Profiles</h2>
+    <p>Manage plugin profiles. Each profile defines which plugins and mods are enabled.</p>
+</div>
+
+<div class="card">
+    <div class="card-title">Profiles</div>
+    <div class="btn-group" style="margin-top:0;margin-bottom:16px">
+        <button class="btn btn-primary btn-sm" onclick="createProfile()">New Profile</button>
+    </div>
+    <div id="profile-list"></div>
+    <p id="current-profile" style="margin-top:12px;color:var(--text-secondary);font-size:0.85rem"></p>
+</div>
+
+<div class="card hidden" id="profile-detail">
+    <div class="card-title" id="profile-detail-title">Profile Details</div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="tab-github">GitHub Plugins</div>
+        <div class="tab" data-tab="tab-devfolder">Dev Folder Plugins</div>
+        <div class="tab" data-tab="tab-local">Local Plugins</div>
+        <div class="tab" data-tab="tab-mods">Mods</div>
+    </div>
+
+    <div id="tab-github" class="tab-content active">
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-secondary" onclick="addGitHubPlugin()">Add GitHub Plugin</button>
+        </div>
+        <div id="github-list"></div>
+    </div>
+
+    <div id="tab-devfolder" class="tab-content">
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-secondary" onclick="addDevFolder()">Add Dev Folder</button>
+        </div>
+        <div id="devfolder-list"></div>
+    </div>
+
+    <div id="tab-local" class="tab-content">
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-secondary" onclick="addLocal()">Add Local Plugin</button>
+        </div>
+        <div id="local-list"></div>
+    </div>
+
+    <div id="tab-mods" class="tab-content">
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button class="btn btn-sm btn-secondary" onclick="addMod()">Add Mod (Workshop ID)</button>
+        </div>
+        <div id="mods-list"></div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+    </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+        <div class="modal-title" id="modal-title">Input</div>
+        <div class="form-group">
+            <label id="modal-label">Value</label>
+            <input type="text" id="modal-input">
+        </div>
+        <div class="form-group hidden" id="modal-input2-group">
+            <label id="modal-label2">Value 2</label>
+            <input type="text" id="modal-input2">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="modal-ok">OK</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentProfile = null;
+let profileData = null;
+
+async function loadProfiles() {
+    try {
+        const data = await API.get('/api/pulsar/profiles');
+        const list = document.getElementById('profile-list');
+        list.innerHTML = '';
+        document.getElementById('current-profile').textContent = data.current ? `Active profile: ${data.current}` : 'No active profile';
+        data.profiles.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-item-info">
+                    <span class="list-item-name">${name}</span>
+                    <span class="list-item-detail">${name === data.current ? '<span class="badge badge-success">Active</span>' : ''}</span>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-sm btn-primary" onclick="selectProfile('${name}')">Edit</button>
+                    <button class="btn btn-sm btn-success" onclick="activateProfile('${name}')">Activate</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteProfile('${name}')">Delete</button>
+                </div>`;
+            list.appendChild(item);
+        });
+    } catch (e) {
+        showToast('Failed to load profiles', 'error');
+    }
+}
+
+async function selectProfile(name) {
+    try {
+        profileData = await API.get(`/api/pulsar/profiles/${encodeURIComponent(name)}`);
+        currentProfile = name;
+        document.getElementById('profile-detail').classList.remove('hidden');
+        document.getElementById('profile-detail-title').textContent = `Profile: ${name}`;
+        renderProfile();
+        initTabs();
+    } catch (e) {
+        showToast('Failed to load profile', 'error');
+    }
+}
+
+function renderProfile() {
+    if (!profileData) return;
+    const ghList = document.getElementById('github-list');
+    ghList.innerHTML = profileData.github.map((g, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${g.id}</span>
+                <span class="list-item-detail">Version: ${g.selected_version || 'default'}</span>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeGitHub(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No GitHub plugins</p>';
+
+    const dfList = document.getElementById('devfolder-list');
+    dfList.innerHTML = profileData.dev_folder.map((d, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${d.id}</span>
+                <span class="list-item-detail">Debug: ${d.debug_build ? 'Yes' : 'No'} | Data: ${d.data_file || 'none'}</span>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeDevFolder(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No dev folder plugins</p>';
+
+    const locList = document.getElementById('local-list');
+    locList.innerHTML = profileData.local.map((id, i) => `
+        <div class="list-item">
+            <div class="list-item-info"><span class="list-item-name">${id}</span></div>
+            <button class="btn btn-sm btn-danger" onclick="removeLocal(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No local plugins</p>';
+
+    const modList = document.getElementById('mods-list');
+    modList.innerHTML = profileData.mods.map((id, i) => `
+        <div class="list-item">
+            <div class="list-item-info"><span class="list-item-name">Workshop ID: ${id}</span></div>
+            <button class="btn btn-sm btn-danger" onclick="removeMod(${i})">Remove</button>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No mods</p>';
+}
+
+async function saveProfile() {
+    if (!currentProfile || !profileData) return;
+    try {
+        await API.put(`/api/pulsar/profiles/${encodeURIComponent(currentProfile)}`, profileData);
+        showToast('Profile saved', 'success');
+    } catch (e) {
+        showToast('Failed to save profile', 'error');
+    }
+}
+
+async function activateProfile(name) {
+    try {
+        await API.post(`/api/pulsar/profiles/${encodeURIComponent(name)}/activate`);
+        showToast(`Profile "${name}" activated`, 'success');
+        loadProfiles();
+    } catch (e) {
+        showToast('Failed to activate profile', 'error');
+    }
+}
+
+async function deleteProfile(name) {
+    if (!confirm(`Delete profile "${name}"?`)) return;
+    try {
+        await API.del(`/api/pulsar/profiles/${encodeURIComponent(name)}`);
+        showToast('Profile deleted', 'success');
+        if (currentProfile === name) {
+            document.getElementById('profile-detail').classList.add('hidden');
+            currentProfile = null;
+            profileData = null;
+        }
+        loadProfiles();
+    } catch (e) {
+        showToast('Failed to delete profile', 'error');
+    }
+}
+
+function openModal(title, label, callback, label2 = null) {
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-label').textContent = label;
+    document.getElementById('modal-input').value = '';
+    const g2 = document.getElementById('modal-input2-group');
+    if (label2) {
+        g2.classList.remove('hidden');
+        document.getElementById('modal-label2').textContent = label2;
+        document.getElementById('modal-input2').value = '';
+    } else {
+        g2.classList.add('hidden');
+    }
+    document.getElementById('modal-ok').onclick = () => {
+        const v1 = document.getElementById('modal-input').value.trim();
+        const v2 = document.getElementById('modal-input2').value.trim();
+        if (v1) callback(v1, v2);
+        closeModal();
+    };
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+async function createProfile() {
+    openModal('New Profile', 'Profile Name', async (name) => {
+        try {
+            await API.post(`/api/pulsar/profiles/${encodeURIComponent(name)}`);
+            showToast('Profile created', 'success');
+            loadProfiles();
+        } catch (e) {
+            showToast('Failed to create profile', 'error');
+        }
+    });
+}
+
+function addGitHubPlugin() {
+    openModal('Add GitHub Plugin', 'Plugin ID', (id, version) => {
+        profileData.github.push({id, selected_version: version || ''});
+        renderProfile();
+    }, 'Version (optional)');
+}
+
+function addDevFolder() {
+    openModal('Add Dev Folder Plugin', 'Plugin ID', (id) => {
+        profileData.dev_folder.push({id, data_file: '', debug_build: true});
+        renderProfile();
+    });
+}
+
+function addLocal() {
+    openModal('Add Local Plugin', 'Plugin ID', (id) => {
+        profileData.local.push(id);
+        renderProfile();
+    });
+}
+
+function addMod() {
+    openModal('Add Mod', 'Workshop ID', (id) => {
+        const num = parseInt(id);
+        if (!isNaN(num)) {
+            profileData.mods.push(num);
+            renderProfile();
+        }
+    });
+}
+
+function removeGitHub(i) { profileData.github.splice(i, 1); renderProfile(); }
+function removeDevFolder(i) { profileData.dev_folder.splice(i, 1); renderProfile(); }
+function removeLocal(i) { profileData.local.splice(i, 1); renderProfile(); }
+function removeMod(i) { profileData.mods.splice(i, 1); renderProfile(); }
+
+loadProfiles();
+</script>
+{% endblock %}

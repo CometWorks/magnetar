@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Server Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Server Dashboard</h2>
+    <p>Live server state, players, chat, and controls. Requires the Admin plugin running on the server.</p>
+</div>
+
+<div class="stats-grid" id="server-stats">
+    <div class="stat-card">
+        <div class="stat-value" id="ds-status">--</div>
+        <div class="stat-label">Status</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-players">--</div>
+        <div class="stat-label">Players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-simspeed">--</div>
+        <div class="stat-label">Sim Speed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-uptime">--</div>
+        <div class="stat-label">Uptime</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-pcu">--</div>
+        <div class="stat-label">PCU Used</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-cpu">--</div>
+        <div class="stat-label">Sim CPU %</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-version">--</div>
+        <div class="stat-label">Game Version</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="ds-mods">--</div>
+        <div class="stat-label">Mods / Plugins</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Server Controls</div>
+    <div class="btn-group" style="margin-top:0">
+        <button class="btn btn-primary" onclick="doSave()">Save World</button>
+        <button class="btn btn-danger" onclick="doStop()">Stop Server</button>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+        <div class="card-title">Online Players</div>
+        <div id="player-list">
+            <p style="color:var(--text-secondary)">Loading...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Server Chat</div>
+        <div class="chat-panel">
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-group">
+                <input type="text" id="chat-input" placeholder="Send a message..." onkeydown="if(event.key==='Enter')doSendChat()">
+                <button class="btn btn-primary" onclick="doSendChat()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function refreshState() {
+    try {
+        const state = await API.get('/api/server/state');
+        const running = state.is_running;
+        document.getElementById('ds-status').textContent = running ? 'Online' : 'Offline';
+        document.getElementById('ds-status').style.color = running ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('ds-players').textContent = running ? `${state.players_online}/${state.max_players}` : '--';
+        document.getElementById('ds-simspeed').textContent = running ? state.sim_speed.toFixed(2) : '--';
+        document.getElementById('ds-uptime').textContent = running ? formatUptime(state.uptime_seconds) : '--';
+        document.getElementById('ds-pcu').textContent = running ? `${state.used_pcu}/${state.total_pcu}` : '--';
+        document.getElementById('ds-cpu').textContent = running ? state.sim_cpu_load.toFixed(1) + '%' : '--';
+        document.getElementById('ds-version').textContent = state.game_version || '--';
+        document.getElementById('ds-mods').textContent = running ? `${state.mods_loaded} / ${state.plugins_loaded}` : '--';
+    } catch {
+        document.getElementById('ds-status').textContent = 'Unreachable';
+        document.getElementById('ds-status').style.color = 'var(--danger)';
+    }
+}
+
+async function refreshPlayers() {
+    try {
+        const players = await API.get('/api/server/players');
+        const el = document.getElementById('player-list');
+        if (players.length === 0) {
+            el.innerHTML = '<p style="color:var(--text-secondary)">No players online</p>';
+            return;
+        }
+        el.innerHTML = players.map(p => `
+            <div class="list-item">
+                <div class="list-item-info">
+                    <span class="list-item-name">${p.display_name} ${p.is_admin ? '<span class="badge badge-warning">Admin</span>' : ''}</span>
+                    <span class="list-item-detail">Steam: ${p.steam_id} | Faction: ${p.faction || 'None'} | Ping: ${p.ping_ms}ms</span>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-sm btn-warning" onclick="doKick(${p.steam_id})">Kick</button>
+                    <button class="btn btn-sm btn-danger" onclick="doBan(${p.steam_id})">Ban</button>
+                    <button class="btn btn-sm btn-secondary" onclick="doPromote(${p.steam_id})">Promote</button>
+                </div>
+            </div>`).join('');
+    } catch {
+        document.getElementById('player-list').innerHTML = '<p style="color:var(--text-secondary)">Admin plugin not reachable</p>';
+    }
+}
+
+async function refreshChat() {
+    try {
+        const msgs = await API.get('/api/server/chat?count=50');
+        const el = document.getElementById('chat-messages');
+        el.innerHTML = msgs.map(m => `
+            <div class="chat-message">
+                <span class="timestamp">[${m.timestamp}]</span>
+                <span class="sender">${m.sender}:</span>
+                ${escapeHtml(m.message)}
+            </div>`).join('') || '<p style="color:var(--text-secondary)">No messages</p>';
+        el.scrollTop = el.scrollHeight;
+    } catch {}
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+async function doSave() {
+    if (!confirm('Save the world now?')) return;
+    const r = await API.post('/api/server/save');
+    showToast(r.status === 'saved' ? 'World saved' : 'Save failed', r.status === 'saved' ? 'success' : 'error');
+}
+
+async function doStop() {
+    if (!confirm('Stop the server? This will disconnect all players.')) return;
+    const r = await API.post('/api/server/stop');
+    showToast(r.status === 'stopping' ? 'Server stopping...' : 'Stop failed', r.status === 'stopping' ? 'info' : 'error');
+}
+
+async function doSendChat() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    await API.post('/api/server/chat', {message: msg});
+    input.value = '';
+    setTimeout(refreshChat, 500);
+}
+
+async function doKick(steamId) {
+    if (!confirm('Kick this player?')) return;
+    await API.post(`/api/server/players/${steamId}/kick`);
+    showToast('Player kicked', 'info');
+    setTimeout(refreshPlayers, 1000);
+}
+
+async function doBan(steamId) {
+    if (!confirm('Ban this player?')) return;
+    await API.post(`/api/server/players/${steamId}/ban`);
+    showToast('Player banned', 'info');
+    setTimeout(refreshPlayers, 1000);
+}
+
+async function doPromote(steamId) {
+    await API.post(`/api/server/players/${steamId}/promote`);
+    showToast('Player promoted', 'info');
+    setTimeout(refreshPlayers, 1000);
+}
+
+refreshState();
+refreshPlayers();
+refreshChat();
+setInterval(refreshState, 5000);
+setInterval(refreshPlayers, 10000);
+setInterval(refreshChat, 5000);
+</script>
+{% endblock %}

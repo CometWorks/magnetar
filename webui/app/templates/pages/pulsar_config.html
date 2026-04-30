@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Pulsar - Core Configuration{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Core Configuration</h2>
+    <p>General Pulsar/Magnetar settings (config.xml)</p>
+</div>
+
+<form id="config-form">
+    <div class="card">
+        <div class="card-title">Network Settings</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="network_timeout">Network Timeout (ms)</label>
+                <input type="number" id="network_timeout" min="1000" max="60000" step="1000">
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="allow_ipv6">
+                <label for="allow_ipv6">Allow IPv6</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Data Handling</div>
+        <div class="form-grid">
+            <div class="form-check">
+                <input type="checkbox" id="data_handling_consent">
+                <label for="data_handling_consent">Data Handling Consent</label>
+            </div>
+            <div class="form-group">
+                <label for="data_handling_consent_date">Consent Date</label>
+                <input type="text" id="data_handling_consent_date" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Game Version</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="game_version">Detected Game Version</label>
+                <input type="text" id="game_version" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary">Save Configuration</button>
+        <button type="button" class="btn btn-secondary" onclick="loadConfig()">Reset</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadConfig() {
+    try {
+        const config = await API.get('/api/pulsar/config');
+        document.getElementById('network_timeout').value = config.network_timeout;
+        document.getElementById('allow_ipv6').checked = config.allow_ipv6;
+        document.getElementById('data_handling_consent').checked = config.data_handling_consent;
+        document.getElementById('data_handling_consent_date').value = config.data_handling_consent_date || 'Not set';
+        document.getElementById('game_version').value = config.game_version || 'Not detected';
+    } catch (e) {
+        showToast('Failed to load configuration', 'error');
+    }
+}
+
+document.getElementById('config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        await API.put('/api/pulsar/config', {
+            network_timeout: parseInt(document.getElementById('network_timeout').value),
+            allow_ipv6: document.getElementById('allow_ipv6').checked,
+            data_handling_consent: document.getElementById('data_handling_consent').checked,
+            data_handling_consent_date: document.getElementById('data_handling_consent_date').value,
+            game_version: document.getElementById('game_version').value === 'Not detected' ? null : document.getElementById('game_version').value,
+        });
+        showToast('Configuration saved', 'success');
+    } catch (e) {
+        showToast('Failed to save configuration', 'error');
+    }
+});
+
+loadConfig();
+</script>
+{% endblock %}

@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+{% block title %}World Settings{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>World / Session Settings</h2>
+    <p>Configure gameplay, multipliers, and environment settings for the dedicated server world.</p>
+</div>
+
+<form id="world-form">
+    <div class="card">
+        <div class="card-title">Game Mode & Players</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="game_mode">Game Mode</label>
+                <select id="game_mode">
+                    <option value="0">Creative</option>
+                    <option value="1">Survival</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="online_mode">Online Mode</label>
+                <select id="online_mode">
+                    <option value="0">Offline</option>
+                    <option value="1">Private</option>
+                    <option value="2">Friends</option>
+                    <option value="3">Public</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="max_players">Max Players</label>
+                <input type="number" id="max_players" min="1" max="64">
+            </div>
+            <div class="form-group">
+                <label for="environment_hostility">Environment Hostility</label>
+                <select id="environment_hostility">
+                    <option value="0">Safe</option>
+                    <option value="1">Normal</option>
+                    <option value="2">Cataclysm</option>
+                    <option value="3">Cataclysm Unreal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="world_size_km">World Size (km, 0 = unlimited)</label>
+                <input type="number" id="world_size_km" min="0">
+            </div>
+            <div class="form-group">
+                <label for="view_distance">View Distance (m)</label>
+                <input type="number" id="view_distance" min="1000" max="50000">
+            </div>
+            <div class="form-group">
+                <label for="sync_distance">Sync Distance (m)</label>
+                <input type="number" id="sync_distance" min="1000" max="20000">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Multipliers</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="inventory_size_multiplier">Inventory Size</label>
+                <input type="number" id="inventory_size_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="blocks_inventory_size_multiplier">Blocks Inventory Size</label>
+                <input type="number" id="blocks_inventory_size_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="assembler_speed_multiplier">Assembler Speed</label>
+                <input type="number" id="assembler_speed_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="assembler_efficiency_multiplier">Assembler Efficiency</label>
+                <input type="number" id="assembler_efficiency_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="refinery_speed_multiplier">Refinery Speed</label>
+                <input type="number" id="refinery_speed_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="welder_speed_multiplier">Welder Speed</label>
+                <input type="number" id="welder_speed_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="grinder_speed_multiplier">Grinder Speed</label>
+                <input type="number" id="grinder_speed_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="hack_speed_multiplier">Hack Speed</label>
+                <input type="number" id="hack_speed_multiplier" min="0.01" max="10" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="harvest_ratio_multiplier">Harvest Ratio</label>
+                <input type="number" id="harvest_ratio_multiplier" min="0.1" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="spawn_ship_time_multiplier">Spawn Ship Time</label>
+                <input type="number" id="spawn_ship_time_multiplier" min="0" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="flora_density_multiplier">Flora Density</label>
+                <input type="number" id="flora_density_multiplier" min="0" max="10" step="0.1">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Limits & PCU</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="total_pcu">Total PCU</label>
+                <input type="number" id="total_pcu" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_grid_size">Max Grid Size</label>
+                <input type="number" id="max_grid_size" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_blocks_per_player">Max Blocks Per Player</label>
+                <input type="number" id="max_blocks_per_player" min="0">
+            </div>
+            <div class="form-group">
+                <label for="pirate_pcu">Pirate PCU</label>
+                <input type="number" id="pirate_pcu" min="0">
+            </div>
+            <div class="form-group">
+                <label for="global_encounter_pcu">Global Encounter PCU</label>
+                <input type="number" id="global_encounter_pcu" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_factions_count">Max Factions (0 = unlimited)</label>
+                <input type="number" id="max_factions_count" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_floating_objects">Max Floating Objects</label>
+                <input type="number" id="max_floating_objects" min="0" max="1000">
+            </div>
+            <div class="form-group">
+                <label for="total_bot_limit">Total Bot Limit</label>
+                <input type="number" id="total_bot_limit" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_backup_saves">Max Backup Saves</label>
+                <input type="number" id="max_backup_saves" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_drones">Max Drones</label>
+                <input type="number" id="max_drones" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_planets">Max Planets</label>
+                <input type="number" id="max_planets" min="0">
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="enable_pcu_trading">
+                <label for="enable_pcu_trading">Enable PCU Trading</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="use_console_pcu">
+                <label for="use_console_pcu">Use Console PCU</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Gameplay Features</div>
+        <div class="form-grid">
+            <div class="form-check"><input type="checkbox" id="auto_healing"><label for="auto_healing">Auto Healing</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_jetpack"><label for="enable_jetpack">Enable Jetpack</label></div>
+            <div class="form-check"><input type="checkbox" id="spawn_with_tools"><label for="spawn_with_tools">Spawn With Tools</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_copy_paste"><label for="enable_copy_paste">Enable Copy/Paste</label></div>
+            <div class="form-check"><input type="checkbox" id="weapons_enabled"><label for="weapons_enabled">Weapons Enabled</label></div>
+            <div class="form-check"><input type="checkbox" id="thruster_damage"><label for="thruster_damage">Thruster Damage</label></div>
+            <div class="form-check"><input type="checkbox" id="destructible_blocks"><label for="destructible_blocks">Destructible Blocks</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_ingame_scripts"><label for="enable_ingame_scripts">Enable In-Game Scripts</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_spectator"><label for="enable_spectator">Enable Spectator</label></div>
+            <div class="form-check"><input type="checkbox" id="show_player_names_on_hud"><label for="show_player_names_on_hud">Show Player Names on HUD</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_3rd_person_view"><label for="enable_3rd_person_view">Enable 3rd Person View</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_saving"><label for="enable_saving">Enable Saving</label></div>
+            <div class="form-check"><input type="checkbox" id="infinite_ammo"><label for="infinite_ammo">Infinite Ammo</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_voxel_destruction"><label for="enable_voxel_destruction">Enable Voxel Destruction</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_voxel_hand"><label for="enable_voxel_hand">Enable Voxel Hand</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_convert_to_station"><label for="enable_convert_to_station">Enable Convert to Station</label></div>
+            <div class="form-check"><input type="checkbox" id="station_voxel_support"><label for="station_voxel_support">Station Voxel Support</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_remote_block_removal"><label for="enable_remote_block_removal">Enable Remote Block Removal</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_tool_shake"><label for="enable_tool_shake">Enable Tool Shake</label></div>
+            <div class="form-check"><input type="checkbox" id="realistic_sound"><label for="realistic_sound">Realistic Sound</label></div>
+            <div class="form-check"><input type="checkbox" id="permanent_death"><label for="permanent_death">Permanent Death</label></div>
+            <div class="form-check"><input type="checkbox" id="respawn_ship_delete"><label for="respawn_ship_delete">Delete Respawn Ships</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_respawn_ships"><label for="enable_respawn_ships">Enable Respawn Ships</label></div>
+            <div class="form-check"><input type="checkbox" id="reset_ownership"><label for="reset_ownership">Reset Ownership</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_autorespawn"><label for="enable_autorespawn">Enable Auto-Respawn</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_scripter_role"><label for="enable_scripter_role">Enable Scripter Role</label></div>
+            <div class="form-check"><input type="checkbox" id="family_sharing"><label for="family_sharing">Family Sharing</label></div>
+            <div class="form-check"><input type="checkbox" id="offensive_words_filtering"><label for="offensive_words_filtering">Offensive Words Filter</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_supergridding"><label for="enable_supergridding">Enable Supergridding</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_subgrid_damage"><label for="enable_subgrid_damage">Enable Subgrid Damage</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_turrets_friendly_fire"><label for="enable_turrets_friendly_fire">Turrets Friendly Fire</label></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">World Generation</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="procedural_density">Procedural Density</label>
+                <input type="number" id="procedural_density" min="0" max="1" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="procedural_seed">Procedural Seed</label>
+                <input type="number" id="procedural_seed">
+            </div>
+            <div class="form-group">
+                <label for="voxel_generator_version">Voxel Generator Version</label>
+                <input type="number" id="voxel_generator_version" min="1">
+            </div>
+            <div class="form-check"><input type="checkbox" id="predefined_asteroids"><label for="predefined_asteroids">Predefined Asteroids</label></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Environment</div>
+        <div class="form-grid">
+            <div class="form-check"><input type="checkbox" id="enable_oxygen"><label for="enable_oxygen">Enable Oxygen</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_oxygen_pressurization"><label for="enable_oxygen_pressurization">Enable Oxygen Pressurization</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_sun_rotation"><label for="enable_sun_rotation">Enable Sun Rotation</label></div>
+            <div class="form-group">
+                <label for="sun_rotation_interval_minutes">Sun Rotation Interval (minutes)</label>
+                <input type="number" id="sun_rotation_interval_minutes" min="1" step="1">
+            </div>
+            <div class="form-check"><input type="checkbox" id="weather_system"><label for="weather_system">Weather System</label></div>
+            <div class="form-check"><input type="checkbox" id="weather_lighting_damage"><label for="weather_lighting_damage">Weather Lightning Damage</label></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">NPCs & Encounters</div>
+        <div class="form-grid">
+            <div class="form-check"><input type="checkbox" id="cargo_ships_enabled"><label for="cargo_ships_enabled">Cargo Ships</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_encounters"><label for="enable_encounters">Enable Encounters</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_drones"><label for="enable_drones">Enable Drones</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_wolfs"><label for="enable_wolfs">Enable Wolves</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_spiders"><label for="enable_spiders">Enable Spiders</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_container_drops"><label for="enable_container_drops">Enable Container Drops</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_bounty_contracts"><label for="enable_bounty_contracts">Enable Bounty Contracts</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_research"><label for="enable_research">Enable Research</label></div>
+            <div class="form-group">
+                <label for="min_drop_container_respawn_time">Min Drop Container Respawn (min)</label>
+                <input type="number" id="min_drop_container_respawn_time" min="1">
+            </div>
+            <div class="form-group">
+                <label for="max_drop_container_respawn_time">Max Drop Container Respawn (min)</label>
+                <input type="number" id="max_drop_container_respawn_time" min="1">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Economy</div>
+        <div class="form-grid">
+            <div class="form-check"><input type="checkbox" id="enable_economy"><label for="enable_economy">Enable Economy</label></div>
+            <div class="form-group">
+                <label for="trade_factions_count">Trade Factions Count</label>
+                <input type="number" id="trade_factions_count" min="0">
+            </div>
+            <div class="form-group">
+                <label for="economy_tick_in_seconds">Economy Tick (seconds)</label>
+                <input type="number" id="economy_tick_in_seconds" min="1">
+            </div>
+            <div class="form-group">
+                <label for="deposits_count_coefficient">Deposits Count Coefficient</label>
+                <input type="number" id="deposits_count_coefficient" min="0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="deposit_size_denominator">Deposit Size Denominator</label>
+                <input type="number" id="deposit_size_denominator" min="1" step="1">
+            </div>
+            <div class="form-group">
+                <label for="stations_distance_inner_radius">Stations Distance Inner Radius</label>
+                <input type="number" id="stations_distance_inner_radius" min="0">
+            </div>
+            <div class="form-group">
+                <label for="stations_distance_outer_radius_start">Stations Distance Outer Start</label>
+                <input type="number" id="stations_distance_outer_radius_start" min="0">
+            </div>
+            <div class="form-group">
+                <label for="stations_distance_outer_radius_end">Stations Distance Outer End</label>
+                <input type="number" id="stations_distance_outer_radius_end" min="0">
+            </div>
+            <div class="form-group">
+                <label for="npc_grid_claim_time_limit">NPC Grid Claim Time Limit (min)</label>
+                <input type="number" id="npc_grid_claim_time_limit" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Trash Removal & Cleanup</div>
+        <div class="form-grid">
+            <div class="form-check"><input type="checkbox" id="trash_removal_enabled"><label for="trash_removal_enabled">Enable Trash Removal</label></div>
+            <div class="form-group">
+                <label for="block_count_threshold">Block Count Threshold</label>
+                <input type="number" id="block_count_threshold" min="0">
+            </div>
+            <div class="form-group">
+                <label for="player_distance_threshold">Player Distance Threshold (m)</label>
+                <input type="number" id="player_distance_threshold" min="0">
+            </div>
+            <div class="form-group">
+                <label for="stop_grids_period_min">Stop Grids Period (min)</label>
+                <input type="number" id="stop_grids_period_min" min="0">
+            </div>
+            <div class="form-group">
+                <label for="optimal_grid_count">Optimal Grid Count (0 = off)</label>
+                <input type="number" id="optimal_grid_count" min="0">
+            </div>
+            <div class="form-group">
+                <label for="player_inactivity_threshold">Player Inactivity Threshold (min)</label>
+                <input type="number" id="player_inactivity_threshold" min="0" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="player_character_removal_threshold">Player Character Removal (min)</label>
+                <input type="number" id="player_character_removal_threshold" min="0">
+            </div>
+            <div class="form-group">
+                <label for="afk_timeout_min">AFK Timeout (min, 0 = off)</label>
+                <input type="number" id="afk_timeout_min" min="0">
+            </div>
+            <div class="form-group">
+                <label for="remove_old_identities_h">Remove Old Identities (hours, 0 = off)</label>
+                <input type="number" id="remove_old_identities_h" min="0">
+            </div>
+            <div class="form-check"><input type="checkbox" id="voxel_trash_removal_enabled"><label for="voxel_trash_removal_enabled">Enable Voxel Trash Removal</label></div>
+            <div class="form-group">
+                <label for="voxel_player_distance_threshold">Voxel Player Distance (m)</label>
+                <input type="number" id="voxel_player_distance_threshold" min="0">
+            </div>
+            <div class="form-group">
+                <label for="voxel_grid_distance_threshold">Voxel Grid Distance (m)</label>
+                <input type="number" id="voxel_grid_distance_threshold" min="0">
+            </div>
+            <div class="form-group">
+                <label for="voxel_age_threshold">Voxel Age Threshold (hours)</label>
+                <input type="number" id="voxel_age_threshold" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Performance</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="physics_iterations">Physics Iterations</label>
+                <input type="number" id="physics_iterations" min="1" max="32">
+            </div>
+            <div class="form-check"><input type="checkbox" id="adaptive_simulation_quality"><label for="adaptive_simulation_quality">Adaptive Simulation Quality</label></div>
+            <div class="form-check"><input type="checkbox" id="experimental_mode"><label for="experimental_mode">Experimental Mode</label></div>
+            <div class="form-check"><input type="checkbox" id="simplified_simulation"><label for="simplified_simulation">Simplified Simulation</label></div>
+            <div class="form-check"><input type="checkbox" id="enable_selective_physics_updates"><label for="enable_selective_physics_updates">Selective Physics Updates</label></div>
+            <div class="form-group">
+                <label for="optimal_spawn_distance">Optimal Spawn Distance (m)</label>
+                <input type="number" id="optimal_spawn_distance" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary">Save World Settings</button>
+        <button type="button" class="btn btn-secondary" onclick="loadWorldSettings()">Reset</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let worldConfig = null;
+
+const FLOAT_FIELDS = ['inventory_size_multiplier','blocks_inventory_size_multiplier','assembler_speed_multiplier','assembler_efficiency_multiplier','refinery_speed_multiplier','welder_speed_multiplier','grinder_speed_multiplier','hack_speed_multiplier','harvest_ratio_multiplier','spawn_ship_time_multiplier','flora_density_multiplier','procedural_density','sun_rotation_interval_minutes','player_distance_threshold','player_inactivity_threshold','voxel_player_distance_threshold','voxel_grid_distance_threshold','optimal_spawn_distance','deposits_count_coefficient','deposit_size_denominator','stations_distance_inner_radius','stations_distance_outer_radius_start','stations_distance_outer_radius_end'];
+const INT_FIELDS = ['max_players','world_size_km','view_distance','sync_distance','total_pcu','max_grid_size','max_blocks_per_player','pirate_pcu','global_encounter_pcu','max_factions_count','max_floating_objects','total_bot_limit','max_backup_saves','max_drones','max_planets','procedural_seed','voxel_generator_version','min_drop_container_respawn_time','max_drop_container_respawn_time','trade_factions_count','economy_tick_in_seconds','npc_grid_claim_time_limit','block_count_threshold','stop_grids_period_min','optimal_grid_count','player_character_removal_threshold','afk_timeout_min','remove_old_identities_h','voxel_age_threshold','physics_iterations'];
+const SELECT_FIELDS = ['game_mode','online_mode','environment_hostility'];
+const BOOL_FIELDS = ['auto_healing','enable_jetpack','spawn_with_tools','enable_copy_paste','weapons_enabled','thruster_damage','destructible_blocks','enable_ingame_scripts','enable_spectator','show_player_names_on_hud','enable_3rd_person_view','enable_saving','infinite_ammo','enable_voxel_destruction','enable_voxel_hand','enable_convert_to_station','station_voxel_support','enable_remote_block_removal','enable_tool_shake','realistic_sound','permanent_death','respawn_ship_delete','enable_respawn_ships','reset_ownership','enable_autorespawn','enable_scripter_role','family_sharing','offensive_words_filtering','enable_supergridding','enable_subgrid_damage','enable_turrets_friendly_fire','predefined_asteroids','enable_oxygen','enable_oxygen_pressurization','enable_sun_rotation','weather_system','weather_lighting_damage','cargo_ships_enabled','enable_encounters','enable_drones','enable_wolfs','enable_spiders','enable_container_drops','enable_bounty_contracts','enable_research','enable_economy','trash_removal_enabled','voxel_trash_removal_enabled','adaptive_simulation_quality','experimental_mode','simplified_simulation','enable_selective_physics_updates','enable_pcu_trading','use_console_pcu'];
+
+async function loadWorldSettings() {
+    try {
+        worldConfig = await API.get('/api/server/config');
+        const ss = worldConfig.session_settings;
+        FLOAT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.value = ss[f]; });
+        INT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.value = ss[f]; });
+        SELECT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.value = ss[f]; });
+        BOOL_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.checked = ss[f]; });
+    } catch (e) {
+        showToast('Failed to load world settings', 'error');
+    }
+}
+
+document.getElementById('world-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!worldConfig) return;
+    const ss = worldConfig.session_settings;
+    FLOAT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) ss[f] = parseFloat(el.value); });
+    INT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) ss[f] = parseInt(el.value); });
+    SELECT_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) ss[f] = parseInt(el.value); });
+    BOOL_FIELDS.forEach(f => { const el = document.getElementById(f); if (el) ss[f] = el.checked; });
+    try {
+        await API.put('/api/server/config', worldConfig);
+        showToast('World settings saved', 'success');
+    } catch (e) {
+        showToast('Failed to save world settings', 'error');
+    }
+});
+
+loadWorldSettings();
+</script>
+{% endblock %}

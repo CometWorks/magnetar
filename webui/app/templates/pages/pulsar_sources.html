@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Pulsar - Plugin Sources{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Plugin Sources</h2>
+    <p>Manage where Pulsar discovers plugins, hubs, and mods.</p>
+</div>
+
+<form id="sources-form">
+    <div class="card">
+        <div class="card-title">General</div>
+        <div class="form-grid">
+            <div class="form-check">
+                <input type="checkbox" id="show_warning">
+                <label for="show_warning">Show Warning for Untrusted Sources</label>
+            </div>
+            <div class="form-group">
+                <label for="max_source_age">Max Source Cache Age (hours)</label>
+                <input type="number" id="max_source_age" min="1" max="168">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Remote Hubs</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addRemoteHub()">Add Remote Hub</button>
+        </div>
+        <div id="remote-hubs"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Local Hubs</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addLocalHub()">Add Local Hub</button>
+        </div>
+        <div id="local-hubs"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Remote Plugins</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addRemotePlugin()">Add Remote Plugin</button>
+        </div>
+        <div id="remote-plugins"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Local Plugins</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addLocalPlugin()">Add Local Plugin</button>
+        </div>
+        <div id="local-plugins"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Steam Workshop Mods</div>
+        <div class="btn-group" style="margin-top:0;margin-bottom:12px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addMod()">Add Mod</button>
+        </div>
+        <div id="mod-sources"></div>
+    </div>
+
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary">Save Sources</button>
+        <button type="button" class="btn btn-secondary" onclick="loadSources()">Reset</button>
+    </div>
+</form>
+
+<div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+        <div class="modal-title" id="modal-title">Add Source</div>
+        <div id="modal-fields"></div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="modal-ok">Add</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let sourcesData = null;
+
+async function loadSources() {
+    try {
+        sourcesData = await API.get('/api/pulsar/sources');
+        document.getElementById('show_warning').checked = sourcesData.show_warning;
+        document.getElementById('max_source_age').value = sourcesData.max_source_age;
+        renderSources();
+    } catch (e) {
+        showToast('Failed to load sources', 'error');
+    }
+}
+
+function renderSources() {
+    renderRemoteHubs();
+    renderLocalHubs();
+    renderRemotePlugins();
+    renderLocalPlugins();
+    renderMods();
+}
+
+function renderRemoteHubs() {
+    const el = document.getElementById('remote-hubs');
+    el.innerHTML = sourcesData.remote_hub_sources.map((s, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${s.name || s.repo}</span>
+                <span class="list-item-detail">Repo: ${s.repo} | Branch: ${s.branch} | ${s.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-danger">Disabled</span>'} ${s.trusted ? '| <span class="badge badge-success">Trusted</span>' : ''}</span>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleRemoteHub(${i})">${s.enabled ? 'Disable' : 'Enable'}</button>
+                <button class="btn btn-sm btn-danger" onclick="removeRemoteHub(${i})">Remove</button>
+            </div>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No remote hubs configured</p>';
+}
+
+function renderLocalHubs() {
+    const el = document.getElementById('local-hubs');
+    el.innerHTML = sourcesData.local_hub_sources.map((s, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${s.name || s.folder}</span>
+                <span class="list-item-detail">Folder: ${s.folder} | ${s.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-danger">Disabled</span>'}</span>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleLocalHub(${i})">${s.enabled ? 'Disable' : 'Enable'}</button>
+                <button class="btn btn-sm btn-danger" onclick="removeLocalHub(${i})">Remove</button>
+            </div>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No local hubs configured</p>';
+}
+
+function renderRemotePlugins() {
+    const el = document.getElementById('remote-plugins');
+    el.innerHTML = sourcesData.remote_plugin_sources.map((s, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${s.name || s.repo}</span>
+                <span class="list-item-detail">Repo: ${s.repo} | Branch: ${s.branch} | ${s.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-danger">Disabled</span>'}</span>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleRemotePlugin(${i})">${s.enabled ? 'Disable' : 'Enable'}</button>
+                <button class="btn btn-sm btn-danger" onclick="removeRemotePlugin(${i})">Remove</button>
+            </div>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No remote plugins configured</p>';
+}
+
+function renderLocalPlugins() {
+    const el = document.getElementById('local-plugins');
+    el.innerHTML = sourcesData.local_plugin_sources.map((s, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${s.name || s.folder}</span>
+                <span class="list-item-detail">Folder: ${s.folder} | ${s.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-danger">Disabled</span>'}</span>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleLocalPlugin(${i})">${s.enabled ? 'Disable' : 'Enable'}</button>
+                <button class="btn btn-sm btn-danger" onclick="removeLocalPlugin(${i})">Remove</button>
+            </div>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No local plugins configured</p>';
+}
+
+function renderMods() {
+    const el = document.getElementById('mod-sources');
+    el.innerHTML = sourcesData.mod_sources.map((s, i) => `
+        <div class="list-item">
+            <div class="list-item-info">
+                <span class="list-item-name">${s.name || 'Mod ' + s.id}</span>
+                <span class="list-item-detail">Workshop ID: ${s.id} | ${s.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-danger">Disabled</span>'}</span>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleMod(${i})">${s.enabled ? 'Disable' : 'Enable'}</button>
+                <button class="btn btn-sm btn-danger" onclick="removeMod(${i})">Remove</button>
+            </div>
+        </div>`).join('') || '<p style="color:var(--text-secondary)">No mods configured</p>';
+}
+
+function toggleRemoteHub(i) { sourcesData.remote_hub_sources[i].enabled = !sourcesData.remote_hub_sources[i].enabled; renderRemoteHubs(); }
+function toggleLocalHub(i) { sourcesData.local_hub_sources[i].enabled = !sourcesData.local_hub_sources[i].enabled; renderLocalHubs(); }
+function toggleRemotePlugin(i) { sourcesData.remote_plugin_sources[i].enabled = !sourcesData.remote_plugin_sources[i].enabled; renderRemotePlugins(); }
+function toggleLocalPlugin(i) { sourcesData.local_plugin_sources[i].enabled = !sourcesData.local_plugin_sources[i].enabled; renderLocalPlugins(); }
+function toggleMod(i) { sourcesData.mod_sources[i].enabled = !sourcesData.mod_sources[i].enabled; renderMods(); }
+
+function removeRemoteHub(i) { sourcesData.remote_hub_sources.splice(i, 1); renderRemoteHubs(); }
+function removeLocalHub(i) { sourcesData.local_hub_sources.splice(i, 1); renderLocalHubs(); }
+function removeRemotePlugin(i) { sourcesData.remote_plugin_sources.splice(i, 1); renderRemotePlugins(); }
+function removeLocalPlugin(i) { sourcesData.local_plugin_sources.splice(i, 1); renderLocalPlugins(); }
+function removeMod(i) { sourcesData.mod_sources.splice(i, 1); renderMods(); }
+
+function openModal(title, fields, callback) {
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal-title').textContent = title;
+    const container = document.getElementById('modal-fields');
+    container.innerHTML = fields.map(f => `
+        <div class="form-group">
+            <label>${f.label}</label>
+            <input type="${f.type || 'text'}" id="modal-${f.id}" value="${f.default || ''}">
+        </div>`).join('');
+    document.getElementById('modal-ok').onclick = () => {
+        const values = {};
+        fields.forEach(f => values[f.id] = document.getElementById(`modal-${f.id}`).value.trim());
+        callback(values);
+        closeModal();
+    };
+}
+
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+function addRemoteHub() {
+    openModal('Add Remote Hub', [
+        {id: 'name', label: 'Name'},
+        {id: 'repo', label: 'GitHub Repo (user/repo)'},
+        {id: 'branch', label: 'Branch', default: 'main'},
+    ], v => { sourcesData.remote_hub_sources.push({...v, enabled: true, trusted: false, hash: '', last_check: null}); renderRemoteHubs(); });
+}
+
+function addLocalHub() {
+    openModal('Add Local Hub', [
+        {id: 'name', label: 'Name'},
+        {id: 'folder', label: 'Folder Path'},
+    ], v => { sourcesData.local_hub_sources.push({...v, enabled: true, hash: ''}); renderLocalHubs(); });
+}
+
+function addRemotePlugin() {
+    openModal('Add Remote Plugin', [
+        {id: 'name', label: 'Name'},
+        {id: 'repo', label: 'GitHub Repo (user/repo)'},
+        {id: 'branch', label: 'Branch', default: 'main'},
+        {id: 'file', label: 'Metadata File'},
+    ], v => { sourcesData.remote_plugin_sources.push({...v, enabled: true, trusted: false, last_check: null}); renderRemotePlugins(); });
+}
+
+function addLocalPlugin() {
+    openModal('Add Local Plugin', [
+        {id: 'name', label: 'Name'},
+        {id: 'folder', label: 'Folder Path'},
+    ], v => { sourcesData.local_plugin_sources.push({...v, enabled: true}); renderLocalPlugins(); });
+}
+
+function addMod() {
+    openModal('Add Workshop Mod', [
+        {id: 'name', label: 'Name'},
+        {id: 'id', label: 'Workshop ID', type: 'number'},
+    ], v => { sourcesData.mod_sources.push({name: v.name, id: parseInt(v.id) || 0, enabled: true}); renderMods(); });
+}
+
+document.getElementById('sources-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    sourcesData.show_warning = document.getElementById('show_warning').checked;
+    sourcesData.max_source_age = parseInt(document.getElementById('max_source_age').value);
+    try {
+        await API.put('/api/pulsar/sources', sourcesData);
+        showToast('Sources saved', 'success');
+    } catch (e) {
+        showToast('Failed to save sources', 'error');
+    }
+});
+
+loadSources();
+</script>
+{% endblock %}
