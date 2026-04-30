@@ -55,12 +55,6 @@ static class Program
 
         Application.EnableVisualStyles();
 
-        if (SharedLauncher.IsOtherPulsarRunning())
-        {
-            Tools.ShowMessageBox("Error: Magnetar is already running!");
-            return;
-        }
-
         if (Flags.ExternalDebug)
             Debugger.Launch();
 

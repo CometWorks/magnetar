@@ -9,8 +9,6 @@ namespace Pulsar.Shared;
 
 public class Launcher(string sePath)
 {
-    public static Mutex Mutex { get; private set; }
-
     public bool CanStart()
     {
         if (IsSpaceEngineersRunning())
@@ -38,16 +36,6 @@ public class Launcher(string sePath)
             .GetProcessesByName(seName)
             .Select(process => process.MainModule.FileName)
             .Any(path => path.Equals(sePath, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public static bool IsOtherPulsarRunning()
-    {
-        Assembly entryAssembly = Assembly.GetEntryAssembly();
-        string callerName = entryAssembly.GetName().Name;
-        string productName = entryAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "Pulsar";
-        string mutexName = callerName == "Modern" ? "Modern" : "Legacy";
-        Mutex = new Mutex(true, $"{productName}.{mutexName}", out bool isOwner);
-        return !isOwner;
     }
 
     public bool VerifyConfig()
