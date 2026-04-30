@@ -13,28 +13,28 @@ for %%F in ("%~1") do set "SOURCE=%%~dpF"
 for %%F in ("%~1") do set "LAUNCHER=%%~nxF"
 for %%F in ("%~1") do set "NAME=%%~nF"
 
-set PULSAR=%~2
+set MAGNETAR=%~2
 set LICENSE=%~3
 set FRAMEWORK=%~4
 
 REM Remove trailing backslash if applicable
 if "%SOURCE:~-1%"=="\" set SOURCE=%SOURCE:~0,-1%
-if "%PULSAR:~-1%"=="\" set PULSAR=%PULSAR:~0,-1%
+if "%MAGNETAR:~-1%"=="\" set MAGNETAR=%MAGNETAR:~0,-1%
 if "%LICENSE:~-1%"=="\" set LICENSE=%LICENSE:~0,-1%
 
-echo Deploy location is "%PULSAR%"
+echo Deploy location is "%MAGNETAR%"
 
-REM Ensure the Pulsar directory exists
-if not exist "%PULSAR%" (
-    echo Creating "Pulsar\" folder"
-    mkdir "%PULSAR%" >NUL 2>&1
+REM Ensure the Magnetar directory exists
+if not exist "%MAGNETAR%" (
+    echo Creating "Magnetar\" folder"
+    mkdir "%MAGNETAR%" >NUL 2>&1
 )
 
-REM Copy launcher into Pulsar directory
+REM Copy launcher into Magnetar directory
 echo Copying "%LAUNCHER%"
 
 for /l %%i in (1, 1, 10) do (
-    copy /y /b "%SOURCE%\%NAME%.exe" "%PULSAR%\" >NUL 2>&1
+    copy /y /b "%SOURCE%\%NAME%.exe" "%MAGNETAR%\" >NUL 2>&1
 
     if !ERRORLEVEL! NEQ 0 (
         REM "timeout" requires input redirection which is not supported,
@@ -42,11 +42,11 @@ for /l %%i in (1, 1, 10) do (
         ping -n 2 127.0.0.1 >NUL 2>&1
     ) else (
         if "%FRAMEWORK%"==".NETCoreApp" (
-            copy /y /b "%SOURCE%\%NAME%.dll" "%PULSAR%\" >NUL 2>&1
-            copy /y /b "%SOURCE%\%NAME%.runtimeconfig.json" "%PULSAR%\" >NUL 2>&1
-            copy /y /b "%SOURCE%\%NAME%.deps.json" "%PULSAR%\" >NUL 2>&1
+            copy /y /b "%SOURCE%\%NAME%.dll" "%MAGNETAR%\" >NUL 2>&1
+            copy /y /b "%SOURCE%\%NAME%.runtimeconfig.json" "%MAGNETAR%\" >NUL 2>&1
+            copy /y /b "%SOURCE%\%NAME%.deps.json" "%MAGNETAR%\" >NUL 2>&1
         ) else (
-            copy /y /b "%SOURCE%\%NAME%.exe.config" "%PULSAR%\" >NUL 2>&1
+            copy /y /b "%SOURCE%\%NAME%.exe.config" "%MAGNETAR%\" >NUL 2>&1
         )
 
         goto BREAK_LOOP
@@ -60,27 +60,27 @@ exit /b 1
 
 :BREAK_LOOP
 
-REM Copy License to Pulsar directory
+REM Copy License to Magnetar directory
 echo Copying License
-copy /y /b "%LICENSE%" "%PULSAR%\" >NUL 2>&1
+copy /y /b "%LICENSE%" "%MAGNETAR%\" >NUL 2>&1
 
 REM Get the library directory
-set SHARED_DIR=%PULSAR%\Libraries
+set SHARED_DIR=%MAGNETAR%\Libraries
 if not exist "%SHARED_DIR%" (
-    echo Creating "Pulsar\Libraries\"
+    echo Creating "Magnetar\Libraries\"
     mkdir "%SHARED_DIR%" >NUL 2>&1
 )
 set LIBRARY_DIR=%SHARED_DIR%\%NAME%
 if exist "%LIBRARY_DIR%" (
-    echo Clearing "Pulsar\Libraries\%NAME%"
+    echo Clearing "Magnetar\Libraries\%NAME%"
     rmdir /s /q "%LIBRARY_DIR%"
 ) else (
-    echo Creating "Pulsar\Libraries\%NAME%"
+    echo Creating "Magnetar\Libraries\%NAME%"
 )
 mkdir "%LIBRARY_DIR%" >NUL 2>&1
-echo Switching to "Pulsar\Libraries\%NAME%"
+echo Switching to "Magnetar\Libraries\%NAME%"
 
-REM Copy Pulsar dependencies
+REM Copy Magnetar dependencies
 echo Copying "Pulsar.Shared.dll"
 copy /y /b "%SOURCE%\Pulsar.Shared.dll" "%LIBRARY_DIR%\" >NUL 2>&1
 
@@ -118,10 +118,10 @@ copy /y /b "%SOURCE%\NuGet.*.dll" "%LIBRARY_DIR%\" >NUL 2>&1
 REM Get the compiler directory
 set COMPILER_DIR=%LIBRARY_DIR%\Compiler
 if not exist "%COMPILER_DIR%" (
-    echo Creating "Pulsar\Libraries\%NAME%\Compiler"
+    echo Creating "Magnetar\Libraries\%NAME%\Compiler"
     mkdir "%COMPILER_DIR%" >NUL 2>&1
 )
-echo Switching to "Pulsar\Libraries\%NAME%\Compiler"
+echo Switching to "Magnetar\Libraries\%NAME%\Compiler"
 
 REM Copy compiler dependencies
 echo Copying "Microsoft.CodeAnalysis.*.dll"

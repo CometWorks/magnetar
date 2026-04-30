@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,24 +16,24 @@ internal class Folder
         @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App {0}";
     private const string registryName = "InstallLocation";
 
-    private const string seLauncher = "SpaceEngineers.exe";
-    private static readonly HashSet<string> seFiles =
+    private const string dsLauncher = "SpaceEngineersDedicated.exe";
+    private static readonly HashSet<string> dsFiles =
     [
-        seLauncher,
+        dsLauncher,
         "SpaceEngineers.Game.dll",
         "VRage.dll",
         "Sandbox.Game.dll",
     ];
 
-    public static string GetBin64() =>
+    public static string GetDS64() =>
         FromOverride() ?? FromSteamArgs() ?? FromSteamFiles() ?? FromRegistry();
 
-    private static bool IsBin64(string path)
+    private static bool IsDS64(string path)
     {
         if (!Directory.Exists(path))
             return false;
 
-        foreach (string file in seFiles)
+        foreach (string file in dsFiles)
             if (!File.Exists(Path.Combine(path, file)))
                 return false;
 
@@ -42,11 +42,6 @@ internal class Folder
 
     private static string TryConvertUnix(string path)
     {
-        // We assume paths in this context refer to the Unix system root
-        // rather then the current root of the Proton prefix.
-        // Windows can handle forward slashes in paths so all we need to
-        // do is point it to where the system root is mounted under.
-
         if (!Tools.IsNative() && path.StartsWith("/"))
             return "Z:" + path;
         return path;
@@ -59,7 +54,7 @@ internal class Folder
             RegistryView.Registry64
         );
 
-        using var key = baseKey.OpenSubKey(string.Format(registryKey, Steam.AppIdSe1));
+        using var key = baseKey.OpenSubKey(string.Format(registryKey, Steam.AppIdSe1DS));
         if (key is null)
             return null;
 
@@ -67,8 +62,8 @@ internal class Folder
         if (string.IsNullOrWhiteSpace(installLocation))
             return null;
 
-        string path = Path.Combine(installLocation, "Bin64");
-        if (!IsBin64(path))
+        string path = Path.Combine(installLocation, "DedicatedServer64");
+        if (!IsDS64(path))
             return null;
 
         return path;
@@ -79,7 +74,7 @@ internal class Folder
         string[] args = Environment.GetCommandLineArgs();
         int index = Array.FindIndex(
             args,
-            arg => arg.Equals("-bin64", StringComparison.OrdinalIgnoreCase)
+            arg => arg.Equals("-ds64", StringComparison.OrdinalIgnoreCase)
         );
 
         if (index < 0 || index >= args.Length - 1)
@@ -95,7 +90,7 @@ internal class Folder
         else
             path = TryConvertUnix(path);
 
-        if (!IsBin64(path))
+        if (!IsDS64(path))
             return null;
 
         return Path.GetFullPath(path);
@@ -103,17 +98,14 @@ internal class Folder
 
     private static string FromSteamArgs()
     {
-        // The original command (which inlcudes a path to seLauncher) will
-        // be present if substituted in with Steam's %command% argument.
-
-        IEnumerable<string> sePaths = Environment
+        IEnumerable<string> dsPaths = Environment
             .GetCommandLineArgs()
-            .Where(arg => arg.Contains("Bin64") && arg.Contains(seLauncher))
+            .Where(arg => arg.Contains("DedicatedServer64") && arg.Contains(dsLauncher))
             .Select(TryConvertUnix)
             .Select(Path.GetDirectoryName);
 
-        foreach (string path in sePaths)
-            if (IsBin64(path))
+        foreach (string path in dsPaths)
+            if (IsDS64(path))
                 return path;
 
         return null;
@@ -121,7 +113,6 @@ internal class Folder
 
     private static string FromSteamFiles()
     {
-        // VDF files within Proton prefixes are unreliable.
         if (!Tools.IsNative())
             return null;
 
@@ -138,20 +129,20 @@ internal class Folder
             var data = (VObject)library.Value;
             var apps = (VObject)data["apps"];
 
-            if (!apps.ContainsKey(Steam.AppIdSe1.ToString()))
+            if (!apps.ContainsKey(Steam.AppIdSe1DS.ToString()))
                 continue;
 
             string targetPath = data.Value<string>("path");
-            string bin64 = Path.Combine(
+            string ds64 = Path.Combine(
                 targetPath,
                 "steamapps",
                 "common",
-                "SpaceEngineers",
-                "Bin64"
+                "SpaceEngineersDedicatedServer",
+                "DedicatedServer64"
             );
 
-            if (IsBin64(bin64))
-                return bin64;
+            if (IsDS64(ds64))
+                return ds64;
         }
 
         return null;

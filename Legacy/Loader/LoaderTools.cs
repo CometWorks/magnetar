@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,16 +8,6 @@ using System.Text;
 using System.Windows.Forms;
 using HarmonyLib;
 using Pulsar.Shared;
-using Sandbox;
-using Sandbox.Game.Multiplayer;
-using Sandbox.Game.Screens.Helpers;
-using Sandbox.Game.World;
-using Sandbox.Graphics.GUI;
-using VRage;
-using VRage.Audio;
-using VRage.Input;
-using VRage.Plugins;
-using VRage.Utils;
 
 namespace Pulsar.Legacy.Loader;
 
@@ -25,113 +15,6 @@ public static class LoaderTools
 {
     private const string ContinueArg = "-continue";
     private const string DebugArg = "-debug";
-
-    public static void AskToRestart()
-    {
-        bool isInGame = MySession.Static is not null;
-
-        void RestartGame()
-        {
-            Unload();
-            Restart(isInGame);
-        }
-
-        if (isInGame)
-            AskSave(RestartGame);
-        else
-            RestartGame();
-    }
-
-    /// <summary>
-    /// From WesternGamer/InGameWorldLoading
-    /// </summary>
-    /// <param name="afterMenu">Action after code is executed.</param>
-    private static void AskSave(Action afterMenu)
-    {
-        // Sync.IsServer is backwards
-        if (!Sync.IsServer)
-        {
-            afterMenu();
-            return;
-        }
-
-        string message = "";
-        bool isCampaign = false;
-        MyMessageBoxButtonsType buttonsType = MyMessageBoxButtonsType.YES_NO_CANCEL;
-
-        // Sync.IsServer is backwards
-        if (Sync.IsServer && !MySession.Static.Settings.EnableSaving)
-        {
-            message +=
-                "Are you sure that you want to restart the game? All progress from the last checkpoint will be lost.";
-            isCampaign = true;
-            buttonsType = MyMessageBoxButtonsType.YES_NO;
-        }
-        else
-        {
-            message += "Save changes before restarting game?";
-        }
-
-        MyGuiScreenMessageBox saveMenu = MyGuiSandbox.CreateMessageBox(
-            buttonType: buttonsType,
-            messageText: new StringBuilder(message),
-            messageCaption: MyTexts.Get(MyCommonTexts.MessageBoxCaptionPleaseConfirm),
-            callback: ShowSaveMenuCallback,
-            cancelButtonText: MyStringId.GetOrCompute("Don't Restart")
-        );
-        saveMenu.InstantClose = false;
-        MyGuiSandbox.AddScreen(saveMenu);
-
-        void ShowSaveMenuCallback(MyGuiScreenMessageBox.ResultEnum callbackReturn)
-        {
-            if (isCampaign)
-            {
-                if (callbackReturn == MyGuiScreenMessageBox.ResultEnum.YES)
-                    afterMenu();
-
-                return;
-            }
-
-            switch (callbackReturn)
-            {
-                case MyGuiScreenMessageBox.ResultEnum.YES:
-                    MyAsyncSaving.Start(
-                        delegate
-                        {
-                            MySandboxGame.Static.OnScreenshotTaken +=
-                                UnloadAndExitAfterScreenshotWasTaken;
-                        }
-                    );
-                    break;
-
-                case MyGuiScreenMessageBox.ResultEnum.NO:
-                    MyAudio.Static.Mute = true;
-                    MyAudio.Static.StopMusic();
-                    afterMenu();
-                    break;
-                case MyGuiScreenMessageBox.ResultEnum.CANCEL:
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        void UnloadAndExitAfterScreenshotWasTaken(object sender, EventArgs e)
-        {
-            MySandboxGame.Static.OnScreenshotTaken -= UnloadAndExitAfterScreenshotWasTaken;
-            afterMenu();
-        }
-    }
-
-    private static void Unload()
-    {
-        LogFile.Dispose();
-        MySessionLoader.Unload();
-        MySandboxGame.Config.ControllerDefaultOnStart = MyInput.Static.IsJoystickLastUsed;
-        MySandboxGame.Config.Save();
-        MyScreenManager.CloseAllScreensNowExcept(null);
-        MyPlugins.Unload();
-    }
 
     public static void Restart(bool autoRejoin = false, bool? debugger = null)
     {

@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>2.2.0</Version>
-    <Product>Pulsar</Product>
+    <Product>Magnetar</Product>
     <Copyright>© 2025 SpaceGT</Copyright>
-    <AssemblyTitle>Pulsar</AssemblyTitle>
-    <Description>Plugin and Mod loader for Space Engineers 1</Description>
+    <AssemblyTitle>Magnetar</AssemblyTitle>
+    <Description>Plugin and Mod loader for Space Engineers 1 Dedicated Server</Description>
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace>Pulsar.Legacy</RootNamespace>
-    <PackageId>Pulsar</PackageId>
+    <PackageId>Magnetar</PackageId>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <PropertyGroup>
@@ -21,11 +21,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <AssemblyName>Legacy</AssemblyName>
-    <StartProgram>$(Pulsar)\Legacy.exe</StartProgram>
+    <StartProgram>$(Magnetar)\Legacy.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' != 'net48'">
     <AssemblyName>Interim</AssemblyName>
-    <StartProgram>$(Pulsar)\Interim.exe</StartProgram>
+    <StartProgram>$(Magnetar)\Interim.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup>
     <Platforms>x64</Platforms>
@@ -60,29 +60,30 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartAction>Program</StartAction>
-    <StartWorkingDirectory>$(Pulsar)</StartWorkingDirectory>
+    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Pulsar)&quot; &quot;$(SolutionDir)LICENSE&quot; &quot;$(TargetFrameworkIdentifier)&quot;" />
+    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Magnetar)&quot; &quot;$(SolutionDir)LICENSE&quot; &quot;$(TargetFrameworkIdentifier)&quot;" />
   </Target>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="call &quot;$(SolutionDir)verify.bat&quot; &quot;$(Bin64)&quot;" />
+    <Exec Command="call &quot;$(SolutionDir)verify.bat&quot; &quot;$(DS64)&quot;" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Sandbox.Game" HintPath="$(Bin64)\Sandbox.Game.dll" Private="False" />
-    <Reference Include="Sandbox.Graphics" HintPath="$(Bin64)\Sandbox.Graphics.dll" Private="False" />
-    <Reference Include="SpaceEngineers" HintPath="$(Bin64)\SpaceEngineers.exe" Private="False" />
-    <Reference Include="SpaceEngineers.Game" HintPath="$(Bin64)\SpaceEngineers.Game.dll" Private="False" />
-    <Reference Include="VRage" HintPath="$(Bin64)\VRage.dll" Private="False" />
-    <Reference Include="VRage.Game" HintPath="$(Bin64)\VRage.Game.dll" Private="False" />
-    <Reference Include="VRage.Input" HintPath="$(Bin64)\VRage.Input.dll" Private="False" />
-    <Reference Include="VRage.Library" HintPath="$(Bin64)\VRage.Library.dll" Private="False" />
-    <Reference Include="VRage.Math" HintPath="$(Bin64)\VRage.Math.dll" Private="False" />
-    <Reference Include="VRage.Platform.Windows" HintPath="$(Bin64)\VRage.Platform.Windows.dll" Private="False" />
-    <Reference Include="VRage.Scripting" HintPath="$(Bin64)\VRage.Scripting.dll" Private="False" />
+    <Reference Include="Sandbox.Game" HintPath="$(DS64)\Sandbox.Game.dll" Private="False" />
+    <Reference Include="Sandbox.Graphics" HintPath="$(DS64)\Sandbox.Graphics.dll" Private="False" />
+    <Reference Include="SpaceEngineersDedicated" HintPath="$(DS64)\SpaceEngineersDedicated.exe" Private="False" />
+    <Reference Include="SpaceEngineers.Game" HintPath="$(DS64)\SpaceEngineers.Game.dll" Private="False" />
+    <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="False" />
+    <Reference Include="VRage.Dedicated" HintPath="$(DS64)\VRage.Dedicated.dll" Private="False" />
+    <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="False" />
+    <Reference Include="VRage.Input" HintPath="$(DS64)\VRage.Input.dll" Private="False" />
+    <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="False" />
+    <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
+    <Reference Include="VRage.Platform.Windows" HintPath="$(DS64)\VRage.Platform.Windows.dll" Private="False" />
+    <Reference Include="VRage.Scripting" HintPath="$(DS64)\VRage.Scripting.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />

@@ -1,4 +1,4 @@
-﻿#if NETFRAMEWORK
+#if NETFRAMEWORK
 using System;
 using System.IO;
 using System.Reflection;
@@ -61,16 +61,10 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
 
     private AppDomain CreateAppDomain(string[] assemblies, string[] probeDirs, string logDir)
     {
-        // Calling SetupAppDomain requires resolving Pulsar Legacy
         string applicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        // Mono loads PrivateBinPaths very aggressively so (incompatible) compiler-only
-        // references must only be made available to the compiler AppDomain only.
         string privateBinPath = @"Libraries\Legacy\Compiler";
 
-        // Note Mono does not respect AppDomainSetup.ConfigurationFile but NET Framework
-        // requires it for binding redirects. Mono (incorrectly) loads compiler-only references
-        // if typeof(RoslynCompiler) is called so the path must be hardcoded.
         string configurationFile = @"Libraries\Legacy\Pulsar.Compiler.dll.config";
 
         AppDomainSetup current = AppDomain.CurrentDomain.SetupInformation;

@@ -1,17 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using HarmonyLib;
-using Pulsar.Legacy.Screens;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
 using Pulsar.Shared.Splash;
 using Sandbox.Game.World;
-using VRage;
 using VRage.Plugins;
 using SharedLoader = Pulsar.Shared.Loader;
 
@@ -29,7 +27,6 @@ public class PluginLoader : IHandleInputPlugin
     {
         Instance = this;
         AppDomain.CurrentDomain.FirstChanceException += OnException;
-        PlayerConsent.OnConsentChanged += OnConsentChanged;
     }
 
     public bool TryGetPluginInstance(string id, out PluginInstance instance)
@@ -116,7 +113,7 @@ public class PluginLoader : IHandleInputPlugin
 
         IEnumerable<ulong> steamIDs = list.GetModPlugins(current, []).Select(x => x.WorkshopId);
         SteamMods.Update(steamIDs);
-        ShowGame();
+        SplashManager.Instance?.Delete();
     }
 
     public void Update()
@@ -151,14 +148,8 @@ public class PluginLoader : IHandleInputPlugin
             p.Dispose();
         plugins.Clear();
 
-        PlayerConsent.OnConsentChanged -= OnConsentChanged;
         LogFile.Dispose();
         Instance = null;
-    }
-
-    private void OnConsentChanged()
-    {
-        ConfigManager.Instance.UpdatePlayerStats();
     }
 
     private void OnException(object sender, FirstChanceExceptionEventArgs e)
@@ -192,12 +183,5 @@ public class PluginLoader : IHandleInputPlugin
             if (!p.Instantiate())
                 plugins.RemoveAtFast(i);
         }
-    }
-
-    private static void ShowGame()
-    {
-        SplashManager.Instance?.Delete();
-        Patch.Patch_ShowAndFocus.Enabled = true;
-        MyVRage.Platform.Windows.Window.ShowAndFocus();
     }
 }

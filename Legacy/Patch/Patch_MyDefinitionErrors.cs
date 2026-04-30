@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Pulsar.Shared;
 using VRage.FileSystem;
 using VRage.Game;

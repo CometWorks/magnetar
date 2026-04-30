@@ -42,14 +42,11 @@ public class Launcher(string sePath)
 
     public static bool IsOtherPulsarRunning()
     {
-        string callerName = Assembly.GetEntryAssembly().GetName().Name;
-        string mutexName = callerName switch
-        {
-            "Modern" => "Modern",
-            "Magnetar" => "Magnetar",
-            _ => "Legacy",
-        };
-        Mutex = new Mutex(true, $"Pulsar.{mutexName}", out bool isOwner);
+        Assembly entryAssembly = Assembly.GetEntryAssembly();
+        string callerName = entryAssembly.GetName().Name;
+        string productName = entryAssembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "Pulsar";
+        string mutexName = callerName == "Modern" ? "Modern" : "Legacy";
+        Mutex = new Mutex(true, $"{productName}.{mutexName}", out bool isOwner);
         return !isOwner;
     }
 
