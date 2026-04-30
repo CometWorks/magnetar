@@ -1,7 +1,12 @@
 """Pydantic models matching Space Engineers Dedicated Server configuration."""
 
 from enum import IntEnum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+def _to_camel(name: str) -> str:
+    parts = name.split("_")
+    return parts[0] + "".join(p.capitalize() for p in parts[1:])
 
 
 class GameModeEnum(IntEnum):
@@ -201,6 +206,8 @@ class SavedWorld(BaseModel):
 
 
 class ServerState(BaseModel):
+    model_config = ConfigDict(alias_generator=_to_camel, populate_by_name=True)
+
     is_running: bool = False
     server_name: str = ""
     world_name: str = ""
@@ -218,6 +225,8 @@ class ServerState(BaseModel):
 
 
 class PlayerInfo(BaseModel):
+    model_config = ConfigDict(alias_generator=_to_camel, populate_by_name=True)
+
     steam_id: int = 0
     display_name: str = ""
     faction: str = ""

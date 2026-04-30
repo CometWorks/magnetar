@@ -25,6 +25,11 @@ Starting Space Engineers from Steam will now open Pulsar as well!<br>
 Pulsar officially endorses the [PluginHub](https://github.com/StarCpt/PluginHub) for high-quality vetted plugins.<br>
 Further sources may be added in-game but make sure you fully understand the risks.<br>
 
+## Documentation
+- [Admin Plugin](Docs/AdminPlugin.md) - REST API for in-game server management
+- [Web UI](Docs/WebUI.md) - Browser-based configuration and monitoring interface
+- [Branch Changes](Docs/BranchChanges.md) - Summary of all changes on the `magnetar` branch
+
 ## Contact
 We have an active [Discord](https://discord.gg/z8ZczP2YZY) for updates and developer information.<br>
 GitHub contributions and bug reports are also welcomed!<br>

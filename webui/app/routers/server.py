@@ -1,6 +1,7 @@
 """API routes for Dedicated Server configuration and live management."""
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from app.models.dedicated_server import (
     ChatMessage,
@@ -10,6 +11,10 @@ from app.models.dedicated_server import (
     ServerState,
 )
 from app.services import admin_client, ds_config
+
+
+class ChatRequest(BaseModel):
+    message: str
 
 router = APIRouter(prefix="/api/server", tags=["server"])
 
@@ -46,8 +51,8 @@ async def get_chat(count: int = 50):
 
 
 @router.post("/chat")
-async def send_chat(message: str):
-    ok = await admin_client.send_chat(message)
+async def send_chat(req: ChatRequest):
+    ok = await admin_client.send_chat(req.message)
     return {"status": "sent" if ok else "failed"}
 
 
