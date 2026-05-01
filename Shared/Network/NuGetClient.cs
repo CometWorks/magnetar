@@ -242,7 +242,7 @@ public class NuGetClient
     {
         if (id.Equals("Lib.Harmony", StringComparison.InvariantCultureIgnoreCase))
         {
-            logger.LogInformation("Package " + id + " not downloaded because it is in Bin64");
+            logger.LogInformation("Package " + id + " not downloaded because it is in DS64");
             return true;
         }
         return false;

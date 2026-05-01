@@ -53,6 +53,9 @@ static class Program
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         Tools.InstallNativeCrashHandler("Magnetar");
 
+#if NETCOREAPP
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+#endif
         Application.EnableVisualStyles();
 
         if (Flags.ExternalDebug)
