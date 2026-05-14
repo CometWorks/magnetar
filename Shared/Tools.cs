@@ -210,7 +210,7 @@ public static class Tools
         MessageBoxDefaultButton defaultButton = MessageBoxDefaultButton.Button1
     )
     {
-        Console.Error.WriteLine($"[Pulsar] {msg}");
+        Console.Error.WriteLine($"[Pulsar] {msg}".Replace("\r\n", "\n").Replace("\n", Environment.NewLine));
         LogFile.Error(msg);
 
         return buttons switch

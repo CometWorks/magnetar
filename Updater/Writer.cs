@@ -79,7 +79,7 @@ internal static class Writer
             + "It WILL BE CLEANED if you update!\n\n"
             + folder;
 
-        Console.Error.WriteLine($"[Pulsar Updater] {message}");
+        Console.Error.WriteLine($"[Pulsar Updater] {message}".Replace("\r\n", "\n").Replace("\n", Environment.NewLine));
         return false;
     }
 }

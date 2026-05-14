@@ -43,8 +43,8 @@ static class Program
     private static void ShowInfo()
     {
         Console.Error.WriteLine(
-            "[Pulsar Updater] This program is used by Pulsar when updating and should not be run directly.\n"
-            + "You are free to delete it - a new copy will be fetched when required."
+            ("[Pulsar Updater] This program is used by Pulsar when updating and should not be run directly.\n"
+            + "You are free to delete it - a new copy will be fetched when required.").Replace("\n", Environment.NewLine)
         );
     }
 
