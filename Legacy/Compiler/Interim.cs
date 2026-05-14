@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP
+#if NETCOREAPP
 using Pulsar.Compiler;
 using System;
 using System.IO;
@@ -56,7 +56,7 @@ file sealed class CompilerLoadContext : AssemblyLoadContext
     private readonly string binPath;
 
     public CompilerLoadContext()
-        : base("Pulsar", isCollectible: true)
+        : base("Magnetar", isCollectible: true)
     {
         string applicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         binPath = Path.Combine(applicationBase, "Libraries", "Interim", "Compiler");
@@ -93,13 +93,11 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
 
     private void SetupLoadContext(string[] assemblies)
     {
-        // Pulsar.Compiler.LogFile.Init(logDir);
         compilerAsm
             .GetType(typeof(LogFile).FullName, true)
             .GetMethod("Init", BindingFlags.Public | BindingFlags.Static)
             .Invoke(null, [logDir]);
 
-        // RoslynReferences.Instance
         object instance = compilerAsm
             .GetType(typeof(RoslynReferences).FullName, true)
             .GetField("Instance", BindingFlags.Public | BindingFlags.Static)
@@ -109,7 +107,6 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
             .GetType()
             .GetMethod("GenerateAssemblyList", BindingFlags.Public | BindingFlags.Instance);
 
-        // RoslynReferences.Instance.Resolver
         object resolver = instance
             .GetType()
             .GetField("Resolver", BindingFlags.Public | BindingFlags.Instance)

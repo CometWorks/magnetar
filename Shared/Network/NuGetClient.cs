@@ -23,10 +23,8 @@ public class NuGetClient
     private static readonly NuGetFramework ProjectFramework =
 #if NETFRAMEWORK
     NuGetFramework.Parse("net48");
-#elif NET8_0
-    NuGetFramework.Parse("net8.0-windows");
 #else
-    NuGetFramework.Parse("net10.0-windows");
+    NuGetFramework.Parse("net10.0");
 #endif
 
     private static readonly ILogger logger = new NuGetLogger();
@@ -242,7 +240,7 @@ public class NuGetClient
     {
         if (id.Equals("Lib.Harmony", StringComparison.InvariantCultureIgnoreCase))
         {
-            logger.LogInformation("Package " + id + " not downloaded because it is in Bin64");
+            logger.LogInformation("Package " + id + " not downloaded because it is in DS64");
             return true;
         }
         return false;

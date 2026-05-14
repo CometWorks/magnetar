@@ -58,6 +58,8 @@ public class LocalFolderPlugin : PluginData
         if (!Directory.Exists(Folder))
             throw new DirectoryNotFoundException("Unable to find directory '" + Folder + "'");
 
+        PluginProgress.ReportCompiling(FriendlyName);
+
         bool debug = settings.DebugBuild;
         ICompiler compiler = Tools.Compiler.Create(debug);
         bool hasFile = false;
@@ -96,6 +98,7 @@ public class LocalFolderPlugin : PluginData
         resolver?.AddAllowedAssemblyName(assemblyName);
         Assembly a = Assembly.Load(data, symbols);
         Version = a.GetName().Version;
+        PluginProgress.ReportCompiled(FriendlyName);
         return a;
     }
 
@@ -262,20 +265,6 @@ public class LocalFolderPlugin : PluginData
 
         if (enabled)
             draft.DevFolder.Add(new() { Id = Id });
-    }
-
-    public void LoadNewDataFile(Action<string> onComplete = null)
-    {
-        Tools.OpenFileDialog(
-            "Open an xml data file",
-            Folder,
-            Tools.XmlDataType,
-            (file) =>
-            {
-                DeserializeFile(file);
-                onComplete?.Invoke(settings.DataFile);
-            }
-        );
     }
 
     public void DeserializeFile(string file)

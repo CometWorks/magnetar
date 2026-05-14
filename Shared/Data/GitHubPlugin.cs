@@ -11,7 +11,6 @@ using ProtoBuf;
 using Pulsar.Compiler;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Network;
-using Pulsar.Shared.Splash;
 
 namespace Pulsar.Shared.Data;
 
@@ -167,22 +166,20 @@ public partial class GitHubPlugin : PluginData
             )
         )
         {
-            var lbl = SplashManager.Instance;
-            lbl?.SetText($"Downloading '{FriendlyName}'");
+            PluginProgress.ReportDownloading(FriendlyName);
 
             manifest.GameVersion = gameVersion;
             manifest.Commit = selectedCommit;
             manifest.Runtime = RuntimeInformation.FrameworkDescription;
             manifest.ClearAssets();
             string name = assemblyName + '_' + Path.GetRandomFileName();
-            Action<float> setBarValue = lbl is not null ? lbl.SetBarValue : null;
-            byte[] data = CompileFromSource(selectedRepo, selectedCommit, name, setBarValue);
+            byte[] data = CompileFromSource(selectedRepo, selectedCommit, name);
             File.WriteAllBytes(manifest.DllFile, data);
             manifest.DeleteUnknownFiles();
             manifest.Save();
 
             Status = PluginStatus.Updated;
-            lbl?.SetText($"Compiled '{FriendlyName}'");
+            PluginProgress.ReportCompiled(FriendlyName);
             resolver.AddSourceFolder(manifest.LibDir);
             resolver.AddAllowedAssemblyFile(manifest.DllFile);
             resolver.AddAllowedAssemblyName(name);
@@ -209,23 +206,16 @@ public partial class GitHubPlugin : PluginData
         );
     }
 
-    private byte[] CompileFromSource(
-        string repo,
-        string commit,
-        string assemblyName,
-        Action<float> callback = null
-    )
+    private byte[] CompileFromSource(string repo, string commit, string assemblyName)
     {
         ICompiler compiler = Tools.Compiler.Create();
         using (Stream s = GitHub.GetRepoArchive(repo, commit))
         using (ZipArchive zip = new(s))
         {
-            callback?.Invoke(0);
             for (int i = 0; i < zip.Entries.Count; i++)
             {
                 ZipArchiveEntry entry = zip.Entries[i];
                 CompileFromSource(compiler, entry);
-                callback?.Invoke(i / (float)zip.Entries.Count);
             }
         }
         if (NuGetReferences?.PackageIds is not null)
@@ -233,7 +223,6 @@ public partial class GitHubPlugin : PluginData
             nuget ??= new NuGetClient();
             InstallPackages(nuget.DownloadPackages(NuGetReferences.PackageIds), compiler);
         }
-        callback?.Invoke(1);
         return compiler.Compile(assemblyName, out _);
     }
 

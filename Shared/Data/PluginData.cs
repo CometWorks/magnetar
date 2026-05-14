@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Windows.Forms;
 using System.Xml.Serialization;
 using FuzzySharp;
 using ProtoBuf;
@@ -210,28 +209,11 @@ public abstract class PluginData : IEquatable<PluginData>
         Status = PluginStatus.Error;
         if (Flags.CheckAllPlugins)
             return;
-        msg ??=
-            $"The plugin '{this}' caused an error. "
-            + "It is recommended that you disable this plugin and restart. "
-            + "The game may be unstable beyond this point. ";
-
-        if (LogFile.GameLog?.Exists() ?? false)
-            msg +=
-                "See info.log or the game log for details.\n\n"
-                + "Would you like to open the Space Engineers and Pulsar logs?";
-        else
-            msg += "See info.log for details.\n\nWould you like to open the Pulsar log?";
-
-        MessageBoxButtons buttons = MessageBoxButtons.YesNo;
-        DialogResult result = Tools.ShowMessageBox(msg, buttons, MessageBoxIcon.Error);
-
-        if (result == DialogResult.No)
-            return;
-
-        if (LogFile.GameLog?.Exists() ?? false)
-            LogFile.GameLog.Open();
-
-        LogFile.Open();
+        
+        msg ??= $"The plugin '{this}' caused an error.";
+        Tools.ShowMessage(msg);
+        
+        Environment.Exit(1);
     }
 
     public long Rank(string query)

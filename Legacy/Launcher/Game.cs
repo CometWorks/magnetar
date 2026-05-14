@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,7 +10,6 @@ using Pulsar.Shared;
 using Sandbox;
 using Sandbox.Engine.Utils;
 using Sandbox.Game;
-using SpaceEngineers;
 using VRage.FileSystem;
 using VRage.Plugins;
 using VRage.Scripting;
@@ -51,7 +50,7 @@ internal static class Game
         );
         var m_plugins = (List<IPlugin>)m_pluginsField.GetValue(null);
         m_plugins.Add(plugin);
-        
+
         FieldInfo m_handleInputPluginsField = typeof(MyPlugins).GetField(
             "m_handleInputPlugins",
             BindingFlags.Static | BindingFlags.NonPublic
@@ -71,15 +70,13 @@ internal static class Game
         Environment.CurrentDirectory = asmFolder;
     }
 
-    public static Version GetGameVersion(string bin64Dir)
+    public static Version GetGameVersion(string ds64Dir)
     {
         const string Assembly = "SpaceEngineers.Game.dll";
         const string Method = "SetupBasicGameInfo";
         const string ReferencedField = "GameVersion";
 
-        // We read the version directly from the DLL to avoid loading Keen assemblies.
-        // Originally an AppDomain was used but Mono could not unload them properly.
-        using var assembly = AssemblyDefinition.ReadAssembly(Path.Combine(bin64Dir, Assembly));
+        using var assembly = AssemblyDefinition.ReadAssembly(Path.Combine(ds64Dir, Assembly));
 
         Instruction storeField = assembly
             .MainModule.Types.SelectMany(type => type.Methods)
@@ -105,16 +102,11 @@ internal static class Game
     {
         typeof(MyFakes).TypeInitializer.Invoke(null, null);
         MyFakes.ENABLE_F12_MENU = Flags.DebugMenu;
-
-        // Note SpaceEngineers internally prioritises -nosplash over ENABLE_SPLASHSCREEN
-        // (therefore SplashType.Native and SplashType.None are mutually exclusive)
-        MyFakes.ENABLE_SPLASHSCREEN = Flags.SplashType == SplashType.Native;
+        MyFakes.ENABLE_SPLASHSCREEN = false;
     }
 
     public static float GetLoadProgress()
     {
-        // No native function in Space Engineers does this but we can estimate
-        // FIXME: Does not work well with Preloaders or under Proton
         float expectedGrowth = 700f * 1024 * 1024;
 
         Process process = Process.GetCurrentProcess();
@@ -125,7 +117,18 @@ internal static class Game
         return Math.Min(1f, Math.Max(0f, ratio));
     }
 
-    public static void StartSpaceEngineers(string[] args) => MyProgram.Main(args);
+    public static void StartDedicatedServer(string[] args)
+    {
+        Assembly dsAssembly = Assembly.LoadFrom(
+            Path.Combine(MyFileSystem.ExePath, "SpaceEngineersDedicated.exe")
+        );
+        Type myProgram = dsAssembly.GetType("SpaceEngineersDedicated.MyProgram", throwOnError: true);
+        MethodInfo main = myProgram.GetMethod(
+            "Main",
+            BindingFlags.Static | BindingFlags.NonPublic
+        );
+        main.Invoke(null, [args]);
+    }
 
     public static void AddCompilationSymbols(params string[] symbols) =>
         MyScriptCompiler.Static.AddConditionalCompilationSymbols(symbols);
@@ -134,5 +137,5 @@ internal static class Game
         MyPlatformGameSettings.ENABLE_LOGOS = enabled;
 
     public static void RunOnGameThread(Action action) =>
-        MySandboxGame.Static.Invoke(action, "Pulsar");
+        MySandboxGame.Static.Invoke(action, "Magnetar");
 }

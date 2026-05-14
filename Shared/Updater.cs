@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
 using Newtonsoft.Json.Linq;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
@@ -34,29 +33,14 @@ public class Updater(string repoName)
         )
         {
             LogFile.WriteLine($"An update is available to {remotePulsarVer.ToString(3)}");
-
-            DialogResult result = ShowUpdatePrompt(localPulsarVer, remotePulsarVer);
-            if (result == DialogResult.Yes)
-                Update();
-            else if (result == DialogResult.Cancel)
-                Environment.Exit(0);
+            Update();
         }
-    }
-
-    private static DialogResult ShowUpdatePrompt(Version localVer, Version remoteVer)
-    {
-        string prompt =
-            $"An update is available for {PulsarName}:\n"
-            + $"{localVer.ToString(3)} -> {remoteVer.ToString(3)}\n"
-            + "Would you like to update now?";
-
-        return Tools.ShowMessageBox(prompt, MessageBoxButtons.YesNoCancel);
     }
 
     public static void GameUpdatePrompt(Version oldVersion, Version newVersion, int fieldCount)
     {
         string change = (newVersion > oldVersion ? "up" : "down") + "graded";
-        string prompt =
+        string message =
             $"Space Engineers has been {change}! "
             + $"({oldVersion.ToString(fieldCount)} -> {newVersion.ToString(fieldCount)})\n"
             + "All plugins must be rebuilt to target the new version.\n\n"
@@ -67,48 +51,26 @@ public class Updater(string repoName)
             + "- It does not happen without Pulsar loaded.\n"
             + "- It still happens with no plugins or mods loaded.\n"
             + "- It can be reproduced / you know what caused it.\n\n"
-            + "Snapshots of the Plugin Hub are available if you choose to revert.\n"
-            + "Do you wish to continue?";
-
-        DialogResult result = Tools.ShowMessageBox(prompt, MessageBoxButtons.YesNo);
-
-        if (result == DialogResult.No)
-            Environment.Exit(0);
-
+            + "Snapshots of the Plugin Hub are available if you choose to revert.\n";
+        Tools.ShowMessage(message);
         GitHubPlugin.ClearGitHubCache();
     }
 
     public void ShowBitrotPrompt()
     {
-        MessageBoxButtons buttons;
-        string message = "You have a broken Pulsar insallation!\n";
-
-        if (Flags.UpdateType == UpdateType.None)
-        {
-            message += "Please rebuild or manually redownload.";
-            buttons = MessageBoxButtons.OK;
-        }
-        else
-        {
-            message += "Attempt to download the latest version?";
-            buttons = MessageBoxButtons.YesNo;
-        }
-
-        DialogResult result = Tools.ShowMessageBox(message, buttons);
-
-        if (result == DialogResult.Yes)
-            Update();
-
+        string message = 
+            "You have a broken Pulsar installation!\n"
+            + "Please rebuild or manually redownload.";
+        Tools.ShowMessage(message);
         Environment.Exit(1);
     }
 
     private static void ShowUpdateError()
     {
-        string prompt =
+        string message =
             $"An error occurred while updating {PulsarName}!\n"
             + "Please check the log for more information!";
-
-        Tools.ShowMessageBox(prompt, MessageBoxButtons.OK);
+        Tools.ShowMessage(message);
     }
 
     private void Update()

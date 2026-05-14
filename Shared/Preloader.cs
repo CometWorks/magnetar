@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
 using HarmonyLib;
 using Mono.Cecil;
 
@@ -98,7 +97,7 @@ public class Preloader
 
         string message = $"Failed to patch '{simpleName}' as it is loaded into memory!";
         LogFile.Error(message);
-        Tools.ShowMessageBox(message, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        Tools.ShowMessage(message);
 
         return true;
     }
@@ -123,7 +122,7 @@ public class Preloader
                 + " could not be found";
 
             LogFile.Error(message);
-            Tools.ShowMessageBox(message, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Tools.ShowMessage(message);
 
             assemblyDefinition = null;
             return true;
@@ -155,7 +154,7 @@ public class Preloader
             string name = type.Assembly.GetName().Name;
             string message = $"Preloader plugin '{name}' does not define a Patch method";
             LogFile.Error(message);
-            Tools.ShowMessageBox(message, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Tools.ShowMessage(message);
             return;
         }
 
@@ -211,7 +210,7 @@ public class Preloader
             string name = GetAssemblyName(method);
             var message = $"Preloader plugin {name} had an exception:\n" + tie.InnerException;
             LogFile.Error(message);
-            Tools.ShowMessageBox(message, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Tools.ShowMessage(message);
             return false;
         }
 

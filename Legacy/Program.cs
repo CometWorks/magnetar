@@ -1,11 +1,9 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Windows.Forms;
 using HarmonyLib;
 using Pulsar.Legacy.Compiler;
 using Pulsar.Legacy.Launcher;
@@ -13,7 +11,6 @@ using Pulsar.Legacy.Loader;
 using Pulsar.Legacy.Patch;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
-using Pulsar.Shared.Splash;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
 #if NETCOREAPP
@@ -30,7 +27,7 @@ static class Program
     }
 
     private const string PulsarRepo = "SpaceGT/Pulsar";
-    private const string OldLauncher = "SpaceEngineers.exe";
+    private const string OldLauncher = "SpaceEngineersDedicated.exe";
     private const string StatsServer = "https://pluginstats.ferenczi.eu";
 
     static void Main(string[] args)
@@ -43,19 +40,14 @@ static class Program
 
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir, runtimeDir]);
 
-        PulsarMain(args);
+        MagnetarMain(args);
     }
 
-    static void PulsarMain(string[] args)
+    static void MagnetarMain(string[] args)
     {
 #endif
-        Application.EnableVisualStyles();
-
-        if (SharedLauncher.IsOtherPulsarRunning())
-        {
-            Tools.ShowMessageBox("Error: Pulsar is already running!");
-            return;
-        }
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        Tools.InstallNativeCrashHandler("Magnetar");
 
         if (Flags.ExternalDebug)
             Debugger.Launch();
@@ -83,15 +75,9 @@ static class Program
             pulsarDir = Path.Combine(baseDir, "Legacy");
 
         LogFile.Init(pulsarDir);
-        LogFile.WriteLine($"Starting Pulsar v{asmName.Version.ToString(3)}");
+        LogFile.WriteLine($"Starting Magnetar v{asmName.Version.ToString(3)}");
 
         Flags.LogFlags();
-
-        if (Flags.SplashType == SplashType.Pulsar)
-            SplashManager.Instance = new SplashManager();
-
-        SplashManager.Instance?.SetTitle("Pulsar");
-        SplashManager.Instance?.SetText("Starting Pulsar...");
 
         ConfigManager.EarlyInit(pulsarDir);
     }
@@ -99,7 +85,12 @@ static class Program
     private static Updater TryUpdate(string baseDir)
     {
         Updater updater = new(PulsarRepo);
-        updater.TryUpdate();
+
+        // Auto-update disabled: Magnetar is versioned independently (0.1.0) from the
+        // upstream SpaceGT/Pulsar repo checked here, so it always sees itself as out of
+        // date and would self-replace with Pulsar on every launch, exiting (code 0)
+        // before the dedicated server starts. Uncomment to restore automatic updates.
+        // updater.TryUpdate();
 
         string checkSum = null;
         string checkFile = Path.Combine(baseDir, "checksum.txt");
@@ -122,32 +113,32 @@ static class Program
 
     private static void SetupGameData(Updater updater)
     {
-        string bin64Dir = Folder.GetBin64();
-        if (bin64Dir is null)
+        string ds64Dir = Folder.GetDS64();
+        if (ds64Dir is null)
         {
-            Tools.ShowMessageBox(
+            Tools.ShowMessage(
                 $"Error: {OldLauncher} not found!\n"
-                    + "You can specify a custom location with \"-bin64\""
+                    + "You can specify a custom location with \"-ds64\""
             );
             Environment.Exit(1);
         }
 
         string modDir = Path.Combine(
-            bin64Dir,
+            ds64Dir,
             @"..\..\..\workshop\content",
             Steam.AppIdSe1.ToString()
         );
 
-        Version seVersion = Game.GetGameVersion(bin64Dir);
-        if (seVersion is null) // Prevent NRE from Keen updates
+        Version seVersion = Game.GetGameVersion(ds64Dir);
+        if (seVersion is null)
             updater.ShowBitrotPrompt();
 
         RemoteHubConfig[] defaultHubs =
         [
             new RemoteHubConfig()
             {
-                Name = "PluginHub",
-                Repo = "StarCpt/PluginHub",
+                Name = "PluginHub-DS",
+                Repo = "viktor-ferenczi/PluginHub-DS",
                 Branch = "main",
                 Enabled = true,
                 Hash = null,
@@ -156,7 +147,7 @@ static class Program
             },
         ];
 
-        ConfigManager.Init(bin64Dir, modDir, seVersion, defaultHubs);
+        ConfigManager.Init(ds64Dir, modDir, seVersion, defaultHubs);
 
         CoreConfig coreConfig = ConfigManager.Instance.Core;
         Version oldSeVersion = coreConfig.GameVersion;
@@ -172,8 +163,8 @@ static class Program
 
     private static void CheckCanStart(Updater updater)
     {
-        string bin64Dir = ConfigManager.Instance.GameDir;
-        string originalLoaderPath = Path.Combine(bin64Dir, OldLauncher);
+        string ds64Dir = ConfigManager.Instance.GameDir;
+        string originalLoaderPath = Path.Combine(ds64Dir, OldLauncher);
         var launcher = new SharedLauncher(originalLoaderPath);
 
 #if NETFRAMEWORK
@@ -187,28 +178,25 @@ static class Program
 
     private static void SetupSteam()
     {
-        SplashManager.Instance?.SetText("Starting Steam...");
-        string bin64Dir = ConfigManager.Instance.GameDir;
-        AppDomain.CurrentDomain.AssemblyResolve += Steam.SteamworksResolver(bin64Dir);
-        Steam.Init(Steam.AppIdSe1);
+        string ds64Dir = ConfigManager.Instance.GameDir;
+        AppDomain.CurrentDomain.AssemblyResolve += Steam.SteamworksResolver(ds64Dir);
+        Steam.Init(Steam.AppIdSe1DS);
     }
 
     private static void SetupPlugins(string baseDir)
     {
-        SplashManager.Instance?.SetText("Getting Plugins...");
-
         var asmName = Assembly.GetExecutingAssembly().GetName();
         string dependencyDir = Path.Combine(baseDir, "Libraries", asmName.Name);
 
         string pulsarDir = ConfigManager.Instance.PulsarDir;
-        string bin64Dir = ConfigManager.Instance.GameDir;
+        string ds64Dir = ConfigManager.Instance.GameDir;
 
-        using (CompilerFactory compiler = new([bin64Dir, dependencyDir], bin64Dir, pulsarDir))
+        using (CompilerFactory compiler = new([ds64Dir, dependencyDir], ds64Dir, pulsarDir))
         {
-            // The AppDomain must be created ASAP if running under Mono
-            // as Mono does not isolate assemblies properly.
+#if NETFRAMEWORK
             if (!Tools.IsNative())
                 compiler.Init();
+#endif
 
             Tools.Init(new ExternalTools(), compiler);
             SharedLoader.Instance = new SharedLoader(StatsServer, GetCorePlugins());
@@ -217,11 +205,10 @@ static class Program
         Preloader preloader = new(SharedLoader.Instance.Plugins.Select(x => x.Item2));
         if (preloader.HasPatches && !ConfigManager.Instance.SafeMode)
         {
-            SplashManager.Instance?.SetText("Applying Preloaders...");
             string preloadDir = Path.Combine(pulsarDir, "Preloader");
 
             preloader.PreHooks();
-            preloader.Patch(bin64Dir, preloadDir);
+            preloader.Patch(ds64Dir, preloadDir);
             SetupGameResolver();
             preloader.PostHooks();
         }
@@ -234,16 +221,24 @@ static class Program
 #if NETFRAMEWORK
         return [];
 #else
-        string bin64Dir = ConfigManager.Instance.GameDir;
-        bool isGameFramework = Tools.GetFiles(bin64Dir, ["*.config"], []).Any();
+        string ds64Dir = ConfigManager.Instance.GameDir;
+        bool isGameFramework = Tools.GetFiles(ds64Dir, ["*.config"], []).Any();
         return isGameFramework ? ["se-dotnet-compat"] : [];
 #endif
     }
 
     private static void SetupGameResolver()
     {
-        string bin64Dir = ConfigManager.Instance.GameDir;
-        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([bin64Dir]);
+        string ds64Dir = ConfigManager.Instance.GameDir;
+        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([ds64Dir]);
+    }
+
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        string message = $"Unhandled exception: {e.ExceptionObject}";
+        Console.Error.WriteLine($"[Magnetar] {message}");
+        LogFile.Error(message);
+        Environment.Exit(1);
     }
 
     private static ResolveEventHandler AssemblyResolver(string[] probeDirs)
@@ -269,8 +264,8 @@ static class Program
 
     private static void SetupGame(string[] args)
     {
-        string bin64Dir = ConfigManager.Instance.GameDir;
-        string originalLoaderPath = Path.Combine(bin64Dir, OldLauncher);
+        string ds64Dir = ConfigManager.Instance.GameDir;
+        string originalLoaderPath = Path.Combine(ds64Dir, OldLauncher);
         Patch_PrepareCrashReport.SpaceEngineersPath = originalLoaderPath;
 
         LogFile.GameLog = new GameLog();
@@ -288,32 +283,6 @@ static class Program
         Game.AddCompilationSymbols("NETCOREAPP");
 #endif
 
-        SplashManager.Instance?.SetText("Launching Space Engineers...");
-        if (Tools.IsNative())
-            ProgressPollFactory().Start();
-
-        Game.StartSpaceEngineers(args);
-    }
-
-    private static Thread ProgressPollFactory()
-    {
-        static void ProgressPoll()
-        {
-            float progress = 0;
-            SplashManager splash = SplashManager.Instance;
-
-            while (SplashManager.Instance is not null && progress < 1)
-            {
-                // FIXME: Does not work well with preloaded assemblies
-                progress = Game.GetLoadProgress();
-
-                if (float.IsNaN(splash.BarValue) || splash.BarValue < progress)
-                    splash?.SetBarValue(progress);
-
-                Thread.Sleep(250); // ms
-            }
-        }
-
-        return new Thread(ProgressPoll) { IsBackground = true, Name = "ProgressPoll" };
+        Game.StartDedicatedServer(args);
     }
 }

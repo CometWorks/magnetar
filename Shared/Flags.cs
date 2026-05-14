@@ -4,13 +4,6 @@ using System.Linq;
 
 namespace Pulsar.Shared;
 
-public enum SplashType
-{
-    None,
-    Native,
-    Pulsar,
-}
-
 public enum UpdateType
 {
     None,
@@ -20,7 +13,6 @@ public enum UpdateType
 
 public static class Flags
 {
-    public static SplashType SplashType { get; private set; }
     public static UpdateType UpdateType { get; private set; }
     public static bool ExternalDebug { get; private set; }
     public static bool DebugMenu { get; private set; }
@@ -33,13 +25,6 @@ public static class Flags
 
     static Flags()
     {
-        if (HasArg("nosplash"))
-            SplashType = SplashType.None;
-        else if (HasArg("sesplash"))
-            SplashType = SplashType.Native;
-        else
-            SplashType = SplashType.Pulsar;
-
         if (HasArg("noupdate"))
             UpdateType = UpdateType.None;
         else if (HasArg("prerelease"))
@@ -60,11 +45,6 @@ public static class Flags
     public static void LogFlags()
     {
         List<string> changed = [];
-
-        if (SplashType == SplashType.None)
-            changed.Add("NoSplash");
-        else if (SplashType == SplashType.Native)
-            changed.Add("NativeSplash");
 
         if (UpdateType == UpdateType.None)
             changed.Add("NoUpdates");

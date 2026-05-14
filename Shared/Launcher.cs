@@ -9,19 +9,17 @@ namespace Pulsar.Shared;
 
 public class Launcher(string sePath)
 {
-    public static Mutex Mutex { get; private set; }
-
     public bool CanStart()
     {
         if (IsSpaceEngineersRunning())
         {
-            Tools.ShowMessageBox("Error: Space Engineers is already running!");
+            Tools.ShowMessage("Error: Space Engineers is already running!");
             return false;
         }
 
         if (Environment.GetCommandLineArgs().Contains("-plugin"))
         {
-            Tools.ShowMessageBox(
+            Tools.ShowMessage(
                 "ERROR: \"-plugin\" support has been dropped!\n"
                     + "Use \"-sources\" add plugins there instead."
             );
@@ -38,14 +36,6 @@ public class Launcher(string sePath)
             .GetProcessesByName(seName)
             .Select(process => process.MainModule.FileName)
             .Any(path => path.Equals(sePath, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public static bool IsOtherPulsarRunning()
-    {
-        string callerName = Assembly.GetEntryAssembly().GetName().Name;
-        string mutexName = callerName == "Modern" ? "Modern" : "Legacy";
-        Mutex = new Mutex(true, $"Pulsar.{mutexName}", out bool isOwner);
-        return !isOwner;
     }
 
     public bool VerifyConfig()

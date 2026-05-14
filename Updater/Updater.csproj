@@ -42,11 +42,11 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartAction>Program</StartAction>
-    <StartWorkingDirectory>$(Pulsar)</StartWorkingDirectory>
-    <StartProgram>$(Pulsar)\Updater.exe</StartProgram>
+    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
+    <StartProgram>$(Magnetar)\Updater.exe</StartProgram>
   </PropertyGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Pulsar)&quot; &quot;$(SolutionDir)LICENSE&quot;" />
+    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Magnetar)&quot; &quot;$(SolutionDir)LICENSE&quot;" />
   </Target>
   <ItemGroup>
     <Reference Include="System.IO.Compression" />

@@ -10,7 +10,6 @@ using ProtoBuf;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
 using Pulsar.Shared.Network;
-using Pulsar.Shared.Splash;
 
 namespace Pulsar.Shared;
 
@@ -64,7 +63,6 @@ public class PluginList : IEnumerable<PluginData>
 
         EnsureDirectories();
 
-        SplashManager.Instance?.SetText("Downloading plugin list...");
         InitRemoteList();
 
         if (Plugins.Count == 0)
