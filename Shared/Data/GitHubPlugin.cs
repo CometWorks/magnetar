@@ -183,7 +183,10 @@ public partial class GitHubPlugin : PluginData
             resolver.AddSourceFolder(manifest.LibDir);
             resolver.AddAllowedAssemblyFile(manifest.DllFile);
             resolver.AddAllowedAssemblyName(name);
-            a = Assembly.Load(data);
+            // Load from the file just written rather than the raw bytes so that
+            // Assembly.Location is populated. Preloader plugins rely on it to locate
+            // their Bin/asset directories, which an in-memory load leaves empty.
+            a = Assembly.LoadFile(manifest.DllFile);
         }
         else
         {
