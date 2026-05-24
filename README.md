@@ -1,34 +1,24 @@
-# Pulsar
-A plugin and mod loader for Space Engineers.<br>
-This is a hard fork of the discontinued [PluginLoader](https://github.com/sepluginloader/PluginLoader).<br>
+# Magnetar
+A plugin loader for the Space Engineers Dedicated Server.<br>
+This is a hard fork of [Pulsar](https://github.com/SpaceGT/Pulsar), adapted to load the Dedicated Server instead of the game client.<br>
 
 ## Installation
-Pulsar is portable: simply download the [latest release](https://github.com/SpaceGT/Pulsar/releases/latest) into a folder of choice.<br>
-This folder **must not** contain important data; It **will be cleaned** during a Pulsar update! <br>
+Magnetar is portable: simply download the [latest release](https://github.com/viktor-ferenczi/Magnetar/releases/latest) into a folder of choice.<br>
+This folder **must not** contain important data; It **will be cleaned** during a Magnetar update! <br>
 If you are building from source, the deploy script will copy all files to their required location.<br>
-An windows-only [installer](https://github.com/StarCpt/Pulsar-Installer) exists which can do all the work (including Steam configuration) for you.<br>
 
 ## Executables
-`Legacy` runs [Space Engineers 1](https://steampowered.com/app/244850) on [.NET Framework](https://dotnet.microsoft.com/en-us/download/dotnet-framework)<br>
-`Interim` runs [Space Engineers 1](https://steampowered.com/app/244850) on [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+`Legacy` runs the [Space Engineers 1](https://steampowered.com/app/244850) Dedicated Server on [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework)<br>
+`Interim` runs the [Space Engineers 1](https://steampowered.com/app/244850) Dedicated Server on [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 (via [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat))<br>
-`Modern` runs [Space Engineers 2](https://steampowered.com/app/1133870) on [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)<br>
 
-## Steam
-The Space Engineers [launch options](https://help.steampowered.com/en/faqs/view/7D01-D2DD-D75E-2955) may be modified so Steam starts Pulsar automatically.<br>
-Replace `[PulsarPath]` with a path to the desired Pulsar executable.<br>
-For Windows: `[PulsarPath] %command% [Args]`<br>
-For Linux: `bash -c 'exec "${@:0:$#}" [PulsarPath] "${@:$#}" [Args]' %command%`<br>
-Starting Space Engineers from Steam will now open Pulsar as well!<br>
+## Usage
+Run the `Legacy` or `Interim` executable from your Dedicated Server installation in place of `SpaceEngineersDedicated.exe`.<br>
+Magnetar loads the server with all enabled plugins, then hands off to the normal startup.<br>
 
 ## Plugins
-Pulsar officially endorses the [PluginHub](https://github.com/StarCpt/PluginHub) for high-quality vetted plugins.<br>
-Further sources may be added in-game but make sure you fully understand the risks.<br>
-
-## Documentation
-- [Admin Plugin](Docs/AdminPlugin.md) - REST API for in-game server management
-- [Web UI](Docs/WebUI.md) - Browser-based configuration and monitoring interface
-- [Branch Changes](Docs/BranchChanges.md) - Summary of all changes on the `magnetar` branch
+Plugins can be registered at [PluginHub-DS](https://github.com/viktor-ferenczi/PluginHub-DS/).<br>
+Further sources may be added but make sure you fully understand the risks.<br>
 
 ## Contact
 We have an active [Discord](https://discord.gg/z8ZczP2YZY) for updates and developer information.<br>
