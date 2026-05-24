@@ -363,3 +363,7 @@ MigrationBackup/
 
 .editorconfig
 .claude
+
+# Linux build pipeline outputs (build.sh / Scripts/*)
+/build/
+/dist/

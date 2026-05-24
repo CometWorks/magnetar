@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using HarmonyLib;
 using Pulsar.Legacy.Compiler;
@@ -13,9 +14,6 @@ using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
-#if NETCOREAPP
-using System.Runtime.InteropServices;
-#endif
 
 namespace Pulsar.Legacy;
 
@@ -32,20 +30,23 @@ static class Program
 
     static void Main(string[] args)
     {
-#if NETCOREAPP
-
         string baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         string libraryDir = Path.Combine(baseDir, "Libraries", "Interim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
+        // Preload every bundled native library and register a single
+        // DllImport resolver covering every present and future ALC. Must run
+        // before any [DllImport] site fires (Steamworks.NET, etc.).
+        NativeLibraryPreloader.Initialize(baseDir);
+
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir, runtimeDir]);
+        AppDomain.CurrentDomain.AssemblyResolve += Steam.SteamworksResolver(baseDir);
 
         MagnetarMain(args);
     }
 
     static void MagnetarMain(string[] args)
     {
-#endif
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         Tools.InstallNativeCrashHandler("Magnetar");
 
@@ -55,7 +56,7 @@ static class Program
         Assembly currentAssembly = Assembly.GetExecutingAssembly();
         string baseDir = Path.GetDirectoryName(currentAssembly.Location);
 
-        SetupCoreData(baseDir);
+        SetupCoreData();
         Updater updater = TryUpdate(baseDir);
         SetupGameData(updater);
         CheckCanStart(updater);
@@ -64,31 +65,41 @@ static class Program
         SetupGame(args);
     }
 
-    private static void SetupCoreData(string baseDir)
+    private static void SetupCoreData()
     {
+        Assembly currentAssembly = Assembly.GetExecutingAssembly();
+        string baseDir = Path.GetDirectoryName(currentAssembly.Location);
         Environment.CurrentDirectory = baseDir;
 
-        var asmName = Assembly.GetExecutingAssembly().GetName();
-        string pulsarDir = GetConfigOverride(baseDir);
+        var asmName = currentAssembly.GetName();
+        string pulsarDir = GetConfigOverride(baseDir) ?? GetConfigDir();
 
-        if (pulsarDir is not null)
-        {
+        if (!Directory.Exists(pulsarDir))
             Directory.CreateDirectory(pulsarDir);
-        }
-        else
-        {
-            pulsarDir = Path.Combine(baseDir, asmName.Name);
-
-            if (!Directory.Exists(pulsarDir))
-                pulsarDir = Path.Combine(baseDir, "Legacy");
-        }
 
         LogFile.Init(pulsarDir);
         LogFile.WriteLine($"Starting Magnetar v{asmName.Version.ToString(3)}");
 
         Flags.LogFlags();
 
+        if (Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1")
+            LogFile.Warn("MAGNETAR_SAFE_MODE=1 set. No preloader patches will be applied!");
+
         ConfigManager.EarlyInit(pulsarDir);
+
+        if (Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1")
+            ConfigManager.Instance.SafeMode = true;
+    }
+
+    private static string GetConfigDir()
+    {
+        // Honour XDG_CONFIG_HOME, fall back to ~/.config/Magnetar.
+        string xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+        if (!string.IsNullOrWhiteSpace(xdg))
+            return Path.Combine(xdg, "Magnetar");
+
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return Path.Combine(home, ".config", "Magnetar");
     }
 
     private static string GetConfigOverride(string baseDir)
@@ -123,7 +134,7 @@ static class Program
         string checkFile = Path.Combine(baseDir, "checksum.txt");
         string libraryDir = Path.Combine(baseDir, "Libraries");
 
-        if (Flags.MakeCheckFile)
+        if (Flags.MakeCheckFile && Directory.Exists(libraryDir))
         {
             UTF8Encoding encoding = new();
             checkSum = Tools.GetFolderHash(libraryDir);
@@ -132,7 +143,7 @@ static class Program
         else if (File.Exists(checkFile))
             checkSum = File.ReadAllText(checkFile);
 
-        if (checkSum is not null && Tools.GetFolderHash(libraryDir) != checkSum)
+        if (checkSum is not null && Directory.Exists(libraryDir) && Tools.GetFolderHash(libraryDir) != checkSum)
             updater.ShowBitrotPrompt();
 
         return updater;
@@ -152,7 +163,7 @@ static class Program
 
         string modDir = Path.Combine(
             ds64Dir,
-            @"..\..\..\workshop\content",
+            "..", "..", "..", "workshop", "content",
             Steam.AppIdSe1.ToString()
         );
 
@@ -194,11 +205,6 @@ static class Program
         string originalLoaderPath = Path.Combine(ds64Dir, OldLauncher);
         var launcher = new SharedLauncher(originalLoaderPath);
 
-#if NETFRAMEWORK
-        if (!launcher.VerifyConfig())
-            updater.ShowBitrotPrompt();
-#endif
-
         if (!launcher.CanStart())
             Environment.Exit(1);
     }
@@ -223,11 +229,6 @@ static class Program
 
         using (CompilerFactory compiler = new([ds64Dir, dependencyDir], ds64Dir, pulsarDir))
         {
-#if NETFRAMEWORK
-            if (!Tools.IsNative())
-                compiler.Init();
-#endif
-
             Tools.Init(new ExternalTools(), compiler);
             SharedLoader.Instance = new SharedLoader(StatsServer, GetCorePlugins());
         }
@@ -248,13 +249,9 @@ static class Program
 
     private static string[] GetCorePlugins()
     {
-#if NETFRAMEWORK
-        return [];
-#else
         string ds64Dir = ConfigManager.Instance.GameDir;
         bool isGameFramework = Tools.GetFiles(ds64Dir, ["*.config"], []).Any();
         return isGameFramework ? ["se-dotnet-compat"] : [];
-#endif
     }
 
     private static void SetupGameResolver()
@@ -309,9 +306,7 @@ static class Program
         Game.ShowIntroVideo(Flags.GameIntroVideo);
         Game.RegisterPlugin(new PluginLoader());
 
-#if NETCOREAPP
         Game.AddCompilationSymbols("NETCOREAPP");
-#endif
 
         Game.StartDedicatedServer(args);
     }

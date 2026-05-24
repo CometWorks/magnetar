@@ -1,8 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0</Version>
     <Product>Magnetar</Product>
     <Copyright>© 2025 SpaceGT</Copyright>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyName>Magnetar.Shared</AssemblyName>
@@ -10,7 +11,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net48;net10.0</TargetFrameworks>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -39,7 +39,15 @@
     <ProjectReference Include="..\Compiler\Compiler.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Steamworks.NET" HintPath="$(Steamworks)" Private="False" />
+    <Reference Include="Steamworks.NET">
+      <!--
+        The DLL is built dynamically into <repo>/build/Libraries/ by
+        Scripts/build_steamworks_net.sh (invoked from build.sh).
+        Run ./build.sh once before the first build.
+      -->
+      <HintPath>..\build\Libraries\Steamworks.NET.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FuzzySharp" Version="2.0.2" />
@@ -50,4 +58,14 @@
     <PackageReference Include="NuGet.Resolver" Version="6.7.1" />
     <PackageReference Include="protobuf-net" Version="2.4.9" />
   </ItemGroup>
+  <!--
+    Fail fast with a clear hint if the HintPath above doesn't resolve.
+    Without this guard, MSBuild only emits MSB3245 as a *warning* and the
+    build proceeds until the CS0246 'Steamworks namespace not found' error,
+    which doesn't tell the user what's actually wrong.
+  -->
+  <Target Name="CheckSteamworksNetDll" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../build/Libraries/Steamworks.NET.dll')"
+           Text="$(MSBuildThisFileDirectory)../build/Libraries/Steamworks.NET.dll is missing. Run ./build.sh from the repo root before building." />
+  </Target>
 </Project>

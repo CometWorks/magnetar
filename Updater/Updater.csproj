@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.1.1</Version>
-    <Product>Pulsar</Product>
+    <Product>Magnetar</Product>
     <Copyright>© 2025 SpaceGT</Copyright>
   </PropertyGroup>
   <PropertyGroup>
@@ -9,12 +9,10 @@
     <RootNamespace>Pulsar.Updater</RootNamespace>
   </PropertyGroup>
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net48</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup>
     <Platforms>x64</Platforms>
@@ -37,18 +35,4 @@
     <LangVersion>latest</LangVersion>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>..\Shared\Splash\icon.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
-    <StartProgram>$(Magnetar)\Updater.exe</StartProgram>
-  </PropertyGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Magnetar)&quot; &quot;$(SolutionDir)LICENSE&quot;" />
-  </Target>
-  <ItemGroup>
-    <Reference Include="System.IO.Compression" />
-  </ItemGroup>
 </Project>

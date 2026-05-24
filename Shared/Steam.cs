@@ -1,10 +1,6 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Threading;
-using Microsoft.Win32;
 using Steamworks;
 
 namespace Pulsar.Shared;
@@ -14,9 +10,6 @@ public static class Steam
     public const uint AppIdSe1 = 244850u;
     public const uint AppIdSe1DS = 298740u;
     public const uint AppIdSe2 = 1133870u;
-    private const int SteamTimeout = 30; // seconds
-    private const string registryKey = @"SOFTWARE\Valve\Steam";
-    private const string registryName = "SteamPath";
     private const string Steamworks = "Steamworks.NET";
 
     // Dedicated servers must not initialize the Steam client API; only the game-server
@@ -46,24 +39,12 @@ public static class Steam
 
     public static string GetSteamPath()
     {
-        using var baseKey = RegistryKey.OpenBaseKey(
-            RegistryHive.CurrentUser,
-            RegistryView.Registry64
-        );
-
-        using var key = baseKey.OpenSubKey(registryKey);
-        if (key is null)
-            return null;
-
-        var path = key.GetValue(registryName) as string;
-        if (string.IsNullOrWhiteSpace(path))
-            return null;
-
-        return path;
-    }
-
-    private static void ShowWarning()
-    {
-        LogFile.WriteLine("Steam failed to start!");
+        // The native Steam client install on Linux lives under
+        // ~/.steam/steam (a symlink Valve maintains to the active
+        // Steam library). There is no equivalent of the Windows
+        // SOFTWARE\Valve\Steam registry key.
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string steamRoot = Path.Combine(home, ".steam", "steam");
+        return Directory.Exists(steamRoot) ? steamRoot : null;
     }
 }

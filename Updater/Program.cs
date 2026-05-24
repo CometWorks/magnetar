@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace Pulsar.Updater;
 
@@ -15,9 +14,6 @@ static class Program
     static void Main()
     {
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
-        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
-
-        Application.EnableVisualStyles();
 
         if (Tools.HasCommandArg(DebugArg))
             Debugger.Launch();

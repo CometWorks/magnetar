@@ -99,6 +99,9 @@ public class Preloader
         LogFile.Error(message);
         Tools.ShowMessage(message);
 
+        // Headless: there is no user to interactively retry, and continuing
+        // would leave the runtime in an inconsistent half-patched state.
+        Environment.Exit(1);
         return true;
     }
 
@@ -124,6 +127,7 @@ public class Preloader
             LogFile.Error(message);
             Tools.ShowMessage(message);
 
+            Environment.Exit(1);
             assemblyDefinition = null;
             return true;
         }
@@ -155,6 +159,7 @@ public class Preloader
             string message = $"Preloader plugin '{name}' does not define a Patch method";
             LogFile.Error(message);
             Tools.ShowMessage(message);
+            Environment.Exit(1);
             return;
         }
 
@@ -211,6 +216,7 @@ public class Preloader
             var message = $"Preloader plugin {name} had an exception:\n" + tie.InnerException;
             LogFile.Error(message);
             Tools.ShowMessage(message);
+            Environment.Exit(1);
             return false;
         }
 

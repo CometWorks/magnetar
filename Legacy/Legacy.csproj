@@ -5,6 +5,8 @@
     <Copyright>© 2025 SpaceGT</Copyright>
     <AssemblyTitle>Magnetar</AssemblyTitle>
     <Description>Plugin and Mod loader for Space Engineers 1 Dedicated Server</Description>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace>Pulsar.Legacy</RootNamespace>
@@ -12,19 +14,11 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net48;net10.0</TargetFrameworks>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
-    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
-    <AssemblyName>Legacy</AssemblyName>
-    <StartProgram>$(Magnetar)\Legacy.exe</StartProgram>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' != 'net48'">
+  <PropertyGroup>
     <AssemblyName>Interim</AssemblyName>
-    <StartProgram>$(Magnetar)\Interim.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup>
     <Platforms>x64</Platforms>
@@ -48,25 +42,9 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>..\Shared\Splash\icon.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-  </PropertyGroup>
-  <PropertyGroup>
     <!-- Required by SpaceEngineers internally; Deserialization is patched to use safer methods. -->
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
-  </PropertyGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Magnetar)&quot; &quot;$(SolutionDir)LICENSE&quot; &quot;$(TargetFrameworkIdentifier)&quot;" />
-  </Target>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="call &quot;$(SolutionDir)verify.bat&quot; &quot;$(DS64)&quot;" />
-  </Target>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
@@ -81,11 +59,30 @@
     <Reference Include="VRage.Input" HintPath="$(DS64)\VRage.Input.dll" Private="False" />
     <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="False" />
     <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
-    <Reference Include="VRage.Platform.Windows" HintPath="$(DS64)\VRage.Platform.Windows.dll" Private="False" />
     <Reference Include="VRage.Scripting" HintPath="$(DS64)\VRage.Scripting.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <PackageReference Include="Gameloop.Vdf" Version="0.6.2" />
   </ItemGroup>
+  <!--
+    Copy the contents of <repo>/build/Libraries (Steamworks.NET.dll +
+    libsteam_api.so) next to the executable for both `dotnet build` and
+    `dotnet publish`. The staging tree is populated by ./build.sh - run
+    that once before the first build (and again after pulling).
+
+    Uses `cp -a` to preserve any future soname symlinks. Linux-only by
+    design - this build pipeline produces a Linux bundle that ships ELF
+    .so deps.
+  -->
+  <Target Name="CopyLibrariesAfterBuild" AfterTargets="Build">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../build/Libraries')"
+           Text="$(MSBuildThisFileDirectory)../build/Libraries is missing. Run ./build.sh from the repo root before building." />
+    <Exec Command="cp -a &quot;$(MSBuildThisFileDirectory)../build/Libraries/.&quot; &quot;$(OutDir).&quot;" />
+  </Target>
+  <Target Name="CopyLibrariesAfterPublish" AfterTargets="Publish">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../build/Libraries')"
+           Text="$(MSBuildThisFileDirectory)../build/Libraries is missing. Run ./build.sh from the repo root before publishing." />
+    <Exec Command="cp -a &quot;$(MSBuildThisFileDirectory)../build/Libraries/.&quot; &quot;$(PublishDir).&quot;" />
+  </Target>
 </Project>

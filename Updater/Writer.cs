@@ -8,15 +8,16 @@ namespace Pulsar.Updater;
 
 internal static class Writer
 {
-    private const string Pulsar = "Pulsar";
+    private const string Magnetar = "Magnetar";
     private const int MaxFiles = 15;
 
+    // Magnetar ships a single Linux launcher (Interim.dll/.exe), no Modern
+    // or Legacy variants. "Modern" stays in Preserve only for backward
+    // compatibility with old install layouts.
     private static readonly HashSet<string> Preserve = ["Legacy", "Interim", "Modern"];
     private static readonly HashSet<string> Check =
     [
-        "Legacy.exe",
-        "Interim.exe",
-        "Modern.exe",
+        "Interim.dll",
         "LICENSE",
     ];
 
@@ -57,10 +58,18 @@ internal static class Writer
 
         folder = Path.GetFullPath(folder);
 
-        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string defaultPath = Path.Combine(appData, Pulsar);
+        // Honour XDG_DATA_HOME, fall back to ~/.local/share/Magnetar.
+        // Matches the $(Magnetar) default in Directory.Build.props.
+        string xdg = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+        string dataHome = string.IsNullOrWhiteSpace(xdg)
+            ? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".local", "share"
+            )
+            : xdg;
+        string defaultPath = Path.Combine(dataHome, Magnetar);
 
-        if (folder == defaultPath)
+        if (folder == Path.GetFullPath(defaultPath))
             return true;
 
         bool isPulsarInstall = Check.All(name => File.Exists(Path.Combine(folder, name)));
@@ -73,13 +82,16 @@ internal static class Writer
 
     private static bool ContinuePrompt(string folder)
     {
+        // Headless server: there is no operator to confirm, so refuse to
+        // clean a directory we don't recognise as a Magnetar install.
         string message =
-            "The installation folder could not be validated!\n"
-            + "Is this your Pulsar install folder?\n"
-            + "It WILL BE CLEANED if you update!\n\n"
-            + folder;
+            "The installation folder could not be validated and will NOT be touched:\n"
+            + folder + "\n"
+            + "Re-run the updater pointing at the actual Magnetar install directory.";
 
-        Console.Error.WriteLine($"[Pulsar Updater] {message}".Replace("\r\n", "\n").Replace("\n", Environment.NewLine));
+        Console.Error.WriteLine(
+            $"[Magnetar Updater] {message}".Replace("\r\n", "\n").Replace("\n", Environment.NewLine)
+        );
         return false;
     }
 }

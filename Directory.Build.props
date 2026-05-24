@@ -1,13 +1,11 @@
 <Project>
   <PropertyGroup>
-    <!-- Folder containing Magnetar -->
-    <Magnetar>$(APPDATA)\Magnetar</Magnetar>
+    <!-- Magnetar install location (where deploy/publish goes by default) -->
+    <Magnetar Condition="'$(Magnetar)' == ''">$(HOME)/.local/share/Magnetar</Magnetar>
 
-    <!-- Folder containing SpaceEngineersDedicated.exe -->
-    <DS64 Condition="'$(DS64)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
-    <DS64 Condition="'$(DS64)' == '\DedicatedServer64'">C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
-
-    <!-- Path to Steamworks.NET (for .NET 4.8) -->
-    <Steamworks>$(DS64)\Steamworks.NET.dll</Steamworks>
+    <!-- Folder containing SpaceEngineersDedicated.exe.
+         Override with `-p:DS64=/path/to/DedicatedServer64` on the command line,
+         or set the DS64 environment variable before invoking dotnet build. -->
+    <DS64 Condition="'$(DS64)' == ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
   </PropertyGroup>
 </Project>

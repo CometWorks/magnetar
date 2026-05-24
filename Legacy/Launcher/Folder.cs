@@ -5,17 +5,12 @@ using System.Linq;
 using System.Reflection;
 using Gameloop.Vdf;
 using Gameloop.Vdf.Linq;
-using Microsoft.Win32;
 using Pulsar.Shared;
 
 namespace Pulsar.Legacy.Launcher;
 
 internal class Folder
 {
-    private const string registryKey =
-        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App {0}";
-    private const string registryName = "InstallLocation";
-
     private const string dsLauncher = "SpaceEngineersDedicated.exe";
     private static readonly HashSet<string> dsFiles =
     [
@@ -26,7 +21,7 @@ internal class Folder
     ];
 
     public static string GetDS64() =>
-        FromOverride() ?? FromSteamArgs() ?? FromSteamFiles() ?? FromRegistry();
+        FromOverride() ?? FromSteamArgs() ?? FromSteamFiles();
 
     private static bool IsDS64(string path)
     {
@@ -44,28 +39,6 @@ internal class Folder
     {
         if (!Tools.IsNative() && path.StartsWith("/"))
             return "Z:" + path;
-        return path;
-    }
-
-    private static string FromRegistry()
-    {
-        using var baseKey = RegistryKey.OpenBaseKey(
-            RegistryHive.LocalMachine,
-            RegistryView.Registry64
-        );
-
-        using var key = baseKey.OpenSubKey(string.Format(registryKey, Steam.AppIdSe1DS));
-        if (key is null)
-            return null;
-
-        var installLocation = key.GetValue(registryName) as string;
-        if (string.IsNullOrWhiteSpace(installLocation))
-            return null;
-
-        string path = Path.Combine(installLocation, "DedicatedServer64");
-        if (!IsDS64(path))
-            return null;
-
         return path;
     }
 
