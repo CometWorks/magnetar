@@ -28,7 +28,7 @@ static class Program
 
     private const string PulsarRepo = "SpaceGT/Pulsar";
     private const string OldLauncher = "SpaceEngineersDedicated.exe";
-    private const string StatsServer = "https://pluginstats.ferenczi.eu";
+    private const string StatsServer = "https://magnetarstats.ferenczi.eu";
 
     static void Main(string[] args)
     {
