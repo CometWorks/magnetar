@@ -16,9 +16,11 @@ public static class StatsClient
     private static string TrackUri => $"{BaseUrl}/Track";
     private static string VoteUri => $"{BaseUrl}/Vote";
 
-    // Hashed Steam ID of the player
+    // Hashed anonymous install identifier (see CoreConfig.InstallId)
     private static string PlayerHash =>
-        playerHash ??= Tools.GetStringHash($"{Steam.GetSteamId()}").Substring(0, 20);
+        playerHash ??= Tools
+            .GetStringHash(ConfigManager.Instance.GetOrCreateInstallId())
+            .Substring(0, 20);
     private static string playerHash;
 
     // Latest voting token received

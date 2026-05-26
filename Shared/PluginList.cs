@@ -82,15 +82,6 @@ public class PluginList : IEnumerable<PluginData>
         FindPluginDependencies();
     }
 
-    /// <summary>
-    /// Ensures the user is subscribed to the steam plugin.
-    /// </summary>
-    public void SubscribeToItem(string id)
-    {
-        if (Plugins.TryGetValue(id, out PluginData data) && data is ModPlugin steam)
-            Steam.SubscribeToItem(steam.WorkshopId);
-    }
-
     public IEnumerable<ModPlugin> GetModPlugins(Profile profile, HashSet<ulong> ignore)
     {
         return this[profile]

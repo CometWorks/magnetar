@@ -59,7 +59,7 @@ public static class SteamMods
     }
 
     public static bool IsModUntrusted(MyObjectBuilder_Checkpoint.ModItem mod) =>
-        mod.PublishedServiceName != "Steam" || !Steam.IsSubscribed(mod.PublishedFileId);
+        mod.PublishedServiceName != "Steam" || !Steam.IsItemInstalled(mod.PublishedFileId);
 
     public static MyWorkshop.ResultData UpdateInternal(
         List<MyObjectBuilder_Checkpoint.ModItem> mods

@@ -11,6 +11,11 @@ public class CoreConfig
     private string filePath;
 
     public string StatsServerBaseUrl { get; }
+
+    // Stable, anonymous per-install identifier for plugin statistics. Replaces the
+    // client Steam ID, which is unavailable on a dedicated server (no client API).
+    public string InstallId { get; set; }
+
     public bool DataHandlingConsent { get; set; }
     public string DataHandlingConsentDate { get; set; }
     public bool AllowIPv6 { get; set; } = true;

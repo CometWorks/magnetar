@@ -25,6 +25,8 @@ public class ConfigManager
     public bool SafeMode { get; set; }
     public bool HasLocal { get; set; }
 
+    private readonly object installIdLock = new();
+
     public static void EarlyInit(string pulsarDir)
     {
         Instance = new()
@@ -49,6 +51,20 @@ public class ConfigManager
         i.Profiles = ProfilesConfig.Load(i.PulsarDir);
         i.Sources = SourcesConfig.Load(i.PulsarDir, defaultHubs);
         i.List = new PluginList(i.PulsarDir, i.Sources, i.Profiles);
+    }
+
+    public string GetOrCreateInstallId()
+    {
+        lock (installIdLock)
+        {
+            if (string.IsNullOrEmpty(Core.InstallId))
+            {
+                Core.InstallId = Guid.NewGuid().ToString("N");
+                Core.Save();
+            }
+
+            return Core.InstallId;
+        }
     }
 
     public void UpdatePlayerStats()

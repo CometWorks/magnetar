@@ -178,9 +178,12 @@ static class Program
 
     private static void SetupSteam()
     {
+        // Register the Steamworks.NET resolver so workshop calls bind at world-load time.
+        // Do NOT initialize the Steam client API here: the dedicated server runs the Steam
+        // game-server API itself, and starting the client API in the same process corrupts
+        // game-server registration, making the server invisible in the browser and unjoinable.
         string ds64Dir = ConfigManager.Instance.GameDir;
         AppDomain.CurrentDomain.AssemblyResolve += Steam.SteamworksResolver(ds64Dir);
-        Steam.Init(Steam.AppIdSe1DS);
     }
 
     private static void SetupPlugins(string baseDir)

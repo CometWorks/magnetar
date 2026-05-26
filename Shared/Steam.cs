@@ -19,25 +19,13 @@ public static class Steam
     private const string registryName = "SteamPath";
     private const string Steamworks = "Steamworks.NET";
 
-    public static void SubscribeToItem(ulong id) =>
-        SteamUGC.SubscribeItem(new PublishedFileId_t(id));
-
-    public static bool IsSubscribed(ulong id)
+    // Dedicated servers must not initialize the Steam client API; only the game-server
+    // UGC is available. A workshop item the server has downloaded reports Installed
+    // (Subscribed is a client-only concept), so trust checks key off Installed.
+    public static bool IsItemInstalled(ulong id)
     {
-        uint state = SteamUGC.GetItemState(new PublishedFileId_t(id));
-        return (state & (uint)EItemState.k_EItemStateSubscribed) != 0;
-    }
-
-    public static ulong GetSteamId() => SteamUser.GetSteamID().m_SteamID;
-
-    public static void Init(uint AppId)
-    {
-        Environment.SetEnvironmentVariable("SteamAppId", AppId.ToString());
-
-        if (SteamAPI.IsSteamRunning())
-        {
-            SteamAPI.Init();
-        }
+        uint state = SteamGameServerUGC.GetItemState(new PublishedFileId_t(id));
+        return (state & (uint)EItemState.k_EItemStateInstalled) != 0;
     }
 
     public static ResolveEventHandler SteamworksResolver(string baseDir)
