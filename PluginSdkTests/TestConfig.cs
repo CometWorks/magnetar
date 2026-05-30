@@ -35,12 +35,14 @@ namespace PluginSdk.Tests
     /// <summary>
     /// Element of <see cref="TestConfig.TreeNodes"/>. Carries an <c>Id</c> and
     /// a <c>ParentId</c> so the UI can render the list as a tree.
+    /// <see cref="Label"/> is marked <see cref="StructCaptionAttribute"/> so
+    /// each row in the UI is labelled by its label string.
     /// </summary>
     public struct TreeNode
     {
         [StructMember] public int Id;
         [StructMember] public int ParentId;
-        [StructMember] public string Label { get; set; }
+        [StructMember, StructCaption] public string Label { get; set; }
     }
 
     /// <summary>

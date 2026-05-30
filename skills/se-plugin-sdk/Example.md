@@ -21,8 +21,8 @@ namespace MyPlugin
     public struct PolicyNode
     {
         [StructMember] public int Id;
-        [StructMember] public int ParentId;             // <-- tree shape
-        [StructMember] public string Label { get; set; }
+        [StructMember] public int ParentId;                       // <-- tree shape
+        [StructMember, StructCaption] public string Label { get; set; }   // <-- row caption
     }
 
     // ---- Enum used by an option -----------------------------------------

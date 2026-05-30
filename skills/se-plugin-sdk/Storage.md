@@ -45,9 +45,11 @@ The JSON document is a three-part envelope:
 }
 ```
 
-- **`schema`** — the layout tree, per-option metadata, struct member tables
-  and enum value tables produced by `ConfigSchema.Build(typeof(MyConfig))`.
-  Rebuilt on every save; the plugin never writes it by hand.
+- **`schema`** — the layout tree, per-option metadata, struct definitions
+  (`{ "members": [...], "captionMember": "<name>"? }` per struct, where
+  `captionMember` is the `[StructCaption]` field name when set) and enum value
+  tables produced by `ConfigSchema.Build(typeof(MyConfig))`. Rebuilt on every
+  save; the plugin never writes it by hand.
 - **`defaults`** — a full serialization of `new MyConfig()`, so a Quasar
   client can offer "reset to default" without round-tripping to the server.
 - **`values`** — a full serialization of the current `config`. **Every option

@@ -313,4 +313,18 @@ namespace PluginSdk.Config
             Caption = caption;
         }
     }
+
+    /// <summary>
+    /// Marks one <see cref="StructMemberAttribute"/>-annotated member of a
+    /// Struct as the source for the row caption when instances of the struct
+    /// appear in a <c>List&lt;Struct&gt;</c> (flat or tree) editor in the UI.
+    /// The marked member must also carry <see cref="StructMemberAttribute"/>
+    /// and must be of type <c>string</c>; at most one member per struct may
+    /// be marked. When absent, the UI falls back to a positional placeholder
+    /// for each row.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    public sealed class StructCaptionAttribute : Attribute
+    {
+    }
 }

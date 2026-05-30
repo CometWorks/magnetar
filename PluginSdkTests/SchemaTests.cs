@@ -87,7 +87,7 @@ namespace PluginSdk.Tests
             Assert.Equal(nameof(TestStruct), structValue.StructName);
 
             Assert.True(schema.Structs.ContainsKey(nameof(TestStruct)));
-            var members = schema.Structs[nameof(TestStruct)];
+            var members = schema.Structs[nameof(TestStruct)].Members;
             // 6 fields + 1 property
             Assert.Equal(7, members.Count);
             Assert.Contains(members, m => m.Name == "Flag" && m.Type == "bool");
@@ -124,7 +124,7 @@ namespace PluginSdk.Tests
             var schema = ConfigSchema.Build(typeof(TestConfig));
 
             Assert.True(schema.Structs.ContainsKey(nameof(NestedStruct)));
-            var members = schema.Structs[nameof(NestedStruct)];
+            var members = schema.Structs[nameof(NestedStruct)].Members;
 
             var numbers = members.Single(m => m.Name == "Numbers");
             Assert.Equal("list", numbers.Type);
@@ -198,7 +198,7 @@ namespace PluginSdk.Tests
         public void Build_EnumStructMember_DescribedAsEnumWithName()
         {
             var schema = ConfigSchema.Build(typeof(TestConfig));
-            var members = schema.Structs[nameof(TestStruct)];
+            var members = schema.Structs[nameof(TestStruct)].Members;
 
             var quality = members.Single(m => m.Name == "Quality");
             Assert.Equal("enum", quality.Type);
@@ -206,6 +206,97 @@ namespace PluginSdk.Tests
             // Reaching TestStruct from the schema walk must also register
             // the enum referenced from inside the struct.
             Assert.True(schema.Enums.ContainsKey(nameof(Quality)));
+        }
+
+        [Fact]
+        public void Build_StructCaption_EmitsCaptionMemberName()
+        {
+            var schema = ConfigSchema.Build(typeof(TestConfig));
+            Assert.Equal("Label", schema.Structs[nameof(TreeNode)].CaptionMember);
+        }
+
+        [Fact]
+        public void Build_StructWithoutCaption_LeavesCaptionMemberNull()
+        {
+            var schema = ConfigSchema.Build(typeof(TestConfig));
+            // TestStruct and NestedStruct do not mark a [StructCaption] member.
+            Assert.Null(schema.Structs[nameof(TestStruct)].CaptionMember);
+            Assert.Null(schema.Structs[nameof(NestedStruct)].CaptionMember);
+        }
+
+        // ---- Negative validation paths for [StructCaption] -----------------
+        // Fields are never assigned: schema build throws before any value is read.
+#pragma warning disable CS0649
+        private struct NonStringCaption
+        {
+            [StructMember, StructCaption] public int Bad;
+        }
+
+        private struct CaptionWithoutStructMember
+        {
+            [StructMember] public string Good;
+            [StructCaption] public string Caption { get; set; }
+        }
+
+        private struct TwoCaptions
+        {
+            [StructMember, StructCaption] public string First;
+            [StructMember, StructCaption] public string Second;
+        }
+#pragma warning restore CS0649
+
+        private class NonStringCaptionConfig : PluginConfig
+        {
+            private NonStringCaption value;
+            [StructOption] public NonStringCaption Value
+            {
+                get => value;
+                set => SetField(ref this.value, value);
+            }
+        }
+
+        private class CaptionWithoutStructMemberConfig : PluginConfig
+        {
+            private CaptionWithoutStructMember value;
+            [StructOption] public CaptionWithoutStructMember Value
+            {
+                get => value;
+                set => SetField(ref this.value, value);
+            }
+        }
+
+        private class TwoCaptionsConfig : PluginConfig
+        {
+            private TwoCaptions value;
+            [StructOption] public TwoCaptions Value
+            {
+                get => value;
+                set => SetField(ref this.value, value);
+            }
+        }
+
+        [Fact]
+        public void Build_StructCaption_OnNonStringMember_Throws()
+        {
+            var ex = Assert.Throws<System.InvalidOperationException>(
+                () => ConfigSchema.Build(typeof(NonStringCaptionConfig)));
+            Assert.Contains("must be of type string", ex.Message);
+        }
+
+        [Fact]
+        public void Build_StructCaption_WithoutStructMember_Throws()
+        {
+            var ex = Assert.Throws<System.InvalidOperationException>(
+                () => ConfigSchema.Build(typeof(CaptionWithoutStructMemberConfig)));
+            Assert.Contains("lacks [StructMember]", ex.Message);
+        }
+
+        [Fact]
+        public void Build_StructCaption_DuplicateOnSameStruct_Throws()
+        {
+            var ex = Assert.Throws<System.InvalidOperationException>(
+                () => ConfigSchema.Build(typeof(TwoCaptionsConfig)));
+            Assert.Contains("more than one [StructCaption]", ex.Message);
         }
     }
 
@@ -304,6 +395,12 @@ namespace PluginSdk.Tests
             var integerProp = properties.EnumerateArray().Single(p => p.GetProperty("name").GetString() == "Integer");
             Assert.Equal(0, integerProp.GetProperty("min").GetDouble());
             Assert.Equal(100, integerProp.GetProperty("max").GetDouble());
+
+            // structs[TreeNode] is now an object { members, captionMember } —
+            // ensure the caption hint travels over the wire as 'captionMember'.
+            var treeNode = schemaEl.GetProperty("structs").GetProperty(nameof(TreeNode));
+            Assert.Equal("Label", treeNode.GetProperty("captionMember").GetString());
+            Assert.True(treeNode.GetProperty("members").GetArrayLength() >= 3);
         }
 
         [Fact]

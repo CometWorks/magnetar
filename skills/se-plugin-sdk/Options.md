@@ -118,6 +118,38 @@ a list of structs) and is convenient for clarity.
   enums, `List<T>`, `SerializableDictionary<,>`, or nested structs.
 - A struct may be a `List<T>` element, but **not** a dictionary key.
 
+### Naming struct instances in a list
+
+When a struct is the element of a `List<T>` (flat or tree), the UI needs a
+caption to show on each row. Mark exactly one `string` `[StructMember]` with
+`[StructCaption]` and the row caption is the live value of that member:
+
+```csharp
+public struct PolicyNode
+{
+    [StructMember] public int Id;
+    [StructMember] public int ParentId;
+    [StructMember, StructCaption] public string Label { get; set; }   // <-- row caption
+}
+```
+
+The schema emits `structs[PolicyNode].captionMember = "Label"`; the UI walks
+each list element and uses `element.Label` as the displayed name. Without
+`[StructCaption]` the UI falls back to a positional placeholder (e.g.
+"Item 3"), which is fine for short fixed lists but unhelpful for tree editors.
+
+Validation (enforced by `ConfigSchema.Build`):
+
+- The marked member must also carry `[StructMember]` — the value has to be in
+  the wire data for the UI to read it.
+- The marked member must be of type `string`.
+- At most one `[StructCaption]` per struct.
+
+For composite captions (`"{Name} ({Min}-{Max})"`), give the struct a stored
+backing string the plugin keeps up to date in its setters, and mark that with
+`[StructCaption]`. There is intentionally no template/format string in the
+schema — the UI only ever reads a literal member value.
+
 ### Constraints inside structs
 
 There is intentionally no `IntStructMember(min, max)` or similar. Struct

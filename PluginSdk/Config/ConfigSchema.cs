@@ -47,7 +47,7 @@ namespace PluginSdk.Config
             {
                 var structType = pendingStructs.Dequeue();
                 if (schema.Structs.ContainsKey(structType.Name)) continue;
-                schema.Structs[structType.Name] = BuildStructMembers(structType, pendingStructs, schema);
+                schema.Structs[structType.Name] = BuildStructInfo(structType, pendingStructs, schema);
             }
 
             return schema;
@@ -184,9 +184,10 @@ namespace PluginSdk.Config
             return info;
         }
 
-        private static List<StructMemberInfo> BuildStructMembers(Type structType, Queue<Type> pendingStructs, ConfigSchemaData schema)
+        private static StructInfo BuildStructInfo(Type structType, Queue<Type> pendingStructs, ConfigSchemaData schema)
         {
             var members = new List<StructMemberInfo>();
+            string captionMember = null;
 
             foreach (var field in structType.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
@@ -196,6 +197,10 @@ namespace PluginSdk.Config
                     field.GetCustomAttribute<StructMemberAttribute>()?.Description,
                     pendingStructs,
                     schema));
+
+                if (field.GetCustomAttribute<StructCaptionAttribute>() != null)
+                    captionMember = ValidateCaptionMember(structType, field.Name, field.FieldType,
+                        field.GetCustomAttribute<StructMemberAttribute>(), captionMember);
             }
 
             foreach (var prop in structType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -207,9 +212,38 @@ namespace PluginSdk.Config
                     prop.GetCustomAttribute<StructMemberAttribute>()?.Description,
                     pendingStructs,
                     schema));
+
+                if (prop.GetCustomAttribute<StructCaptionAttribute>() != null)
+                    captionMember = ValidateCaptionMember(structType, prop.Name, prop.PropertyType,
+                        prop.GetCustomAttribute<StructMemberAttribute>(), captionMember);
             }
 
-            return members;
+            return new StructInfo { Members = members, CaptionMember = captionMember };
+        }
+
+        /// <summary>
+        /// Validates a <see cref="StructCaptionAttribute"/>-marked member:
+        /// it must also carry <see cref="StructMemberAttribute"/>, be of type
+        /// <c>string</c>, and be the only such member on its struct. Returns
+        /// the validated member name.
+        /// </summary>
+        private static string ValidateCaptionMember(
+            Type structType, string memberName, Type memberType,
+            StructMemberAttribute structMember, string existingCaptionMember)
+        {
+            if (existingCaptionMember != null)
+                throw new InvalidOperationException(
+                    $"{structType.Name} has more than one [StructCaption] member " +
+                    $"('{existingCaptionMember}' and '{memberName}'); only one is allowed.");
+            if (structMember == null)
+                throw new InvalidOperationException(
+                    $"{structType.Name}.{memberName} is marked [StructCaption] but lacks [StructMember]; " +
+                    "the caption member must also be a serialized struct member so the UI can read its value.");
+            if (memberType != typeof(string))
+                throw new InvalidOperationException(
+                    $"{structType.Name}.{memberName} is marked [StructCaption] but is {memberType.Name}; " +
+                    "the caption member must be of type string.");
+            return memberName;
         }
 
         /// <summary>
@@ -358,7 +392,7 @@ namespace PluginSdk.Config
     {
         public List<LayoutContainerInfo> Layout { get; set; } = new List<LayoutContainerInfo>();
         public List<ConfigPropertyInfo> Properties { get; set; } = new List<ConfigPropertyInfo>();
-        public Dictionary<string, List<StructMemberInfo>> Structs { get; set; } = new Dictionary<string, List<StructMemberInfo>>();
+        public Dictionary<string, StructInfo> Structs { get; set; } = new Dictionary<string, StructInfo>();
 
         /// <summary>
         /// Enum definitions referenced by options or struct members, keyed by
@@ -366,6 +400,21 @@ namespace PluginSdk.Config
         /// (underlying-value) order.
         /// </summary>
         public Dictionary<string, List<EnumValueInfo>> Enums { get; set; } = new Dictionary<string, List<EnumValueInfo>>();
+    }
+
+    /// <summary>
+    /// Schema description of one user-defined struct used as a configuration
+    /// value. <see cref="Members"/> lists its serialized fields and
+    /// properties; <see cref="CaptionMember"/> — when set via
+    /// <see cref="StructCaptionAttribute"/> on one of the members — is the
+    /// name of the string member the UI should display as the row caption in
+    /// a <c>List&lt;Struct&gt;</c> editor. <c>null</c> means the UI falls
+    /// back to a positional placeholder.
+    /// </summary>
+    public sealed class StructInfo
+    {
+        public List<StructMemberInfo> Members { get; set; } = new List<StructMemberInfo>();
+        public string CaptionMember { get; set; }
     }
 
     /// <summary>
