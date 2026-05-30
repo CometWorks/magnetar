@@ -73,121 +73,96 @@ namespace PluginSdk.Tests
     public class TestConfig : PluginConfig
     {
         // Scalars
-        private bool flag;
-        private int integer;
-        private long longInteger;
-        private float floatNumber;
-        private double doubleNumber;
-        private string text = "";
+
+        [BoolOption("A boolean flag", Parent = "scalars-left")]
+        public bool Flag { get; set => SetField(ref field, value); }
+
+        [IntOption(0, 100, "An int in [0,100]", Parent = "scalars-left")]
+        public int Integer { get; set => SetField(ref field, value); }
+
+        [LongOption(description: "A long", Parent = "scalars-left")]
+        public long LongInteger { get; set => SetField(ref field, value); }
+
+        [FloatOption(description: "A float", Parent = "scalars-right")]
+        public float FloatNumber { get; set => SetField(ref field, value); }
+
+        [DoubleOption(description: "A double", Parent = "scalars-right")]
+        public double DoubleNumber { get; set => SetField(ref field, value); }
+
+        [StringOption(maxLength: 64, description: "Some text", Parent = "scalars-right")]
+        public string Text { get; set => SetField(ref field, value); } = "";
 
         // Lists of scalars
-        private List<bool> boolList = new List<bool>();
-        private List<int> intList = new List<int>();
-        private List<long> longList = new List<long>();
-        private List<float> floatList = new List<float>();
-        private List<double> doubleList = new List<double>();
-        private List<string> stringList = new List<string>();
+
+        [ListOption(description: "List of bool")]
+        public List<bool> BoolList { get; set => SetField(ref field, value); } = new List<bool>();
+
+        [ListOption(description: "List of int")]
+        public List<int> IntList { get; set => SetField(ref field, value); } = new List<int>();
+
+        [ListOption(description: "List of long")]
+        public List<long> LongList { get; set => SetField(ref field, value); } = new List<long>();
+
+        [ListOption(description: "List of float")]
+        public List<float> FloatList { get; set => SetField(ref field, value); } = new List<float>();
+
+        [ListOption(description: "List of double")]
+        public List<double> DoubleList { get; set => SetField(ref field, value); } = new List<double>();
+
+        [ListOption(description: "List of string")]
+        public List<string> StringList { get; set => SetField(ref field, value); } = new List<string>();
 
         // Dicts with each allowed key type and scalar value types
-        private SerializableDictionary<string, int> dictStringInt = new SerializableDictionary<string, int>();
-        private SerializableDictionary<string, string> dictStringString = new SerializableDictionary<string, string>();
-        private SerializableDictionary<string, double> dictStringDouble = new SerializableDictionary<string, double>();
-        private SerializableDictionary<int, string> dictIntString = new SerializableDictionary<int, string>();
-        private SerializableDictionary<int, double> dictIntDouble = new SerializableDictionary<int, double>();
-        private SerializableDictionary<long, bool> dictLongBool = new SerializableDictionary<long, bool>();
-        private SerializableDictionary<long, long> dictLongLong = new SerializableDictionary<long, long>();
+
+        [DictOption(description: "string -> int")]
+        public SerializableDictionary<string, int> DictStringInt { get; set => SetField(ref field, value); } = new SerializableDictionary<string, int>();
+
+        [DictOption(description: "string -> string")]
+        public SerializableDictionary<string, string> DictStringString { get; set => SetField(ref field, value); } = new SerializableDictionary<string, string>();
+
+        [DictOption(description: "string -> double")]
+        public SerializableDictionary<string, double> DictStringDouble { get; set => SetField(ref field, value); } = new SerializableDictionary<string, double>();
+
+        [DictOption(description: "int -> string")]
+        public SerializableDictionary<int, string> DictIntString { get; set => SetField(ref field, value); } = new SerializableDictionary<int, string>();
+
+        [DictOption(description: "int -> double")]
+        public SerializableDictionary<int, double> DictIntDouble { get; set => SetField(ref field, value); } = new SerializableDictionary<int, double>();
+
+        [DictOption(description: "long -> bool")]
+        public SerializableDictionary<long, bool> DictLongBool { get; set => SetField(ref field, value); } = new SerializableDictionary<long, bool>();
+
+        [DictOption(description: "long -> long")]
+        public SerializableDictionary<long, long> DictLongLong { get; set => SetField(ref field, value); } = new SerializableDictionary<long, long>();
 
         // Enum scalar and list of enums
-        private Quality quality = Quality.Medium;
-        private List<Quality> qualityList = new List<Quality>();
+
+        [EnumOption("An enum value", Parent = "scalars-right")]
+        public Quality Quality { get; set => SetField(ref field, value); } = Quality.Medium;
+
+        [EnumOption("List of enums")]
+        public List<Quality> QualityList { get; set => SetField(ref field, value); } = new List<Quality>();
 
         // Struct directly, and list of struct
-        private TestStruct structValue;
-        private List<TestStruct> structList = new List<TestStruct>();
+
+        [StructOption(description: "A struct value")]
+        public TestStruct StructValue { get; set => SetField(ref field, value); }
+
+        [StructOption(description: "List of structs")]
+        public List<TestStruct> StructList { get; set => SetField(ref field, value); } = new List<TestStruct>();
 
         // Tree-shaped list of struct (exercises TreeParentField metadata)
-        private List<TreeNode> treeNodes = new List<TreeNode>();
+
+        [ListOption(description: "Tree of nodes", TreeParentField = nameof(TreeNode.ParentId))]
+        public List<TreeNode> TreeNodes { get; set => SetField(ref field, value); } = new List<TreeNode>();
 
         // Nested-collection struct (exercises schema recursion + deep equality)
-        private NestedStruct nested = new NestedStruct
+
+        [StructOption(description: "Struct with nested collections")]
+        public NestedStruct Nested { get; set => SetField(ref field, value); } = new NestedStruct
         {
             Numbers = new List<int>(),
             Map = new SerializableDictionary<string, double>(),
         };
-
-        [BoolOption("A boolean flag", Parent = "scalars-left")]
-        public bool Flag { get => flag; set => SetField(ref flag, value); }
-
-        [IntOption(0, 100, "An int in [0,100]", Parent = "scalars-left")]
-        public int Integer { get => integer; set => SetField(ref integer, value); }
-
-        [LongOption(description: "A long", Parent = "scalars-left")]
-        public long LongInteger { get => longInteger; set => SetField(ref longInteger, value); }
-
-        [FloatOption(description: "A float", Parent = "scalars-right")]
-        public float FloatNumber { get => floatNumber; set => SetField(ref floatNumber, value); }
-
-        [DoubleOption(description: "A double", Parent = "scalars-right")]
-        public double DoubleNumber { get => doubleNumber; set => SetField(ref doubleNumber, value); }
-
-        [StringOption(maxLength: 64, description: "Some text", Parent = "scalars-right")]
-        public string Text { get => text; set => SetField(ref text, value); }
-
-        [ListOption(description: "List of bool")]
-        public List<bool> BoolList { get => boolList; set => SetField(ref boolList, value); }
-
-        [ListOption(description: "List of int")]
-        public List<int> IntList { get => intList; set => SetField(ref intList, value); }
-
-        [ListOption(description: "List of long")]
-        public List<long> LongList { get => longList; set => SetField(ref longList, value); }
-
-        [ListOption(description: "List of float")]
-        public List<float> FloatList { get => floatList; set => SetField(ref floatList, value); }
-
-        [ListOption(description: "List of double")]
-        public List<double> DoubleList { get => doubleList; set => SetField(ref doubleList, value); }
-
-        [ListOption(description: "List of string")]
-        public List<string> StringList { get => stringList; set => SetField(ref stringList, value); }
-
-        [DictOption(description: "string -> int")]
-        public SerializableDictionary<string, int> DictStringInt { get => dictStringInt; set => SetField(ref dictStringInt, value); }
-
-        [DictOption(description: "string -> string")]
-        public SerializableDictionary<string, string> DictStringString { get => dictStringString; set => SetField(ref dictStringString, value); }
-
-        [DictOption(description: "string -> double")]
-        public SerializableDictionary<string, double> DictStringDouble { get => dictStringDouble; set => SetField(ref dictStringDouble, value); }
-
-        [DictOption(description: "int -> string")]
-        public SerializableDictionary<int, string> DictIntString { get => dictIntString; set => SetField(ref dictIntString, value); }
-
-        [DictOption(description: "int -> double")]
-        public SerializableDictionary<int, double> DictIntDouble { get => dictIntDouble; set => SetField(ref dictIntDouble, value); }
-
-        [DictOption(description: "long -> bool")]
-        public SerializableDictionary<long, bool> DictLongBool { get => dictLongBool; set => SetField(ref dictLongBool, value); }
-
-        [DictOption(description: "long -> long")]
-        public SerializableDictionary<long, long> DictLongLong { get => dictLongLong; set => SetField(ref dictLongLong, value); }
-
-        [EnumOption("An enum value", Parent = "scalars-right")]
-        public Quality Quality { get => quality; set => SetField(ref quality, value); }
-
-        [EnumOption("List of enums")]
-        public List<Quality> QualityList { get => qualityList; set => SetField(ref qualityList, value); }
-
-        [StructOption(description: "A struct value")]
-        public TestStruct StructValue { get => structValue; set => SetField(ref structValue, value); }
-
-        [StructOption(description: "List of structs")]
-        public List<TestStruct> StructList { get => structList; set => SetField(ref structList, value); }
-
-        [ListOption(description: "Tree of nodes", TreeParentField = nameof(TreeNode.ParentId))]
-        public List<TreeNode> TreeNodes { get => treeNodes; set => SetField(ref treeNodes, value); }
-
-        [StructOption(description: "Struct with nested collections")]
-        public NestedStruct Nested { get => nested; set => SetField(ref nested, value); }
     }
 }

@@ -15,9 +15,17 @@ namespace PluginSdk.Config
 {
     /// <summary>
     /// Base class for managed plugin configuration. Plugins derive from this
-    /// class, declare a private backing field for each option, and expose it
-    /// via a public property whose setter calls <see cref="SetField{T}"/> so
-    /// that <see cref="PropertyChanged"/> is raised when the value changes.
+    /// class and declare one public read/write property per option, whose
+    /// setter calls <see cref="SetField{T}"/> so <see cref="PropertyChanged"/>
+    /// is raised when the value changes. The C# 14 <c>field</c> contextual
+    /// keyword refers to the compiler-generated backing field, so no explicit
+    /// private field is needed; defaults are set with a property initializer:
+    ///
+    /// <code>
+    /// [IntOption(1, 240, "Ticks per second")]
+    /// public int TickRate { get; set =&gt; SetField(ref field, value); } = 60;
+    /// </code>
+    ///
     /// Each public property must be annotated with the matching attribute
     /// from <see cref="ConfigAttributes"/> so the server can discover,
     /// validate, remotely manage and lay out the option in the Web UI.

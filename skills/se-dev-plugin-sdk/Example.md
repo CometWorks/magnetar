@@ -46,96 +46,44 @@ namespace MyPlugin
     [Column("server-right", parent: "server",   caption: "Right")]
     public class MyPluginConfig : PluginConfig
     {
-        // Scalars
-        private bool     enabled    = true;
-        private string   serverName = "Unnamed";
-        private int      tickRate   = 60;
-        private double   gravity    = 1.0;
-        private LogLevel logLevel   = LogLevel.Info;
-
-        // Compound
-        private Range allowedPorts = new Range { Min = 27000, Max = 27100 };
-
-        // Collections of scalars
-        private List<string> tags = new List<string>();
-        private SerializableDictionary<string, int> quotas =
-            new SerializableDictionary<string, int>();
-
-        // Collection of structs as a tree
-        private List<PolicyNode> policy = new List<PolicyNode>();
-
         // ---- Scalar properties --------------------------------------------
 
         [BoolOption("Enable the plugin", Parent = "server-left")]
-        public bool Enabled
-        {
-            get => enabled;
-            set => SetField(ref enabled, value);
-        }
+        public bool Enabled { get; set => SetField(ref field, value); } = true;
 
         [StringOption(maxLength: 64, description: "Display name", Parent = "server-left")]
-        public string ServerName
-        {
-            get => serverName;
-            set => SetField(ref serverName, value);
-        }
+        public string ServerName { get; set => SetField(ref field, value); } = "Unnamed";
 
         [IntOption(1, 240, "Ticks per second", Parent = "server-right")]
-        public int TickRate
-        {
-            get => tickRate;
-            set => SetField(ref tickRate, value);
-        }
+        public int TickRate { get; set => SetField(ref field, value); } = 60;
 
         [DoubleOption(0.0, 4.0, "Gravity multiplier", Parent = "server-right")]
-        public double Gravity
-        {
-            get => gravity;
-            set => SetField(ref gravity, value);
-        }
+        public double Gravity { get; set => SetField(ref field, value); } = 1.0;
 
         // ---- Enum property -----------------------------------------------
 
         [EnumOption("Log verbosity", Parent = "server-right")]
-        public LogLevel LogLevel
-        {
-            get => logLevel;
-            set => SetField(ref logLevel, value);
-        }
+        public LogLevel LogLevel { get; set => SetField(ref field, value); } = LogLevel.Info;
 
         // ---- Struct property ---------------------------------------------
 
         [StructOption(description: "Port range", Parent = "limits")]
-        public Range AllowedPorts
-        {
-            get => allowedPorts;
-            set => SetField(ref allowedPorts, value);
-        }
+        public Range AllowedPorts { get; set => SetField(ref field, value); }
+            = new Range { Min = 27000, Max = 27100 };
 
         // ---- Collections --------------------------------------------------
 
         [ListOption(description: "Free-form tags", Parent = "collections")]
-        public List<string> Tags
-        {
-            get => tags;
-            set => SetField(ref tags, value);
-        }
+        public List<string> Tags { get; set => SetField(ref field, value); } = new List<string>();
 
         [DictOption(description: "Per-player quotas", Parent = "collections")]
-        public SerializableDictionary<string, int> Quotas
-        {
-            get => quotas;
-            set => SetField(ref quotas, value);
-        }
+        public SerializableDictionary<string, int> Quotas { get; set => SetField(ref field, value); }
+            = new SerializableDictionary<string, int>();
 
         [ListOption(description: "Policy tree",
                     TreeParentField = nameof(PolicyNode.ParentId),
                     Parent = "collections")]
-        public List<PolicyNode> Policy
-        {
-            get => policy;
-            set => SetField(ref policy, value);
-        }
+        public List<PolicyNode> Policy { get; set => SetField(ref field, value); } = new List<PolicyNode>();
     }
 }
 ```

@@ -27,13 +27,13 @@ Examples:
 
 ```csharp
 [BoolOption("Enable verbose logging")]
-public bool Verbose { get => verbose; set => SetField(ref verbose, value); }
+public bool Verbose { get; set => SetField(ref field, value); }
 
 [IntOption(1, 240, "Ticks per second")]
-public int TickRate { ... }
+public int TickRate { get; set => SetField(ref field, value); } = 60;
 
 [StringOption(maxLength: 64, pattern: @"^[A-Za-z0-9_-]+$", description: "Slug")]
-public string Slug { ... }
+public string Slug { get; set => SetField(ref field, value); } = "";
 ```
 
 ## Lists
@@ -43,10 +43,11 @@ an enum, or a user struct. `maxCount = 0` (the default) means unlimited.
 
 ```csharp
 [ListOption(description: "Whitelisted ports")]
-public List<int> Ports { get => ports; set => SetField(ref ports, value); }
+public List<int> Ports { get; set => SetField(ref field, value); } = new List<int>();
 
 [ListOption(maxCount: 100, description: "Per-player overrides")]
-public List<PlayerOverride> Overrides { ... }
+public List<PlayerOverride> Overrides { get; set => SetField(ref field, value); }
+    = new List<PlayerOverride>();
 ```
 
 ### Tree-shaped lists
@@ -80,7 +81,8 @@ The plugin still gets a flat `List<Node>`; the tree shape is purely a UI hint.
 
 ```csharp
 [DictOption(description: "Per-player quotas")]
-public SerializableDictionary<string, int> Quotas { ... }
+public SerializableDictionary<string, int> Quotas { get; set => SetField(ref field, value); }
+    = new SerializableDictionary<string, int>();
 ```
 
 ## Struct options
@@ -98,10 +100,10 @@ public struct Range
 }
 
 [StructOption(description: "Allowed range")]
-public Range Bounds { get => bounds; set => SetField(ref bounds, value); }
+public Range Bounds { get; set => SetField(ref field, value); }
 
 [StructOption(description: "Tiered ranges")]
-public List<Range> Tiers { get => tiers; set => SetField(ref tiers, value); }
+public List<Range> Tiers { get; set => SetField(ref field, value); } = new List<Range>();
 ```
 
 A struct may also be used as the element type of a `List<T>` via the plain
@@ -172,10 +174,10 @@ public enum Quality
 }
 
 [EnumOption("Render quality", Parent = "scalars-right")]
-public Quality Quality { get => quality; set => SetField(ref quality, value); }
+public Quality Quality { get; set => SetField(ref field, value); } = Quality.Medium;
 
 [EnumOption("Preset rotation")]
-public List<Quality> Presets { get => presets; set => SetField(ref presets, value); }
+public List<Quality> Presets { get; set => SetField(ref field, value); } = new List<Quality>();
 ```
 
 Key properties:

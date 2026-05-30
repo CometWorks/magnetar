@@ -10,21 +10,19 @@ A plugin's configuration is a single class that derives from
 3. Property setters that **call `SetField(ref field, value)`** so change
    notifications fire when the value actually changes.
 
-## The backing-field / SetField pattern
+## The property pattern
 
 ```csharp
 public class MyConfig : PluginConfig
 {
-    private int tickRate = 60;       // backing field carries the default
-
     [IntOption(1, 240, "Ticks per second")]
-    public int TickRate
-    {
-        get => tickRate;
-        set => SetField(ref tickRate, value);   // raises PropertyChanged on change
-    }
+    public int TickRate { get; set => SetField(ref field, value); } = 60;
 }
 ```
+
+`field` is the C# 14 contextual keyword that refers to the compiler-generated
+backing field of the property — no explicit private field is needed. The
+property initializer (`= 60;`) sets the default.
 
 `SetField<T>` is provided by the base class. It:
 
@@ -41,11 +39,11 @@ needs to react when Quasar pushes a new value or the user edits the local XML.
 
 Defaults are whatever a freshly constructed instance produces. There is no
 separate `[DefaultValue(...)]` attribute and there is no setter-side fallback —
-initialize the backing field to the desired default.
+use a property initializer to set the desired default.
 
 ```csharp
-private string serverName = "Unnamed";          // default = "Unnamed"
-private List<int> ports = new List<int>();      // default = empty list
+public string ServerName { get; set => SetField(ref field, value); } = "Unnamed";
+public List<int> Ports   { get; set => SetField(ref field, value); } = new List<int>();
 ```
 
 The defaults are read twice by the framework: once when writing XML (to skip

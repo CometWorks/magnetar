@@ -1,10 +1,17 @@
 ---
-name: se-plugin-sdk
+name: se-dev-plugin-sdk
 description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables and the UI layout that Quasar renders remotely.
 license: MIT
 ---
 
 # Magnetar PluginSdk — Configuration Handbook
+
+> **C# 14 syntax.** All examples in this handbook use the C# 14 `field`
+> contextual keyword in property accessors (no explicit private backing
+> field). `PluginSdk.csproj` sets `<LangVersion>latest</LangVersion>`; consumer
+> plugins should do the same. The library still targets `netstandard2.0` — the
+> `field` keyword is a compile-time feature and does not change runtime
+> compatibility.
 
 `PluginSdk` is the small .NET Standard 2.0 library a Magnetar plugin uses to
 declare its configuration. The same declaration drives three things at once:
@@ -37,14 +44,11 @@ using PluginSdk.Config;
 
 public class MyPluginConfig : PluginConfig
 {
-    private bool enabled = true;
-    private int tickRate = 60;
-
     [BoolOption("Enable the feature")]
-    public bool Enabled { get => enabled; set => SetField(ref enabled, value); }
+    public bool Enabled { get; set => SetField(ref field, value); } = true;
 
     [IntOption(1, 240, "Ticks per second")]
-    public int TickRate { get => tickRate; set => SetField(ref tickRate, value); }
+    public int TickRate { get; set => SetField(ref field, value); } = 60;
 }
 ```
 
