@@ -177,28 +177,28 @@ namespace PluginSdk.Config
                     break;
 
                 case ColorOptionAttribute co:
-                    info.Type = "color";
+                    info.Type = nameof(VRageMath.Color);
                     info.HasAlpha = co.Format == ColorFormat.Rgba;
                     break;
 
                 case Vector2DOptionAttribute _:
-                    info.Type = "vec2d";
+                    info.Type = nameof(VRageMath.Vector2D);
                     break;
 
                 case Vector3DOptionAttribute _:
-                    info.Type = "vec3d";
+                    info.Type = nameof(VRageMath.Vector3D);
                     break;
 
                 case Vector2IOptionAttribute _:
-                    info.Type = "vec2i";
+                    info.Type = nameof(VRageMath.Vector2I);
                     break;
 
                 case Vector3IOptionAttribute _:
-                    info.Type = "vec3i";
+                    info.Type = nameof(VRageMath.Vector3I);
                     break;
 
                 case DirectionOptionAttribute _:
-                    info.Type = "direction";
+                    info.Type = nameof(VRageMath.Base6Directions.Direction);
                     // Direction values travel as the enum member name; surface the
                     // member list so the UI can render the dropdown without
                     // hard-coding it.
@@ -207,7 +207,7 @@ namespace PluginSdk.Config
                     break;
 
                 case PositionAndOrientationOptionAttribute _:
-                    info.Type = "pose";
+                    info.Type = nameof(VRage.MyPositionAndOrientation);
                     break;
 
                 default:

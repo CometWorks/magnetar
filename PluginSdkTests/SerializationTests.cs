@@ -437,9 +437,9 @@ namespace PluginSdk.Tests
             var solid = schema.Properties.Single(p => p.Name == nameof(TestConfig.SolidColor));
             var tint  = schema.Properties.Single(p => p.Name == nameof(TestConfig.TintColor));
 
-            Assert.Equal("color", solid.Type);
+            Assert.Equal(nameof(Color), solid.Type);
             Assert.False(solid.HasAlpha);
-            Assert.Equal("color", tint.Type);
+            Assert.Equal(nameof(Color), tint.Type);
             Assert.True(tint.HasAlpha);
         }
 
@@ -447,14 +447,14 @@ namespace PluginSdk.Tests
         public void Schema_VectorAndPoseAndDirection_HaveDistinctTypeNames()
         {
             var schema = ConfigSchema.Build(typeof(TestConfig));
-            Assert.Equal("vec2d",     schema.Properties.Single(p => p.Name == "UvOffset").Type);
-            Assert.Equal("vec3d",     schema.Properties.Single(p => p.Name == "WorldOffset").Type);
-            Assert.Equal("vec2i",     schema.Properties.Single(p => p.Name == "TileCoord").Type);
-            Assert.Equal("vec3i",     schema.Properties.Single(p => p.Name == "GridSize").Type);
-            Assert.Equal("pose",      schema.Properties.Single(p => p.Name == "SpawnPose").Type);
+            Assert.Equal(nameof(Vector2D),                 schema.Properties.Single(p => p.Name == "UvOffset").Type);
+            Assert.Equal(nameof(Vector3D),                 schema.Properties.Single(p => p.Name == "WorldOffset").Type);
+            Assert.Equal(nameof(Vector2I),                 schema.Properties.Single(p => p.Name == "TileCoord").Type);
+            Assert.Equal(nameof(Vector3I),                 schema.Properties.Single(p => p.Name == "GridSize").Type);
+            Assert.Equal(nameof(MyPositionAndOrientation), schema.Properties.Single(p => p.Name == "SpawnPose").Type);
 
             var dir = schema.Properties.Single(p => p.Name == "Facing");
-            Assert.Equal("direction", dir.Type);
+            Assert.Equal(nameof(Base6Directions.Direction), dir.Type);
             // Direction values travel as enum names — the schema must surface the
             // member list so the UI does not hard-code it.
             Assert.Equal(nameof(Base6Directions.Direction), dir.EnumName);
