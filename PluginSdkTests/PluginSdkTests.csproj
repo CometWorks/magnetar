@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <Platforms>x64</Platforms>
+        <PlatformTarget>x64</PlatformTarget>
+        <!-- VRage.Math is built for .NET Framework; consume it from net10.0 anyway. -->
+        <NoWarn>NU1701</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+        <PackageReference Include="xunit" Version="2.9.2" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Tests instantiate VRage.Math types directly, so the dlls must be present at
+             runtime. Private="True" copies them into the test output. -->
+        <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="True" />
+        <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="True" />
+        <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="True" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Platforms>x64</Platforms>
+        <PlatformTarget>x64</PlatformTarget>
+        <!-- NU1701: VRage.Math.dll is a .NET Framework assembly; that warning is noise here. -->
+        <NoWarn>NU1701</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- SE plugins always run inside Space Engineers, where VRage.Math.dll is loaded.
+             Reference it via HintPath (Private="False") so the dll is not redistributed. -->
+        <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
+        <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="False" />
+    </ItemGroup>
+
+</Project>
