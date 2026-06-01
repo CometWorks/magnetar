@@ -68,6 +68,7 @@
     <Exec Command="call &quot;$(SolutionDir)verify.bat&quot; &quot;$(DS64)&quot;" />
   </Target>
   <ItemGroup>
+    <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
   <ItemGroup>

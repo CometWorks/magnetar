@@ -90,6 +90,12 @@ if "%FRAMEWORK%"==".NETFramework" (
     copy /y /b "%SOURCE%\Magnetar.Compiler.dll.config" "%LIBRARY_DIR%\" >NUL 2>&1
 )
 
+echo Copying "PluginSdk.dll"
+copy /y /b "%SOURCE%\PluginSdk.dll" "%LIBRARY_DIR%\" >NUL 2>&1
+if "%FRAMEWORK%"==".NETFramework" (
+    copy /y /b "%SOURCE%\PluginSdk.dll.config" "%LIBRARY_DIR%\" >NUL 2>&1
+)
+
 REM Copy other dependencies
 echo Copying "0Harmony.dll"
 copy /y /b "%SOURCE%\0Harmony.dll" "%LIBRARY_DIR%\" >NUL 2>&1
