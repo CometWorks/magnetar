@@ -12,55 +12,59 @@ struct values.
 
 ## The rule
 
-To make a change observable, **reassign the whole property**. Build a new
-collection or copy the struct, mutate the copy, then assign it back.
+Mutate the contents in place, then **call `NotifyChanged`** with the name of
+the property whose value changed. That raises `PropertyChanged` explicitly, so
+the change is observed even though the setter never ran.
 
-The default equality check in `SetField` is `EqualityComparer<T>.Default`,
-which for collections is reference equality — so a fresh instance always
-counts as "changed" and the notification fires.
+`NotifyChanged` is a public method on `PluginConfig`. It notifies
+unconditionally — there is no equality check, because you are stating that the
+structured value changed.
 
 ## Correct patterns
 
 ```csharp
 // Add to a list
-config.Names = new List<string>(config.Names) { "added" };
+config.Names.Add("added");
+config.NotifyChanged(nameof(config.Names));
 
 // Update a dictionary entry
-var counters = new SerializableDictionary<string, int>(config.Counters);
-counters["foo"] = 1;
-config.Counters = counters;
+config.Counters["foo"] = 1;
+config.NotifyChanged(nameof(config.Counters));
 
 // Modify a struct field
 var bounds = config.Bounds;
 bounds.Max = 10;
-config.Bounds = bounds;
+config.Bounds = bounds;   // struct value type: reassign as usual
 ```
+
+A struct is a value type, so editing a *scalar field* still means copy / edit /
+reassign — and that reassignment already notifies through the setter. Use
+`NotifyChanged` when the in-place edit is on a **reference** held by the option
+(a list or dictionary), including ones nested inside a struct (see below).
 
 ## Incorrect — silently ignored
 
 ```csharp
-config.Names.Add("added");      // mutates in place: no notification
-config.Counters["foo"] = 1;     // mutates in place: no notification
-
-config.Bounds.Max = 10;
-// Won't even compile for a struct property — the compiler enforces the
-// copy/reassign pattern in that case. Lists and dicts give you no such
-// safety net.
+config.Names.Add("added");      // mutates in place, but no NotifyChanged: no notification
+config.Counters["foo"] = 1;     // mutates in place, but no NotifyChanged: no notification
 ```
+
+The mutation itself is fine; forgetting the follow-up `NotifyChanged` is the
+bug.
 
 ## Nested mutation
 
-When a struct contains a list, a dictionary, or another struct, **every level
-must be rebuilt and reassigned**. There is no propagation: mutating an inner
-collection or modifying a nested struct field in place is invisible at every
-level. Only the top-level property setter raises `PropertyChanged`.
+When a struct contains a list or dictionary, the struct copy you read back
+shares the *same* collection reference, so you can mutate the inner collection
+in place and then raise a single notification for the top-level property.
 
 ```csharp
-var outer = config.Bounds;                          // copy struct
-var inner = new List<int>(outer.Tags) { 42 };       // rebuild list
-outer.Tags = inner;                                 // assign into struct copy
-config.Bounds = outer;                              // assign into property
+config.Bounds.Tags.Add(42);              // inner list is shared with the option
+config.NotifyChanged(nameof(config.Bounds));
 ```
+
+One `NotifyChanged` for the top-level property is enough — there is no
+per-level notification to fire.
 
 ## Why this design
 
@@ -68,18 +72,8 @@ The constraint is what makes change detection cheap and explicit:
 
 - No collection proxies, no `ObservableCollection<T>`, no surprises about
   which mutations notify and which do not.
-- Round-tripping through `EqualityComparer<T>.Default` is enough to gate
-  notifications, regardless of value shape.
-- "Did this option change?" reduces to "did the top-level setter fire?", so
-  the host can stream diffs to Quasar by simply watching `PropertyChanged`.
-
-## A small helper if you find yourself doing this often
-
-```csharp
-static void UpdateList<T>(PluginConfig owner, Expression<Func<List<T>>> prop, Action<List<T>> mutate)
-{ ... }
-```
-
-A few plugins have written wrappers like the above. There is no
-sanctioned helper in `PluginSdk` — keep the rebuild-and-reassign pattern
-visible at call sites unless your config sees heavy edits.
+- The plugin states exactly when a structured value changed, by calling
+  `NotifyChanged` — change detection never has to guess.
+- "Did this option change?" reduces to "did the setter fire, or did the plugin
+  call `NotifyChanged`?", so the host can stream diffs to Quasar by simply
+  watching `PropertyChanged`.

@@ -8,8 +8,8 @@ namespace PluginSdk.Tests
 {
     /// <summary>
     /// Tests for <see cref="PluginConfig"/> change notification, including the
-    /// documented "must reassign via the top-level setter" rule for lists,
-    /// dictionaries and structs.
+    /// documented "mutate in place, then call <see cref="PluginConfig.NotifyChanged"/>"
+    /// rule for lists, dictionaries and structs.
     /// </summary>
     public class ChangeNotificationTests
     {
@@ -122,8 +122,9 @@ namespace PluginSdk.Tests
             var c = new TestConfig();
             var changed = CaptureChanges(c);
 
-            // Documented "correct" pattern: build a new list, assign back.
-            c.IntList = new List<int>(c.IntList) { 7 };
+            // Documented pattern: mutate in place, then notify explicitly.
+            c.IntList.Add(7);
+            c.NotifyChanged(nameof(c.IntList));
 
             Assert.Equal(new[] { nameof(TestConfig.IntList) }, changed);
             Assert.Equal(new[] { 7 }, c.IntList);
@@ -157,9 +158,9 @@ namespace PluginSdk.Tests
             var c = new TestConfig();
             var changed = CaptureChanges(c);
 
-            var copy = new SerializableDictionary<string, int>(c.DictStringInt);
-            copy["k"] = 1;
-            c.DictStringInt = copy;
+            // Documented pattern: mutate in place, then notify explicitly.
+            c.DictStringInt["k"] = 1;
+            c.NotifyChanged(nameof(c.DictStringInt));
 
             Assert.Equal(new[] { nameof(TestConfig.DictStringInt) }, changed);
             Assert.Equal(1, c.DictStringInt["k"]);
@@ -211,6 +212,46 @@ namespace PluginSdk.Tests
 
             Assert.Empty(changed);
             Assert.Single(c.StructList);
+        }
+
+        [Fact]
+        public void NotifyChanged_AfterInPlaceMutation_RaisesEventForNamedProperty()
+        {
+            var c = new TestConfig();
+            var changed = CaptureChanges(c);
+
+            c.StructList.Add(new TestStruct { Integer = 1 });
+            c.NotifyChanged(nameof(c.StructList));
+
+            Assert.Equal(new[] { nameof(TestConfig.StructList) }, changed);
+            Assert.Single(c.StructList);
+        }
+
+        [Fact]
+        public void NotifyChanged_NotifiesUnconditionally_EvenWithoutAChange()
+        {
+            var c = new TestConfig();
+            var changed = CaptureChanges(c);
+
+            // No equality gate: NotifyChanged always raises the event.
+            c.NotifyChanged(nameof(c.Integer));
+
+            Assert.Equal(new[] { nameof(TestConfig.Integer) }, changed);
+        }
+
+        [Fact]
+        public void NotifyChanged_AfterNestedInPlaceMutation_RaisesEventForTopLevelProperty()
+        {
+            var c = new TestConfig();
+            var changed = CaptureChanges(c);
+
+            // The struct copy shares the inner list reference, so an in-place
+            // edit reaches the option; one top-level notification suffices.
+            c.Nested.Numbers.Add(42);
+            c.NotifyChanged(nameof(c.Nested));
+
+            Assert.Equal(new[] { nameof(TestConfig.Nested) }, changed);
+            Assert.Equal(new[] { 42 }, c.Nested.Numbers);
         }
     }
 }

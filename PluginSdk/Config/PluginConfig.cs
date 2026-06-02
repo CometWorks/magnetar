@@ -89,48 +89,32 @@ namespace PluginSdk.Config
     /// <para><b>Change notification — important</b></para>
     /// <para>
     /// Change notifications are raised by the top-level property setter.
-    /// Lists, dictionaries and structs cannot detect in-place mutations of
-    /// their contents — to make a change visible to the server you MUST
-    /// reassign the whole collection or struct back to the property, even
-    /// when only an element, entry or field changed. The default equality
-    /// check used by <see cref="SetField{T}"/> is
-    /// <see cref="EqualityComparer{T}.Default"/>, which is reference
-    /// equality for collections; reassigning a new instance always passes
-    /// that check and raises <see cref="PropertyChanged"/>.
+    /// Scalar assignments notify automatically through
+    /// <see cref="SetField{T}"/>. Lists, dictionaries and structs cannot
+    /// detect in-place mutations of their contents, so after editing the
+    /// contents of such an option you MUST call
+    /// <see cref="NotifyChanged"/> with that property's name to make the
+    /// change visible to XML save, the JSON envelope and listeners.
     /// </para>
     ///
-    /// <para><b>Correct mutation patterns</b></para>
+    /// <para><b>Mutation pattern</b></para>
     /// <code>
-    /// config.Names = new List&lt;string&gt;(config.Names) { "added" };
+    /// config.Names.Add("added");
+    /// config.NotifyChanged(nameof(config.Names));
     ///
-    /// var counters = new SerializableDictionary&lt;string, int&gt;(config.Counters);
-    /// counters["foo"] = 1;
-    /// config.Counters = counters;
-    ///
-    /// var bounds = config.Bounds;
-    /// bounds.Max = 10;
-    /// config.Bounds = bounds;
-    /// </code>
-    ///
-    /// <para><b>Incorrect mutation patterns — silently ignored</b></para>
-    /// <code>
-    /// config.Names.Add("added");      // mutates in place: no notification
-    /// config.Counters["foo"] = 1;     // mutates in place: no notification
+    /// config.Counters["foo"] = 1;
+    /// config.NotifyChanged(nameof(config.Counters));
     /// </code>
     ///
     /// <para><b>Nested mutation</b></para>
     /// <para>
-    /// When a struct contains a list, dictionary or another struct, every
-    /// level must be rebuilt and reassigned. Mutating the inner collection
-    /// or modifying a nested struct field in place is invisible at every
-    /// level: only the top-level property setter raises
-    /// <see cref="PropertyChanged"/>.
+    /// When a struct contains a list, dictionary or another struct, mutate
+    /// the contents in place at any depth and then raise a single
+    /// notification for the top-level property whose value changed.
     /// </para>
     /// <code>
-    /// var outer = config.Bounds;                          // copy struct
-    /// var inner = new List&lt;int&gt;(outer.Tags) { 42 };  // rebuild list
-    /// outer.Tags = inner;                                 // assign back into struct copy
-    /// config.Bounds = outer;                              // assign back into property
+    /// config.Bounds.Tags.Add(42);
+    /// config.NotifyChanged(nameof(config.Bounds));
     /// </code>
     /// </summary>
     public abstract class PluginConfig : INotifyPropertyChanged, IXmlSerializable
@@ -141,6 +125,16 @@ namespace PluginSdk.Config
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        /// <summary>
+        /// Raises <see cref="PropertyChanged"/> for <paramref name="propertyName"/>.
+        /// Call this after mutating a list, dictionary or struct option in
+        /// place, since such in-place changes bypass the property setter and
+        /// would otherwise go unobserved by XML save, the JSON envelope and
+        /// listeners. Top-level scalar assignments do not need this — their
+        /// setter already notifies through <see cref="SetField{T}"/>.
+        /// </summary>
+        public void NotifyChanged(string propertyName) => OnPropertyChanged(propertyName);
 
         /// <summary>
         /// Assigns <paramref name="value"/> to <paramref name="field"/> and

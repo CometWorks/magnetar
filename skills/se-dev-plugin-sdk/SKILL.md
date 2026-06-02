@@ -38,10 +38,9 @@ the plugin logs the same way in both. See [Logging.md](Logging.md).
 
 | Document | When you need it |
 |---|---|
-| [Config.md](Config.md) | Writing the config class itself — base class contract, property pattern, change notification. |
+| [Config.md](Config.md) | Writing the config class itself — base class contract, property pattern, change notification (incl. the list/dict/struct in-place mutation pitfall). |
 | [Options.md](Options.md) | Picking the right attribute for a value (bool, ranges, strings, lists, dicts, structs). |
 | [Layout.md](Layout.md) | Grouping options into tabs, sections and columns for the Web UI. |
-| [Mutation.md](Mutation.md) | **Must read.** The in-place mutation pitfall that silently breaks remote sync. |
 | [Storage.md](Storage.md) | Loading and saving — XML on disk, JSON over the wire. |
 | [Example.md](Example.md) | Complete annotated config class to copy-paste from. |
 | [Commands.md](Commands.md) | Adding server chat commands (`!prefix cmd`) with `[CommandRoot]` / `[Command]` modules. |

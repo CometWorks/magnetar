@@ -35,6 +35,12 @@ A `PluginConfig` instance is the source of truth at runtime. Subscribe to
 `PropertyChanged` (the standard `INotifyPropertyChanged` event) if the plugin
 needs to react when Quasar pushes a new value or the user edits the local XML.
 
+Scalar setters notify automatically through `SetField`. List, dictionary and
+struct options cannot detect in-place edits of their contents, so after
+mutating one you must call `NotifyChanged(nameof(MyOption))` to raise the
+change event. This is the most common pitfall when editing config at runtime —
+read [Mutation.md](Mutation.md) before doing so.
+
 ## What "default" means
 
 Defaults are whatever a freshly constructed instance produces. There is no

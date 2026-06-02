@@ -117,18 +117,18 @@ namespace MyPlugin
 ## Editing this config at runtime
 
 ```csharp
-// Single field — straightforward.
+// Single field — the setter notifies automatically.
 config.TickRate = 30;
 
-// List — rebuild and reassign, see Mutation.md.
-config.Tags = new List<string>(config.Tags) { "new-tag" };
+// List — mutate in place, then notify.
+config.Tags.Add("new-tag");
+config.NotifyChanged(nameof(config.Tags));
 
-// Dict — copy, mutate copy, reassign.
-var q = new SerializableDictionary<string, int>(config.Quotas);
-q["alice"] = 100;
-config.Quotas = q;
+// Dict — mutate in place, then notify.
+config.Quotas["alice"] = 100;
+config.NotifyChanged(nameof(config.Quotas));
 
-// Struct — copy, mutate copy, reassign.
+// Struct scalar field — copy, edit, reassign (the setter notifies).
 var ports = config.AllowedPorts;
 ports.Max = 27200;
 config.AllowedPorts = ports;
