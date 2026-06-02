@@ -1,6 +1,6 @@
 ---
 name: se-dev-plugin-sdk
-description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables, the UI layout Quasar renders remotely, server-side chat commands, and to log through one environment-agnostic Logger.
+description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables, the UI layout Quasar renders remotely, server-side chat commands, case-insensitive path resolution that works on both Windows and Linux, and to log through one environment-agnostic Logger.
 license: MIT
 ---
 
@@ -34,6 +34,10 @@ The library also gives a plugin a single **`Logger`** that writes to the game
 log when running standalone and to structured JSON when managed by Quasar —
 the plugin logs the same way in both. See [Logging.md](Logging.md).
 
+The library also exposes a **`PathResolver`** facade so file-handling code
+resolves paths case-insensitively on Linux and stays a cheap no-op on Windows —
+the plugin writes one code path that works on both. See [Paths.md](Paths.md).
+
 ## When to read what
 
 | Document | When you need it |
@@ -45,6 +49,7 @@ the plugin logs the same way in both. See [Logging.md](Logging.md).
 | [Example.md](Example.md) | Complete annotated config class to copy-paste from. |
 | [Commands.md](Commands.md) | Adding server chat commands (`!prefix cmd`) with `[CommandRoot]` / `[Command]` modules. |
 | [Logging.md](Logging.md) | Logging through one environment-agnostic `Logger` — game log when standalone, JSON when managed by Quasar. |
+| [Paths.md](Paths.md) | Resolving filesystem paths case-insensitively via `PathResolver` so file handling works on both Windows and Linux. |
 
 ## Minimal example
 

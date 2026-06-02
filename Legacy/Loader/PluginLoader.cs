@@ -7,6 +7,7 @@ using System.Text;
 using HarmonyLib;
 using PluginSdk.Commands;
 using Pulsar.Legacy.Commands;
+using Pulsar.Legacy.Paths;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
@@ -92,6 +93,15 @@ public class PluginLoader : IHandleInputPlugin
             // register from Init() or at any later point.
             Commands = new CommandService();
             ServerCommands.Registrar = Commands;
+
+            // Bind the SDK PathResolver facade to the LinuxCompat case-insensitive
+            // path cache before plugins initialize, so a plugin may already use it
+            // from its own Init(); otherwise the pass-through shim stays active
+            // (Windows). Binding is reflection-only (GetType / GetMethod /
+            // CreateDelegate) and never invokes a static member, so it triggers no
+            // type initializers — the LinuxCompat cache cctor runs lazily on the
+            // first actual resolve call, not here.
+            PathResolverBinder.Bind();
 
             for (int i = plugins.Count - 1; i >= 0; i--)
             {
