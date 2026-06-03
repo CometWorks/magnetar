@@ -1,13 +1,37 @@
 <Project>
-  <PropertyGroup>
+  <!--
+    Windows and Linux locate the Magnetar install folder, the Space Engineers
+    dedicated server, and Steamworks.NET differently. Select per OS using the
+    MSBuild $(OS) reserved property ('Windows_NT' on Windows, 'Unix' elsewhere).
+    DS64 / Magnetar can always be overridden on the command line
+    (`-p:DS64=...`) or via an environment variable of the same name.
+  -->
+
+  <!-- ===== Windows ===== -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
     <!-- Folder containing Magnetar -->
-    <Magnetar>$(APPDATA)\Magnetar</Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == ''">$(APPDATA)\Magnetar</Magnetar>
 
     <!-- Folder containing SpaceEngineersDedicated.exe -->
     <DS64 Condition="'$(DS64)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
     <DS64 Condition="'$(DS64)' == '\DedicatedServer64'">C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
 
-    <!-- Path to Steamworks.NET (for .NET 4.8) -->
-    <Steamworks>$(DS64)\Steamworks.NET.dll</Steamworks>
+    <!-- Path to Steamworks.NET (for .NET 4.8). On Windows it ships next to the DS. -->
+    <Steamworks Condition="'$(Steamworks)' == ''">$(DS64)\Steamworks.NET.dll</Steamworks>
+  </PropertyGroup>
+
+  <!-- ===== Linux ===== -->
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+    <!-- Magnetar install location (where deploy/publish goes by default) -->
+    <Magnetar Condition="'$(Magnetar)' == ''">$(HOME)/.local/share/Magnetar</Magnetar>
+
+    <!-- Folder containing SpaceEngineersDedicated.exe.
+         Override with `-p:DS64=/path/to/DedicatedServer64` on the command line,
+         or set the DS64 environment variable before invoking dotnet build. -->
+    <DS64 Condition="'$(DS64)' == ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
+
+    <!-- Steamworks.NET is built dynamically into <repo>/build/Libraries/ by
+         Scripts/build_steamworks_net.sh (invoked from ./build.sh). -->
+    <Steamworks Condition="'$(Steamworks)' == ''">$(MSBuildThisFileDirectory)build/Libraries/Steamworks.NET.dll</Steamworks>
   </PropertyGroup>
 </Project>

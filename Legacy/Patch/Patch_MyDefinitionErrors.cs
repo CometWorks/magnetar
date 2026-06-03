@@ -1,3 +1,4 @@
+using System.IO;
 using HarmonyLib;
 using Pulsar.Shared;
 using VRage.FileSystem;
@@ -16,7 +17,12 @@ public static class Patch_MyDefinitionErrors
         if (!PulsarLog || !message.Contains("Compilation"))
             return true;
 
-        string[] trim = [$"Compilation of {MyFileSystem.ModsPath}\\{context.ModId}_", " failed:"];
+        // SE formats the prefix as "Compilation of <ModsPath><sep><ModId>_"
+        // where <sep> is Path.DirectorySeparatorChar (backslash on Windows,
+        // forward slash on Linux).
+        string prefix =
+            $"Compilation of {MyFileSystem.ModsPath}{Path.DirectorySeparatorChar}{context.ModId}_";
+        string[] trim = [prefix, " failed:"];
         string name = Tools.RemoveAll(message, trim);
 
         LogFile.Error($"Failed to build {name}:");

@@ -433,7 +433,7 @@ public class PluginList : IEnumerable<PluginData>
             if (source.Enabled)
                 AddLocalPlugin(source);
             else
-                localPlugins.Remove(Path.GetFileName(source.Folder.TrimEnd('\\')));
+                localPlugins.Remove(Path.GetFileName(source.Folder.TrimEnd('\\', '/')));
 
         foreach (
             string dll in Directory.EnumerateFiles(

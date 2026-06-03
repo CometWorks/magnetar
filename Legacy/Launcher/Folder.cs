@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Gameloop.Vdf;
 using Gameloop.Vdf.Linq;
 using Microsoft.Win32;
@@ -47,8 +48,17 @@ internal class Folder
         return path;
     }
 
+    // The Steam App uninstall key only exists on Windows; Linux locates the
+    // dedicated server through the Steam library files instead. The
+    // RuntimeInformation.IsOSPlatform(Windows) guard keeps the registry calls off
+    // Linux, but CA1416 can't see that guard across net48/net10, so suppress its
+    // "registry is Windows-only" noise here.
+#pragma warning disable CA1416
     private static string FromRegistry()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return null;
+
         using var baseKey = RegistryKey.OpenBaseKey(
             RegistryHive.LocalMachine,
             RegistryView.Registry64
@@ -68,6 +78,7 @@ internal class Folder
 
         return path;
     }
+#pragma warning restore CA1416
 
     private static string FromOverride()
     {

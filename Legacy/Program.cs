@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using HarmonyLib;
 using Pulsar.Legacy.Compiler;
@@ -13,9 +14,6 @@ using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
-#if NETCOREAPP
-using System.Runtime.InteropServices;
-#endif
 
 namespace Pulsar.Legacy;
 
@@ -45,7 +43,21 @@ static class Program
         string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarInterim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
-        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir, runtimeDir]);
+        // On Linux, preload every bundled native .so and register a single
+        // DllImport resolver covering every present and future ALC. Must run
+        // before any [DllImport] site fires (Steamworks.NET, etc.). On Windows
+        // the native dependencies resolve through the normal DLL search path.
+        if (OperatingSystem.IsLinux())
+            NativeLibraryPreloader.Initialize(baseDir);
+
+        // Probe baseDir too: on Linux the managed Steamworks.NET.dll is staged
+        // next to the executable (not in Libraries/). Resolving it via this
+        // generic handler avoids referencing any Magnetar.Shared type from Main
+        // — doing so would force the CLR to load Magnetar.Shared while JIT-ing
+        // Main, before this resolver is installed, and the .NET 10 launcher keeps
+        // its managed dependencies under Libraries/ rather than next to the exe.
+        // The Windows DS-dir copy of Steamworks.NET is handled later in SetupSteam.
+        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir, runtimeDir, baseDir]);
 
         MagnetarMain(args);
     }
@@ -62,7 +74,7 @@ static class Program
         Assembly currentAssembly = Assembly.GetExecutingAssembly();
         string baseDir = Path.GetDirectoryName(currentAssembly.Location);
 
-        SetupCoreData(baseDir);
+        SetupCoreData();
         Updater updater = TryUpdate(baseDir);
         SetupGameData(updater);
         CheckCanStart(updater);
@@ -71,31 +83,51 @@ static class Program
         SetupGame(args);
     }
 
-    private static void SetupCoreData(string baseDir)
+    private static void SetupCoreData()
     {
+        Assembly currentAssembly = Assembly.GetExecutingAssembly();
+        string baseDir = Path.GetDirectoryName(currentAssembly.Location);
         Environment.CurrentDirectory = baseDir;
 
-        var asmName = Assembly.GetExecutingAssembly().GetName();
-        string pulsarDir = GetConfigOverride(baseDir);
+        var asmName = currentAssembly.GetName();
+        string pulsarDir = GetConfigOverride(baseDir) ?? GetConfigDir(baseDir, asmName);
 
-        if (pulsarDir is not null)
-        {
+        if (!Directory.Exists(pulsarDir))
             Directory.CreateDirectory(pulsarDir);
-        }
-        else
-        {
-            pulsarDir = Path.Combine(baseDir, asmName.Name);
-
-            if (!Directory.Exists(pulsarDir))
-                pulsarDir = Path.Combine(baseDir, "MagnetarLegacy");
-        }
 
         LogFile.Init(pulsarDir);
         LogFile.WriteLine($"Starting Magnetar v{asmName.Version.ToString(3)}");
 
         Flags.LogFlags();
 
+        if (Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1")
+            LogFile.Warn("MAGNETAR_SAFE_MODE=1 set. No preloader patches will be applied!");
+
         ConfigManager.EarlyInit(pulsarDir);
+
+        if (Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1")
+            ConfigManager.Instance.SafeMode = true;
+    }
+
+    private static string GetConfigDir(string baseDir, AssemblyName asmName)
+    {
+#if NETCOREAPP
+        // Linux: honour XDG_CONFIG_HOME, otherwise ~/.config/Magnetar.
+        if (OperatingSystem.IsLinux())
+        {
+            string xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+            if (!string.IsNullOrWhiteSpace(xdg))
+                return Path.Combine(xdg, "Magnetar");
+
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(home, ".config", "Magnetar");
+        }
+#endif
+        // Windows: config/log directory next to the binary.
+        string dir = Path.Combine(baseDir, asmName.Name);
+        if (!Directory.Exists(dir))
+            dir = Path.Combine(baseDir, "MagnetarLegacy");
+        return dir;
     }
 
     private static string GetConfigOverride(string baseDir)
@@ -130,7 +162,7 @@ static class Program
         string checkFile = Path.Combine(baseDir, "checksum.txt");
         string libraryDir = Path.Combine(baseDir, "Libraries");
 
-        if (Flags.MakeCheckFile)
+        if (Flags.MakeCheckFile && Directory.Exists(libraryDir))
         {
             UTF8Encoding encoding = new();
             checkSum = Tools.GetFolderHash(libraryDir);
@@ -139,7 +171,7 @@ static class Program
         else if (File.Exists(checkFile))
             checkSum = File.ReadAllText(checkFile);
 
-        if (checkSum is not null && Tools.GetFolderHash(libraryDir) != checkSum)
+        if (checkSum is not null && Directory.Exists(libraryDir) && Tools.GetFolderHash(libraryDir) != checkSum)
             updater.ShowBitrotPrompt();
 
         return updater;
@@ -157,9 +189,23 @@ static class Program
             Environment.Exit(1);
         }
 
+        // Publish the resolved game-install root to plugins running in this
+        // process. The LinuxCompat preloader reads SPACE_ENGINEERS_ROOT to
+        // locate native libraries (Havok, D3DCompiler shim, etc.) under
+        // DedicatedServer64/ or Bin64/. Without it the plugin logs a warning
+        // and skips wrapper init, which later trips a Havok load failure.
+        // We point at the parent so the plugin's existing probe
+        // (DedicatedServer64 -> Bin64 fallback) keeps working unchanged.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SPACE_ENGINEERS_ROOT")))
+        {
+            string gameRoot = Path.GetDirectoryName(ds64Dir);
+            if (!string.IsNullOrEmpty(gameRoot))
+                Environment.SetEnvironmentVariable("SPACE_ENGINEERS_ROOT", gameRoot);
+        }
+
         string modDir = Path.Combine(
             ds64Dir,
-            @"..\..\..\workshop\content",
+            "..", "..", "..", "workshop", "content",
             Steam.AppIdSe1.ToString()
         );
 
@@ -260,7 +306,15 @@ static class Program
 #else
         string ds64Dir = ConfigManager.Instance.GameDir;
         bool isGameFramework = Tools.GetFiles(ds64Dir, ["*.config"], []).Any();
-        return isGameFramework ? ["se-dotnet-compat"] : [];
+        if (!isGameFramework)
+            return [];
+
+        // se-dotnet-compat lets the .NET Framework dedicated server run under
+        // CoreCLR (the Interim/.NET 10 launcher). se-linux-compat additionally
+        // wraps the Windows-native libraries with their Linux .so equivalents.
+        return OperatingSystem.IsLinux()
+            ? ["se-dotnet-compat", "se-linux-compat"]
+            : ["se-dotnet-compat"];
 #endif
     }
 

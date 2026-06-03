@@ -13,7 +13,11 @@
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net48;net10.0</TargetFrameworks>
+    <!-- Windows builds both the .NET Framework (Legacy) and .NET 10 (Interim)
+         launchers. Linux can only build the .NET 10 launcher (net48 needs the
+         Windows .NET Framework reference assemblies). -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFrameworks>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
@@ -47,10 +51,12 @@
     <LangVersion>latest</LangVersion>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
-  <PropertyGroup>
+  <!-- Windows-only launcher polish: the .ico is embedded in the apphost and the
+       manifest carries long-path / DPI awareness. Neither applies on Linux. -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
     <ApplicationIcon>..\Shared\Splash\icon.ico</ApplicationIcon>
   </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
@@ -61,15 +67,23 @@
     <StartAction>Program</StartAction>
     <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
   </PropertyGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;$(ProjectDir)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Magnetar)&quot; &quot;$(SolutionDir)LICENSE&quot; &quot;$(TargetFrameworkIdentifier)&quot;" />
+  <!-- Windows deploy: copy the freshly built launcher + libraries into the
+       Magnetar install folder via deploy.bat, after verifying the DS path. -->
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(OS)' == 'Windows_NT'">
+    <Exec Command="call &quot;$(MSBuildThisFileDirectory)..\verify.bat&quot; &quot;$(DS64)&quot;" />
   </Target>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="call &quot;$(SolutionDir)verify.bat&quot; &quot;$(DS64)&quot;" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(OS)' == 'Windows_NT'">
+    <Exec Command="call &quot;$(MSBuildThisFileDirectory)deploy.bat&quot; &quot;$(TargetPath)&quot; &quot;$(Magnetar)&quot; &quot;$(MSBuildThisFileDirectory)..\LICENSE&quot; &quot;$(TargetFrameworkIdentifier)&quot;" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
     <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+  <!-- The Linux native-library bootstrap pulls in System.Runtime.Loader /
+       OperatingSystem.IsLinux, which do not exist on .NET Framework. It is only
+       reached from Main() under #if NETCOREAPP, so exclude it from the net48 build. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Compile Remove="Loader\NativeLibraryPreloader.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Sandbox.Game" HintPath="$(DS64)\Sandbox.Game.dll" Private="False" />
@@ -82,11 +96,31 @@
     <Reference Include="VRage.Input" HintPath="$(DS64)\VRage.Input.dll" Private="False" />
     <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="False" />
     <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
-    <Reference Include="VRage.Platform.Windows" HintPath="$(DS64)\VRage.Platform.Windows.dll" Private="False" />
     <Reference Include="VRage.Scripting" HintPath="$(DS64)\VRage.Scripting.dll" Private="False" />
+  </ItemGroup>
+  <!-- VRage.Platform.Windows is a Windows-only platform assembly shipped with the
+       Windows dedicated server; the Linux server replaces it with its own. -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <Reference Include="VRage.Platform.Windows" HintPath="$(DS64)\VRage.Platform.Windows.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <PackageReference Include="Gameloop.Vdf" Version="0.6.2" />
   </ItemGroup>
+  <!--
+    Linux deploy: copy the contents of <repo>/build/Libraries (Steamworks.NET.dll
+    + the native .so dependencies staged by ./build.sh) next to the executable for
+    both `dotnet build` and `dotnet publish`. Uses `cp -a` to preserve any soname
+    symlinks. Windows uses deploy.bat (above) instead.
+  -->
+  <Target Name="CopyLibrariesAfterBuild" AfterTargets="Build" Condition="'$(OS)' != 'Windows_NT'">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../build/Libraries')"
+           Text="$(MSBuildThisFileDirectory)../build/Libraries is missing. Run ./build.sh from the repo root before building." />
+    <Exec Command="cp -a &quot;$(MSBuildThisFileDirectory)../build/Libraries/.&quot; &quot;$(OutDir).&quot;" />
+  </Target>
+  <Target Name="CopyLibrariesAfterPublish" AfterTargets="Publish" Condition="'$(OS)' != 'Windows_NT'">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../build/Libraries')"
+           Text="$(MSBuildThisFileDirectory)../build/Libraries is missing. Run ./build.sh from the repo root before publishing." />
+    <Exec Command="cp -a &quot;$(MSBuildThisFileDirectory)../build/Libraries/.&quot; &quot;$(PublishDir).&quot;" />
+  </Target>
 </Project>

@@ -96,7 +96,10 @@ public class NuGetPackage
         folder = null;
         file = null;
 
-        int index = fullPath.IndexOf(lastFolderName);
+        // LastIndexOf so that names like "content/Microsoft.NET.Sdk/content/..."
+        // match the deepest occurrence (the actual payload folder) rather
+        // than an early one in the package path prefix.
+        int index = fullPath.LastIndexOf(lastFolderName);
         if (index < 0 || fullPath.Length <= index + lastFolderName.Length + 2)
             return false;
 

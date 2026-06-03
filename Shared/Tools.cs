@@ -158,6 +158,14 @@ public static class Tools
 
     public static void InstallNativeCrashHandler(string label)
     {
+        // SEH is a Windows kernel concept; the dedicated server on Linux
+        // surfaces native faults via SIGSEGV/etc. that the CoreCLR signal
+        // handler already turns into managed exceptions, so we no-op here.
+        // RuntimeInformation rather than OperatingSystem.IsWindows so this
+        // compiles against netstandard2.0 (Shared's TFM).
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return;
+
         nativeFilterDelegate = exceptionInfo =>
         {
             Console.Error.WriteLine($"[{label}] Native crash detected (unhandled SEH exception)");

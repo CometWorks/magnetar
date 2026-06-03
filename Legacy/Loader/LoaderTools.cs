@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using HarmonyLib;
 using Pulsar.Shared;
@@ -14,6 +15,11 @@ public static class LoaderTools
 {
     private const string ContinueArg = "-continue";
     private const string DebugArg = "-debug";
+
+#if NETCOREAPP
+    [DllImport("libc", SetLastError = true)]
+    private static extern int execv(string path, string[] argv);
+#endif
 
     public static void Restart(bool autoRejoin = false, bool? debugger = null)
     {
@@ -34,8 +40,30 @@ public static class LoaderTools
         if (debugger)
             args.Add(DebugArg);
 
+        string mainModule = Process.GetCurrentProcess().MainModule.FileName;
+
+#if NETCOREAPP
+        if (OperatingSystem.IsLinux())
+        {
+            // execv replaces the current process image. Combined with the
+            // Kill() in Restart() this preserves the parent's PID, stdio
+            // and tty (matters for systemd / tmux supervision). argv[0]
+            // must be the program name by convention.
+            string[] argv = new string[args.Count + 2];
+            argv[0] = mainModule;
+            for (int i = 0; i < args.Count; i++)
+                argv[i + 1] = args[i];
+            argv[^1] = null;
+
+            execv(mainModule, argv);
+            // Only reached if execv fails.
+            LogFile.Error($"execv failed: {Marshal.GetLastWin32Error()}");
+            return;
+        }
+#endif
+
         ProcessStartInfo startInfo = new(
-            fileName: Process.GetCurrentProcess().MainModule.FileName,
+            fileName: mainModule,
             arguments: string.Join(" ", args.Select(a => $"\"{a}\""))
         );
 

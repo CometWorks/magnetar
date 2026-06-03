@@ -10,7 +10,12 @@
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net48;net10.0</TargetFrameworks>
+    <!-- Windows ships the .NET Framework (net48) and .NET 10 (net10.0) builds;
+         Linux ships only net10.0. The #if NETFRAMEWORK / NETCOREAPP code paths
+         differ semantically, so this stays a real multi-target rather than
+         netstandard2.0. -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFrameworks>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -38,6 +43,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Compiler\Compiler.csproj" />
   </ItemGroup>
+  <!--
+    Steamworks.NET (for .NET 4.8 / .NET 10). $(Steamworks) is resolved per-OS in
+    Directory.Build.props: on Windows it ships next to the dedicated server, on
+    Linux it is built into <repo>/build/Libraries/ by ./build.sh.
+  -->
   <ItemGroup>
     <Reference Include="Steamworks.NET" HintPath="$(Steamworks)" Private="False" />
   </ItemGroup>
@@ -50,4 +60,15 @@
     <PackageReference Include="NuGet.Resolver" Version="6.7.1" />
     <PackageReference Include="protobuf-net" Version="2.4.9" />
   </ItemGroup>
+  <!--
+    On Linux, fail fast with a clear hint if the Steamworks.NET HintPath doesn't
+    resolve. Without this guard, MSBuild only emits MSB3245 as a *warning* and the
+    build proceeds until the CS0246 'Steamworks namespace not found' error, which
+    doesn't tell the user what's actually wrong. On Windows the DLL ships with the
+    dedicated server and verify.bat already checks the DS path.
+  -->
+  <Target Name="CheckSteamworksNetDll" BeforeTargets="ResolveAssemblyReferences" Condition="'$(OS)' != 'Windows_NT'">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../build/Libraries/Steamworks.NET.dll')"
+           Text="$(MSBuildThisFileDirectory)../build/Libraries/Steamworks.NET.dll is missing. Run ./build.sh from the repo root before building." />
+  </Target>
 </Project>

@@ -358,8 +358,14 @@ MigrationBackup/
 # Steam's workshop folder symlinked for DLL dependencies
 /workshop/
 
-# JetBrains Rider project files
+# Editors and agents
 .idea/
-
 .editorconfig
 .claude
+
+# Vendored files (must be copied there for build)
+Vendor/*.so
+
+# Linux build pipeline outputs (build.sh / Scripts/*)
+/build/
+/dist/

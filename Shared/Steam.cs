@@ -1,9 +1,7 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Threading;
+using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Steamworks;
 
@@ -14,7 +12,6 @@ public static class Steam
     public const uint AppIdSe1 = 244850u;
     public const uint AppIdSe1DS = 298740u;
     public const uint AppIdSe2 = 1133870u;
-    private const int SteamTimeout = 30; // seconds
     private const string registryKey = @"SOFTWARE\Valve\Steam";
     private const string registryName = "SteamPath";
     private const string Steamworks = "Steamworks.NET";
@@ -46,6 +43,25 @@ public static class Steam
 
     public static string GetSteamPath()
     {
+        // RuntimeInformation (rather than OperatingSystem.IsWindows) so this
+        // compiles for net48 as well as net10.0.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return GetWindowsSteamPath();
+
+        // The native Steam client install on Linux lives under ~/.steam/steam
+        // (a symlink Valve maintains to the active Steam library). There is no
+        // equivalent of the Windows SOFTWARE\Valve\Steam registry key.
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string steamRoot = Path.Combine(home, ".steam", "steam");
+        return Directory.Exists(steamRoot) ? steamRoot : null;
+    }
+
+    // Only reached after the RuntimeInformation.IsOSPlatform(Windows) guard in
+    // GetSteamPath, but CA1416 doesn't track that guard across net48/net10, so
+    // suppress the "registry is Windows-only" analyzer noise here.
+#pragma warning disable CA1416
+    private static string GetWindowsSteamPath()
+    {
         using var baseKey = RegistryKey.OpenBaseKey(
             RegistryHive.CurrentUser,
             RegistryView.Registry64
@@ -61,9 +77,5 @@ public static class Steam
 
         return path;
     }
-
-    private static void ShowWarning()
-    {
-        LogFile.WriteLine("Steam failed to start!");
-    }
+#pragma warning restore CA1416
 }

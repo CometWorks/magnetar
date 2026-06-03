@@ -27,7 +27,7 @@ public class LocalFolderPlugin : PluginData
 
     public LocalFolderPlugin(string folder)
     {
-        Id = Path.GetFileName(folder.TrimEnd('\\'));
+        Id = Path.GetFileName(folder.TrimEnd('\\', '/'));
         Folder = folder;
         Status = PluginStatus.None;
         FriendlyName = Id;
@@ -79,7 +79,7 @@ public class LocalFolderPlugin : PluginData
             hasFile = true;
             string name = file.Substring(Folder.Length + 1, file.Length - (Folder.Length + 1));
             sb.Append(name).Append(", ");
-            string relFile = file.Replace(Folder, "").TrimStart('\\');
+            string relFile = file.Replace(Folder, "").TrimStart('\\', '/');
             compiler.Load(fileStream, relFile, debug ? file : null);
         }
 
@@ -310,7 +310,7 @@ public class LocalFolderPlugin : PluginData
                 .ToArray();
 
             if (file.Contains(Folder))
-                settings.DataFile = file.Replace(Folder, "").TrimStart('\\');
+                settings.DataFile = file.Replace(Folder, "").TrimStart('\\', '/');
             else
                 settings.DataFile = file;
 
