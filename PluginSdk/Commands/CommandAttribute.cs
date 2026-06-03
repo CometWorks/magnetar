@@ -8,7 +8,9 @@ namespace PluginSdk.Commands
     /// form a nested path under the module's
     /// <see cref="CommandRootAttribute.Prefix"/>; for example
     /// <c>[Command("grid list")]</c> in a module rooted at <c>"adm"</c> is
-    /// invoked as <c>!adm grid list</c>.
+    /// invoked as <c>!adm grid list</c>. An empty command string
+    /// (<c>[Command("")]</c>) denotes the root-level (default) command, run for
+    /// a bare <c>!adm</c> with no sub-path.
     ///
     /// <para><b>Handler signature</b></para>
     /// <para>

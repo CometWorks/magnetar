@@ -55,7 +55,12 @@ namespace PluginSdk.Commands
 
             if (rest.Count == 0)
             {
-                SendOverview(root, caller, responder);
+                // A bare '!prefix' runs the root's default command when it has
+                // one the caller may use; otherwise it prints the overview.
+                if (root.Default != null && root.Default.IsVisibleTo(caller.PromoteLevel))
+                    ExecuteCommand(root, root.Default, rest, caller, responder);
+                else
+                    SendOverview(root, caller, responder);
                 return true;
             }
 
@@ -80,11 +85,18 @@ namespace PluginSdk.Commands
             }
 
             var args = rest.GetRange(consumed, rest.Count - consumed);
+            ExecuteCommand(root, command, args, caller, responder);
+            return true;
+        }
+
+        private void ExecuteCommand(CommandRoot root, RegisteredCommand command,
+            List<string> args, in CommandCaller caller, ICommandResponder responder)
+        {
             if (!ArgumentBinder.TryBind(command.Parameters, args, out object[] values, out string bindError))
             {
                 Reply(responder, caller, CommandReply.Error(
                     $"{bindError}. Usage: {command.Syntax}").WithAuthor(root.Title));
-                return true;
+                return;
             }
 
             var context = new CommandContext(caller, root.Prefix, args, string.Join(" ", args), responder);
@@ -101,8 +113,6 @@ namespace PluginSdk.Commands
                 Reply(responder, caller, CommandReply.Error(
                     $"Command failed: {actual.Message}").WithAuthor(root.Title));
             }
-
-            return true;
         }
 
         private static void DispatchResult(object result, CommandContext context)

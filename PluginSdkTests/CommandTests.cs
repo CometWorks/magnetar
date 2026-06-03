@@ -257,6 +257,87 @@ namespace PluginSdk.Tests
             public string Ping() => "pong2";
         }
 
+        [CommandRoot("def", "Default Plugin", "has a default command")]
+        public sealed class DefaultCommands : CommandModule
+        {
+            [Command("", "the default")]
+            [Permission(MyPromoteLevel.None)]
+            public string Root() => "default-ran";
+
+            [Command("sub", "a sub command")]
+            [Permission(MyPromoteLevel.None)]
+            public string Sub() => "sub-ran";
+        }
+
+        [CommandRoot("adm", "Admin Default Plugin", "default needs admin")]
+        public sealed class AdminDefaultCommands : CommandModule
+        {
+            // No [Permission] => defaults to Admin.
+            [Command("", "admin default")]
+            public string Root() => "admin-default-ran";
+        }
+
+        private static CommandDispatcher BuildDispatcherFor(Type moduleType, out CapturingResponder responder)
+        {
+            var registry = new CommandRegistry();
+            registry.RegisterModule(moduleType, "owner1");
+            responder = new CapturingResponder();
+            return new CommandDispatcher(registry, null);
+        }
+
+        [Fact]
+        public void Handle_BarePrefix_WithDefault_RunsDefaultCommand()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultCommands), out var r);
+            bool handled = d.Handle("!def", Caller(MyPromoteLevel.None), r);
+
+            Assert.True(handled);
+            Assert.Equal("default-ran", Assert.Single(r.Replies).Text);
+        }
+
+        [Fact]
+        public void Handle_BarePrefix_WithoutDefault_ShowsOverview()
+        {
+            // SampleCommands has no default command, so a bare prefix must still
+            // print the auto-generated overview (regression guard).
+            var d = BuildDispatcher(out var r);
+            bool handled = d.Handle("!test", Caller(MyPromoteLevel.None), r);
+
+            Assert.True(handled);
+            string all = string.Join("\n", r.Texts);
+            Assert.Contains("Test Plugin", all);
+            Assert.Contains("ping", all);
+        }
+
+        [Fact]
+        public void Handle_NamedSubcommand_StillResolves_WithDefaultPresent()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultCommands), out var r);
+            d.Handle("!def sub", Caller(MyPromoteLevel.None), r);
+            Assert.Equal("sub-ran", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_BarePrefix_DefaultAboveCallerLevel_ShowsOverview()
+        {
+            // The default needs Admin; a non-admin bare call falls back to the
+            // overview instead of running it.
+            var d = BuildDispatcherFor(typeof(AdminDefaultCommands), out var r);
+            d.Handle("!adm", Caller(MyPromoteLevel.None), r);
+
+            string all = string.Join("\n", r.Texts);
+            Assert.DoesNotContain("admin-default-ran", all);
+            Assert.Contains("Admin Default Plugin", all);
+        }
+
+        [Fact]
+        public void Handle_BarePrefix_DefaultAtCallerLevel_RunsIt()
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultCommands), out var r);
+            d.Handle("!adm", Caller(MyPromoteLevel.Admin), r);
+            Assert.Equal("admin-default-ran", r.LastText);
+        }
+
         [Fact]
         public void Register_ConflictingCommand_LastRegistrationWins()
         {

@@ -94,6 +94,12 @@ public class PluginLoader : IHandleInputPlugin
             Commands = new CommandService();
             ServerCommands.Registrar = Commands;
 
+            // Register Magnetar's built-in !save / !restart / !quit before
+            // plugins initialize. Last-registration-wins, so a plugin may
+            // override any of them by registering the same prefix later.
+            Commands.Register(typeof(SaveCommand).Assembly,
+                typeof(SaveCommand), typeof(RestartCommand), typeof(QuitCommand));
+
             // Bind the SDK PathResolver facade to the LinuxCompat case-insensitive
             // path cache before plugins initialize, so a plugin may already use it
             // from its own Init(); otherwise the pass-through shim stays active

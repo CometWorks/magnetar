@@ -70,12 +70,11 @@ namespace PluginSdk.Commands
                 if (cmdAttr == null)
                     continue;
 
+                // An empty path denotes the root-level (default) command, run
+                // for a bare '!prefix'. Non-empty paths must not start with the
+                // reserved 'help' word.
                 List<string> path = SplitPath(cmdAttr.Command);
-                if (path.Count == 0)
-                    throw new CommandRegistrationException(
-                        $"{moduleType.Name}.{method.Name} has an empty command path");
-
-                if (string.Equals(path[0], "help", StringComparison.OrdinalIgnoreCase))
+                if (path.Count > 0 && string.Equals(path[0], "help", StringComparison.OrdinalIgnoreCase))
                     throw new CommandRegistrationException(
                         $"'!{prefix} help' is reserved and cannot be defined by {moduleType.Name}.{method.Name}");
 

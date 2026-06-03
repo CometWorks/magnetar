@@ -15,6 +15,14 @@ namespace PluginSdk.Commands
         public string Description { get; }
         public string OwnerId { get; }
 
+        /// <summary>
+        /// The root-level (default) command, run for a bare <c>!prefix</c> with
+        /// no sub-path. Null when the root has none, in which case a bare
+        /// <c>!prefix</c> prints the overview instead. Registered via an empty
+        /// <see cref="CommandAttribute.Command"/> path.
+        /// </summary>
+        public RegisteredCommand Default { get; private set; }
+
         private readonly Node root = new Node();
 
         public CommandRoot(string prefix, string title, string description, string ownerId)
@@ -32,6 +40,12 @@ namespace PluginSdk.Commands
         /// </summary>
         public void Add(RegisteredCommand command)
         {
+            if (command.Path.Count == 0)
+            {
+                Default = command;
+                return;
+            }
+
             Node node = root;
             foreach (string segment in command.Path)
             {
