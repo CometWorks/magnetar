@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Pulsar.Legacy.Loader;
@@ -43,11 +44,13 @@ internal static class ServerControl
     private static string originalCwd;
     private static string[] originalEnv = Array.Empty<string>();
 
+#if NETCOREAPP
     // Rooted so the CLR does not finalize the registrations (a finalized
     // registration silently stops delivering the signal).
     private static PosixSignalRegistration sigTerm;
     private static PosixSignalRegistration sigInt;
     private static PosixSignalRegistration sigHup;
+#endif
 
     private static volatile bool terminating;
     private static readonly object terminateLock = new object();
@@ -76,9 +79,10 @@ internal static class ServerControl
     }
 
     /// <summary>
-    /// Installs the POSIX signal handlers and binds the plugin SDK facade.
-    /// Safe to call before a session exists — the handlers tolerate a null
-    /// <see cref="MySession.Static"/>.
+    /// Binds the plugin SDK facade and, on .NET (Core), installs the POSIX
+    /// signal handlers. Safe to call before a session exists — the handlers
+    /// tolerate a null <see cref="MySession.Static"/>. The .NET Framework
+    /// (Legacy) build has no POSIX signals, so it only binds the facade.
     /// </summary>
     public static void InstallSignalHandlers()
     {
@@ -90,14 +94,17 @@ internal static class ServerControl
             QuitWithoutSaving,
             RestartWithoutSaving);
 
+#if NETCOREAPP
         sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, OnTerminate);
         sigInt = PosixSignalRegistration.Create(PosixSignal.SIGINT, OnTerminate);
 
         // SIGHUP is Linux-only; on Windows Create() throws for it.
         if (OperatingSystem.IsLinux())
             sigHup = PosixSignalRegistration.Create(PosixSignal.SIGHUP, OnReload);
+#endif
     }
 
+#if NETCOREAPP
     private static void OnTerminate(PosixSignalContext context)
     {
         // Cancel the default disposition (process termination) so the save can
@@ -113,6 +120,7 @@ internal static class ServerControl
         LogFile.WriteLine("Received SIGHUP: saving world and reloading config");
         Task.Run(() => ReloadConfig());
     }
+#endif
 
     /// <summary>
     /// Saves the world and blocks the calling thread until the on-disk write
@@ -340,7 +348,7 @@ internal static class ServerControl
     {
         // libc _exit guarantees the exact exit code and cannot hang in a
         // finalizer or static destructor, unlike Environment.Exit.
-        if (OperatingSystem.IsLinux())
+        if (IsLinux)
         {
             try { LibcExit(code); } catch { }
         }
@@ -359,7 +367,7 @@ internal static class ServerControl
 
         string path = originalArgv[0];
 
-        if (OperatingSystem.IsLinux())
+        if (IsLinux)
         {
             // Restore the working directory the process was launched from, then
             // replace the image. execve preserves the PID, stdio and tty, which
@@ -395,8 +403,14 @@ internal static class ServerControl
                 UseShellExecute = false,
             };
 
+#if NETCOREAPP
             for (int i = 1; i < originalArgv.Length; i++)
                 startInfo.ArgumentList.Add(originalArgv[i]);
+#else
+            // .NET Framework's ProcessStartInfo has no ArgumentList, so paste
+            // the args into the legacy Arguments string with the same quoting.
+            startInfo.Arguments = PasteArguments(originalArgv);
+#endif
 
             startInfo.EnvironmentVariables.Clear();
             foreach (string entry in originalEnv)
@@ -422,4 +436,71 @@ internal static class ServerControl
     private static bool OnUpdateThread()
         => MyPrecalcComponent.UpdateThreadManagedId != 0
            && Environment.CurrentManagedThreadId == MyPrecalcComponent.UpdateThreadManagedId;
+
+#if NETCOREAPP
+    private static bool IsLinux => OperatingSystem.IsLinux();
+#else
+    // The .NET Framework (Legacy) build only ever runs on Windows.
+    private static bool IsLinux => false;
+
+    private static readonly char[] ArgumentDelimiters = { ' ', '\t', '\n', '\v', '"' };
+
+    // Reproduces the Windows command-line quoting that ProcessStartInfo's
+    // ArgumentList applies on .NET (Core), skipping argv[0] (the executable
+    // path, passed separately via FileName).
+    private static string PasteArguments(string[] argv)
+    {
+        var sb = new StringBuilder();
+        for (int i = 1; i < argv.Length; i++)
+            AppendArgument(sb, argv[i]);
+        return sb.ToString();
+    }
+
+    private static void AppendArgument(StringBuilder sb, string argument)
+    {
+        if (sb.Length != 0)
+            sb.Append(' ');
+
+        if (argument.Length != 0 && argument.IndexOfAny(ArgumentDelimiters) < 0)
+        {
+            sb.Append(argument);
+            return;
+        }
+
+        sb.Append('"');
+        int idx = 0;
+        while (idx < argument.Length)
+        {
+            char c = argument[idx++];
+            if (c == '\\')
+            {
+                int slashes = 1;
+                while (idx < argument.Length && argument[idx] == '\\')
+                {
+                    idx++;
+                    slashes++;
+                }
+
+                if (idx == argument.Length)
+                    sb.Append('\\', slashes * 2);
+                else if (argument[idx] == '"')
+                {
+                    sb.Append('\\', slashes * 2 + 1);
+                    sb.Append('"');
+                    idx++;
+                }
+                else
+                    sb.Append('\\', slashes);
+            }
+            else if (c == '"')
+            {
+                sb.Append('\\');
+                sb.Append('"');
+            }
+            else
+                sb.Append(c);
+        }
+        sb.Append('"');
+    }
+#endif
 }
