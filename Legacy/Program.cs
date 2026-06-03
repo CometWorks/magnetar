@@ -42,7 +42,7 @@ static class Program
 #if NETCOREAPP
 
         string baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        string libraryDir = Path.Combine(baseDir, "Libraries", "Interim");
+        string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarInterim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir, runtimeDir]);
@@ -87,7 +87,7 @@ static class Program
             pulsarDir = Path.Combine(baseDir, asmName.Name);
 
             if (!Directory.Exists(pulsarDir))
-                pulsarDir = Path.Combine(baseDir, "Legacy");
+                pulsarDir = Path.Combine(baseDir, "MagnetarLegacy");
         }
 
         LogFile.Init(pulsarDir);

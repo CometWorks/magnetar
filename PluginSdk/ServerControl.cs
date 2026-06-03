@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 // Only the host launcher may Bind the facade to its implementation.
 [assembly: InternalsVisibleTo("MagnetarInterim")]
+[assembly: InternalsVisibleTo("MagnetarLegacy")]
 [assembly: InternalsVisibleTo("PluginSdkTests")]
 
 namespace PluginSdk

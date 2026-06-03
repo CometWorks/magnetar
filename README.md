@@ -8,12 +8,12 @@ This folder **must not** contain important data; It **will be cleaned** during a
 If you are building from source, the deploy script will copy all files to their required location.<br>
 
 ## Executables
-`Legacy` runs the [Space Engineers 1](https://steampowered.com/app/244850) Dedicated Server on [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework)<br>
-`Interim` runs the [Space Engineers 1](https://steampowered.com/app/244850) Dedicated Server on [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+`MagnetarLegacy` runs the [Space Engineers 1](https://steampowered.com/app/244850) Dedicated Server on [.NET Framework 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework)<br>
+`MagnetarInterim` runs the [Space Engineers 1](https://steampowered.com/app/244850) Dedicated Server on [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 (via [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat))<br>
 
 ## Usage
-Run the `Legacy` or `Interim` executable from your Dedicated Server installation in place of `SpaceEngineersDedicated.exe`.<br>
+Run the `MagnetarLegacy` or `MagnetarInterim` executable from your Dedicated Server installation in place of `SpaceEngineersDedicated.exe`.<br>
 Magnetar loads the server with all enabled plugins, then hands off to the normal startup.<br>
 
 ## Plugins

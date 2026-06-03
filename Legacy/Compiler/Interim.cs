@@ -59,7 +59,7 @@ file sealed class CompilerLoadContext : AssemblyLoadContext
         : base("Magnetar", isCollectible: true)
     {
         string applicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        binPath = Path.Combine(applicationBase, "Libraries", "Interim", "Compiler");
+        binPath = Path.Combine(applicationBase, "Libraries", "MagnetarInterim", "Compiler");
     }
 
     protected override Assembly Load(AssemblyName assemblyName)

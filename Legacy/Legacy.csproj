@@ -19,12 +19,12 @@
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
-    <AssemblyName>Legacy</AssemblyName>
-    <StartProgram>$(Magnetar)\Legacy.exe</StartProgram>
+    <AssemblyName>MagnetarLegacy</AssemblyName>
+    <StartProgram>$(Magnetar)\MagnetarLegacy.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' != 'net48'">
-    <AssemblyName>Interim</AssemblyName>
-    <StartProgram>$(Magnetar)\Interim.exe</StartProgram>
+    <AssemblyName>MagnetarInterim</AssemblyName>
+    <StartProgram>$(Magnetar)\MagnetarInterim.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup>
     <Platforms>x64</Platforms>

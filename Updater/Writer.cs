@@ -11,11 +11,11 @@ internal static class Writer
     private const string Pulsar = "Pulsar";
     private const int MaxFiles = 15;
 
-    private static readonly HashSet<string> Preserve = ["Legacy", "Interim", "Modern"];
+    private static readonly HashSet<string> Preserve = ["MagnetarLegacy", "MagnetarInterim", "Modern"];
     private static readonly HashSet<string> Check =
     [
-        "Legacy.exe",
-        "Interim.exe",
+        "MagnetarLegacy.exe",
+        "MagnetarInterim.exe",
         "Modern.exe",
         "LICENSE",
     ];

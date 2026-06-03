@@ -1,6 +1,6 @@
 ﻿<component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MagnetarLegacy" type="DotNetProject" factoryName=".NET Project">
-    <option name="EXE_PATH" value="$USER_HOME$/AppData/Roaming/Magnetar/Legacy.exe" />
+    <option name="EXE_PATH" value="$USER_HOME$/AppData/Roaming/Magnetar/MagnetarLegacy.exe" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="$USER_HOME$/AppData/Roaming/Magnetar" />
     <option name="PASS_PARENT_ENVS" value="1" />
