@@ -38,6 +38,11 @@ The library also exposes a **`PathResolver`** facade so file-handling code
 resolves paths case-insensitively on Linux and stays a cheap no-op on Windows —
 the plugin writes one code path that works on both. See [Paths.md](Paths.md).
 
+The library also exposes a **`ServerControl`** facade so a plugin can drive the
+dedicated server's lifecycle — save the world, reload the dedicated config, and
+quit or restart the process — through static calls. See
+[ServerControl.md](ServerControl.md).
+
 ## When to read what
 
 | Document | When you need it |
@@ -46,10 +51,12 @@ the plugin writes one code path that works on both. See [Paths.md](Paths.md).
 | [Options.md](Options.md) | Picking the right attribute for a value (bool, ranges, strings, lists, dicts, structs). |
 | [Layout.md](Layout.md) | Grouping options into tabs, sections and columns for the Web UI. |
 | [Storage.md](Storage.md) | Loading and saving — XML on disk, JSON over the wire. |
+| [Mutation.md](Mutation.md) | **Critical reading** before editing a list, dictionary or struct option at runtime — why in-place mutations need `NotifyChanged`. |
 | [Example.md](Example.md) | Complete annotated config class to copy-paste from. |
 | [Commands.md](Commands.md) | Adding server chat commands (`!prefix cmd`) with `[CommandRoot]` / `[Command]` modules. |
 | [Logging.md](Logging.md) | Logging through one environment-agnostic `Logger` — game log when standalone, JSON when managed by Quasar. |
 | [Paths.md](Paths.md) | Resolving filesystem paths case-insensitively via `PathResolver` so file handling works on both Windows and Linux. |
+| [ServerControl.md](ServerControl.md) | Driving the server lifecycle — save, reload config, quit, restart — via the static `ServerControl` facade. |
 
 ## Minimal example
 
