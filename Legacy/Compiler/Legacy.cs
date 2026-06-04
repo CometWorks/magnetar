@@ -28,9 +28,11 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
             );
 
         instance.DebugBuild = debugBuild;
+        // NETFRAMEWORK only ever runs on Windows, so the platform is fixed here.
+        // Running on Proton/Wine is considered running on Windows, so no difference.
         instance.Flags = debugBuild
-            ? ["NETFRAMEWORK", "TRACE", "DEBUG"]
-            : ["NETFRAMEWORK", "TRACE"];
+            ? ["NETFRAMEWORK", "PLATFORM_WINDOWS", "TRACE", "DEBUG"]
+            : ["NETFRAMEWORK", "PLATFORM_WINDOWS", "TRACE"];
 
         return instance;
     }

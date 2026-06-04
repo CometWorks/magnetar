@@ -85,7 +85,12 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
         if (loadContext is null)
             Init();
 
-        string[] flags = debugBuild ? ["NETCOREAPP", "TRACE", "DEBUG"] : ["NETCOREAPP", "TRACE"];
+        string platform = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "PLATFORM_WINDOWS"
+            : "PLATFORM_LINUX";
+        string[] flags = debugBuild
+            ? ["NETCOREAPP", platform, "TRACE", "DEBUG"]
+            : ["NETCOREAPP", platform, "TRACE"];
 
         Type type = compilerAsm.GetType(typeof(RoslynCompiler).FullName, throwOnError: true);
         return new CompilerWrapper(Activator.CreateInstance(type), debugBuild, flags);
