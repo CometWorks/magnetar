@@ -8,4 +8,5 @@ public enum PluginStatus
     Error,
     Blocked,
     Runtime,
+    Platform,
 }

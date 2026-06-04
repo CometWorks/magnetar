@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using FuzzySharp;
 using ProtoBuf;
@@ -36,6 +37,7 @@ public abstract class PluginData : IEquatable<PluginData>
             {
                 PluginStatus.Network => "Network!",
                 PluginStatus.Runtime => "Runtime!",
+                PluginStatus.Platform => "Platform!",
                 PluginStatus.Updated => "Updated",
                 PluginStatus.Error => "Error!",
                 PluginStatus.Blocked => "Blocked!",
@@ -68,6 +70,9 @@ public abstract class PluginData : IEquatable<PluginData>
     [ProtoMember(8)]
     public string Runtimes { get; set; }
 
+    [ProtoMember(10)]
+    public string Platforms { get; set; }
+
     [ProtoMember(9)]
     [XmlArray]
     [XmlArrayItem("Id")]
@@ -96,6 +101,13 @@ public abstract class PluginData : IEquatable<PluginData>
         if (!IsSupportedRuntime())
         {
             Status = PluginStatus.Runtime;
+            a = null;
+            return false;
+        }
+
+        if (!IsSupportedPlatform())
+        {
+            Status = PluginStatus.Platform;
             a = null;
             return false;
         }
@@ -172,6 +184,20 @@ public abstract class PluginData : IEquatable<PluginData>
 #else
             || Runtimes.Contains("NETCoreApp");
 #endif
+    }
+
+    public bool IsSupportedPlatform()
+    {
+        if (Platforms is null)
+            return true;
+
+        // RuntimeInformation (rather than OperatingSystem.IsWindows) so this
+        // compiles for both net48 and net10.0. Running under Proton/Wine reports
+        // as Windows, which matches how plugins are compiled for that platform.
+        string platform = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "Windows"
+            : "Linux";
+        return Platforms.Contains(platform);
     }
 
     public override bool Equals(object obj)

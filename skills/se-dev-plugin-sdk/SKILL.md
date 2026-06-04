@@ -43,6 +43,11 @@ dedicated server's lifecycle — save the world, reload the dedicated config, an
 quit or restart the process — through static calls. See
 [ServerControl.md](ServerControl.md).
 
+When Magnetar compiles a plugin it defines a **platform preprocessor symbol**
+(`PLATFORM_WINDOWS` or `PLATFORM_LINUX`) for the OS the server runs on, so a
+plugin can pick platform-specific code paths and know which SDK behaviour to
+expect. See [Platform.md](Platform.md).
+
 ## When to read what
 
 | Document | When you need it |
@@ -57,6 +62,7 @@ quit or restart the process — through static calls. See
 | [Logging.md](Logging.md) | Logging through one environment-agnostic `Logger` — game log when standalone, JSON when managed by Quasar. |
 | [Paths.md](Paths.md) | Resolving filesystem paths case-insensitively via `PathResolver` so file handling works on both Windows and Linux. |
 | [ServerControl.md](ServerControl.md) | Driving the server lifecycle — save, reload config, quit, restart — via the static `ServerControl` facade. |
+| [Platform.md](Platform.md) | Using the `PLATFORM_WINDOWS` / `PLATFORM_LINUX` compile symbols Magnetar defines to branch on the OS the server runs on. |
 
 ## Minimal example
 
