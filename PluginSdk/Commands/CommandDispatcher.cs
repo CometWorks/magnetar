@@ -7,8 +7,9 @@ namespace PluginSdk.Commands
 {
     /// <summary>
     /// Parses a chat line, resolves it against a <see cref="CommandRegistry"/>
-    /// and invokes the matching handler, including the built-in per-root
-    /// overview and <c>help</c>. The whole pipeline is host-independent: it
+    /// and invokes the matching handler, including the global <c>!help</c>
+    /// top-level listing and the built-in per-root overview and <c>help</c>.
+    /// The whole pipeline is host-independent: it
     /// runs against a <see cref="CommandCaller"/> and an
     /// <see cref="ICommandResponder"/>, so it can be exercised in tests without
     /// a live game.
@@ -46,6 +47,20 @@ namespace PluginSdk.Commands
             List<string> tokens = CommandLine.Tokenize(message.Substring(1));
             if (tokens.Count == 0)
                 return false;
+
+            // '!help' is the built-in command that lists every top-level command
+            // available to the caller. It is not tied to a registered root, so it
+            // is handled before root resolution. '!help <prefix>' drills into that
+            // root and lists its sub-commands; an unknown prefix falls back to the
+            // top-level listing.
+            if (string.Equals(tokens[0], "help", StringComparison.OrdinalIgnoreCase))
+            {
+                if (tokens.Count > 1 && registry.TryGetRoot(tokens[1], out CommandRoot helpRoot))
+                    SendOverview(helpRoot, caller, responder);
+                else
+                    SendGlobalHelp(caller, responder);
+                return true;
+            }
 
             string prefix = tokens[0];
             if (!registry.TryGetRoot(prefix, out CommandRoot root))
@@ -150,6 +165,34 @@ namespace PluginSdk.Commands
             }
         }
 
+        private void SendGlobalHelp(CommandCaller caller, ICommandResponder responder)
+        {
+            const string author = "Help";
+
+            var roots = registry.EnumerateRoots()
+                .Where(r => r.IsAvailableTo(caller.PromoteLevel))
+                .OrderBy(r => r.Prefix, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            Reply(responder, caller, CommandReply.Info("=== Server Commands ===").WithAuthor(author));
+
+            if (roots.Count == 0)
+            {
+                Reply(responder, caller, CommandReply.Info("No server commands available").WithAuthor(author));
+                return;
+            }
+
+            foreach (CommandRoot root in roots)
+            {
+                string line = string.IsNullOrEmpty(root.Description)
+                    ? $"!{root.Prefix}"
+                    : $"!{root.Prefix} — {root.Description}";
+                Reply(responder, caller, CommandReply.Info(line).WithAuthor(author));
+            }
+
+            Reply(responder, caller, CommandReply.Info("Type a command to run it or list its sub-commands.").WithAuthor(author));
+        }
+
         private static void SendOverview(CommandRoot root, CommandCaller caller, ICommandResponder responder)
         {
             var visible = root.EnumerateCommands().Where(c => c.IsVisibleTo(caller.PromoteLevel)).ToList();
@@ -161,7 +204,7 @@ namespace PluginSdk.Commands
 
             if (visible.Count == 0)
             {
-                Reply(responder, caller, CommandReply.Info("(no commands available to you)").WithAuthor(root.Title));
+                Reply(responder, caller, CommandReply.Info("No server commands available").WithAuthor(root.Title));
                 return;
             }
 

@@ -62,6 +62,12 @@ namespace PluginSdk.Commands
                 throw new CommandRegistrationException(
                     $"{moduleType.Name} has an invalid command prefix '{rootAttr.Prefix}'");
 
+            // '!help' is the built-in command that lists every top-level command,
+            // so plugins may not claim it as a root prefix.
+            if (string.Equals(prefix, "help", StringComparison.OrdinalIgnoreCase))
+                throw new CommandRegistrationException(
+                    $"{moduleType.Name} uses the reserved prefix 'help'; '!help' is the built-in command list");
+
             CommandRoot root = GetOrCreateRoot(prefix, rootAttr, ownerId);
 
             foreach (MethodInfo method in moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
@@ -88,6 +94,9 @@ namespace PluginSdk.Commands
 
         internal bool TryGetRoot(string prefix, out CommandRoot root)
             => roots.TryGetValue(prefix, out root);
+
+        /// <summary>Every registered root, used to build the global <c>!help</c> listing.</summary>
+        internal IEnumerable<CommandRoot> EnumerateRoots() => roots.Values;
 
         private CommandRoot GetOrCreateRoot(string prefix, CommandRootAttribute attr, string ownerId)
         {

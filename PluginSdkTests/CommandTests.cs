@@ -277,6 +277,14 @@ namespace PluginSdk.Tests
             public string Root() => "admin-default-ran";
         }
 
+        [CommandRoot("help", "Help Plugin", "tries to hijack help")]
+        public sealed class HelpPrefixCommands : CommandModule
+        {
+            [Command("foo", "does foo")]
+            [Permission(MyPromoteLevel.None)]
+            public string Foo() => "foo";
+        }
+
         private static CommandDispatcher BuildDispatcherFor(Type moduleType, out CapturingResponder responder)
         {
             var registry = new CommandRegistry();
@@ -350,6 +358,113 @@ namespace PluginSdk.Tests
             d.Handle("!test ping", Caller(MyPromoteLevel.None), r);
 
             Assert.Equal("pong2", r.LastText);
+        }
+
+        private static CommandDispatcher BuildMultiRootDispatcher(out CapturingResponder responder)
+        {
+            var registry = new CommandRegistry();
+            registry.RegisterModule(typeof(SampleCommands), "owner1");
+            registry.RegisterModule(typeof(DefaultCommands), "owner1");
+            registry.RegisterModule(typeof(AdminDefaultCommands), "owner1");
+            responder = new CapturingResponder();
+            return new CommandDispatcher(registry, null);
+        }
+
+        [Fact]
+        public void GlobalHelp_ListsTopLevelCommands_Sorted()
+        {
+            var d = BuildMultiRootDispatcher(out var r);
+            bool handled = d.Handle("!help", Caller(MyPromoteLevel.Admin), r);
+
+            Assert.True(handled);
+            string all = string.Join("\n", r.Texts);
+            // Each registered root appears as a top-level command, with its
+            // description, sorted alphabetically by prefix (adm < def < test).
+            Assert.Contains("!adm", all);
+            Assert.Contains("!def", all);
+            Assert.Contains("!test", all);
+            Assert.True(all.IndexOf("!adm", StringComparison.Ordinal) < all.IndexOf("!def", StringComparison.Ordinal));
+            Assert.True(all.IndexOf("!def", StringComparison.Ordinal) < all.IndexOf("!test", StringComparison.Ordinal));
+            Assert.Contains("has a default command", all);
+        }
+
+        [Fact]
+        public void GlobalHelp_DoesNotListSubcommands()
+        {
+            var d = BuildMultiRootDispatcher(out var r);
+            d.Handle("!help", Caller(MyPromoteLevel.Admin), r);
+
+            string all = string.Join("\n", r.Texts);
+            Assert.DoesNotContain("!test ping", all);
+            Assert.DoesNotContain("grid list", all);
+            Assert.DoesNotContain("!def sub", all);
+            Assert.DoesNotContain("a sub command", all);
+        }
+
+        [Fact]
+        public void GlobalHelp_NonAdmin_HidesRootsWithoutAvailableCommands()
+        {
+            var d = BuildMultiRootDispatcher(out var r);
+            d.Handle("!help", Caller(MyPromoteLevel.None), r);
+
+            string all = string.Join("\n", r.Texts);
+            // 'test' and 'def' expose commands a non-admin may use; 'adm' only has
+            // an admin-level default, so it is a top-level command unavailable to
+            // this caller and must not be listed.
+            Assert.Contains("!test", all);
+            Assert.Contains("!def", all);
+            Assert.DoesNotContain("!adm", all);
+        }
+
+        [Fact]
+        public void GlobalHelp_NoAvailableCommands_SaysSo()
+        {
+            var registry = new CommandRegistry();
+            registry.RegisterModule(typeof(AdminDefaultCommands), "owner1");
+            var r = new CapturingResponder();
+            var d = new CommandDispatcher(registry, null);
+
+            d.Handle("!help", Caller(MyPromoteLevel.None), r);
+
+            string all = string.Join("\n", r.Texts);
+            Assert.DoesNotContain("!adm", all);
+            Assert.Contains("No server commands available", all);
+        }
+
+        [Fact]
+        public void GlobalHelp_WithKnownPrefix_ListsThatRootsSubcommands()
+        {
+            var d = BuildMultiRootDispatcher(out var r);
+            d.Handle("!help test", Caller(MyPromoteLevel.None), r);
+
+            string all = string.Join("\n", r.Texts);
+            // Drills into the 'test' root and lists its sub-commands rather than
+            // the top-level listing.
+            Assert.Contains("Test Plugin", all);
+            Assert.Contains("!test ping", all);
+            Assert.Contains("!test grid list", all);
+            Assert.DoesNotContain("!def", all);
+        }
+
+        [Fact]
+        public void GlobalHelp_WithUnknownPrefix_FallsBackToTopLevelListing()
+        {
+            var d = BuildMultiRootDispatcher(out var r);
+            d.Handle("!help nosuchroot", Caller(MyPromoteLevel.Admin), r);
+
+            string all = string.Join("\n", r.Texts);
+            Assert.Contains("Server Commands", all);
+            Assert.Contains("!test", all);
+            Assert.Contains("!def", all);
+        }
+
+        [Fact]
+        public void Register_HelpPrefix_IsRejected()
+        {
+            var registry = new CommandRegistry();
+            var ex = Assert.Throws<CommandRegistrationException>(
+                () => registry.RegisterModule(typeof(HelpPrefixCommands), "owner1"));
+            Assert.Contains("help", ex.Message);
         }
     }
 }

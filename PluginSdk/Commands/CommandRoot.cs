@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VRage.Game.ModAPI;
 
 namespace PluginSdk.Commands
 {
@@ -84,6 +85,22 @@ namespace PluginSdk.Commands
             }
 
             return command != null;
+        }
+
+        /// <summary>
+        /// True when the given promote <paramref name="level"/> may use at least
+        /// one command in this root — its default command or any command in the
+        /// tree. Used by the global <c>!help</c> listing to decide whether this
+        /// top-level command appears for the caller.
+        /// </summary>
+        public bool IsAvailableTo(MyPromoteLevel level)
+        {
+            if (Default != null && Default.IsVisibleTo(level))
+                return true;
+            foreach (RegisteredCommand command in EnumerateCommands())
+                if (command.IsVisibleTo(level))
+                    return true;
+            return false;
         }
 
         /// <summary>All commands in declaration-independent (sorted) order.</summary>
