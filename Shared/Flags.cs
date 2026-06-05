@@ -22,6 +22,7 @@ public static class Flags
     public static bool GameIntroVideo { get; private set; }
     public static bool MakeCheckFile { get; private set; }
     public static bool TrustedMods { get; private set; }
+    public static bool Daemon { get; private set; }
 
     static Flags()
     {
@@ -40,6 +41,7 @@ public static class Flags
         GameIntroVideo = HasArg("keepintro");
         MakeCheckFile = HasArg("mkcheck");
         TrustedMods = HasArg("hardened");
+        Daemon = HasArg("daemon");
     }
 
     public static void LogFlags()
@@ -67,6 +69,8 @@ public static class Flags
             changed.Add("MakeCheckFile");
         if (TrustedMods)
             changed.Add("TrustedMods");
+        if (Daemon)
+            changed.Add("Daemon");
 
         if (changed.Count > 0)
             LogFile.WriteLine($"Enabled flags: {string.Join(" ", changed)}");

@@ -99,6 +99,17 @@ Run the launcher in place of `SpaceEngineersDedicated.exe`:
 Magnetar resolves the DS install, applies any preloader patches, loads
 enabled plugins, then hands off to the dedicated server's own `Main`.
 
+Pass `-daemon` to detach the process from its parent (typically Quasar) at
+startup, so the parent terminating does not take the server down with it. On
+Linux this is a `setsid()` — the process leaves the parent's session and
+process group (an explicit `kill -HUP <pid>` still reloads the config). When
+launched as a child it detaches in place, keeping the PID and inherited
+stdout/stderr so a managing parent keeps capturing the log stream until it
+exits; when the process is itself a process-group leader (e.g. a wrapper script
+that `exec`s it), `setsid()` is not permitted in place, so it re-execs a
+detached child and the original exits. On Windows it detaches from the inherited
+console.
+
 ## Plugins
 
 Plugins are registered on

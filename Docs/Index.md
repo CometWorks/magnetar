@@ -37,10 +37,11 @@ Every documented source file, grouped by module. 123 files across 16 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
+| [`Legacy/Launcher/Daemon.cs`](descriptions/Legacy/Launcher/Daemon.cs.md) | 160 | 2 | Detaches the running process from its parent when `-daemon` is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](descriptions/Legacy/Launcher/Folder.cs.md) | 161 | 2 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](descriptions/Legacy/Launcher/Game.cs.md) | 141 | 2 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
 | [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 512 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
-| [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 383 | 1 | Entry point for the Magnetar launcher. |
+| [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 389 | 1 | Entry point for the Magnetar launcher. |
 
 ## Legacy.Loader  ·  [module doc](modules/Legacy.Loader.md)
 

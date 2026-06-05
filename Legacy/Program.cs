@@ -75,6 +75,12 @@ static class Program
         string baseDir = Path.GetDirectoryName(currentAssembly.Location);
 
         SetupCoreData();
+
+        // Detach from the parent (typically Quasar) before the heavy startup work
+        // so the parent terminating cannot take the dedicated server down with it.
+        if (Flags.Daemon)
+            Daemon.Detach();
+
         Updater updater = TryUpdate(baseDir);
         SetupGameData(updater);
         CheckCanStart(updater);
