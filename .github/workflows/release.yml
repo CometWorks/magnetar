@@ -173,14 +173,32 @@ jobs:
           mkdir -p steamcmd ds
           curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
             | tar -xz -C steamcmd
-          # SE DS has no native Linux depot; force the Windows files (run via
-          # the se-linux-compat native wrappers). Anonymous login is allowed.
-          ./steamcmd/steamcmd.sh \
-            +@sSteamCmdForcePlatformType windows \
-            +force_install_dir "$PWD/ds" \
-            +login anonymous \
-            +app_update "$SE_DS_APPID" validate \
-            +quit
+
+          # A brand-new steamcmd self-updates on its first run, which makes an
+          # in-session app_update abort with "Missing configuration". Bootstrap
+          # once, then retry the install (steamcmd is also flaky enough in CI
+          # that a couple of retries are worthwhile). SE DS has no native Linux
+          # depot, so force the Windows files (run via the native wrappers).
+          ./steamcmd/steamcmd.sh +quit || true
+
+          ok=0
+          for attempt in 1 2 3 4 5; do
+            ./steamcmd/steamcmd.sh \
+              +@sSteamCmdForcePlatformType windows \
+              +force_install_dir "$PWD/ds" \
+              +login anonymous \
+              +app_update "$SE_DS_APPID" validate \
+              +quit || true
+            if [ -f "$PWD/ds/DedicatedServer64/SpaceEngineersDedicated.exe" ]; then
+              ok=1; break
+            fi
+            echo "steamcmd attempt $attempt did not complete the DS install; retrying..."
+            sleep 5
+          done
+          if [ "$ok" != 1 ]; then
+            echo "ERROR: steamcmd failed to install the Dedicated Server." >&2
+            exit 1
+          fi
           echo "DS contents:"
           ls "$PWD/ds/DedicatedServer64" | head
 
@@ -233,7 +251,22 @@ jobs:
           Invoke-WebRequest -Uri "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile steamcmd.zip
           Expand-Archive -Path steamcmd.zip -DestinationPath steamcmd -Force
           $ds = Join-Path $env:GITHUB_WORKSPACE "ds"
-          & steamcmd/steamcmd.exe +force_install_dir "$ds" +login anonymous +app_update $env:SE_DS_APPID validate +quit
+          $marker = Join-Path $ds "DedicatedServer64\SpaceEngineersDedicated.exe"
+
+          # A brand-new steamcmd self-updates on its first run, which makes an
+          # in-session app_update abort with "Missing configuration". Bootstrap
+          # once, then retry the install (steamcmd is flaky enough in CI that a
+          # couple of retries are worthwhile).
+          & steamcmd/steamcmd.exe +quit | Out-Null
+
+          $ok = $false
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+            & steamcmd/steamcmd.exe +force_install_dir "$ds" +login anonymous +app_update $env:SE_DS_APPID validate +quit
+            if (Test-Path $marker) { $ok = $true; break }
+            Write-Host "steamcmd attempt $attempt did not complete the DS install; retrying..."
+            Start-Sleep -Seconds 5
+          }
+          if (-not $ok) { throw "steamcmd failed to install the Dedicated Server." }
           Get-ChildItem (Join-Path $ds "DedicatedServer64") | Select-Object -First 5 Name
 
       - name: Build and stage (Magnetar.sln)
