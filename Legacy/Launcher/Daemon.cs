@@ -31,6 +31,7 @@ namespace Pulsar.Legacy.Launcher;
 /// </summary>
 internal static class Daemon
 {
+#if NETCOREAPP
     // errno value for "operation not permitted" — what setsid() returns when the
     // caller is already a process-group leader.
     private const int EPERM = 1;
@@ -50,6 +51,7 @@ internal static class Daemon
 
     [DllImport("libc", EntryPoint = "_exit")]
     private static extern void LibcExit(int status);
+#endif
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -73,6 +75,7 @@ internal static class Daemon
         DetachWindows();
     }
 
+#if NETCOREAPP
     private static void DetachPosix()
     {
         // Already a session leader (a prior re-exec already detached us, or an
@@ -144,6 +147,7 @@ internal static class Daemon
         try { LogFile.Dispose(); } catch { }
         LibcExit(0);
     }
+#endif
 
     private static void DetachWindows()
     {
