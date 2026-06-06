@@ -26,7 +26,7 @@
 #
 # Usage:
 #   ./build.sh                  Build/refresh build/Libraries/ AND package
-#                              dist/MagnetarForLinux.<date>.<hash>.7z.
+#                              dist/MagnetarForLinux.7z.
 #   ./build.sh --deps-only      Build/refresh build/Libraries/ only.
 #   ./build.sh --skip-deps      Skip dep staging; just package.
 #   ./build.sh --clean          Wipe caches and rebuild from scratch.
@@ -225,7 +225,7 @@ fi  # DO_DEPS
 
 # ---- 5. package the distributable bundle ----------------------------------
 # Publishes Legacy framework-dependently, stages the bundle tree, and
-# packs dist/MagnetarForLinux.<date>.<hash>.7z. Skipped with --deps-only.
+# packs dist/MagnetarForLinux.7z. Skipped with --deps-only.
 
 if [ "$DO_PACKAGE" = "1" ]; then
     if [ ! -d "$LIBRARIES_DIR" ]; then

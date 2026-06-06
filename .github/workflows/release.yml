@@ -13,7 +13,7 @@ name: Release
 #                          what is already released.
 #
 # Required repository configuration:
-#   * vars.VENDOR_ARCHIVE_URL  - download URL that returns Vendor.7z, containing
+#   * secrets.VENDOR_ARCHIVE_URL - download URL that returns Vendor.7z, containing
 #                                the Vendor/ folder with libsteam_api.so and
 #                                libEOSSDK-Linux-Shipping.so (the proprietary
 #                                blobs that can't be committed).
@@ -41,7 +41,7 @@ jobs:
       should_build: ${{ steps.decide.outputs.should_build }}
       draft: ${{ steps.decide.outputs.draft }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Decide release plan
         id: decide
@@ -65,9 +65,13 @@ jobs:
             draft=true
           else
             # Push to main: build only if strictly newer than the latest release.
-            latest="$(gh api "repos/${{ github.repository }}/releases/latest" \
-                        --jq '.tag_name' 2>/dev/null || true)"
-            latest="${latest#v}"
+            # /releases/latest returns HTTP 404 (and a JSON error body on stdout)
+            # when no release exists yet, so only trust the output on success.
+            latest=""
+            if tag="$(gh api "repos/${{ github.repository }}/releases/latest" \
+                        --jq '.tag_name' 2>/dev/null)"; then
+              latest="${tag#v}"
+            fi
 
             if [ -z "$latest" ]; then
               echo "No existing release -> first release counts as newer."
@@ -92,17 +96,17 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------------------
-  # Linux build: build.sh -> dist/MagnetarForLinux.<date>.<hash>.7z
+  # Linux build: build.sh -> dist/MagnetarForLinux.7z
   # ---------------------------------------------------------------------------
   build-linux:
     needs: version-check
     if: needs.version-check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install .NET SDKs
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             8.0.x
@@ -127,7 +131,7 @@ jobs:
 
       - name: Cache native wrappers
         id: nativecache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: native
           key: nativewrappers-${{ steps.linuxcompat.outputs.sha }}
@@ -149,11 +153,11 @@ jobs:
       # --- Vendor proprietary blobs (always downloaded, never cached) --------
       - name: Download Vendor archive
         env:
-          VENDOR_ARCHIVE_URL: ${{ vars.VENDOR_ARCHIVE_URL }}
+          VENDOR_ARCHIVE_URL: ${{ secrets.VENDOR_ARCHIVE_URL }}
         run: |
           set -euo pipefail
           if [ -z "${VENDOR_ARCHIVE_URL:-}" ]; then
-            echo "ERROR: repository variable VENDOR_ARCHIVE_URL is not set." >&2
+            echo "ERROR: repository secret VENDOR_ARCHIVE_URL is not set." >&2
             exit 1
           fi
           curl -fsSL "$VENDOR_ARCHIVE_URL" -o Vendor.7z
@@ -169,14 +173,32 @@ jobs:
           mkdir -p steamcmd ds
           curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
             | tar -xz -C steamcmd
-          # SE DS has no native Linux depot; force the Windows files (run via
-          # the se-linux-compat native wrappers). Anonymous login is allowed.
-          ./steamcmd/steamcmd.sh \
-            +@sSteamCmdForcePlatformType windows \
-            +force_install_dir "$PWD/ds" \
-            +login anonymous \
-            +app_update "$SE_DS_APPID" validate \
-            +quit
+
+          # A brand-new steamcmd self-updates on its first run, which makes an
+          # in-session app_update abort with "Missing configuration". Bootstrap
+          # once, then retry the install (steamcmd is also flaky enough in CI
+          # that a couple of retries are worthwhile). SE DS has no native Linux
+          # depot, so force the Windows files (run via the native wrappers).
+          ./steamcmd/steamcmd.sh +quit || true
+
+          ok=0
+          for attempt in 1 2 3 4 5; do
+            ./steamcmd/steamcmd.sh \
+              +@sSteamCmdForcePlatformType windows \
+              +force_install_dir "$PWD/ds" \
+              +login anonymous \
+              +app_update "$SE_DS_APPID" validate \
+              +quit || true
+            if [ -f "$PWD/ds/DedicatedServer64/SpaceEngineersDedicated.exe" ]; then
+              ok=1; break
+            fi
+            echo "steamcmd attempt $attempt did not complete the DS install; retrying..."
+            sleep 5
+          done
+          if [ "$ok" != 1 ]; then
+            echo "ERROR: steamcmd failed to install the Dedicated Server." >&2
+            exit 1
+          fi
           echo "DS contents:"
           ls "$PWD/ds/DedicatedServer64" | head
 
@@ -186,18 +208,22 @@ jobs:
           LIBHAVOK_SO: ${{ github.workspace }}/native/libHavok.so
           LIBRECASTDETOUR_SO: ${{ github.workspace }}/native/libRecastDetour.so
           LIBVRAGENATIVE_SO: ${{ github.workspace }}/native/libVRageNative.so
+          VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           set -euo pipefail
           chmod +x build.sh Scripts/*.sh
           ./build.sh
+          # build.sh names the bundle dist/MagnetarForLinux.7z;
+          # rename it to the version-stamped release name.
+          mv dist/MagnetarForLinux.7z "dist/MagnetarForLinux-${VERSION}.7z"
           echo "Produced:"
-          ls -l dist/*.7z
+          ls -l "dist/MagnetarForLinux-${VERSION}.7z"
 
       - name: Upload Linux bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: magnetar-linux
-          path: dist/MagnetarForLinux.*.7z
+          path: dist/MagnetarForLinux-*.7z
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -209,10 +235,10 @@ jobs:
     if: needs.version-check.outputs.should_build == 'true'
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install .NET 10 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -225,7 +251,22 @@ jobs:
           Invoke-WebRequest -Uri "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile steamcmd.zip
           Expand-Archive -Path steamcmd.zip -DestinationPath steamcmd -Force
           $ds = Join-Path $env:GITHUB_WORKSPACE "ds"
-          & steamcmd/steamcmd.exe +force_install_dir "$ds" +login anonymous +app_update $env:SE_DS_APPID validate +quit
+          $marker = Join-Path $ds "DedicatedServer64\SpaceEngineersDedicated.exe"
+
+          # A brand-new steamcmd self-updates on its first run, which makes an
+          # in-session app_update abort with "Missing configuration". Bootstrap
+          # once, then retry the install (steamcmd is flaky enough in CI that a
+          # couple of retries are worthwhile).
+          & steamcmd/steamcmd.exe +quit | Out-Null
+
+          $ok = $false
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+            & steamcmd/steamcmd.exe +force_install_dir "$ds" +login anonymous +app_update $env:SE_DS_APPID validate +quit
+            if (Test-Path $marker) { $ok = $true; break }
+            Write-Host "steamcmd attempt $attempt did not complete the DS install; retrying..."
+            Start-Sleep -Seconds 5
+          }
+          if (-not $ok) { throw "steamcmd failed to install the Dedicated Server." }
           Get-ChildItem (Join-Path $ds "DedicatedServer64") | Select-Object -First 5 Name
 
       - name: Build and stage (Magnetar.sln)
@@ -243,11 +284,11 @@ jobs:
 
       - name: Package Windows bundle
         shell: pwsh
+        env:
+          VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          $date = Get-Date -Format "yyyyMMdd"
-          $hash = (git rev-parse --short=8 HEAD).Trim()
-          $name = "MagnetarForWindows.$date.$hash.7z"
+          $name = "MagnetarForWindows-$env:VERSION.7z"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $sevenzip = "C:\Program Files\7-Zip\7z.exe"
           # Pack the staged Magnetar/ folder so the archive root mirrors the
@@ -256,10 +297,10 @@ jobs:
           Get-ChildItem dist
 
       - name: Upload Windows bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: magnetar-windows
-          path: dist/MagnetarForWindows.*.7z
+          path: dist/MagnetarForWindows-*.7z
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -271,7 +312,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download bundles
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

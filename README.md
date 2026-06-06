@@ -39,6 +39,29 @@ See **[Docs/Build.md](Docs/Build.md)** for full per-platform instructions —
 prerequisites, dedicated-server detection, dependency staging, publishing,
 and the build-time property/environment overrides.
 
+The Linux packaging step (`./build.sh`, or `Scripts/package_magnetar_for_linux.sh`)
+produces `dist/MagnetarForLinux.7z`.
+
+## Releases
+
+Prebuilt bundles are published on the
+[GitHub Releases](https://github.com/viktor-ferenczi/Magnetar/releases) page:
+
+| Asset | Contents |
+| ----- | -------- |
+| `MagnetarForLinux-<version>.7z` | `install.sh` / `uninstall.sh` + the `MagnetarInterim` (.NET 10) bundle. Extract and run `./install.sh`. |
+| `MagnetarForWindows-<version>.7z` | The `Magnetar/` install tree: `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) plus their `Libraries/`. Extract next to your dedicated server. |
+
+Releases are produced automatically by the
+[`Release`](.github/workflows/release.yml) GitHub Actions workflow, which builds
+both platforms (pulling the dedicated server via `steamcmd` and the
+[se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat) native
+wrappers) and attaches both `.7z` files. A push to `main` publishes a new public
+release when the version in `Legacy/Legacy.csproj` is higher than the latest
+release; a manual run produces a draft. See
+[Docs/Build.md](Docs/Build.md#continuous-integration--releases) for the full
+release process.
+
 ## Documentation
 
 * **[Docs/TOC.md](Docs/TOC.md)** — the **code handbook**: an architecture

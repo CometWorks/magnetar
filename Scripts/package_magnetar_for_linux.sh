@@ -9,7 +9,7 @@
 # libsteam_api.so into the user's XDG data dir, and the user invokes it
 # from their DS launch script.
 #
-# Output: dist/MagnetarForLinux.<YYYYMMDD>.<8-hex-git-hash>.7z
+# Output: dist/MagnetarForLinux.7z
 #
 # Bundle layout (Magnetar/ is the staging tree; install.sh deploys it
 # split between ~/.local/share/Magnetar/ for binaries and
@@ -329,7 +329,7 @@ Prerequisites
 Quick start
 -----------
 1. Extract:
-       7z x MagnetarForLinux.$BUILD_DATE.$GIT_HASH.7z
+       7z x MagnetarForLinux.7z
 2. Deploy:
        cd MagnetarForLinux
        ./install.sh
@@ -362,7 +362,7 @@ EOF
 
 # ---- pack -------------------------------------------------------------------
 
-ARCHIVE_NAME="MagnetarForLinux.$BUILD_DATE.$GIT_HASH.7z"
+ARCHIVE_NAME="MagnetarForLinux.7z"
 ARCHIVE_PATH="$OUTPUT_DIR/$ARCHIVE_NAME"
 
 rm -f "$ARCHIVE_PATH"
