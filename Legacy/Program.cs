@@ -158,7 +158,7 @@ static class Program
     {
         Updater updater = new(PulsarRepo);
 
-        // Auto-update disabled: Magnetar is versioned independently (0.1.0) from the
+        // Auto-update disabled: Magnetar is versioned independently from the
         // upstream SpaceGT/Pulsar repo checked here, so it always sees itself as out of
         // date and would self-replace with Pulsar on every launch, exiting (code 0)
         // before the dedicated server starts. Uncomment to restore automatic updates.
