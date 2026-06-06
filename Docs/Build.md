@@ -205,3 +205,49 @@ overrides — are documented in the [README](../README.md).
   and `net10.0`, and `OperatingSystem.IsLinux()` (.NET 5+) only inside
   `#if NETCOREAPP`. `Loader/NativeLibraryPreloader.cs` (the Linux native
   bootstrap) is excluded from the `net48` compile entirely.
+
+---
+
+## Continuous integration / Releases
+
+[`.github/workflows/release.yml`](../.github/workflows/release.yml) builds both
+platforms and publishes a GitHub release with the two `.7z` bundles attached.
+
+### Triggers
+
+| Trigger | Behaviour |
+| ------- | --------- |
+| Push to `main` | Reads `<Version>` from [Legacy/Legacy.csproj](../Legacy/Legacy.csproj). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped — nothing is built and no existing release is touched. |
+| Manual run (`workflow_dispatch`) | Always builds and publishes a **draft** release (not marked latest) for the current Legacy version, regardless of what is already released. The draft tag is `v<version>`, or `v<version>-build.<run>` if that tag already exists. |
+
+### Jobs
+
+* **version-check** — parses the version and decides `should_build` / `draft`;
+  every other job is gated on `should_build`.
+* **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and
+  `p7zip-full`; builds the [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat)
+  `NativeWrappers` in Docker (see
+  [`.github/docker/nativewrappers.Dockerfile`](../.github/docker/nativewrappers.Dockerfile)),
+  cached by the upstream commit SHA so they only rebuild when that repo's `HEAD`
+  changes; downloads the Vendor blobs and the **Windows** DS depot via
+  `steamcmd`; then runs [`build.sh`](../build.sh) and uploads
+  `dist/MagnetarForLinux.<date>.<hash>.7z`.
+* **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
+  ships the .NET Framework 4.8 targeting pack); downloads the DS via `steamcmd`;
+  builds `Magnetar.sln` with `Magnetar` pointed at a staging tree so
+  [deploy.bat](../Legacy/deploy.bat) lays out the install folder there, then
+  packs it as `MagnetarForWindows.<date>.<hash>.7z`.
+* **release** (`ubuntu-latest`) — downloads both bundles and creates the release
+  with `gh`.
+
+### Required repository configuration
+
+| Name | Kind | Purpose |
+| ---- | ---- | ------- |
+| `VENDOR_ARCHIVE_URL` | Repository **variable** | Download URL returning `Vendor.7z` (the `Vendor/` folder with `libsteam_api.so` and `libEOSSDK-Linux-Shipping.so`). Fetched fresh every run; the existing `Vendor/` is removed and replaced. |
+
+The DS is retrieved anonymously (Steam app `298740`); the Linux job forces the
+Windows depot (`+@sSteamCmdForcePlatformType windows`) because there is no native
+Linux DS — Magnetar runs the Windows files via the native wrappers. The
+`GITHUB_TOKEN` (`contents: write`) is used for the release; no other secret is
+needed.

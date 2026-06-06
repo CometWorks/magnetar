@@ -1,0 +1,310 @@
+name: Release
+
+# Builds Magnetar for Linux and Windows and publishes a GitHub release with
+# both .7z bundles attached.
+#
+#   * push to main      -> read the version from Legacy/Legacy.csproj, and only
+#                          build + publish a public "latest" release when that
+#                          version is strictly higher than the latest existing
+#                          release (the first ever release always counts as
+#                          newer). Otherwise the whole run is skipped.
+#   * manual dispatch   -> always build and publish a DRAFT release (not marked
+#                          latest) for the current Legacy version, regardless of
+#                          what is already released.
+#
+# Required repository configuration:
+#   * vars.VENDOR_ARCHIVE_URL  - download URL that returns Vendor.7z, containing
+#                                the Vendor/ folder with libsteam_api.so and
+#                                libEOSSDK-Linux-Shipping.so (the proprietary
+#                                blobs that can't be committed).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Steam app id of the Space Engineers Dedicated Server (free, anonymous login).
+env:
+  SE_DS_APPID: "298740"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Gate: decide whether to build, what tag to use, and draft vs latest.
+  # ---------------------------------------------------------------------------
+  version-check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
+      should_build: ${{ steps.decide.outputs.should_build }}
+      draft: ${{ steps.decide.outputs.draft }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decide release plan
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Version from the Legacy project (single source of truth for the tag).
+          version="$(grep -oPm1 '(?<=<Version>)[^<]+' Legacy/Legacy.csproj)"
+          if [ -z "$version" ]; then
+            echo "ERROR: could not parse <Version> from Legacy/Legacy.csproj" >&2
+            exit 1
+          fi
+          echo "Legacy version: $version"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual run: always build, always a draft, never marked latest.
+            echo "Manual dispatch -> unconditional draft release."
+            should_build=true
+            draft=true
+          else
+            # Push to main: build only if strictly newer than the latest release.
+            latest="$(gh api "repos/${{ github.repository }}/releases/latest" \
+                        --jq '.tag_name' 2>/dev/null || true)"
+            latest="${latest#v}"
+
+            if [ -z "$latest" ]; then
+              echo "No existing release -> first release counts as newer."
+              should_build=true
+            elif [ "$version" = "$latest" ]; then
+              echo "Version $version equals latest release $latest -> skip."
+              should_build=false
+            elif [ "$(printf '%s\n%s\n' "$version" "$latest" | sort -V | tail -1)" = "$version" ]; then
+              echo "Version $version > latest release $latest -> build."
+              should_build=true
+            else
+              echo "Version $version <= latest release $latest -> skip."
+              should_build=false
+            fi
+            draft=false
+          fi
+
+          {
+            echo "version=$version"
+            echo "should_build=$should_build"
+            echo "draft=$draft"
+          } >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # Linux build: build.sh -> dist/MagnetarForLinux.<date>.<hash>.7z
+  # ---------------------------------------------------------------------------
+  build-linux:
+    needs: version-check
+    if: needs.version-check.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Install build tools (7z, steamcmd deps)
+        run: |
+          set -euo pipefail
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            p7zip-full lib32gcc-s1 ca-certificates curl
+
+      # --- se-linux-compat native wrappers (cached by upstream commit) -------
+      - name: Resolve se-linux-compat commit
+        id: linuxcompat
+        run: |
+          set -euo pipefail
+          sha="$(git ls-remote https://github.com/viktor-ferenczi/se-linux-compat HEAD | cut -f1)"
+          echo "Latest se-linux-compat commit: $sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Cache native wrappers
+        id: nativecache
+        uses: actions/cache@v4
+        with:
+          path: native
+          key: nativewrappers-${{ steps.linuxcompat.outputs.sha }}
+
+      - name: Build native wrappers (Docker)
+        if: steps.nativecache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          rm -rf se-linux-compat
+          git clone https://github.com/viktor-ferenczi/se-linux-compat se-linux-compat
+          git -C se-linux-compat checkout "${{ steps.linuxcompat.outputs.sha }}"
+          DOCKER_BUILDKIT=1 docker build \
+            -f .github/docker/nativewrappers.Dockerfile \
+            -o type=local,dest=native \
+            se-linux-compat/NativeWrappers
+          echo "Built native wrappers:"
+          ls -l native
+
+      # --- Vendor proprietary blobs (always downloaded, never cached) --------
+      - name: Download Vendor archive
+        env:
+          VENDOR_ARCHIVE_URL: ${{ vars.VENDOR_ARCHIVE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VENDOR_ARCHIVE_URL:-}" ]; then
+            echo "ERROR: repository variable VENDOR_ARCHIVE_URL is not set." >&2
+            exit 1
+          fi
+          curl -fsSL "$VENDOR_ARCHIVE_URL" -o Vendor.7z
+          rm -rf Vendor
+          7z x -y Vendor.7z >/dev/null
+          echo "Vendor contents:"
+          ls -l Vendor
+
+      # --- Space Engineers Dedicated Server (Windows depot, via steamcmd) ----
+      - name: Download Dedicated Server (steamcmd)
+        run: |
+          set -euo pipefail
+          mkdir -p steamcmd ds
+          curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+            | tar -xz -C steamcmd
+          # SE DS has no native Linux depot; force the Windows files (run via
+          # the se-linux-compat native wrappers). Anonymous login is allowed.
+          ./steamcmd/steamcmd.sh \
+            +@sSteamCmdForcePlatformType windows \
+            +force_install_dir "$PWD/ds" \
+            +login anonymous \
+            +app_update "$SE_DS_APPID" validate \
+            +quit
+          echo "DS contents:"
+          ls "$PWD/ds/DedicatedServer64" | head
+
+      - name: Build and package (build.sh)
+        env:
+          DS64: ${{ github.workspace }}/ds/DedicatedServer64
+          LIBHAVOK_SO: ${{ github.workspace }}/native/libHavok.so
+          LIBRECASTDETOUR_SO: ${{ github.workspace }}/native/libRecastDetour.so
+          LIBVRAGENATIVE_SO: ${{ github.workspace }}/native/libVRageNative.so
+        run: |
+          set -euo pipefail
+          chmod +x build.sh Scripts/*.sh
+          ./build.sh
+          echo "Produced:"
+          ls -l dist/*.7z
+
+      - name: Upload Linux bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: magnetar-linux
+          path: dist/MagnetarForLinux.*.7z
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Windows build: build Magnetar.sln (deploy.bat stages the install tree) ->
+  # MagnetarForWindows.<date>.<hash>.7z
+  # ---------------------------------------------------------------------------
+  build-windows:
+    needs: version-check
+    if: needs.version-check.outputs.should_build == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # --- Space Engineers Dedicated Server (via steamcmd) -------------------
+      - name: Download Dedicated Server (steamcmd)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path steamcmd, ds | Out-Null
+          Invoke-WebRequest -Uri "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile steamcmd.zip
+          Expand-Archive -Path steamcmd.zip -DestinationPath steamcmd -Force
+          $ds = Join-Path $env:GITHUB_WORKSPACE "ds"
+          & steamcmd/steamcmd.exe +force_install_dir "$ds" +login anonymous +app_update $env:SE_DS_APPID validate +quit
+          Get-ChildItem (Join-Path $ds "DedicatedServer64") | Select-Object -First 5 Name
+
+      - name: Build and stage (Magnetar.sln)
+        shell: pwsh
+        env:
+          DS64: ${{ github.workspace }}\ds\DedicatedServer64
+          # deploy.bat (post-build) stages the install tree here instead of
+          # %APPDATA%\Magnetar. The leaf folder name becomes the archive root.
+          Magnetar: ${{ github.workspace }}\stage\Magnetar
+        run: |
+          $ErrorActionPreference = "Stop"
+          dotnet build -c Release Magnetar.sln
+          Write-Host "Staged install tree:"
+          Get-ChildItem -Recurse "$env:GITHUB_WORKSPACE\stage\Magnetar" -Depth 1 | Select-Object FullName
+
+      - name: Package Windows bundle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $date = Get-Date -Format "yyyyMMdd"
+          $hash = (git rev-parse --short=8 HEAD).Trim()
+          $name = "MagnetarForWindows.$date.$hash.7z"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $sevenzip = "C:\Program Files\7-Zip\7z.exe"
+          # Pack the staged Magnetar/ folder so the archive root mirrors the
+          # %APPDATA%\Magnetar install layout deploy.bat produces.
+          & $sevenzip a -t7z -mx=9 "dist\$name" "$env:GITHUB_WORKSPACE\stage\Magnetar"
+          Get-ChildItem dist
+
+      - name: Upload Windows bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: magnetar-windows
+          path: dist/MagnetarForWindows.*.7z
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Release: attach both bundles to a GitHub release.
+  # ---------------------------------------------------------------------------
+  release:
+    needs: [version-check, build-linux, build-windows]
+    if: needs.version-check.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download bundles
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version-check.outputs.version }}
+          DRAFT: ${{ needs.version-check.outputs.draft }}
+        run: |
+          set -euo pipefail
+          echo "Artifacts to attach:"
+          ls -l dist/*.7z
+
+          tag="v$VERSION"
+          if [ "$DRAFT" = "true" ]; then
+            # Keep the tag unique so a manual draft never collides with an
+            # existing release of the same version.
+            if gh release view "$tag" >/dev/null 2>&1; then
+              tag="v$VERSION-build.${{ github.run_number }}"
+            fi
+            gh release create "$tag" \
+              --repo "${{ github.repository }}" \
+              --draft \
+              --title "Magnetar $tag" \
+              --notes "Manual draft build of Magnetar $VERSION." \
+              dist/*.7z
+          else
+            gh release create "$tag" \
+              --repo "${{ github.repository }}" \
+              --latest \
+              --target "${{ github.sha }}" \
+              --title "Magnetar v$VERSION" \
+              --notes "Automated release of Magnetar $VERSION." \
+              dist/*.7z
+          fi
