@@ -223,22 +223,48 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
 ### Jobs
 
 * **version-check** — parses the version and decides `should_build` / `draft`;
-  every other job is gated on `should_build`.
+  every other job is gated on `should_build`. When building, it also probes the
+  DS depot's public **build id** (via `steamcmd +app_info_print`, no depot
+  download) and exposes it as the `ds_buildid` output used to key the DS cache.
 * **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and
   `p7zip-full`; builds the [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat)
   `NativeWrappers` in Docker (see
   [`.github/docker/nativewrappers.Dockerfile`](../.github/docker/nativewrappers.Dockerfile)),
   cached by the upstream commit SHA so they only rebuild when that repo's `HEAD`
-  changes; downloads the Vendor blobs and the **Windows** DS depot via
-  `steamcmd`; then runs [`build.sh`](../build.sh) and uploads the bundle,
-  renamed to `MagnetarForLinux-<version>.7z`.
+  changes; restores the cached **DS library set** (or downloads the **Windows**
+  DS depot via `steamcmd` on a cache miss — see below); downloads the Vendor
+  blobs; then runs [`build.sh`](../build.sh) and uploads the bundle, renamed to
+  `MagnetarForLinux-<version>.7z`.
 * **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
-  ships the .NET Framework 4.8 targeting pack); downloads the DS via `steamcmd`;
-  builds `Magnetar.sln` with `Magnetar` pointed at a staging tree so
-  [deploy.bat](../Legacy/deploy.bat) lays out the install folder there, then
-  packs it as `MagnetarForWindows-<version>.7z`.
+  ships the .NET Framework 4.8 targeting pack); restores the cached DS library
+  set (or downloads via `steamcmd` on a miss); builds `Magnetar.sln` with
+  `Magnetar` pointed at a staging tree so [deploy.bat](../Legacy/deploy.bat)
+  lays out the install folder there, then packs it as
+  `MagnetarForWindows-<version>.7z`.
 * **release** (`ubuntu-latest`) — downloads both bundles and creates the release
   with `gh`.
+
+### Dedicated Server cache
+
+The build only references the managed assemblies in `DedicatedServer64/`, so
+each build job caches just that **~186 MB library set** (via `actions/cache`,
+path `ds64`) — never the multi-GB `Content/`. The cache key is
+`ds64-<os>-<ds_buildid>`, where `ds_buildid` is the DS depot's public build id
+from `version-check`. Consequences:
+
+* Unchanged DS version → cache hit → the `steamcmd` download is skipped entirely
+  (faster, and no exposure to `steamcmd`'s first-run flakiness).
+* First build after Keen ships a new DS version → new build id → cache miss → a
+  full `steamcmd` download into a scratch dir, of which only `DedicatedServer64/`
+  is copied into `ds64` and cached. So the DS auto-updates exactly once per DS
+  release.
+* `ds64/` is populated only after the post-download marker check passes, so a
+  failed download never caches a partial tree. If the build id can't be probed,
+  the key falls back to a unique value (cache miss, full download) rather than
+  wedging the release.
+
+Two ~186 MB caches (Linux + Windows) stay well under GitHub's 10 GB per-repo
+cache budget, so they are not evicted by the small native-wrappers cache.
 
 ### Required repository configuration
 
@@ -246,7 +272,7 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
 | ---- | ---- | ------- |
 | `VENDOR_ARCHIVE_URL` | Repository **secret** | Download URL returning `Vendor.7z` (the `Vendor/` folder with `libsteam_api.so` and `libEOSSDK-Linux-Shipping.so`). Fetched fresh every run; the existing `Vendor/` is removed and replaced. |
 
-The DS is retrieved anonymously (Steam app `298740`); the Linux job forces the
+On a cache miss the DS is retrieved anonymously (Steam app `298740`); the Linux job forces the
 Windows depot (`+@sSteamCmdForcePlatformType windows`) because there is no native
 Linux DS — Magnetar runs the Windows files via the native wrappers. Both jobs
 bootstrap `steamcmd` once (`+quit`) and then retry the `app_update` a few times:

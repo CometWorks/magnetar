@@ -40,6 +40,7 @@ jobs:
       version: ${{ steps.decide.outputs.version }}
       should_build: ${{ steps.decide.outputs.should_build }}
       draft: ${{ steps.decide.outputs.draft }}
+      ds_buildid: ${{ steps.dsbuild.outputs.buildid }}
     steps:
       - uses: actions/checkout@v6
 
@@ -95,6 +96,48 @@ jobs:
             echo "draft=$draft"
           } >> "$GITHUB_OUTPUT"
 
+      # The DS depot build id keys the cached library set: when Keen ships a new
+      # DS version the build id changes, so the next release build misses the
+      # cache and re-fetches; an unchanged version is restored instantly. Probed
+      # cheaply via app_info_print (no depot download). Only when building.
+      - name: Probe Dedicated Server build id
+        id: dsbuild
+        if: steps.decide.outputs.should_build == 'true'
+        run: |
+          set -euo pipefail
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lib32gcc-s1 ca-certificates curl
+          mkdir -p steamcmd
+          curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+            | tar -xz -C steamcmd
+
+          # Parse branches.public.buildid out of the appinfo VDF dump. awk keeps
+          # this inline (a python heredoc's column-0 body would break the YAML
+          # block scalar); the line is `"buildid"  "<n>"`, so strip non-digits.
+          buildid=""
+          for attempt in 1 2 3 4 5; do
+            out="$(./steamcmd/steamcmd.sh +login anonymous +app_info_update 1 \
+                     +app_info_print "$SE_DS_APPID" +quit 2>/dev/null || true)"
+            buildid="$(printf '%s' "$out" | tr -d '\r' | awk '
+              /"branches"/              { in_branches = 1 }
+              in_branches && /"public"/ { in_public = 1 }
+              in_public && /"buildid"/  { gsub(/[^0-9]/, "", $2); print $2; exit }
+            ')"
+            [ -n "$buildid" ] && break
+            echo "build id probe attempt $attempt empty; retrying..."
+            sleep 5
+          done
+
+          if [ -z "$buildid" ]; then
+            # Don't let a probe hiccup wedge the release: fall back to a unique
+            # key so the DS cache simply misses (full download) this run.
+            echo "WARNING: could not determine DS build id; DS cache will miss this run." >&2
+            buildid="norev-${{ github.run_id }}"
+          fi
+          echo "DS public build id: $buildid"
+          echo "buildid=$buildid" >> "$GITHUB_OUTPUT"
+
   # ---------------------------------------------------------------------------
   # Linux build: build.sh -> dist/MagnetarForLinux.7z
   # ---------------------------------------------------------------------------
@@ -112,13 +155,11 @@ jobs:
             8.0.x
             10.0.x
 
-      - name: Install build tools (7z, steamcmd deps)
+      - name: Install build tools (7z)
         run: |
           set -euo pipefail
-          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            p7zip-full lib32gcc-s1 ca-certificates curl
+          sudo apt-get install -y --no-install-recommends p7zip-full ca-certificates curl
 
       # --- se-linux-compat native wrappers (cached by upstream commit) -------
       - name: Resolve se-linux-compat commit
@@ -166,11 +207,27 @@ jobs:
           echo "Vendor contents:"
           ls -l Vendor
 
+      # --- Dedicated Server libraries (cached by DS build id) ----------------
+      # Only the ~186 MB DedicatedServer64/ library set is cached, not the
+      # multi-GB Content. Restored instantly when the DS version is unchanged;
+      # re-fetched on the first build after Keen ships a new DS version.
+      - name: Cache Dedicated Server libraries
+        id: dscache
+        uses: actions/cache@v5
+        with:
+          path: ds64
+          key: ds64-linux-${{ needs.version-check.outputs.ds_buildid }}
+
       # --- Space Engineers Dedicated Server (Windows depot, via steamcmd) ----
       - name: Download Dedicated Server (steamcmd)
+        if: steps.dscache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-          mkdir -p steamcmd ds
+          # steamcmd is a 32-bit binary; install its runtime only on a cache miss.
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lib32gcc-s1
+          mkdir -p steamcmd dsfull
           curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
             | tar -xz -C steamcmd
 
@@ -185,11 +242,11 @@ jobs:
           for attempt in 1 2 3 4 5; do
             ./steamcmd/steamcmd.sh \
               +@sSteamCmdForcePlatformType windows \
-              +force_install_dir "$PWD/ds" \
+              +force_install_dir "$PWD/dsfull" \
               +login anonymous \
               +app_update "$SE_DS_APPID" validate \
               +quit || true
-            if [ -f "$PWD/ds/DedicatedServer64/SpaceEngineersDedicated.exe" ]; then
+            if [ -f "$PWD/dsfull/DedicatedServer64/SpaceEngineersDedicated.exe" ]; then
               ok=1; break
             fi
             echo "steamcmd attempt $attempt did not complete the DS install; retrying..."
@@ -199,12 +256,18 @@ jobs:
             echo "ERROR: steamcmd failed to install the Dedicated Server." >&2
             exit 1
           fi
-          echo "DS contents:"
-          ls "$PWD/ds/DedicatedServer64" | head
+
+          # Keep only the library set so just ~186 MB gets cached; drop Content.
+          # ds64/ is populated only after the marker check passes, so a failed
+          # download never caches a partial/empty tree.
+          mkdir -p ds64
+          cp -a "$PWD/dsfull/DedicatedServer64/." ds64/
+          rm -rf dsfull
+          echo "Cached DS library set:"; du -sh ds64
 
       - name: Build and package (build.sh)
         env:
-          DS64: ${{ github.workspace }}/ds/DedicatedServer64
+          DS64: ${{ github.workspace }}/ds64
           LIBHAVOK_SO: ${{ github.workspace }}/native/libHavok.so
           LIBRECASTDETOUR_SO: ${{ github.workspace }}/native/libRecastDetour.so
           LIBVRAGENATIVE_SO: ${{ github.workspace }}/native/libVRageNative.so
@@ -242,16 +305,25 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # --- Dedicated Server libraries (cached by DS build id) ----------------
+      - name: Cache Dedicated Server libraries
+        id: dscache
+        uses: actions/cache@v5
+        with:
+          path: ds64
+          key: ds64-windows-${{ needs.version-check.outputs.ds_buildid }}
+
       # --- Space Engineers Dedicated Server (via steamcmd) -------------------
       - name: Download Dedicated Server (steamcmd)
+        if: steps.dscache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          New-Item -ItemType Directory -Force -Path steamcmd, ds | Out-Null
+          New-Item -ItemType Directory -Force -Path steamcmd, dsfull | Out-Null
           Invoke-WebRequest -Uri "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile steamcmd.zip
           Expand-Archive -Path steamcmd.zip -DestinationPath steamcmd -Force
-          $ds = Join-Path $env:GITHUB_WORKSPACE "ds"
-          $marker = Join-Path $ds "DedicatedServer64\SpaceEngineersDedicated.exe"
+          $dsfull = Join-Path $env:GITHUB_WORKSPACE "dsfull"
+          $marker = Join-Path $dsfull "DedicatedServer64\SpaceEngineersDedicated.exe"
 
           # A brand-new steamcmd self-updates on its first run, which makes an
           # in-session app_update abort with "Missing configuration". Bootstrap
@@ -261,18 +333,23 @@ jobs:
 
           $ok = $false
           for ($attempt = 1; $attempt -le 5; $attempt++) {
-            & steamcmd/steamcmd.exe +force_install_dir "$ds" +login anonymous +app_update $env:SE_DS_APPID validate +quit
+            & steamcmd/steamcmd.exe +force_install_dir "$dsfull" +login anonymous +app_update $env:SE_DS_APPID validate +quit
             if (Test-Path $marker) { $ok = $true; break }
             Write-Host "steamcmd attempt $attempt did not complete the DS install; retrying..."
             Start-Sleep -Seconds 5
           }
           if (-not $ok) { throw "steamcmd failed to install the Dedicated Server." }
-          Get-ChildItem (Join-Path $ds "DedicatedServer64") | Select-Object -First 5 Name
+
+          # Keep only the library set so just ~186 MB gets cached; drop Content.
+          $ds64 = Join-Path $env:GITHUB_WORKSPACE "ds64"
+          New-Item -ItemType Directory -Force -Path $ds64 | Out-Null
+          Copy-Item -Path (Join-Path $dsfull "DedicatedServer64\*") -Destination $ds64 -Recurse -Force
+          Remove-Item -Recurse -Force $dsfull
 
       - name: Build and stage (Magnetar.sln)
         shell: pwsh
         env:
-          DS64: ${{ github.workspace }}\ds\DedicatedServer64
+          DS64: ${{ github.workspace }}\ds64
           # deploy.bat (post-build) stages the install tree here instead of
           # %APPDATA%\Magnetar. The leaf folder name becomes the archive root.
           Magnetar: ${{ github.workspace }}\stage\Magnetar
