@@ -244,7 +244,7 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
 
 | Name | Kind | Purpose |
 | ---- | ---- | ------- |
-| `VENDOR_ARCHIVE_URL` | Repository **variable** | Download URL returning `Vendor.7z` (the `Vendor/` folder with `libsteam_api.so` and `libEOSSDK-Linux-Shipping.so`). Fetched fresh every run; the existing `Vendor/` is removed and replaced. |
+| `VENDOR_ARCHIVE_URL` | Repository **secret** | Download URL returning `Vendor.7z` (the `Vendor/` folder with `libsteam_api.so` and `libEOSSDK-Linux-Shipping.so`). Fetched fresh every run; the existing `Vendor/` is removed and replaced. |
 
 The DS is retrieved anonymously (Steam app `298740`); the Linux job forces the
 Windows depot (`+@sSteamCmdForcePlatformType windows`) because there is no native

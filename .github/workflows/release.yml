@@ -13,7 +13,7 @@ name: Release
 #                          what is already released.
 #
 # Required repository configuration:
-#   * vars.VENDOR_ARCHIVE_URL  - download URL that returns Vendor.7z, containing
+#   * secrets.VENDOR_ARCHIVE_URL - download URL that returns Vendor.7z, containing
 #                                the Vendor/ folder with libsteam_api.so and
 #                                libEOSSDK-Linux-Shipping.so (the proprietary
 #                                blobs that can't be committed).
@@ -153,11 +153,11 @@ jobs:
       # --- Vendor proprietary blobs (always downloaded, never cached) --------
       - name: Download Vendor archive
         env:
-          VENDOR_ARCHIVE_URL: ${{ vars.VENDOR_ARCHIVE_URL }}
+          VENDOR_ARCHIVE_URL: ${{ secrets.VENDOR_ARCHIVE_URL }}
         run: |
           set -euo pipefail
           if [ -z "${VENDOR_ARCHIVE_URL:-}" ]; then
-            echo "ERROR: repository variable VENDOR_ARCHIVE_URL is not set." >&2
+            echo "ERROR: repository secret VENDOR_ARCHIVE_URL is not set." >&2
             exit 1
           fi
           curl -fsSL "$VENDOR_ARCHIVE_URL" -o Vendor.7z
