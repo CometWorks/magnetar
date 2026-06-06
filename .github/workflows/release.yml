@@ -65,9 +65,13 @@ jobs:
             draft=true
           else
             # Push to main: build only if strictly newer than the latest release.
-            latest="$(gh api "repos/${{ github.repository }}/releases/latest" \
-                        --jq '.tag_name' 2>/dev/null || true)"
-            latest="${latest#v}"
+            # /releases/latest returns HTTP 404 (and a JSON error body on stdout)
+            # when no release exists yet, so only trust the output on success.
+            latest=""
+            if tag="$(gh api "repos/${{ github.repository }}/releases/latest" \
+                        --jq '.tag_name' 2>/dev/null)"; then
+              latest="${tag#v}"
+            fi
 
             if [ -z "$latest" ]; then
               echo "No existing release -> first release counts as newer."
@@ -92,7 +96,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------------------
-  # Linux build: build.sh -> dist/MagnetarForLinux.<date>.<hash>.7z
+  # Linux build: build.sh -> dist/MagnetarForLinux.7z
   # ---------------------------------------------------------------------------
   build-linux:
     needs: version-check
@@ -186,18 +190,22 @@ jobs:
           LIBHAVOK_SO: ${{ github.workspace }}/native/libHavok.so
           LIBRECASTDETOUR_SO: ${{ github.workspace }}/native/libRecastDetour.so
           LIBVRAGENATIVE_SO: ${{ github.workspace }}/native/libVRageNative.so
+          VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           set -euo pipefail
           chmod +x build.sh Scripts/*.sh
           ./build.sh
+          # build.sh names the bundle dist/MagnetarForLinux.7z;
+          # rename it to the version-stamped release name.
+          mv dist/MagnetarForLinux.7z "dist/MagnetarForLinux-${VERSION}.7z"
           echo "Produced:"
-          ls -l dist/*.7z
+          ls -l "dist/MagnetarForLinux-${VERSION}.7z"
 
       - name: Upload Linux bundle
         uses: actions/upload-artifact@v4
         with:
           name: magnetar-linux
-          path: dist/MagnetarForLinux.*.7z
+          path: dist/MagnetarForLinux-*.7z
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -243,11 +251,11 @@ jobs:
 
       - name: Package Windows bundle
         shell: pwsh
+        env:
+          VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          $date = Get-Date -Format "yyyyMMdd"
-          $hash = (git rev-parse --short=8 HEAD).Trim()
-          $name = "MagnetarForWindows.$date.$hash.7z"
+          $name = "MagnetarForWindows-$env:VERSION.7z"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $sevenzip = "C:\Program Files\7-Zip\7z.exe"
           # Pack the staged Magnetar/ folder so the archive root mirrors the
@@ -259,7 +267,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: magnetar-windows
-          path: dist/MagnetarForWindows.*.7z
+          path: dist/MagnetarForWindows-*.7z
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------

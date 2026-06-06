@@ -230,13 +230,13 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
   [`.github/docker/nativewrappers.Dockerfile`](../.github/docker/nativewrappers.Dockerfile)),
   cached by the upstream commit SHA so they only rebuild when that repo's `HEAD`
   changes; downloads the Vendor blobs and the **Windows** DS depot via
-  `steamcmd`; then runs [`build.sh`](../build.sh) and uploads
-  `dist/MagnetarForLinux.<date>.<hash>.7z`.
+  `steamcmd`; then runs [`build.sh`](../build.sh) and uploads the bundle,
+  renamed to `MagnetarForLinux-<version>.7z`.
 * **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
   ships the .NET Framework 4.8 targeting pack); downloads the DS via `steamcmd`;
   builds `Magnetar.sln` with `Magnetar` pointed at a staging tree so
   [deploy.bat](../Legacy/deploy.bat) lays out the install folder there, then
-  packs it as `MagnetarForWindows.<date>.<hash>.7z`.
+  packs it as `MagnetarForWindows-<version>.7z`.
 * **release** (`ubuntu-latest`) — downloads both bundles and creates the release
   with `gh`.
 
