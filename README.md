@@ -58,7 +58,8 @@ both platforms (pulling the dedicated server via `steamcmd` and the
 [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat) native
 wrappers) and attaches both `.7z` files. A push to `main` publishes a new public
 release when the version in `Legacy/Legacy.csproj` is higher than the latest
-release; a manual run produces a draft. See
+release; a manual run produces a draft by default, or a public release if you
+clear its **draft** option. See
 [Docs/Build.md](Docs/Build.md#continuous-integration--releases) for the full
 release process.
 

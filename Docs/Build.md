@@ -218,7 +218,7 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
 | Trigger | Behaviour |
 | ------- | --------- |
 | Push to `main` | Reads `<Version>` from [Legacy/Legacy.csproj](../Legacy/Legacy.csproj). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped — nothing is built and no existing release is touched. |
-| Manual run (`workflow_dispatch`) | Always builds and publishes a **draft** release (not marked latest) for the current Legacy version, regardless of what is already released. The draft tag is `v<version>`, or `v<version>-build.<run>` if that tag already exists. |
+| Manual run (`workflow_dispatch`) | Always builds for the current Legacy version, regardless of what is already released. A **draft** boolean input (default **true**) decides the outcome: when set (the default) it publishes a **draft** release (not marked latest), tag `v<version>` or `v<version>-build.<run>` if that tag already exists; when cleared it publishes a real, public **latest** release `v<version>` — no version-gate check, since the operator asked for it explicitly. |
 
 ### Jobs
 
@@ -285,10 +285,11 @@ no other secret is needed.
 
 Because the workflow lives on the default branch (`main`), `workflow_dispatch` is
 registered and can be run against **any** branch — a dispatched run executes the
-workflow *and* code from the chosen branch, and always takes the **draft** path,
-so it never publishes a public release. A push to a non-`main` branch does not
-trigger anything (the push trigger is `main`-only). To iterate on a branch
-without touching `main`:
+workflow *and* code from the chosen branch. Leaving the **draft** input at its
+default (`true`) keeps it on the **draft** path, so it never publishes a public
+release; pass `-f draft=false` only when you deliberately want a real release. A
+push to a non-`main` branch does not trigger anything (the push trigger is
+`main`-only). To iterate on a branch without touching `main`:
 
 ```sh
 git push origin HEAD:my-branch
@@ -297,6 +298,7 @@ gh run watch -R viktor-ferenczi/Magnetar \
   "$(gh run list -R viktor-ferenczi/Magnetar --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
 ```
 
-Each dispatch creates a draft release for the current version (`v<version>`, or
-`v<version>-build.<run>` if that tag already exists); prune them with
+Each dispatch (with the default `draft=true`) creates a draft release for the
+current version (`v<version>`, or `v<version>-build.<run>` if that tag already
+exists); prune them with
 `gh release delete <tag> -R viktor-ferenczi/Magnetar --yes`.

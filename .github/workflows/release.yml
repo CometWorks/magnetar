@@ -8,9 +8,11 @@ name: Release
 #                          version is strictly higher than the latest existing
 #                          release (the first ever release always counts as
 #                          newer). Otherwise the whole run is skipped.
-#   * manual dispatch   -> always build and publish a DRAFT release (not marked
-#                          latest) for the current Legacy version, regardless of
-#                          what is already released.
+#   * manual dispatch   -> always build for the current Legacy version,
+#                          regardless of what is already released. The "draft"
+#                          input (default true) decides whether the result is a
+#                          DRAFT build (not marked latest) or a real, public
+#                          "latest" release.
 #
 # Required repository configuration:
 #   * secrets.VENDOR_ARCHIVE_URL - download URL that returns Vendor.7z, containing
@@ -22,6 +24,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      draft:
+        description: "Publish as a DRAFT build (uncheck to publish a real, public 'latest' release)"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -60,10 +67,12 @@ jobs:
           echo "Legacy version: $version"
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Manual run: always build, always a draft, never marked latest.
-            echo "Manual dispatch -> unconditional draft release."
+            # Manual run: always build (the operator explicitly asked for it).
+            # The "draft" input decides draft vs. real "latest" release; it
+            # defaults to true, preserving the safe build-only behaviour.
+            draft="${{ inputs.draft }}"
+            echo "Manual dispatch -> unconditional build (draft=$draft)."
             should_build=true
-            draft=true
           else
             # Push to main: build only if strictly newer than the latest release.
             # /releases/latest returns HTTP 404 (and a JSON error body on stdout)
