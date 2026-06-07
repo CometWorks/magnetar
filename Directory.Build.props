@@ -1,4 +1,11 @@
 <Project>
+  <!-- Bump the Magnetar version here (centralized) -->
+  <PropertyGroup>
+    <Version>0.1.3</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+  </PropertyGroup>
+
   <!--
     Windows and Linux locate the Magnetar install folder, the Space Engineers
     dedicated server, and Steamworks.NET differently. Select per OS using the

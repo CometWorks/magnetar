@@ -3,12 +3,12 @@ name: Release
 # Builds Magnetar for Linux and Windows and publishes a GitHub release with
 # both .7z bundles attached.
 #
-#   * push to main      -> read the version from Legacy/Legacy.csproj, and only
+#   * push to main      -> read the version from Directory.Build.props, and only
 #                          build + publish a public "latest" release when that
 #                          version is strictly higher than the latest existing
 #                          release (the first ever release always counts as
 #                          newer). Otherwise the whole run is skipped.
-#   * manual dispatch   -> always build for the current Legacy version,
+#   * manual dispatch   -> always build for the current version,
 #                          regardless of what is already released. The "draft"
 #                          input (default true) decides whether the result is a
 #                          DRAFT build (not marked latest) or a real, public
@@ -58,13 +58,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Version from the Legacy project (single source of truth for the tag).
-          version="$(grep -oPm1 '(?<=<Version>)[^<]+' Legacy/Legacy.csproj)"
+          # Version from Directory.Build.props (single source of truth for the tag).
+          version="$(grep -oPm1 '(?<=<Version>)[^<]+' Directory.Build.props)"
           if [ -z "$version" ]; then
-            echo "ERROR: could not parse <Version> from Legacy/Legacy.csproj" >&2
+            echo "ERROR: could not parse <Version> from Directory.Build.props" >&2
             exit 1
           fi
-          echo "Legacy version: $version"
+          echo "Magnetar version: $version"
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual run: always build (the operator explicitly asked for it).

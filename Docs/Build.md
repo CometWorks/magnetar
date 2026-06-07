@@ -217,13 +217,15 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
 
 | Trigger | Behaviour |
 | ------- | --------- |
-| Push to `main` | Reads `<Version>` from [Legacy/Legacy.csproj](../Legacy/Legacy.csproj). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped — nothing is built and no existing release is touched. |
-| Manual run (`workflow_dispatch`) | Always builds for the current Legacy version, regardless of what is already released. A **draft** boolean input (default **true**) decides the outcome: when set (the default) it publishes a **draft** release (not marked latest), tag `v<version>` or `v<version>-build.<run>` if that tag already exists; when cleared it publishes a real, public **latest** release `v<version>` — no version-gate check, since the operator asked for it explicitly. |
+| Push to `main` | Reads `<Version>` from [Directory.Build.props](../Directory.Build.props). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped — nothing is built and no existing release is touched. |
+| Manual run (`workflow_dispatch`) | Always builds for the current version, regardless of what is already released. A **draft** boolean input (default **true**) decides the outcome: when set (the default) it publishes a **draft** release (not marked latest), tag `v<version>` or `v<version>-build.<run>` if that tag already exists; when cleared it publishes a real, public **latest** release `v<version>` — no version-gate check, since the operator asked for it explicitly. |
 
 ### Jobs
 
 * **version-check** — parses the version and decides `should_build` / `draft`;
-  every other job is gated on `should_build`. When building, it also probes the
+  every other job is gated on `should_build`. The version is the single
+  `<Version>` defined in [Directory.Build.props](../Directory.Build.props), which
+  also drives `AssemblyVersion` / `FileVersion` for every project. When building, it also probes the
   DS depot's public **build id** (via `steamcmd +app_info_print`, no depot
   download) and exposes it as the `ds_buildid` output used to key the DS cache.
 * **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and

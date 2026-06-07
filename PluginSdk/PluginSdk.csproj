@@ -7,8 +7,6 @@
         <!-- NU1701: VRage.Math.dll is a .NET Framework assembly; that warning is noise here. -->
         <NoWarn>NU1701</NoWarn>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <AssemblyVersion>0.1.3</AssemblyVersion>
-        <FileVersion>0.1.3</FileVersion>
     </PropertyGroup>
 
     <ItemGroup>
