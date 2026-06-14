@@ -17,7 +17,7 @@ to attach the option to a layout container — see [Layout.md](Layout.md).
 | `[LongOption(min, max)]` | `long` | inclusive `min`/`max`, both optional |
 | `[FloatOption(min, max)]` | `float` | inclusive `min`/`max`, both optional |
 | `[DoubleOption(min, max)]` | `double` | inclusive `min`/`max`, both optional |
-| `[StringOption(maxLength, pattern)]` | `string` | `maxLength = 0` means unlimited; `pattern` is an optional full-match regex |
+| `[StringOption(maxLength, pattern)]` | `string` | `maxLength = 0` means unlimited; `pattern` is an optional full-match regex; set `Multiline = true` for an auto-growing multi-line text area |
 
 Numeric ranges left unspecified are emitted as **absent** in the schema (not
 as the type's `MinValue`/`MaxValue` sentinel), so Quasar can render an
@@ -34,7 +34,15 @@ public int TickRate { get; set => SetField(ref field, value); } = 60;
 
 [StringOption(maxLength: 64, pattern: @"^[A-Za-z0-9_-]+$", description: "Slug")]
 public string Slug { get; set => SetField(ref field, value); } = "";
+
+[StringOption(description: "Message of the day", Multiline = true)]
+public string Motd { get; set => SetField(ref field, value); } = "";
 ```
+
+`Multiline = true` makes Quasar render an auto-growing, multi-line text area
+instead of a single-line input. The stored value is still a plain `string`;
+embedded newlines are preserved. It combines with `maxLength`/`pattern`, though
+`pattern` rarely makes sense on multi-line text.
 
 ## Lists
 

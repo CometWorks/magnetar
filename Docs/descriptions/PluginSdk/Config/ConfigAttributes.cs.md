@@ -1,6 +1,6 @@
 # PluginSdk/Config/ConfigAttributes.cs
 
-**Project:** PluginSdk · **Namespace:** `PluginSdk.Config` · **Kind:** Attribute family (abstract bases + sealed attributes + one enum) · **Lines:** 405
+**Project:** PluginSdk · **Namespace:** `PluginSdk.Config` · **Kind:** Attribute family (abstract bases + sealed attributes + one enum) · **Lines:** 412
 
 ## Summary
 Declares the full attribute vocabulary a plugin uses to annotate a `PluginConfig`-derived class so Magnetar can discover, validate, remotely manage and lay out each configuration option in an external Web UI (rendered by the manager app, e.g. Quasar). Two attribute families exist: *layout container* attributes applied to the config class (`Section`/`Tab`/`Column`) that form an optional layout tree, and *option* attributes applied to public properties (`BoolOption`, `IntOption`, `ListOption`, `EnumOption`, `ColorOption`, etc.) that declare the type and constraints of each option. Helper attributes (`StructMember`, `StructCaption`, `EnumCaption`) annotate user-defined structs and enums used as config values. These are pure metadata; `ConfigSchema` reflects over them to build the wire schema and `PluginConfig`/`ConfigStorage` drive serialization.
@@ -48,7 +48,7 @@ Marks a `double` option. Properties `Min`/`Max` default to `double.NegativeInfin
 
 ### StringOptionAttribute — sealed class, public : `ConfigOptionAttribute`
 Marks a `string` option.
-- **Properties:** `MaxLength` — max length, `0` = unlimited; `Pattern` — optional regex the value must fully match.
+- **Properties:** `MaxLength` — max length, `0` = unlimited; `Pattern` — optional regex the value must fully match; `Multiline` — `bool` (settable), `true` makes the UI render an auto-growing multi-line text area instead of a single-line input.
 - **Methods:** `StringOptionAttribute(int maxLength = 0, string pattern = null, string description = null)`.
 
 ### ListOptionAttribute — sealed class, public : `ConfigOptionAttribute`
