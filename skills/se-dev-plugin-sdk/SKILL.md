@@ -54,6 +54,7 @@ expect. See [Platform.md](Platform.md).
 | Document | When you need it |
 |---|---|
 | [Config.md](Config.md) | Writing the config class itself — base class contract, property pattern, change notification (incl. the list/dict/struct in-place mutation pitfall). |
+| [Discovery.md](Discovery.md) | Making the config visible to Quasar — the public `PluginConfig`-typed property your `IPlugin` class must expose, and the pitfalls that leave it unregistered. |
 | [Options.md](Options.md) | Picking the right attribute for a value (bool, ranges, strings, lists, dicts, structs). |
 | [Layout.md](Layout.md) | Grouping options into tabs, sections and columns for the Web UI. |
 | [Storage.md](Storage.md) | Loading and saving — XML on disk, JSON over the wire. |
@@ -83,11 +84,19 @@ public class MyPluginConfig : PluginConfig
 That is enough for Quasar to render a usable editor with a checkbox and a
 bounded integer field, and for `ConfigStorage` to round-trip the values.
 
+One more step is required before Quasar can *find* this config at runtime: your
+`IPlugin` class must expose the instance through a public `PluginConfig`-typed
+property. Declaring the class alone leaves it unregistered. See
+[Discovery.md](Discovery.md).
+
 ## What PluginSdk does *not* do
 
 - It does not load, save, or watch files on its own — the plugin host calls
   `ConfigStorage.SaveXml` / `LoadXml` at appropriate moments.
 - It does not push changes to Quasar — the host transports the JSON envelope.
+  The host (Quasar agent) discovers the config by reflecting over your `IPlugin`
+  class for a public `PluginConfig`-typed property; PluginSdk provides no
+  registration call. See [Discovery.md](Discovery.md).
 - It does not render UI. The schema is metadata; the UI lives elsewhere.
 - It does not expose a fluent builder or runtime registration API.
   Configuration is declared statically with attributes; reflection at

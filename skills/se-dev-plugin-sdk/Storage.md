@@ -82,7 +82,9 @@ flow is:
    so each `SetField` fires `PropertyChanged` for the plugin to react to.
 
 Step 2 is the host's responsibility — `ConfigStorage` does not merge into an
-existing instance; it always deserializes a fresh one.
+existing instance; it always deserializes a fresh one. The host locates the live
+`config` instance for both directions through the public `PluginConfig`-typed
+property on your `IPlugin` class — see [Discovery.md](Discovery.md).
 
 ## What is *not* persisted
 
