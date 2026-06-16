@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using Pulsar.Shared.Stats;
-using Pulsar.Shared.Stats.Model;
+using Pulsar.Shared.Votes;
+using Pulsar.Shared.Votes.Model;
 
 namespace Pulsar.Shared.Config;
 
@@ -15,7 +15,7 @@ public class ConfigManager
     public CoreConfig Core { get; private set; }
     public SourcesConfig Sources { get; private set; }
     public ProfilesConfig Profiles { get; private set; }
-    public PluginStats Stats { get; private set; }
+    public PluginVotes Votes { get; private set; }
     public Version GameVersion { get; private set; }
 
     public string PulsarDir { get; private set; }
@@ -67,11 +67,11 @@ public class ConfigManager
         }
     }
 
-    public void UpdatePlayerStats()
+    public void UpdatePlayerVotes()
     {
         Task.Run(() =>
         {
-            Stats = StatsClient.DownloadStats();
+            Votes = VotesClient.DownloadVotes();
         });
     }
 }

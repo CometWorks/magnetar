@@ -8,15 +8,15 @@ Provides the client-side telemetry and community-rating layer for Magnetar. It s
 
 ## Role in Magnetar
 
-Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginStats result through ConfigManager.Instance.Stats rather than calling StatsClient directly.
+Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginVotes result through ConfigManager.Instance.Stats rather than calling StatsClient directly.
 
 ## Key types
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
 | `StatsClient` | static class | [`Shared/Stats/StatsClient.cs`](../descriptions/Shared/Stats/StatsClient.cs.md) | Four-operation REST client for the stats back-end: Consent, DownloadStats, Track, Vote. |
-| `PluginStats` | class | [`Shared/Stats/Model/PluginStats.cs`](../descriptions/Shared/Stats/Model/PluginStats.cs.md) | Top-level response DTO from /Stats; maps plugin IDs to PluginStat records and carries the server-issued voting token. |
-| `PluginStat` | class | [`Shared/Stats/Model/PluginStat.cs`](../descriptions/Shared/Stats/Model/PluginStat.cs.md) | Per-plugin statistics record: 30-day player count, lifetime vote totals, half-star rating, and the requesting player's personal tried/vote state. |
+| `PluginVotes` | class | [`Shared/Stats/Model/PluginVotes.cs`](../descriptions/Shared/Stats/Model/PluginVotes.cs.md) | Top-level response DTO from /Stats; maps plugin IDs to PluginVote records and carries the server-issued voting token. |
+| `PluginVote` | class | [`Shared/Stats/Model/PluginVote.cs`](../descriptions/Shared/Stats/Model/PluginVote.cs.md) | Per-plugin statistics record: 30-day player count, lifetime vote totals, half-star rating, and the requesting player's personal tried/vote state. |
 | `ConsentRequest` | class | [`Shared/Stats/Model/ConsentRequest.cs`](../descriptions/Shared/Stats/Model/ConsentRequest.cs.md) | Request body for /Consent: hashed player ID and a boolean consent flag. |
 | `TrackRequest` | class | [`Shared/Stats/Model/TrackRequest.cs`](../descriptions/Shared/Stats/Model/TrackRequest.cs.md) | Request body for /Track: hashed player ID and the list of enabled plugin IDs at game start. |
 | `VoteRequest` | class | [`Shared/Stats/Model/VoteRequest.cs`](../descriptions/Shared/Stats/Model/VoteRequest.cs.md) | Request body for /Vote: plugin ID, hashed player ID, voting token, and +1/0/-1 vote value. |
@@ -26,8 +26,8 @@ Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Shared/Stats/Model/ConsentRequest.cs`](../descriptions/Shared/Stats/Model/ConsentRequest.cs.md) | 14 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
-| [`Shared/Stats/Model/PluginStat.cs`](../descriptions/Shared/Stats/Model/PluginStat.cs.md) | 24 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
-| [`Shared/Stats/Model/PluginStats.cs`](../descriptions/Shared/Stats/Model/PluginStats.cs.md) | 21 | Top-level response container returned by the `/Stats` REST endpoint. |
+| [`Shared/Stats/Model/PluginVote.cs`](../descriptions/Shared/Stats/Model/PluginVote.cs.md) | 24 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
+| [`Shared/Stats/Model/PluginVotes.cs`](../descriptions/Shared/Stats/Model/PluginVotes.cs.md) | 24 | Top-level response container returned by the `/Stats` REST endpoint. |
 | [`Shared/Stats/Model/TrackRequest.cs`](../descriptions/Shared/Stats/Model/TrackRequest.cs.md) | 17 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
 | [`Shared/Stats/Model/VoteRequest.cs`](../descriptions/Shared/Stats/Model/VoteRequest.cs.md) | 20 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
 | [`Shared/Stats/StatsClient.cs`](../descriptions/Shared/Stats/StatsClient.cs.md) | 94 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |
@@ -36,10 +36,10 @@ Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the
 
 - `StatsClient.BaseUrl (set by host at startup)`
 - `StatsClient.Consent(bool) → bool`
-- `StatsClient.DownloadStats() → PluginStats`
+- `StatsClient.DownloadStats() → PluginVotes`
 - `StatsClient.Track(string[]) → bool`
-- `StatsClient.Vote(string, int) → PluginStat`
-- `PluginStats.GetStatsForPlugin(PluginData) → PluginStat`
+- `StatsClient.Vote(string, int) → PluginVote`
+- `PluginVotes.GetVotesForPlugin(PluginData) → PluginVote`
 
 ## Dependencies
 

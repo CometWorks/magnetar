@@ -281,7 +281,7 @@
       "Shared/Config/Sources/RemoteHubConfig.cs",
       "Shared/Config/SourcesConfig.cs",
       "Shared/PluginList.cs",
-      "Shared/Stats/Model/PluginStats.cs",
+      "Shared/Stats/Model/PluginVotes.cs",
       "Shared/Stats/StatsClient.cs"
     ],
     "Shared/Config/GitHubPluginConfig.cs": [
@@ -443,16 +443,16 @@
       "Shared/AssemblyResolver.cs",
       "Shared/Tools.cs"
     ],
-    "Shared/Stats/Model/PluginStats.cs": [
+    "Shared/Stats/Model/PluginVotes.cs": [
       "Shared/Data/PluginData.cs",
-      "Shared/Stats/Model/PluginStat.cs"
+      "Shared/Stats/Model/PluginVote.cs"
     ],
     "Shared/Stats/StatsClient.cs": [
       "Shared/Config/ConfigManager.cs",
       "Shared/Network/SimpleHttpClient.cs",
       "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginStat.cs",
-      "Shared/Stats/Model/PluginStats.cs",
+      "Shared/Stats/Model/PluginVote.cs",
+      "Shared/Stats/Model/PluginVotes.cs",
       "Shared/Stats/Model/TrackRequest.cs",
       "Shared/Stats/Model/VoteRequest.cs",
       "Shared/Tools.cs"
@@ -853,7 +853,7 @@
       "Shared/Data/ObsoletePlugin.cs",
       "Shared/Loader.cs",
       "Shared/PluginList.cs",
-      "Shared/Stats/Model/PluginStats.cs"
+      "Shared/Stats/Model/PluginVotes.cs"
     ],
     "Shared/Data/PluginStatus.cs": [
       "Legacy/Loader/PluginInstance.cs",
@@ -935,11 +935,11 @@
     "Shared/Stats/Model/ConsentRequest.cs": [
       "Shared/Stats/StatsClient.cs"
     ],
-    "Shared/Stats/Model/PluginStat.cs": [
-      "Shared/Stats/Model/PluginStats.cs",
+    "Shared/Stats/Model/PluginVote.cs": [
+      "Shared/Stats/Model/PluginVotes.cs",
       "Shared/Stats/StatsClient.cs"
     ],
-    "Shared/Stats/Model/PluginStats.cs": [
+    "Shared/Stats/Model/PluginVotes.cs": [
       "Shared/Config/ConfigManager.cs",
       "Shared/Stats/StatsClient.cs"
     ],

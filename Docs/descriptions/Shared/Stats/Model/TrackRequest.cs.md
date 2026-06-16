@@ -3,7 +3,7 @@
 **Project:** Shared · **Namespace:** `Pulsar.Shared.Stats.Model` · **Kind:** class · **Lines:** 17
 
 ## Summary
-Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. This event is the source of `PluginStat.Players` counts on the server. The player is identified only by a truncated SHA-1 hash of the install ID — the comment documents the exact hash format (first 80 bits, hex-encoded) to make the privacy model auditable.
+Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. This event is the source of `PluginVote.Players` counts on the server. The player is identified only by a truncated SHA-1 hash of the install ID — the comment documents the exact hash format (first 80 bits, hex-encoded) to make the privacy model auditable.
 
 ## Types
 ### `TrackRequest` — class, public

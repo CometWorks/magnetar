@@ -268,8 +268,8 @@
     "project": "Shared",
     "files": [
       "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginStat.cs",
-      "Shared/Stats/Model/PluginStats.cs",
+      "Shared/Stats/Model/PluginVote.cs",
+      "Shared/Stats/Model/PluginVotes.cs",
       "Shared/Stats/Model/TrackRequest.cs",
       "Shared/Stats/Model/VoteRequest.cs",
       "Shared/Stats/StatsClient.cs"

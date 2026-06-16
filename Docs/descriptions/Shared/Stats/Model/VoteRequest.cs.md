@@ -3,7 +3,7 @@
 **Project:** Shared · **Namespace:** `Pulsar.Shared.Stats.Model` · **Kind:** class · **Lines:** 19
 
 ## Summary
-Request body POSTed to `/Vote` when a player changes their vote on a plugin. The `VotingToken` field, received with the previous `/Stats` response and cached in `StatsClient`, links this request back to an authenticated stats session, making it harder to programmatically fabricate votes without first fetching real stats. The vote value uses the signed-integer convention (`+1`/`0`/`-1`) shared with `PluginStat.Vote`.
+Request body POSTed to `/Vote` when a player changes their vote on a plugin. The `VotingToken` field, received with the previous `/Stats` response and cached in `StatsClient`, links this request back to an authenticated stats session, making it harder to programmatically fabricate votes without first fetching real stats. The vote value uses the signed-integer convention (`+1`/`0`/`-1`) shared with `PluginVote.Vote`.
 
 ## Types
 ### `VoteRequest` — class, public
@@ -12,7 +12,7 @@ DTO serialized to JSON by `StatsClient.Vote`. All four fields must be populated;
 - **Properties:**
   - `PluginId` — identifier of the plugin being voted on.
   - `PlayerHash` — same truncated SHA-1 hash used in `TrackRequest`; ties the vote to the anonymous player identity without exposing the Steam ID.
-  - `VotingToken` — opaque token obtained from the most recent `PluginStats` response; the server validates it to reject forged vote requests.
+  - `VotingToken` — opaque token obtained from the most recent `PluginVotes` response; the server validates it to reject forged vote requests.
   - `Vote` — integer vote value: `+1` for upvote, `0` to clear a prior vote, `-1` for downvote.
 
 ## Cross-references

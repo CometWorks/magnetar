@@ -1480,7 +1480,7 @@
     "module": "Shared.Stats",
     "project": "Shared",
     "purpose": "Provides the client-side telemetry and community-rating layer for Magnetar. It sends anonymized usage tracking events to a remote stats server, fetches aggregate plugin statistics (active player counts, upvote/downvote totals, half-star ratings), and lets consenting players cast and update votes. All player identification uses a truncated SHA-1 hash of a locally-generated install ID, never raw Steam IDs, to satisfy data-protection requirements.",
-    "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginStats result through ConfigManager.Instance.Stats rather than calling StatsClient directly.",
+    "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginVotes result through ConfigManager.Instance.Stats rather than calling StatsClient directly.",
     "key_types": [
       {
         "name": "StatsClient",
@@ -1489,15 +1489,15 @@
         "summary": "Four-operation REST client for the stats back-end: Consent, DownloadStats, Track, Vote."
       },
       {
-        "name": "PluginStats",
+        "name": "PluginVotes",
         "kind": "class",
-        "file": "Shared/Stats/Model/PluginStats.cs",
-        "summary": "Top-level response DTO from /Stats; maps plugin IDs to PluginStat records and carries the server-issued voting token."
+        "file": "Shared/Stats/Model/PluginVotes.cs",
+        "summary": "Top-level response DTO from /Stats; maps plugin IDs to PluginVote records and carries the server-issued voting token."
       },
       {
-        "name": "PluginStat",
+        "name": "PluginVote",
         "kind": "class",
-        "file": "Shared/Stats/Model/PluginStat.cs",
+        "file": "Shared/Stats/Model/PluginVote.cs",
         "summary": "Per-plugin statistics record: 30-day player count, lifetime vote totals, half-star rating, and the requesting player's personal tried/vote state."
       },
       {
@@ -1522,10 +1522,10 @@
     "public_api": [
       "StatsClient.BaseUrl (set by host at startup)",
       "StatsClient.Consent(bool) \u2192 bool",
-      "StatsClient.DownloadStats() \u2192 PluginStats",
+      "StatsClient.DownloadStats() \u2192 PluginVotes",
       "StatsClient.Track(string[]) \u2192 bool",
-      "StatsClient.Vote(string, int) \u2192 PluginStat",
-      "PluginStats.GetStatsForPlugin(PluginData) \u2192 PluginStat"
+      "StatsClient.Vote(string, int) \u2192 PluginVote",
+      "PluginVotes.GetVotesForPlugin(PluginData) \u2192 PluginVote"
     ],
     "depends_on": [
       "Shared.Network (SimpleHttpClient)",
@@ -1535,8 +1535,8 @@
     ],
     "files_documented": [
       "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginStat.cs",
-      "Shared/Stats/Model/PluginStats.cs",
+      "Shared/Stats/Model/PluginVote.cs",
+      "Shared/Stats/Model/PluginVotes.cs",
       "Shared/Stats/Model/TrackRequest.cs",
       "Shared/Stats/Model/VoteRequest.cs",
       "Shared/Stats/StatsClient.cs"

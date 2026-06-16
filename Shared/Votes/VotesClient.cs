@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Network;
-using Pulsar.Shared.Stats.Model;
+using Pulsar.Shared.Votes.Model;
 
-namespace Pulsar.Shared.Stats;
+namespace Pulsar.Shared.Votes;
 
-public static class StatsClient
+public static class VotesClient
 {
     // API address
     public static string BaseUrl { get; set; }
 
     // API endpoints
     private static string ConsentUri => $"{BaseUrl}/Consent";
-    private static string StatsUri => $"{BaseUrl}/Stats";
+    private static string VotesUri => $"{BaseUrl}/Stats";
     private static string TrackUri => $"{BaseUrl}/Track";
     private static string VoteUri => $"{BaseUrl}/Vote";
 
@@ -29,10 +29,10 @@ public static class StatsClient
     public static bool Consent(bool consent)
     {
         if (consent)
-            LogFile.WriteLine($"Registering player consent on the statistics server");
+            LogFile.WriteLine($"Registering player consent on the votes server");
         else
             LogFile.WriteLine(
-                $"Withdrawing player consent, removing user data from the statistics server"
+                $"Withdrawing player consent, removing user data from the votes server"
             );
 
         var consentRequest = new ConsentRequest() { PlayerHash = PlayerHash, Consent = consent };
@@ -41,23 +41,23 @@ public static class StatsClient
     }
 
     // This function may be called from another thread.
-    public static PluginStats DownloadStats()
+    public static PluginVotes DownloadVotes()
     {
         if (!ConfigManager.Instance.Core.DataHandlingConsent)
         {
-            LogFile.WriteLine("Downloading plugin statistics anonymously...");
+            LogFile.WriteLine("Downloading plugin votes anonymously...");
             votingToken = null;
-            return SimpleHttpClient.Get<PluginStats>(StatsUri);
+            return SimpleHttpClient.Get<PluginVotes>(VotesUri);
         }
 
-        LogFile.WriteLine("Downloading plugin statistics, ratings and votes for " + PlayerHash);
+        LogFile.WriteLine("Downloading plugin votes for " + PlayerHash);
 
         var parameters = new Dictionary<string, string> { ["playerHash"] = PlayerHash };
-        var pluginStats = SimpleHttpClient.Get<PluginStats>(StatsUri, parameters);
+        var pluginVotes = SimpleHttpClient.Get<PluginVotes>(VotesUri, parameters);
 
-        votingToken = pluginStats?.VotingToken;
+        votingToken = pluginVotes?.VotingToken;
 
-        return pluginStats;
+        return pluginVotes;
     }
 
     public static bool Track(string[] pluginIds)
@@ -71,7 +71,7 @@ public static class StatsClient
         return SimpleHttpClient.Post(TrackUri, trackRequest);
     }
 
-    public static PluginStat Vote(string pluginId, int vote)
+    public static PluginVote Vote(string pluginId, int vote)
     {
         if (votingToken is null)
         {
@@ -88,7 +88,7 @@ public static class StatsClient
             Vote = vote,
         };
 
-        var stat = SimpleHttpClient.Post<PluginStat, VoteRequest>(VoteUri, voteRequest);
-        return stat;
+        var pluginVote = SimpleHttpClient.Post<PluginVote, VoteRequest>(VoteUri, voteRequest);
+        return pluginVote;
     }
 }

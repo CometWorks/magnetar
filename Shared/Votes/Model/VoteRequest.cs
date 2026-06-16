@@ -1,6 +1,6 @@
-namespace Pulsar.Shared.Stats.Model;
+namespace Pulsar.Shared.Votes.Model;
 
-// Request data sent to the StatsServer each time the user changes his/her vote on a plugin
+// Request data sent to the backend server each time the user changes his/her vote on a plugin
 public class VoteRequest
 {
     // Id of the plugin

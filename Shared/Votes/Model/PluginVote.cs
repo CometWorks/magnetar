@@ -1,7 +1,7 @@
-namespace Pulsar.Shared.Stats.Model;
+namespace Pulsar.Shared.Votes.Model;
 
-// Statistics for a single plugin
-public class PluginStat
+// Votes and usage counts for a single plugin
+public class PluginVote
 {
     // Number of players who successfully started SE with this plugin enabled anytime during the past 30 days
     public int Players { get; set; }

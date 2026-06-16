@@ -7,7 +7,7 @@ The single outbound client for Magnetar's statistics back-end, providing four RE
 
 ## Types
 ### `StatsClient` — static class, public
-Owns all communication with the remote stats service. The four public methods map one-to-one onto the four server endpoints. Because `DownloadStats` may be called from a background thread (as `ConfigManager.UpdatePlayerStats` wraps it in `Task.Run`), the class is written to be safe for concurrent calls that do not interleave (the token assignment is last-write-wins which is sufficient given the single background task pattern).
+Owns all communication with the remote stats service. The four public methods map one-to-one onto the four server endpoints. Because `DownloadVotes` may be called from a background thread (as `ConfigManager.UpdatePlayerStats` wraps it in `Task.Run`), the class is written to be safe for concurrent calls that do not interleave (the token assignment is last-write-wins which is sufficient given the single background task pattern).
 
 - **Properties:**
   - `BaseUrl` — settable base URL for the stats API, set at startup by the host layer to point at the live server (or a test instance).
@@ -22,15 +22,15 @@ Owns all communication with the remote stats service. The four public methods ma
 
 - **Methods:**
   - `Consent(bool consent) → bool` — builds a `ConsentRequest` with the current `PlayerHash` and POSTs it to `/Consent`; logs the action before sending; returns `true` on HTTP 200.
-  - `DownloadStats() → PluginStats` — fetches `/Stats`; if `DataHandlingConsent` is `false` the request is made anonymously (no query parameters, `votingToken` set to `null`); if consent is active, `PlayerHash` is passed as a query parameter and the returned `VotingToken` is cached for use by `Vote`. Safe to call from a non-UI thread.
+  - `DownloadVotes() → PluginVotes` — fetches `/Stats`; if `DataHandlingConsent` is `false` the request is made anonymously (no query parameters, `votingToken` set to `null`); if consent is active, `PlayerHash` is passed as a query parameter and the returned `VotingToken` is cached for use by `Vote`. Safe to call from a non-UI thread.
   - `Track(string[] pluginIds) → bool` — POSTs a `TrackRequest` to `/Track` recording which plugins were active at startup; returns `true` on success.
-  - `Vote(string pluginId, int vote) → PluginStat` — guards against a missing `votingToken` (logs an error and returns `null` if absent); otherwise POSTs a `VoteRequest` to `/Vote` and deserializes the server's updated `PluginStat` response, giving the caller the fresh stat without a separate download.
+  - `Vote(string pluginId, int vote) → PluginVote` — guards against a missing `votingToken` (logs an error and returns `null` if absent); otherwise POSTs a `VoteRequest` to `/Vote` and deserializes the server's updated `PluginVote` response, giving the caller the fresh stat without a separate download.
 
 ## Cross-references
 - **Uses:**
   - `Shared/Stats/Model/ConsentRequest.cs`
-  - `Shared/Stats/Model/PluginStats.cs`
-  - `Shared/Stats/Model/PluginStat.cs`
+  - `Shared/Stats/Model/PluginVotes.cs`
+  - `Shared/Stats/Model/PluginVote.cs`
   - `Shared/Stats/Model/TrackRequest.cs`
   - `Shared/Stats/Model/VoteRequest.cs`
   - `Shared/Network/SimpleHttpClient.cs` — performs all HTTP GET/POST calls

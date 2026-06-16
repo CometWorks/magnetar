@@ -211,8 +211,8 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Shared/Stats/Model/ConsentRequest.cs`](descriptions/Shared/Stats/Model/ConsentRequest.cs.md) | 14 | 3 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
-| [`Shared/Stats/Model/PluginStat.cs`](descriptions/Shared/Stats/Model/PluginStat.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
-| [`Shared/Stats/Model/PluginStats.cs`](descriptions/Shared/Stats/Model/PluginStats.cs.md) | 21 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
+| [`Shared/Stats/Model/PluginVote.cs`](descriptions/Shared/Stats/Model/PluginVote.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
+| [`Shared/Stats/Model/PluginVotes.cs`](descriptions/Shared/Stats/Model/PluginVotes.cs.md) | 24 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
 | [`Shared/Stats/Model/TrackRequest.cs`](descriptions/Shared/Stats/Model/TrackRequest.cs.md) | 17 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
 | [`Shared/Stats/Model/VoteRequest.cs`](descriptions/Shared/Stats/Model/VoteRequest.cs.md) | 20 | 3 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
 | [`Shared/Stats/StatsClient.cs`](descriptions/Shared/Stats/StatsClient.cs.md) | 94 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |

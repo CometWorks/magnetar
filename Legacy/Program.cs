@@ -26,7 +26,7 @@ static class Program
 
     private const string PulsarRepo = "SpaceGT/Pulsar";
     private const string OldLauncher = "SpaceEngineersDedicated.exe";
-    private const string StatsServer = "https://magnetarstats.ferenczi.eu";
+    private const string VotesServer = "https://magnetarstats.ferenczi.eu";
 
     static void Main(string[] args)
     {
@@ -288,7 +288,7 @@ static class Program
 #endif
 
             Tools.Init(new ExternalTools(), compiler);
-            SharedLoader.Instance = new SharedLoader(StatsServer, GetCorePlugins());
+            SharedLoader.Instance = new SharedLoader(VotesServer, GetCorePlugins());
         }
 
         Preloader preloader = new(SharedLoader.Instance.Plugins.Select(x => x.Item2));
