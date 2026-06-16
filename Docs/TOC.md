@@ -125,6 +125,7 @@ Grouped by project. Click a module for its full doc.
 | [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1226 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions. |
 | [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 391 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
 | [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 5 | 353 | Host-agnostic path resolution and dedicated-server lifecycle control (`ServerControl`). |
+| [PluginSdk.Stats](modules/PluginSdk.Stats.md) | 4 | 498 | Self-describing runtime telemetry: attribute-declared counters / gauges / discrete values published as snapshots a consumer (Quasar Agent) rolls up and charts. |
 
 ### `PluginSdkTests` — specifications
 
@@ -158,6 +159,7 @@ graph LR
     PluginSdk_Commands[Commands]
     PluginSdk_Logging[Logging]
     PluginSdk_Runtime[Runtime]
+    PluginSdk_Stats[Stats]
   end
   Compiler[Compiler]
 
@@ -171,8 +173,9 @@ graph LR
   Shared_Config --> Shared_Core & Shared_Data & Shared_Stats
   Shared_Network --> Shared_Config
   Shared_Stats --> Shared_Core & Shared_Config & Shared_Data & Shared_Network
+  PluginSdk_Stats --> PluginSdk_Logging
 ```
 
 ---
 
-**[Full file index ▶](Index.md)** · 16 modules · 123 source files · ~12.7k lines
+**[Full file index ▶](Index.md)** · 17 modules · 127 source files · ~13.2k lines

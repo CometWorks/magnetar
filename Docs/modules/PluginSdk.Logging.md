@@ -51,7 +51,7 @@ Sits between plugin code and the two deployment back-ends (standalone Magnetar a
 ## Dependencies
 
 **Uses modules:** _none_  
-**Used by modules:** [Legacy.Loader](Legacy.Loader.md), [PluginSdkTests](PluginSdkTests.md)  
+**Used by modules:** [Legacy.Loader](Legacy.Loader.md), [PluginSdk.Stats](PluginSdk.Stats.md), [PluginSdkTests](PluginSdkTests.md)  
 **External systems:** SE DS assemblies (VRage.Library: VRage.Utils.MyLog, VRage.Utils.MyLogSeverity)
 
 ---

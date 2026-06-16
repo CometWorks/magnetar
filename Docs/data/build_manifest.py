@@ -49,7 +49,7 @@ def module_of(rel):
             return "Shared." + parts[1], "Shared"
         return "Shared.Core", "Shared"
     if top == "PluginSdk":
-        if len(parts) > 1 and parts[1] in ("Commands", "Config", "Logging"):
+        if len(parts) > 1 and parts[1] in ("Commands", "Config", "Logging", "Stats"):
             return "PluginSdk." + parts[1], "PluginSdk"
         return "PluginSdk.Runtime", "PluginSdk"  # Paths/, Tools/, ServerControl.cs
     if top == "PluginSdkTests":

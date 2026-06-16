@@ -32,6 +32,9 @@
     "Shared.Core",
     "Shared.Data"
   ],
+  "PluginSdk.Stats": [
+    "PluginSdk.Logging"
+  ],
   "PluginSdkTests": [
     "PluginSdk.Commands",
     "PluginSdk.Config",

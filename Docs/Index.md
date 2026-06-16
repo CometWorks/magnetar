@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 123 files across 16 modules.
+Every documented source file, grouped by module. 127 files across 17 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -123,6 +123,15 @@ Every documented source file, grouped by module. 123 files across 16 modules.
 | [`PluginSdk/Paths/ShimPathResolver.cs`](descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | 2 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
 | [`PluginSdk/ServerControl.cs`](descriptions/PluginSdk/ServerControl.cs.md) | 142 | 2 | Exposes the dedicated server's lifecycle controls (save, reload config, quit, restart) as a stable plugin-facing API, decoupled from the host launcher implementation. |
 | [`PluginSdk/Tools/SerializableDictionary.cs`](descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 79 | 2 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
+
+## PluginSdk.Stats  ·  [module doc](modules/PluginSdk.Stats.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`PluginSdk/Stats/PluginStats.cs`](descriptions/PluginSdk/Stats/PluginStats.cs.md) | 90 | 2 | The process-wide publish/subscribe hub for plugin statistics: a producer publishes a self-describing `StatsSnapshot` under a provider name, and a consumer reads the latest snapshot by name, lists the active providers, or subscribes to `Updated` to receive every publication as it happens. |
+| [`PluginSdk/Stats/StatsAttributes.cs`](descriptions/PluginSdk/Stats/StatsAttributes.cs.md) | 183 | 2 | The attribute vocabulary a plugin uses to annotate a stats POCO, plus the two enums that describe how each value aggregates. |
+| [`PluginSdk/Stats/StatsSchema.cs`](descriptions/PluginSdk/Stats/StatsSchema.cs.md) | 172 | 2 | Reflection-based schema for a stats POCO, plus the capture routines that project live POCO instances into the serializable `StatInstance` and `StatGroup` shapes. |
+| [`PluginSdk/Stats/StatsSnapshot.cs`](descriptions/PluginSdk/Stats/StatsSnapshot.cs.md) | 53 | 2 | The serializable payload a producer publishes through `PluginStats`: a timestamped tree of groups, each pairing a schema with the instances captured against it. |
 
 ## PluginSdkTests  ·  [module doc](modules/PluginSdkTests.md)
 

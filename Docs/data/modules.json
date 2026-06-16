@@ -158,6 +158,19 @@
     "model": "sonnet",
     "dominant_tier": 2
   },
+  "PluginSdk.Stats": {
+    "project": "PluginSdk",
+    "files": [
+      "PluginSdk/Stats/PluginStats.cs",
+      "PluginSdk/Stats/StatsAttributes.cs",
+      "PluginSdk/Stats/StatsSchema.cs",
+      "PluginSdk/Stats/StatsSnapshot.cs"
+    ],
+    "file_count": 4,
+    "total_lines": 498,
+    "model": "sonnet",
+    "dominant_tier": 2
+  },
   "PluginSdkTests": {
     "project": "PluginSdkTests",
     "files": [
