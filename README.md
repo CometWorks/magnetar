@@ -18,7 +18,7 @@ Compatibility plugins are loaded implicitly:
 - [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat) for .NET 10 compatibility
 - [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat) for Linux compatibility
 
-You can register new plugins by making PRs to the [MagnetarHub](https://github.com/viktor-ferenczi/magnetarhub).
+You can register new plugins by making PRs to the [MagnetarHub](https://github.com/CometWorks/magnetar-hub).
 
 ## Control plane — Quasar
 
