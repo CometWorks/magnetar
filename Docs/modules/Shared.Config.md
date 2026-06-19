@@ -50,7 +50,7 @@ Acts as the configuration backbone shared by both the Legacy (Windows/.NET 4.8) 
 - `ConfigManager.Init(string gameDir, string modDir, Version gameVersion, RemoteHubConfig[] defaultHubs)`
 - `ConfigManager.Instance`
 - `ConfigManager.GetOrCreateInstallId()`
-- `ConfigManager.UpdatePlayerStats()`
+- `ConfigManager.UpdatePlayerVotes()`
 - `CoreConfig.Load(string mainDirectory)`
 - `CoreConfig.Save()`
 - `SourcesConfig.Load(string mainDirectory, RemoteHubConfig[] defaultHubs)`
@@ -63,8 +63,8 @@ Acts as the configuration backbone shared by both the Legacy (Windows/.NET 4.8) 
 
 ## Dependencies
 
-**Uses modules:** [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Stats](Shared.Stats.md)  
-**Used by modules:** [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Network](Shared.Network.md), [Shared.Stats](Shared.Stats.md)  
+**Uses modules:** [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Votes](Shared.Votes.md)  
+**Used by modules:** [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Network](Shared.Network.md), [Shared.Votes](Shared.Votes.md)  
 **External systems:** GitHub
 
 ---

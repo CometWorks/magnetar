@@ -117,13 +117,13 @@
   "Shared/PluginList.cs": "Docs/descriptions/Shared/PluginList.cs.md",
   "Shared/PluginProgress.cs": "Docs/descriptions/Shared/PluginProgress.cs.md",
   "Shared/Preloader.cs": "Docs/descriptions/Shared/Preloader.cs.md",
-  "Shared/Stats/Model/ConsentRequest.cs": "Docs/descriptions/Shared/Stats/Model/ConsentRequest.cs.md",
-  "Shared/Stats/Model/PluginVote.cs": "Docs/descriptions/Shared/Stats/Model/PluginVote.cs.md",
-  "Shared/Stats/Model/PluginVotes.cs": "Docs/descriptions/Shared/Stats/Model/PluginVotes.cs.md",
-  "Shared/Stats/Model/TrackRequest.cs": "Docs/descriptions/Shared/Stats/Model/TrackRequest.cs.md",
-  "Shared/Stats/Model/VoteRequest.cs": "Docs/descriptions/Shared/Stats/Model/VoteRequest.cs.md",
-  "Shared/Stats/StatsClient.cs": "Docs/descriptions/Shared/Stats/StatsClient.cs.md",
   "Shared/Steam.cs": "Docs/descriptions/Shared/Steam.cs.md",
   "Shared/Tools.cs": "Docs/descriptions/Shared/Tools.cs.md",
-  "Shared/Updater.cs": "Docs/descriptions/Shared/Updater.cs.md"
+  "Shared/Updater.cs": "Docs/descriptions/Shared/Updater.cs.md",
+  "Shared/Votes/Model/ConsentRequest.cs": "Docs/descriptions/Shared/Votes/Model/ConsentRequest.cs.md",
+  "Shared/Votes/Model/PluginVote.cs": "Docs/descriptions/Shared/Votes/Model/PluginVote.cs.md",
+  "Shared/Votes/Model/PluginVotes.cs": "Docs/descriptions/Shared/Votes/Model/PluginVotes.cs.md",
+  "Shared/Votes/Model/TrackRequest.cs": "Docs/descriptions/Shared/Votes/Model/TrackRequest.cs.md",
+  "Shared/Votes/Model/VoteRequest.cs": "Docs/descriptions/Shared/Votes/Model/VoteRequest.cs.md",
+  "Shared/Votes/VotesClient.cs": "Docs/descriptions/Shared/Votes/VotesClient.cs.md"
 }

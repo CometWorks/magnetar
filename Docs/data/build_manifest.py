@@ -6,6 +6,20 @@ SHA256, and assigns each file a module and a processing tier using path + size
 heuristics (no AI inference). Re-runnable: the SHA256 is the cache key, so a
 later run can diff against a prior manifest and only re-process changed files.
 
+All inputs are C# source (text), so every file is normalized to LF before
+measuring size and hashing: the size and SHA256 become independent of newline
+style. This keeps the manifest stable across platforms and git core.autocrlf
+checkout settings (a CRLF working-tree copy hashes identically to its LF blob).
+Binary inputs would be hashed by their exact bytes, but the enumeration here is
+text-only so normalization always applies.
+
+Description output paths are made unique on case-insensitive filesystems
+(Windows, macOS): paths that would differ only in letter casing are detected
+while the mapping is built and disambiguated deterministically, so a re-run on a
+case-sensitive (Linux) source tree never emits two outputs that collide on
+checkout. The chosen names are recorded in path-mapping.json so they stay stable
+across runs.
+
 Outputs (all under Docs/data/):
   manifest.jsonl     one JSON object per source file
   modules.json       module -> {files, project, model, dominant_tier}
@@ -21,12 +35,53 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 DATA = os.path.join(ROOT, "Docs", "data")
 
 
-def sha256(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
+def normalize_newlines(data):
+    """Normalize CRLF and lone CR to LF so size/hash are newline-independent."""
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def ensure_case_insensitive_unique(path_map):
+    """Guarantee the description paths are unique on case-insensitive filesystems.
+
+    The description tree mirrors the source tree, so a source repo authored on a
+    case-sensitive (Linux) filesystem can produce outputs that collide once
+    checked out on Windows or macOS. Detect those collisions while the mapping is
+    built and disambiguate deterministically; the chosen names are written to
+    path-mapping.json so they remain stable across runs. Mutates and returns the
+    given mapping. A no-op when no collisions exist.
+
+      * Directory-component collisions (e.g. 'Net/' vs 'net/') cannot be fixed by
+        renaming a single output file; they require resolving the clash in the
+        source tree. Fail loudly so the breakage is never produced silently.
+      * File-leaf collisions are disambiguated by appending a short, stable hash
+        of the source path before the extension.
+    """
+    # Detect directory-component case collisions across every output path.
+    canonical = {}  # case-folded directory prefix -> first actual spelling seen
+    for rel in sorted(path_map):
+        parts = path_map[rel].split("/")
+        for i in range(1, len(parts)):  # directory prefixes only (exclude leaf)
+            key = "/".join(p.lower() for p in parts[:i])
+            actual = "/".join(parts[:i])
+            if canonical.setdefault(key, actual) != actual:
+                raise ValueError(
+                    "Case-insensitive directory collision in generated paths: "
+                    f"{canonical[key]!r} vs {actual!r}. Resolve the clash in the "
+                    "source tree (rename one) before regenerating."
+                )
+
+    # Disambiguate file leaves whose full paths differ only by letter casing.
+    by_lower = defaultdict(list)
+    for rel, desc in path_map.items():
+        by_lower[desc.lower()].append(rel)
+    for _, colliding in sorted(by_lower.items()):
+        if len(colliding) < 2:
+            continue
+        for rel in sorted(colliding):
+            root, ext = os.path.splitext(path_map[rel])
+            suffix = hashlib.sha1(rel.encode("utf-8")).hexdigest()[:8]
+            path_map[rel] = f"{root}__{suffix}{ext}"
+    return path_map
 
 
 def module_of(rel):
@@ -45,7 +100,7 @@ def module_of(rel):
             return "Legacy.Commands", "Legacy"
         return "Legacy.Integration", "Legacy"  # Compiler/, Extensions/, Paths/
     if top == "Shared":
-        if len(parts) > 1 and parts[1] in ("Config", "Data", "Network", "Stats"):
+        if len(parts) > 1 and parts[1] in ("Config", "Data", "Network", "Votes"):
             return "Shared." + parts[1], "Shared"
         return "Shared.Core", "Shared"
     if top == "PluginSdk":
@@ -99,7 +154,7 @@ def main():
     for rel in sorted(rels):
         ap = os.path.join(ROOT, rel)
         with open(ap, "rb") as f:
-            data = f.read()
+            data = normalize_newlines(f.read())
         lines = data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
         module, project = module_of(rel)
         tier = tier_of(rel, lines)
@@ -112,11 +167,17 @@ def main():
             "type": "csharp",
             "size": len(data),
             "lines": lines,
-            "sha256": sha256(ap),
+            "sha256": hashlib.sha256(data).hexdigest(),
             "tier": tier,
             "desc": desc,
             "status": "pending",
         })
+
+    # Keep description paths safe on case-insensitive filesystems, then sync the
+    # (possibly disambiguated) names back into the manifest records.
+    ensure_case_insensitive_unique(path_map)
+    for r in records:
+        r["desc"] = path_map[r["path"]]
 
     with open(os.path.join(DATA, "manifest.jsonl"), "w") as f:
         for r in records:

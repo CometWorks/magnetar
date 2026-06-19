@@ -264,18 +264,18 @@
     "model": "sonnet",
     "dominant_tier": 1
   },
-  "Shared.Stats": {
+  "Shared.Votes": {
     "project": "Shared",
     "files": [
-      "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginVote.cs",
-      "Shared/Stats/Model/PluginVotes.cs",
-      "Shared/Stats/Model/TrackRequest.cs",
-      "Shared/Stats/Model/VoteRequest.cs",
-      "Shared/Stats/StatsClient.cs"
+      "Shared/Votes/Model/ConsentRequest.cs",
+      "Shared/Votes/Model/PluginVote.cs",
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/Model/TrackRequest.cs",
+      "Shared/Votes/Model/VoteRequest.cs",
+      "Shared/Votes/VotesClient.cs"
     ],
     "file_count": 6,
-    "total_lines": 190,
+    "total_lines": 193,
     "model": "sonnet",
     "dominant_tier": 2
   }

@@ -8,7 +8,7 @@ Lets a plugin publish self-describing runtime statistics as an in-process publis
 
 ## Role in Magnetar
 
-The telemetry-producer counterpart of the config system: where PluginConfig and ConfigSchema turn an annotated class into a remotely-rendered editor, a stats POCO plus StatsSchema turn an annotated class into a remotely-rendered chart. The API is public static with no InternalsVisibleTo, so any plugin publishes or consumes directly. There is no in-tree consumer yet; the intended collector is the external Quasar Agent, which subscribes, rolls snapshots up using the per-field aggregation hints, and charts them. This is unrelated to Shared.Stats, which is Magnetar's own launcher-side usage and community-rating telemetry.
+The telemetry-producer counterpart of the config system: where PluginConfig and ConfigSchema turn an annotated class into a remotely-rendered editor, a stats POCO plus StatsSchema turn an annotated class into a remotely-rendered chart. The API is public static with no InternalsVisibleTo, so any plugin publishes or consumes directly. There is no in-tree consumer yet; the intended collector is the external Quasar Agent, which subscribes, rolls snapshots up using the per-field aggregation hints, and charts them. This is unrelated to Shared.Votes, which is Magnetar's own launcher-side usage and community-rating telemetry.
 
 ## Key types
 

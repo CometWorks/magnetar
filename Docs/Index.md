@@ -206,13 +206,13 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 | [`Shared/Network/NuGetPackageList.cs`](descriptions/Shared/Network/NuGetPackageList.cs.md) | 20 | 3 | `NuGetPackageList` is a compact container that carries a plugin's NuGet dependency declaration in two optional forms: a path to a `packages.config` file (`Config`) and/or an inline array of `NuGetPackageId` records (`PackageIds`). |
 | [`Shared/Network/SimpleHttpClient.cs`](descriptions/Shared/Network/SimpleHttpClient.cs.md) | 198 | 2 | `SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. |
 
-## Shared.Stats  ·  [module doc](modules/Shared.Stats.md)
+## Shared.Votes  ·  [module doc](modules/Shared.Votes.md)
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Shared/Stats/Model/ConsentRequest.cs`](descriptions/Shared/Stats/Model/ConsentRequest.cs.md) | 14 | 3 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
-| [`Shared/Stats/Model/PluginVote.cs`](descriptions/Shared/Stats/Model/PluginVote.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
-| [`Shared/Stats/Model/PluginVotes.cs`](descriptions/Shared/Stats/Model/PluginVotes.cs.md) | 24 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
-| [`Shared/Stats/Model/TrackRequest.cs`](descriptions/Shared/Stats/Model/TrackRequest.cs.md) | 17 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
-| [`Shared/Stats/Model/VoteRequest.cs`](descriptions/Shared/Stats/Model/VoteRequest.cs.md) | 20 | 3 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
-| [`Shared/Stats/StatsClient.cs`](descriptions/Shared/Stats/StatsClient.cs.md) | 94 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |
+| [`Shared/Votes/Model/ConsentRequest.cs`](descriptions/Shared/Votes/Model/ConsentRequest.cs.md) | 14 | 3 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
+| [`Shared/Votes/Model/PluginVote.cs`](descriptions/Shared/Votes/Model/PluginVote.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
+| [`Shared/Votes/Model/PluginVotes.cs`](descriptions/Shared/Votes/Model/PluginVotes.cs.md) | 24 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
+| [`Shared/Votes/Model/TrackRequest.cs`](descriptions/Shared/Votes/Model/TrackRequest.cs.md) | 17 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
+| [`Shared/Votes/Model/VoteRequest.cs`](descriptions/Shared/Votes/Model/VoteRequest.cs.md) | 20 | 3 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
+| [`Shared/Votes/VotesClient.cs`](descriptions/Shared/Votes/VotesClient.cs.md) | 94 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |

@@ -109,7 +109,7 @@ Grouped by project. Click a module for its full doc.
 | [Shared.Data](modules/Shared.Data.md) | 10 | 1685 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status). |
 | [Shared.Config](modules/Shared.Config.md) | 12 | 521 | All persistent installation configuration: core config, profiles, and plugin sources. |
 | [Shared.Network](modules/Shared.Network.md) | 7 | 864 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
-| [Shared.Stats](modules/Shared.Stats.md) | 6 | 190 | Opt-in client-side telemetry and community plugin-rating layer. |
+| [Shared.Votes](modules/Shared.Votes.md) | 6 | 193 | Opt-in client-side telemetry and community plugin-rating layer. |
 
 ### `Compiler` — the plugin compiler
 
@@ -152,7 +152,7 @@ graph LR
     Shared_Data[Data]
     Shared_Config[Config]
     Shared_Network[Network]
-    Shared_Stats[Stats]
+    Shared_Votes[Votes]
   end
   subgraph PluginSdk
     PluginSdk_Config[Config]
@@ -168,11 +168,11 @@ graph LR
   Legacy_Patch --> Legacy_Loader & Legacy_Commands & Shared_Core & Shared_Config & Shared_Data
   Legacy_Commands --> PluginSdk_Commands
   Legacy_Integration --> Compiler & PluginSdk_Runtime & Shared_Core & Shared_Data
-  Shared_Core --> Compiler & Shared_Config & Shared_Data & Shared_Network & Shared_Stats
+  Shared_Core --> Compiler & Shared_Config & Shared_Data & Shared_Network & Shared_Votes
   Shared_Data --> Compiler & Shared_Config & Shared_Core & Shared_Network
-  Shared_Config --> Shared_Core & Shared_Data & Shared_Stats
+  Shared_Config --> Shared_Core & Shared_Data & Shared_Votes
   Shared_Network --> Shared_Config
-  Shared_Stats --> Shared_Core & Shared_Config & Shared_Data & Shared_Network
+  Shared_Votes --> Shared_Core & Shared_Config & Shared_Data & Shared_Network
   PluginSdk_Stats --> PluginSdk_Logging
 ```
 

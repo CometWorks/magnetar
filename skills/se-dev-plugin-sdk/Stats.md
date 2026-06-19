@@ -226,6 +226,6 @@ is idempotent, a null/empty name is a no-op, and it does **not** raise
   Agent**, which subscribes, rolls snapshots up using the aggregation hints, and
   charts them. One plugin may also consume another's stats directly via the same
   `PluginStats` API.
-- **Distinct from `Shared.Stats`.** That is Magnetar's own opt-in
+- **Distinct from `Shared.Votes`.** That is Magnetar's own opt-in
   community-rating/usage telemetry for the launcher; this is the *plugin-facing*
   runtime-metrics API and is unrelated.

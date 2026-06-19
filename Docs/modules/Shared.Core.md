@@ -47,7 +47,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 
 ## Public API surface
 
-- `new Loader(statsServer, forceEnable) -> populated Loader.Plugins list of (PluginData, Assembly)`
+- `new Loader(votesServer, forceEnable) -> populated Loader.Plugins list of (PluginData, Assembly)`
 - `new PluginList(mainDirectory, sources, profiles); UpdateRemoteList/UpdateLocalList; GetModPlugins; TryGetPlugin; enumeration`
 - `new Preloader(assemblies).Patch(gameDir, cacheDir); PreHooks()/PostHooks(); HasPatches`
 - `new Updater(repoName).TryUpdate(); Updater.GameUpdatePrompt(...)`
@@ -61,8 +61,8 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 
 ## Dependencies
 
-**Uses modules:** [Compiler](Compiler.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Network](Shared.Network.md), [Shared.Stats](Shared.Stats.md)  
-**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Stats](Shared.Stats.md)  
+**Uses modules:** [Compiler](Compiler.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Network](Shared.Network.md), [Shared.Votes](Shared.Votes.md)  
+**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Votes](Shared.Votes.md)  
 **External systems:** GitHub; Harmony; NuGet; SE DS assemblies; Steam
 
 ---
