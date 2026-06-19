@@ -1,7 +1,7 @@
 <Project>
   <!-- Bump the Magnetar version here (centralized) -->
   <PropertyGroup>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
