@@ -224,7 +224,7 @@ static class Program
             new RemoteHubConfig()
             {
                 Name = "MagnetarHub",
-                Repo = "viktor-ferenczi/MagnetarHub",
+                Repo = "CometWorks/magnetar-hub",
                 Branch = "main",
                 Enabled = true,
                 Hash = null,
