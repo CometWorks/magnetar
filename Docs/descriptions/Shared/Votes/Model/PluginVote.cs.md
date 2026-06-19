@@ -1,13 +1,13 @@
-# Shared/Stats/Model/PluginStat.cs
+# Shared/Votes/Model/PluginVote.cs
 
-**Project:** Shared · **Namespace:** `Pulsar.Shared.Stats.Model` · **Kind:** class · **Lines:** 24
+**Project:** Shared · **Namespace:** `Pulsar.Shared.Votes.Model` · **Kind:** class · **Lines:** 24
 
 ## Summary
 Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. It bundles aggregate community metrics (active player count, lifetime vote totals, star rating) with per-requesting-player context (whether the player has tried the plugin and their current vote). This dual nature allows the UI to render both public reputation and personal history from a single server round-trip.
 
 ## Types
-### `PluginStat` — class, public
-A plain DTO deserialized from the JSON body of a `GET /Stats` response. Consumed by `PluginStats.GetStatsForPlugin` and surfaced through `ConfigManager.Stats` to the UI layer.
+### `PluginVote` — class, public
+A plain DTO deserialized from the JSON body of a `GET /Stats` response. Consumed by `PluginVotes.GetVotesForPlugin` and surfaced through `ConfigManager.Votes` to the UI layer.
 
 - **Properties:**
   - `Players` — count of distinct players (by hashed ID) who ran SE with this plugin active during the past 30 days; used to indicate current adoption.
@@ -19,4 +19,4 @@ A plain DTO deserialized from the JSON body of a `GET /Stats` response. Consumed
 
 ## Cross-references
 - **Uses:** nothing (pure DTO)
-- **Used by:** [StatsClient.cs](../StatsClient.cs.md), [PluginStats.cs](PluginStats.cs.md)
+- **Used by:** [VotesClient.cs](../VotesClient.cs.md), [PluginVotes.cs](PluginVotes.cs.md)

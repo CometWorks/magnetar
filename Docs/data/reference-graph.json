@@ -281,8 +281,8 @@
       "Shared/Config/Sources/RemoteHubConfig.cs",
       "Shared/Config/SourcesConfig.cs",
       "Shared/PluginList.cs",
-      "Shared/Stats/Model/PluginStats.cs",
-      "Shared/Stats/StatsClient.cs"
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/VotesClient.cs"
     ],
     "Shared/Config/GitHubPluginConfig.cs": [
       "Shared/Config/PluginDataConfig.cs"
@@ -404,7 +404,7 @@
       "Shared/Flags.cs",
       "Shared/Network/GitHub.cs",
       "Shared/PluginProgress.cs",
-      "Shared/Stats/StatsClient.cs",
+      "Shared/Votes/VotesClient.cs",
       "Shared/Tools.cs"
     ],
     "Shared/Network/GitHub.cs": [
@@ -443,18 +443,18 @@
       "Shared/AssemblyResolver.cs",
       "Shared/Tools.cs"
     ],
-    "Shared/Stats/Model/PluginStats.cs": [
+    "Shared/Votes/Model/PluginVotes.cs": [
       "Shared/Data/PluginData.cs",
-      "Shared/Stats/Model/PluginStat.cs"
+      "Shared/Votes/Model/PluginVote.cs"
     ],
-    "Shared/Stats/StatsClient.cs": [
+    "Shared/Votes/VotesClient.cs": [
       "Shared/Config/ConfigManager.cs",
       "Shared/Network/SimpleHttpClient.cs",
-      "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginStat.cs",
-      "Shared/Stats/Model/PluginStats.cs",
-      "Shared/Stats/Model/TrackRequest.cs",
-      "Shared/Stats/Model/VoteRequest.cs",
+      "Shared/Votes/Model/ConsentRequest.cs",
+      "Shared/Votes/Model/PluginVote.cs",
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/Model/TrackRequest.cs",
+      "Shared/Votes/Model/VoteRequest.cs",
       "Shared/Tools.cs"
     ],
     "Shared/Tools.cs": [
@@ -742,7 +742,7 @@
       "Shared/Loader.cs",
       "Shared/Network/GitHub.cs",
       "Shared/Network/NuGetClient.cs",
-      "Shared/Stats/StatsClient.cs",
+      "Shared/Votes/VotesClient.cs",
       "Shared/Updater.cs"
     ],
     "Shared/Config/CoreConfig.cs": [
@@ -853,7 +853,7 @@
       "Shared/Data/ObsoletePlugin.cs",
       "Shared/Loader.cs",
       "Shared/PluginList.cs",
-      "Shared/Stats/Model/PluginStats.cs"
+      "Shared/Votes/Model/PluginVotes.cs"
     ],
     "Shared/Data/PluginStatus.cs": [
       "Legacy/Loader/PluginInstance.cs",
@@ -916,7 +916,7 @@
       "Shared/Data/LocalFolderPlugin.cs"
     ],
     "Shared/Network/SimpleHttpClient.cs": [
-      "Shared/Stats/StatsClient.cs"
+      "Shared/Votes/VotesClient.cs"
     ],
     "Shared/PluginList.cs": [
       "Legacy/Loader/PluginLoader.cs",
@@ -932,24 +932,24 @@
     "Shared/Preloader.cs": [
       "Legacy/Program.cs"
     ],
-    "Shared/Stats/Model/ConsentRequest.cs": [
-      "Shared/Stats/StatsClient.cs"
+    "Shared/Votes/Model/ConsentRequest.cs": [
+      "Shared/Votes/VotesClient.cs"
     ],
-    "Shared/Stats/Model/PluginStat.cs": [
-      "Shared/Stats/Model/PluginStats.cs",
-      "Shared/Stats/StatsClient.cs"
+    "Shared/Votes/Model/PluginVote.cs": [
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/VotesClient.cs"
     ],
-    "Shared/Stats/Model/PluginStats.cs": [
+    "Shared/Votes/Model/PluginVotes.cs": [
       "Shared/Config/ConfigManager.cs",
-      "Shared/Stats/StatsClient.cs"
+      "Shared/Votes/VotesClient.cs"
     ],
-    "Shared/Stats/Model/TrackRequest.cs": [
-      "Shared/Stats/StatsClient.cs"
+    "Shared/Votes/Model/TrackRequest.cs": [
+      "Shared/Votes/VotesClient.cs"
     ],
-    "Shared/Stats/Model/VoteRequest.cs": [
-      "Shared/Stats/StatsClient.cs"
+    "Shared/Votes/Model/VoteRequest.cs": [
+      "Shared/Votes/VotesClient.cs"
     ],
-    "Shared/Stats/StatsClient.cs": [
+    "Shared/Votes/VotesClient.cs": [
       "Shared/Config/ConfigManager.cs",
       "Shared/Loader.cs"
     ],
@@ -976,7 +976,7 @@
       "Shared/Loader.cs",
       "Shared/PluginList.cs",
       "Shared/Preloader.cs",
-      "Shared/Stats/StatsClient.cs",
+      "Shared/Votes/VotesClient.cs",
       "Shared/Updater.cs"
     ],
     "Shared/Updater.cs": [

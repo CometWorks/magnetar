@@ -109,7 +109,7 @@ Grouped by project. Click a module for its full doc.
 | [Shared.Data](modules/Shared.Data.md) | 10 | 1685 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status). |
 | [Shared.Config](modules/Shared.Config.md) | 12 | 521 | All persistent installation configuration: core config, profiles, and plugin sources. |
 | [Shared.Network](modules/Shared.Network.md) | 7 | 864 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
-| [Shared.Stats](modules/Shared.Stats.md) | 6 | 190 | Opt-in client-side telemetry and community plugin-rating layer. |
+| [Shared.Votes](modules/Shared.Votes.md) | 6 | 193 | Opt-in client-side telemetry and community plugin-rating layer. |
 
 ### `Compiler` — the plugin compiler
 
@@ -125,6 +125,7 @@ Grouped by project. Click a module for its full doc.
 | [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1226 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions. |
 | [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 391 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
 | [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 5 | 353 | Host-agnostic path resolution and dedicated-server lifecycle control (`ServerControl`). |
+| [PluginSdk.Stats](modules/PluginSdk.Stats.md) | 4 | 498 | Self-describing runtime telemetry: attribute-declared counters / gauges / discrete values published as snapshots a consumer (Quasar Agent) rolls up and charts. |
 
 ### `PluginSdkTests` — specifications
 
@@ -151,13 +152,14 @@ graph LR
     Shared_Data[Data]
     Shared_Config[Config]
     Shared_Network[Network]
-    Shared_Stats[Stats]
+    Shared_Votes[Votes]
   end
   subgraph PluginSdk
     PluginSdk_Config[Config]
     PluginSdk_Commands[Commands]
     PluginSdk_Logging[Logging]
     PluginSdk_Runtime[Runtime]
+    PluginSdk_Stats[Stats]
   end
   Compiler[Compiler]
 
@@ -166,13 +168,14 @@ graph LR
   Legacy_Patch --> Legacy_Loader & Legacy_Commands & Shared_Core & Shared_Config & Shared_Data
   Legacy_Commands --> PluginSdk_Commands
   Legacy_Integration --> Compiler & PluginSdk_Runtime & Shared_Core & Shared_Data
-  Shared_Core --> Compiler & Shared_Config & Shared_Data & Shared_Network & Shared_Stats
+  Shared_Core --> Compiler & Shared_Config & Shared_Data & Shared_Network & Shared_Votes
   Shared_Data --> Compiler & Shared_Config & Shared_Core & Shared_Network
-  Shared_Config --> Shared_Core & Shared_Data & Shared_Stats
+  Shared_Config --> Shared_Core & Shared_Data & Shared_Votes
   Shared_Network --> Shared_Config
-  Shared_Stats --> Shared_Core & Shared_Config & Shared_Data & Shared_Network
+  Shared_Votes --> Shared_Core & Shared_Config & Shared_Data & Shared_Network
+  PluginSdk_Stats --> PluginSdk_Logging
 ```
 
 ---
 
-**[Full file index ▶](Index.md)** · 16 modules · 123 source files · ~12.7k lines
+**[Full file index ▶](Index.md)** · 17 modules · 127 source files · ~13.2k lines

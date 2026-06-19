@@ -3,7 +3,7 @@
 **Project:** Shared · **Namespace:** `Pulsar.Shared.Network` · **Kind:** static class · **Lines:** 198
 
 ## Summary
-`SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. It provides generic typed GET and POST helpers that automatically serialise/deserialise JSON payloads via `Newtonsoft.Json`. It is used for short-lived REST API calls (e.g., stats reporting via `StatsClient`) where the 3-second hard timeout is acceptable and async complexity is unnecessary.
+`SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. It provides generic typed GET and POST helpers that automatically serialise/deserialise JSON payloads via `Newtonsoft.Json`. It is used for short-lived REST API calls (e.g., stats reporting via `VotesClient`) where the 3-second hard timeout is acceptable and async complexity is unnecessary.
 
 ## Types
 
@@ -32,4 +32,4 @@ All public methods are generic with the constraint `where TV : class, new()`. JS
   - External: `Newtonsoft.Json.JsonConvert` — request/response serialisation
   - External: `System.Net.HttpWebRequest` / `HttpWebResponse`
   - External: `System.Net.Http.HttpMethod`
-- **Used by:** [StatsClient.cs](../Stats/StatsClient.cs.md)
+- **Used by:** [VotesClient.cs](../Votes/VotesClient.cs.md)

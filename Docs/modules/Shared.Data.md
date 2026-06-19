@@ -58,7 +58,7 @@ This is the core domain layer the launcher/loader operates on: the plugin list i
 ## Dependencies
 
 **Uses modules:** [Compiler](Compiler.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Network](Shared.Network.md)  
-**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Stats](Shared.Stats.md)  
+**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Votes](Shared.Votes.md)  
 **External systems:** FuzzySharp; GitHub; Mono.Cecil; NuGet; ProtoBuf; Steam
 
 ---

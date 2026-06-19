@@ -8,7 +8,7 @@ using HarmonyLib;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
 using Pulsar.Shared.Network;
-using Pulsar.Shared.Stats;
+using Pulsar.Shared.Votes;
 
 namespace Pulsar.Shared;
 
@@ -20,7 +20,7 @@ public class Loader
     private readonly CoreConfig config;
     private readonly ProfilesConfig profiles;
 
-    public Loader(string statsServer, string[] forceEnable = null)
+    public Loader(string votesServer, string[] forceEnable = null)
     {
         ConfigManager manager = ConfigManager.Instance;
         config = manager.Core;
@@ -29,8 +29,8 @@ public class Loader
         GitHub.Init();
         LogEnabledPlugins();
 
-        StatsClient.BaseUrl = config.StatsServerBaseUrl ?? statsServer;
-        ConfigManager.Instance.UpdatePlayerStats();
+        VotesClient.BaseUrl = config.VotesServerBaseUrl ?? votesServer;
+        ConfigManager.Instance.UpdatePlayerVotes();
 
         // Check harmony version
         Version expectedHarmony = new(ConfigManager.HarmonyVersion);
@@ -115,7 +115,7 @@ public class Loader
 
         // Config has already been validated at this point so all enabled plugins will have list items
         // FIXME: Move into a background thread
-        if (StatsClient.Track(trackablePluginIds))
+        if (VotesClient.Track(trackablePluginIds))
             LogFile.WriteLine("List of enabled plugins has been sent to the statistics server");
         else
             LogFile.Error("Failed to send the list of enabled plugins to the statistics server");

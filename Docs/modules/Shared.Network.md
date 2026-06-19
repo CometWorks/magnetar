@@ -8,7 +8,7 @@ Provides all outbound network I/O for Magnetar: GitHub REST/CDN access for plugi
 
 ## Role in Magnetar
 
-Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Stats (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.
+Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Votes (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.
 
 ## Key types
 
@@ -57,7 +57,7 @@ Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub 
 ## Dependencies
 
 **Uses modules:** [Shared.Config](Shared.Config.md)  
-**Used by modules:** [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Stats](Shared.Stats.md)  
+**Used by modules:** [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Votes](Shared.Votes.md)  
 **External systems:** GitHub; NuGet
 
 ---

@@ -55,7 +55,11 @@ def is_external(dep):
 
 
 def rel_link(text, target_abs, from_dir):
-    return f"[{text}]({os.path.relpath(target_abs, from_dir)})"
+    # Always emit forward slashes so the generator is deterministic across
+    # platforms (os.path.relpath yields backslashes on Windows) and the links
+    # render correctly on both Windows and Linux.
+    rel = os.path.relpath(target_abs, from_dir).replace(os.sep, "/")
+    return f"[{text}]({rel})"
 
 
 # ---------- module docs ----------

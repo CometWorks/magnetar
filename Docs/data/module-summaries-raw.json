@@ -1026,7 +1026,7 @@
           "ConfigManager.Init(string gameDir, string modDir, Version gameVersion, RemoteHubConfig[] defaultHubs)",
           "ConfigManager.Instance",
           "ConfigManager.GetOrCreateInstallId()",
-          "ConfigManager.UpdatePlayerStats()",
+          "ConfigManager.UpdatePlayerVotes()",
           "CoreConfig.Load(string mainDirectory)",
           "CoreConfig.Save()",
           "SourcesConfig.Load(string mainDirectory, RemoteHubConfig[] defaultHubs)",
@@ -1039,7 +1039,7 @@
         ],
         "depends_on": [
           "Shared.Data",
-          "Shared.Stats",
+          "Shared.Votes",
           "GitHub"
         ],
         "files_documented": [
@@ -1061,7 +1061,7 @@
         "module": "Shared.Core",
         "project": "Shared",
         "purpose": "The core bootstrap layer of the Magnetar plugin/mod loader. It discovers and caches plugin metadata from GitHub hubs, single repos, Steam Workshop mods and local folders; compiles/loads enabled plugins per the active profile; performs pre-launch sanity checks; patches SE DS assemblies on disk (preloader mechanism); self-updates against GitHub; and provides cross-cutting services (logging, hashing, Steam path/UGC, assembly resolution, console progress).",
-        "role": "This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) front-ends call into these types to load plugins and patch the SE Dedicated Server. It sits above Shared.Config/Data/Network/Stats and the Compiler, and below the environment-specific Launcher/Loader/Integration modules, exposing the Loader, PluginList, Preloader and Updater that those front-ends drive.",
+        "role": "This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) front-ends call into these types to load plugins and patch the SE Dedicated Server. It sits above Shared.Config/Data/Network/Votes and the Compiler, and below the environment-specific Launcher/Loader/Integration modules, exposing the Loader, PluginList, Preloader and Updater that those front-ends drive.",
         "key_types": [
           {
             "name": "Loader",
@@ -1149,7 +1149,7 @@
           }
         ],
         "public_api": [
-          "new Loader(statsServer, forceEnable) -> populated Loader.Plugins list of (PluginData, Assembly)",
+          "new Loader(votesServer, forceEnable) -> populated Loader.Plugins list of (PluginData, Assembly)",
           "new PluginList(mainDirectory, sources, profiles); UpdateRemoteList/UpdateLocalList; GetModPlugins; TryGetPlugin; enumeration",
           "new Preloader(assemblies).Patch(gameDir, cacheDir); PreHooks()/PostHooks(); HasPatches",
           "new Updater(repoName).TryUpdate(); Updater.GameUpdatePrompt(...)",
@@ -1165,7 +1165,7 @@
           "Shared.Config",
           "Shared.Data",
           "Shared.Network",
-          "Shared.Stats",
+          "Shared.Votes",
           "Compiler",
           "Harmony",
           "Steam",
@@ -1302,7 +1302,7 @@
         "module": "Shared.Network",
         "project": "Shared",
         "purpose": "Provides all outbound network I/O for Magnetar: GitHub REST/CDN access for plugin downloads and update checks, full NuGet v3 client integration (dependency resolution, download, extraction) for plugin assembly dependencies, and a lightweight synchronous REST façade used by stats and other callers. The module abstracts the two target runtimes (net48 Legacy and net10.0 Interim) behind a single compile-time framework selection so the rest of the codebase stays platform-agnostic.",
-        "role": "Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Stats (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.",
+        "role": "Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Votes (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.",
         "key_types": [
           {
             "name": "GitHub",
@@ -1387,55 +1387,55 @@
         ]
       },
       {
-        "module": "Shared.Stats",
+        "module": "Shared.Votes",
         "project": "Shared",
         "purpose": "Provides the client-side telemetry and community-rating layer for Magnetar. It sends anonymized usage tracking events to a remote stats server, fetches aggregate plugin statistics (active player counts, upvote/downvote totals, half-star ratings), and lets consenting players cast and update votes. All player identification uses a truncated SHA-1 hash of a locally-generated install ID, never raw Steam IDs, to satisfy data-protection requirements.",
-        "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginStats result through ConfigManager.Instance.Stats rather than calling StatsClient directly.",
+        "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginVotes result through ConfigManager.Instance.Votes rather than calling VotesClient directly.",
         "key_types": [
           {
-            "name": "StatsClient",
+            "name": "VotesClient",
             "kind": "static class",
-            "file": "Shared/Stats/StatsClient.cs",
-            "summary": "Four-operation REST client for the stats back-end: Consent, DownloadStats, Track, Vote."
+            "file": "Shared/Votes/VotesClient.cs",
+            "summary": "Four-operation REST client for the stats back-end: Consent, DownloadVotes, Track, Vote."
           },
           {
-            "name": "PluginStats",
+            "name": "PluginVotes",
             "kind": "class",
-            "file": "Shared/Stats/Model/PluginStats.cs",
-            "summary": "Top-level response DTO from /Stats; maps plugin IDs to PluginStat records and carries the server-issued voting token."
+            "file": "Shared/Votes/Model/PluginVotes.cs",
+            "summary": "Top-level response DTO from /Stats; maps plugin IDs to PluginVote records and carries the server-issued voting token."
           },
           {
-            "name": "PluginStat",
+            "name": "PluginVote",
             "kind": "class",
-            "file": "Shared/Stats/Model/PluginStat.cs",
+            "file": "Shared/Votes/Model/PluginVote.cs",
             "summary": "Per-plugin statistics record: 30-day player count, lifetime vote totals, half-star rating, and the requesting player's personal tried/vote state."
           },
           {
             "name": "ConsentRequest",
             "kind": "class",
-            "file": "Shared/Stats/Model/ConsentRequest.cs",
+            "file": "Shared/Votes/Model/ConsentRequest.cs",
             "summary": "Request body for /Consent: hashed player ID and a boolean consent flag."
           },
           {
             "name": "TrackRequest",
             "kind": "class",
-            "file": "Shared/Stats/Model/TrackRequest.cs",
+            "file": "Shared/Votes/Model/TrackRequest.cs",
             "summary": "Request body for /Track: hashed player ID and the list of enabled plugin IDs at game start."
           },
           {
             "name": "VoteRequest",
             "kind": "class",
-            "file": "Shared/Stats/Model/VoteRequest.cs",
+            "file": "Shared/Votes/Model/VoteRequest.cs",
             "summary": "Request body for /Vote: plugin ID, hashed player ID, voting token, and +1/0/-1 vote value."
           }
         ],
         "public_api": [
-          "StatsClient.BaseUrl (set by host at startup)",
-          "StatsClient.Consent(bool) → bool",
-          "StatsClient.DownloadStats() → PluginStats",
-          "StatsClient.Track(string[]) → bool",
-          "StatsClient.Vote(string, int) → PluginStat",
-          "PluginStats.GetStatsForPlugin(PluginData) → PluginStat"
+          "VotesClient.BaseUrl (set by host at startup)",
+          "VotesClient.Consent(bool) → bool",
+          "VotesClient.DownloadVotes() → PluginVotes",
+          "VotesClient.Track(string[]) → bool",
+          "VotesClient.Vote(string, int) → PluginVote",
+          "PluginVotes.GetVotesForPlugin(PluginData) → PluginVote"
         ],
         "depends_on": [
           "Shared.Network (SimpleHttpClient)",
@@ -1444,12 +1444,12 @@
           "External stats REST API (Pulsar/Magnetar back-end service)"
         ],
         "files_documented": [
-          "Shared/Stats/Model/ConsentRequest.cs",
-          "Shared/Stats/Model/PluginStat.cs",
-          "Shared/Stats/Model/PluginStats.cs",
-          "Shared/Stats/Model/TrackRequest.cs",
-          "Shared/Stats/Model/VoteRequest.cs",
-          "Shared/Stats/StatsClient.cs"
+          "Shared/Votes/Model/ConsentRequest.cs",
+          "Shared/Votes/Model/PluginVote.cs",
+          "Shared/Votes/Model/PluginVotes.cs",
+          "Shared/Votes/Model/TrackRequest.cs",
+          "Shared/Votes/Model/VoteRequest.cs",
+          "Shared/Votes/VotesClient.cs"
         ]
       }
     ]

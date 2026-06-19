@@ -1,6 +1,6 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
-namespace Pulsar.Shared.Stats.Model;
+namespace Pulsar.Shared.Votes.Model;
 
 // Request data received from Pulsar to store user consent or withdrawal,
 // this request is NOT sent if the user does not give consent in the first place

@@ -812,6 +812,101 @@
     ]
   },
   {
+    "module": "PluginSdk.Stats",
+    "project": "PluginSdk",
+    "purpose": "Lets a plugin publish self-describing runtime statistics as an in-process publish/subscribe feed. A plugin declares a plain POCO whose properties carry stat attributes (counter, gauge, discrete) plus an optional label; StatsSchema reflects that declaration into a serializable schema and captures live instances into double-valued snapshots; PluginStats then keeps the latest snapshot per provider and notifies subscribers. The schema travels inline in every snapshot, so a consumer interprets and charts the numbers without any compile-time knowledge of the plugin's types.",
+    "role": "The telemetry-producer counterpart of the config system: where PluginConfig and ConfigSchema turn an annotated class into a remotely-rendered editor, a stats POCO plus StatsSchema turn an annotated class into a remotely-rendered chart. The API is public static with no InternalsVisibleTo, so any plugin publishes or consumes directly. There is no in-tree consumer yet; the intended collector is the external Quasar Agent, which subscribes, rolls snapshots up using the per-field aggregation hints, and charts them. This is unrelated to Shared.Votes, which is Magnetar's own launcher-side usage and community-rating telemetry.",
+    "key_types": [
+      {
+        "name": "PluginStats",
+        "kind": "static class",
+        "file": "PluginSdk/Stats/PluginStats.cs",
+        "summary": "Process-wide publish/subscribe hub holding the latest snapshot per provider, with Publish, TryGetSnapshot, Providers, Clear and an Updated event."
+      },
+      {
+        "name": "StatsSchema",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsSchema.cs",
+        "summary": "Cached reflection schema for a stats POCO plus the Capture / CaptureGroup routines that project live instances into snapshot value arrays."
+      },
+      {
+        "name": "StatAttribute",
+        "kind": "abstract class",
+        "file": "PluginSdk/Stats/StatsAttributes.cs",
+        "summary": "Base for the Counter / Gauge / Discrete attributes that mark a numeric POCO property as a published value and set per-kind aggregation defaults."
+      },
+      {
+        "name": "StatLabelAttribute",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsAttributes.cs",
+        "summary": "Marks the single string property whose value labels each captured instance (e.g. a Steam id); at most one per POCO."
+      },
+      {
+        "name": "StatAggregation",
+        "kind": "enum",
+        "file": "PluginSdk/Stats/StatsAttributes.cs",
+        "summary": "How a value combines across the instances of a group at one instant: None, Sum, Mean, Min, Max."
+      },
+      {
+        "name": "TimeAggregation",
+        "kind": "enum",
+        "file": "PluginSdk/Stats/StatsAttributes.cs",
+        "summary": "How a consumer folds successive samples of one instance over time: Last, Sum, Mean, Min, Max, Median, Percentiles."
+      },
+      {
+        "name": "StatsSnapshot",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsSnapshot.cs",
+        "summary": "A timestamped publication from one provider: a UTC timestamp and one or more StatGroups."
+      },
+      {
+        "name": "StatGroup",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsSnapshot.cs",
+        "summary": "One schema (carried inline) plus the dynamically sized set of instances captured against it, e.g. one row per connected client."
+      },
+      {
+        "name": "StatInstance",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsSnapshot.cs",
+        "summary": "One captured row: a label and a double[] of values positionally parallel to the schema's fields."
+      },
+      {
+        "name": "StatsSchemaData",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsSchema.cs",
+        "summary": "Serializable schema description (name, label description, ordered field definitions) carried inline in every StatGroup."
+      },
+      {
+        "name": "StatFieldInfo",
+        "kind": "sealed class",
+        "file": "PluginSdk/Stats/StatsSchema.cs",
+        "summary": "Metadata for one stat field: name, kind, unit and the two aggregation hints, stored as enum member names for wire stability."
+      }
+    ],
+    "public_api": [
+      "PluginStats.Publish(string provider, StatsSnapshot snapshot) - stores the latest snapshot for a provider and notifies subscribers",
+      "PluginStats.TryGetSnapshot(string provider, out StatsSnapshot) / PluginStats.Providers - pull the latest snapshot, or list the active providers",
+      "PluginStats.Updated (event Action<string, StatsSnapshot>) - raised on every publication, each subscriber invoked with fault isolation",
+      "PluginStats.Clear(string provider) - drop one provider's snapshot when its plugin is disabled at runtime",
+      "StatsSchema.Build(Type pocoType) - cached reflection schema for a stats POCO",
+      "StatsSchema.Capture(object) / CaptureGroup(IEnumerable) - project live POCO instances into a StatInstance / StatGroup",
+      "[Counter] / [Gauge] / [Discrete] / [StatLabel] - attributes a plugin puts on its stats POCO properties",
+      "StatAggregation / TimeAggregation - per-field hints telling a consumer how to aggregate across instances and over time"
+    ],
+    "depends_on": [
+      "PluginSdk.Logging (Logger, to report a faulting Updated subscriber)",
+      "System.Reflection",
+      "System.Collections.Concurrent"
+    ],
+    "files_documented": [
+      "PluginSdk/Stats/PluginStats.cs",
+      "PluginSdk/Stats/StatsAttributes.cs",
+      "PluginSdk/Stats/StatsSchema.cs",
+      "PluginSdk/Stats/StatsSnapshot.cs"
+    ]
+  },
+  {
     "module": "PluginSdkTests",
     "project": "PluginSdkTests",
     "purpose": "Xunit test project that specifies and regression-guards every public API in PluginSdk: the PluginConfig change-notification contract, the chat-command pipeline (registry, dispatch, argument binding, permissions, help), the logging subsystem (Logger, LogEntry, QuasarLogSink, MagnetarLogSink, LogEnvironment), the PathResolver fa\u00e7ade and its Linux-compat backend hook, the ConfigSchema builder and JSON-envelope format, the ConfigStorage XML/JSON round-trips and sparse-save behaviour, and the ServerControl lifecycle fa\u00e7ade. No production code lives here; the project exists purely to define the library's behavioural contract.",
@@ -1021,7 +1116,7 @@
       "ConfigManager.Init(string gameDir, string modDir, Version gameVersion, RemoteHubConfig[] defaultHubs)",
       "ConfigManager.Instance",
       "ConfigManager.GetOrCreateInstallId()",
-      "ConfigManager.UpdatePlayerStats()",
+      "ConfigManager.UpdatePlayerVotes()",
       "CoreConfig.Load(string mainDirectory)",
       "CoreConfig.Save()",
       "SourcesConfig.Load(string mainDirectory, RemoteHubConfig[] defaultHubs)",
@@ -1034,7 +1129,7 @@
     ],
     "depends_on": [
       "Shared.Data",
-      "Shared.Stats",
+      "Shared.Votes",
       "GitHub"
     ],
     "files_documented": [
@@ -1056,7 +1151,7 @@
     "module": "Shared.Core",
     "project": "Shared",
     "purpose": "The core bootstrap layer of the Magnetar plugin/mod loader. It discovers and caches plugin metadata from GitHub hubs, single repos, Steam Workshop mods and local folders; compiles/loads enabled plugins per the active profile; performs pre-launch sanity checks; patches SE DS assemblies on disk (preloader mechanism); self-updates against GitHub; and provides cross-cutting services (logging, hashing, Steam path/UGC, assembly resolution, console progress).",
-    "role": "This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) front-ends call into these types to load plugins and patch the SE Dedicated Server. It sits above Shared.Config/Data/Network/Stats and the Compiler, and below the environment-specific Launcher/Loader/Integration modules, exposing the Loader, PluginList, Preloader and Updater that those front-ends drive.",
+    "role": "This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) front-ends call into these types to load plugins and patch the SE Dedicated Server. It sits above Shared.Config/Data/Network/Votes and the Compiler, and below the environment-specific Launcher/Loader/Integration modules, exposing the Loader, PluginList, Preloader and Updater that those front-ends drive.",
     "key_types": [
       {
         "name": "Loader",
@@ -1144,7 +1239,7 @@
       }
     ],
     "public_api": [
-      "new Loader(statsServer, forceEnable) -> populated Loader.Plugins list of (PluginData, Assembly)",
+      "new Loader(votesServer, forceEnable) -> populated Loader.Plugins list of (PluginData, Assembly)",
       "new PluginList(mainDirectory, sources, profiles); UpdateRemoteList/UpdateLocalList; GetModPlugins; TryGetPlugin; enumeration",
       "new Preloader(assemblies).Patch(gameDir, cacheDir); PreHooks()/PostHooks(); HasPatches",
       "new Updater(repoName).TryUpdate(); Updater.GameUpdatePrompt(...)",
@@ -1160,7 +1255,7 @@
       "Shared.Config",
       "Shared.Data",
       "Shared.Network",
-      "Shared.Stats",
+      "Shared.Votes",
       "Compiler",
       "Harmony",
       "Steam",
@@ -1297,7 +1392,7 @@
     "module": "Shared.Network",
     "project": "Shared",
     "purpose": "Provides all outbound network I/O for Magnetar: GitHub REST/CDN access for plugin downloads and update checks, full NuGet v3 client integration (dependency resolution, download, extraction) for plugin assembly dependencies, and a lightweight synchronous REST fa\u00e7ade used by stats and other callers. The module abstracts the two target runtimes (net48 Legacy and net10.0 Interim) behind a single compile-time framework selection so the rest of the codebase stays platform-agnostic.",
-    "role": "Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Stats (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.",
+    "role": "Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Votes (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.",
     "key_types": [
       {
         "name": "GitHub",
@@ -1382,55 +1477,55 @@
     ]
   },
   {
-    "module": "Shared.Stats",
+    "module": "Shared.Votes",
     "project": "Shared",
     "purpose": "Provides the client-side telemetry and community-rating layer for Magnetar. It sends anonymized usage tracking events to a remote stats server, fetches aggregate plugin statistics (active player counts, upvote/downvote totals, half-star ratings), and lets consenting players cast and update votes. All player identification uses a truncated SHA-1 hash of a locally-generated install ID, never raw Steam IDs, to satisfy data-protection requirements.",
-    "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginStats result through ConfigManager.Instance.Stats rather than calling StatsClient directly.",
+    "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginVotes result through ConfigManager.Instance.Votes rather than calling VotesClient directly.",
     "key_types": [
       {
-        "name": "StatsClient",
+        "name": "VotesClient",
         "kind": "static class",
-        "file": "Shared/Stats/StatsClient.cs",
-        "summary": "Four-operation REST client for the stats back-end: Consent, DownloadStats, Track, Vote."
+        "file": "Shared/Votes/VotesClient.cs",
+        "summary": "Four-operation REST client for the stats back-end: Consent, DownloadVotes, Track, Vote."
       },
       {
-        "name": "PluginStats",
+        "name": "PluginVotes",
         "kind": "class",
-        "file": "Shared/Stats/Model/PluginStats.cs",
-        "summary": "Top-level response DTO from /Stats; maps plugin IDs to PluginStat records and carries the server-issued voting token."
+        "file": "Shared/Votes/Model/PluginVotes.cs",
+        "summary": "Top-level response DTO from /Stats; maps plugin IDs to PluginVote records and carries the server-issued voting token."
       },
       {
-        "name": "PluginStat",
+        "name": "PluginVote",
         "kind": "class",
-        "file": "Shared/Stats/Model/PluginStat.cs",
+        "file": "Shared/Votes/Model/PluginVote.cs",
         "summary": "Per-plugin statistics record: 30-day player count, lifetime vote totals, half-star rating, and the requesting player's personal tried/vote state."
       },
       {
         "name": "ConsentRequest",
         "kind": "class",
-        "file": "Shared/Stats/Model/ConsentRequest.cs",
+        "file": "Shared/Votes/Model/ConsentRequest.cs",
         "summary": "Request body for /Consent: hashed player ID and a boolean consent flag."
       },
       {
         "name": "TrackRequest",
         "kind": "class",
-        "file": "Shared/Stats/Model/TrackRequest.cs",
+        "file": "Shared/Votes/Model/TrackRequest.cs",
         "summary": "Request body for /Track: hashed player ID and the list of enabled plugin IDs at game start."
       },
       {
         "name": "VoteRequest",
         "kind": "class",
-        "file": "Shared/Stats/Model/VoteRequest.cs",
+        "file": "Shared/Votes/Model/VoteRequest.cs",
         "summary": "Request body for /Vote: plugin ID, hashed player ID, voting token, and +1/0/-1 vote value."
       }
     ],
     "public_api": [
-      "StatsClient.BaseUrl (set by host at startup)",
-      "StatsClient.Consent(bool) \u2192 bool",
-      "StatsClient.DownloadStats() \u2192 PluginStats",
-      "StatsClient.Track(string[]) \u2192 bool",
-      "StatsClient.Vote(string, int) \u2192 PluginStat",
-      "PluginStats.GetStatsForPlugin(PluginData) \u2192 PluginStat"
+      "VotesClient.BaseUrl (set by host at startup)",
+      "VotesClient.Consent(bool) \u2192 bool",
+      "VotesClient.DownloadVotes() \u2192 PluginVotes",
+      "VotesClient.Track(string[]) \u2192 bool",
+      "VotesClient.Vote(string, int) \u2192 PluginVote",
+      "PluginVotes.GetVotesForPlugin(PluginData) \u2192 PluginVote"
     ],
     "depends_on": [
       "Shared.Network (SimpleHttpClient)",
@@ -1439,12 +1534,12 @@
       "External stats REST API (Pulsar/Magnetar back-end service)"
     ],
     "files_documented": [
-      "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginStat.cs",
-      "Shared/Stats/Model/PluginStats.cs",
-      "Shared/Stats/Model/TrackRequest.cs",
-      "Shared/Stats/Model/VoteRequest.cs",
-      "Shared/Stats/StatsClient.cs"
+      "Shared/Votes/Model/ConsentRequest.cs",
+      "Shared/Votes/Model/PluginVote.cs",
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/Model/TrackRequest.cs",
+      "Shared/Votes/Model/VoteRequest.cs",
+      "Shared/Votes/VotesClient.cs"
     ]
   }
 ]

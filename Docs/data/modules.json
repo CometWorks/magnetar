@@ -158,6 +158,19 @@
     "model": "sonnet",
     "dominant_tier": 2
   },
+  "PluginSdk.Stats": {
+    "project": "PluginSdk",
+    "files": [
+      "PluginSdk/Stats/PluginStats.cs",
+      "PluginSdk/Stats/StatsAttributes.cs",
+      "PluginSdk/Stats/StatsSchema.cs",
+      "PluginSdk/Stats/StatsSnapshot.cs"
+    ],
+    "file_count": 4,
+    "total_lines": 498,
+    "model": "sonnet",
+    "dominant_tier": 2
+  },
   "PluginSdkTests": {
     "project": "PluginSdkTests",
     "files": [
@@ -251,18 +264,18 @@
     "model": "sonnet",
     "dominant_tier": 1
   },
-  "Shared.Stats": {
+  "Shared.Votes": {
     "project": "Shared",
     "files": [
-      "Shared/Stats/Model/ConsentRequest.cs",
-      "Shared/Stats/Model/PluginStat.cs",
-      "Shared/Stats/Model/PluginStats.cs",
-      "Shared/Stats/Model/TrackRequest.cs",
-      "Shared/Stats/Model/VoteRequest.cs",
-      "Shared/Stats/StatsClient.cs"
+      "Shared/Votes/Model/ConsentRequest.cs",
+      "Shared/Votes/Model/PluginVote.cs",
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/Model/TrackRequest.cs",
+      "Shared/Votes/Model/VoteRequest.cs",
+      "Shared/Votes/VotesClient.cs"
     ],
     "file_count": 6,
-    "total_lines": 190,
+    "total_lines": 193,
     "model": "sonnet",
     "dominant_tier": 2
   }

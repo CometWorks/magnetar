@@ -32,6 +32,9 @@
     "Shared.Core",
     "Shared.Data"
   ],
+  "PluginSdk.Stats": [
+    "PluginSdk.Logging"
+  ],
   "PluginSdkTests": [
     "PluginSdk.Commands",
     "PluginSdk.Config",
@@ -41,14 +44,14 @@
   "Shared.Config": [
     "Shared.Core",
     "Shared.Data",
-    "Shared.Stats"
+    "Shared.Votes"
   ],
   "Shared.Core": [
     "Compiler",
     "Shared.Config",
     "Shared.Data",
     "Shared.Network",
-    "Shared.Stats"
+    "Shared.Votes"
   ],
   "Shared.Data": [
     "Compiler",
@@ -59,7 +62,7 @@
   "Shared.Network": [
     "Shared.Config"
   ],
-  "Shared.Stats": [
+  "Shared.Votes": [
     "Shared.Config",
     "Shared.Core",
     "Shared.Data",

@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 123 files across 16 modules.
+Every documented source file, grouped by module. 127 files across 17 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -124,6 +124,15 @@ Every documented source file, grouped by module. 123 files across 16 modules.
 | [`PluginSdk/ServerControl.cs`](descriptions/PluginSdk/ServerControl.cs.md) | 142 | 2 | Exposes the dedicated server's lifecycle controls (save, reload config, quit, restart) as a stable plugin-facing API, decoupled from the host launcher implementation. |
 | [`PluginSdk/Tools/SerializableDictionary.cs`](descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 79 | 2 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
 
+## PluginSdk.Stats  ·  [module doc](modules/PluginSdk.Stats.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`PluginSdk/Stats/PluginStats.cs`](descriptions/PluginSdk/Stats/PluginStats.cs.md) | 90 | 2 | The process-wide publish/subscribe hub for plugin statistics: a producer publishes a self-describing `StatsSnapshot` under a provider name, and a consumer reads the latest snapshot by name, lists the active providers, or subscribes to `Updated` to receive every publication as it happens. |
+| [`PluginSdk/Stats/StatsAttributes.cs`](descriptions/PluginSdk/Stats/StatsAttributes.cs.md) | 183 | 2 | The attribute vocabulary a plugin uses to annotate a stats POCO, plus the two enums that describe how each value aggregates. |
+| [`PluginSdk/Stats/StatsSchema.cs`](descriptions/PluginSdk/Stats/StatsSchema.cs.md) | 172 | 2 | Reflection-based schema for a stats POCO, plus the capture routines that project live POCO instances into the serializable `StatInstance` and `StatGroup` shapes. |
+| [`PluginSdk/Stats/StatsSnapshot.cs`](descriptions/PluginSdk/Stats/StatsSnapshot.cs.md) | 53 | 2 | The serializable payload a producer publishes through `PluginStats`: a timestamped tree of groups, each pairing a schema with the instances captured against it. |
+
 ## PluginSdkTests  ·  [module doc](modules/PluginSdkTests.md)
 
 | File | Lines | Tier | Description |
@@ -197,13 +206,13 @@ Every documented source file, grouped by module. 123 files across 16 modules.
 | [`Shared/Network/NuGetPackageList.cs`](descriptions/Shared/Network/NuGetPackageList.cs.md) | 20 | 3 | `NuGetPackageList` is a compact container that carries a plugin's NuGet dependency declaration in two optional forms: a path to a `packages.config` file (`Config`) and/or an inline array of `NuGetPackageId` records (`PackageIds`). |
 | [`Shared/Network/SimpleHttpClient.cs`](descriptions/Shared/Network/SimpleHttpClient.cs.md) | 198 | 2 | `SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. |
 
-## Shared.Stats  ·  [module doc](modules/Shared.Stats.md)
+## Shared.Votes  ·  [module doc](modules/Shared.Votes.md)
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Shared/Stats/Model/ConsentRequest.cs`](descriptions/Shared/Stats/Model/ConsentRequest.cs.md) | 14 | 3 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
-| [`Shared/Stats/Model/PluginStat.cs`](descriptions/Shared/Stats/Model/PluginStat.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
-| [`Shared/Stats/Model/PluginStats.cs`](descriptions/Shared/Stats/Model/PluginStats.cs.md) | 21 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
-| [`Shared/Stats/Model/TrackRequest.cs`](descriptions/Shared/Stats/Model/TrackRequest.cs.md) | 17 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
-| [`Shared/Stats/Model/VoteRequest.cs`](descriptions/Shared/Stats/Model/VoteRequest.cs.md) | 20 | 3 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
-| [`Shared/Stats/StatsClient.cs`](descriptions/Shared/Stats/StatsClient.cs.md) | 94 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |
+| [`Shared/Votes/Model/ConsentRequest.cs`](descriptions/Shared/Votes/Model/ConsentRequest.cs.md) | 14 | 3 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
+| [`Shared/Votes/Model/PluginVote.cs`](descriptions/Shared/Votes/Model/PluginVote.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
+| [`Shared/Votes/Model/PluginVotes.cs`](descriptions/Shared/Votes/Model/PluginVotes.cs.md) | 24 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
+| [`Shared/Votes/Model/TrackRequest.cs`](descriptions/Shared/Votes/Model/TrackRequest.cs.md) | 17 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
+| [`Shared/Votes/Model/VoteRequest.cs`](descriptions/Shared/Votes/Model/VoteRequest.cs.md) | 20 | 3 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
+| [`Shared/Votes/VotesClient.cs`](descriptions/Shared/Votes/VotesClient.cs.md) | 94 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |

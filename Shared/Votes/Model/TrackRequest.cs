@@ -1,6 +1,6 @@
-namespace Pulsar.Shared.Stats.Model;
+namespace Pulsar.Shared.Votes.Model;
 
-// Request data sent to the StatsServer each time the game is started
+// Request data sent to the backend server to count usage each time the game is started
 public class TrackRequest
 {
     // Hash of the player's Steam ID

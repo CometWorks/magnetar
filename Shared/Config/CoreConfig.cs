@@ -10,7 +10,7 @@ public class CoreConfig
     private const string fileName = "config.xml";
     private string filePath;
 
-    public string StatsServerBaseUrl { get; }
+    public string VotesServerBaseUrl { get; }
 
     // Stable, anonymous per-install identifier for plugin statistics. Replaces the
     // client Steam ID, which is unavailable on a dedicated server (no client API).
