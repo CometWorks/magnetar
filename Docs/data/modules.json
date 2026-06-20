@@ -21,7 +21,7 @@
       "Legacy/Commands/ServerCommandResponder.cs"
     ],
     "file_count": 3,
-    "total_lines": 196,
+    "total_lines": 212,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -50,7 +50,7 @@
       "Legacy/Program.cs"
     ],
     "file_count": 5,
-    "total_lines": 1442,
+    "total_lines": 1455,
     "model": "opus",
     "dominant_tier": 1
   },

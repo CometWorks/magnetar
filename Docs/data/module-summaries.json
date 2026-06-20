@@ -90,7 +90,7 @@
         "name": "SaveCommand",
         "kind": "class",
         "file": "Legacy/Commands/MagnetarCommands.cs",
-        "summary": "Built-in !save command module; acknowledges caller then saves the world on a worker thread."
+        "summary": "Built-in !save command module; acknowledges caller, saves on a worker thread, then posts a completion/timeout reply."
       },
       {
         "name": "RestartCommand",
@@ -237,7 +237,7 @@
         "name": "ServerControl",
         "kind": "static class",
         "file": "Legacy/Launcher/ServerControl.cs",
-        "summary": "Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; thread-safe and idempotent."
+        "summary": "Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; waits for Keen save-idle state and is idempotent."
       },
       {
         "name": "Program",

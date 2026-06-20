@@ -1,6 +1,6 @@
 # Module: Legacy.Launcher
 
-**Project:** `Legacy` · **Files:** 5 · **Source lines:** 1442
+**Project:** `Legacy` · **Files:** 5 · **Source lines:** 1455
 
 ## Purpose
 
@@ -17,7 +17,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 | `Folder` | static class | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | Resolves and validates the SE DedicatedServer64 directory from -ds64 override, Steam launch args, Steam library VDF, or the Windows registry. |
 | `Game` | static class | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | Reflection/Mono.Cecil bridge into SE engine internals: registers the plugin, sets MyFileSystem paths, reads the game version from IL, and starts the DS. |
 | `GameLog` | class | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | Adapts SE's MyLog.Default to Magnetar's IGameLog (exists/open/write). |
-| `ServerControl` | static class | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; thread-safe and idempotent. |
+| `ServerControl` | static class | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; waits for Keen save-idle state and is idempotent. |
 | `Program` | static class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | Process entry point orchestrating the full startup pipeline (incl. -help and telemetry-consent resolution) for both the Legacy (net48) and Interim (net10) builds. |
 | `ExternalTools` | class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | IExternalTools adapter that marshals shared-code actions onto the SE game thread via Game.RunOnGameThread. |
 
@@ -28,7 +28,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 | [`Legacy/Launcher/Daemon.cs`](../descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | 161 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | 141 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
-| [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 512 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
+| [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 525 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
 | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 464 | Entry point for the Magnetar launcher. |
 
 ## Public API surface
@@ -41,7 +41,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 ## Dependencies
 
 **Uses modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Votes](Shared.Votes.md)  
-**Used by modules:** [Legacy.Integration](Legacy.Integration.md)  
+**Used by modules:** [Legacy.Commands](Legacy.Commands.md), [Legacy.Integration](Legacy.Integration.md)
 **External systems:** GitHub; Harmony; NuGet; SE DS assemblies; Steam
 
 ---

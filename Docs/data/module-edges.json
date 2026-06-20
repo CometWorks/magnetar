@@ -1,5 +1,6 @@
 {
   "Legacy.Commands": [
+    "Legacy.Launcher",
     "PluginSdk.Commands"
   ],
   "Legacy.Integration": [
