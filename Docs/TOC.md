@@ -95,7 +95,7 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Legacy.Launcher](modules/Legacy.Launcher.md) | 4 | 1197 | Launcher bootstrap & entry point: argument parsing, DS detection, environment setup, and handoff to the game's `Main`. |
+| [Legacy.Launcher](modules/Legacy.Launcher.md) | 5 | 1442 | Launcher bootstrap & entry point: argument parsing, DS detection, environment setup, daemon detach, and handoff to the game's `Main`. |
 | [Legacy.Loader](modules/Legacy.Loader.md) | 5 | 932 | Runtime plugin host & native bootstrap: instantiates plugins, drives their SE lifecycle, registers components, preloads native libs. |
 | [Legacy.Patch](modules/Legacy.Patch.md) | 11 | 488 | All Harmony patches that adapt the DS binary to Magnetar's headless, in-process, externally-configured hosting model. |
 | [Legacy.Commands](modules/Legacy.Commands.md) | 3 | 196 | Host side of the `!`-prefixed chat-command pipeline and the built-in `!save` / `!restart` / `!quit` commands. |
@@ -105,11 +105,11 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Shared.Core](modules/Shared.Core.md) | 11 | 2064 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, shared tools. |
+| [Shared.Core](modules/Shared.Core.md) | 11 | 2159 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
 | [Shared.Data](modules/Shared.Data.md) | 10 | 1685 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status). |
-| [Shared.Config](modules/Shared.Config.md) | 12 | 521 | All persistent installation configuration: core config, profiles, and plugin sources. |
+| [Shared.Config](modules/Shared.Config.md) | 12 | 530 | All persistent installation configuration: core config, profiles, plugin sources, and the instance.id consent anchor. |
 | [Shared.Network](modules/Shared.Network.md) | 7 | 864 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
-| [Shared.Votes](modules/Shared.Votes.md) | 6 | 193 | Opt-in client-side telemetry and community plugin-rating layer. |
+| [Shared.Votes](modules/Shared.Votes.md) | 7 | 361 | Opt-in client-side telemetry and community plugin-rating layer, with the consent state machine that gates it. |
 
 ### `Compiler` — the plugin compiler
 
@@ -121,9 +121,9 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [PluginSdk.Config](modules/PluginSdk.Config.md) | 5 | 1817 | Declarative, attribute-driven plugin configuration → local XML, remote JSON envelope, and Quasar UI schema. |
+| [PluginSdk.Config](modules/PluginSdk.Config.md) | 5 | 1831 | Declarative, attribute-driven plugin configuration → local XML, remote JSON envelope, and Quasar UI schema. |
 | [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1226 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions. |
-| [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 391 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
+| [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 425 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
 | [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 5 | 353 | Host-agnostic path resolution and dedicated-server lifecycle control (`ServerControl`). |
 | [PluginSdk.Stats](modules/PluginSdk.Stats.md) | 4 | 498 | Self-describing runtime telemetry: attribute-declared counters / gauges / discrete values published as snapshots a consumer (Quasar Agent) rolls up and charts. |
 
@@ -163,7 +163,7 @@ graph LR
   end
   Compiler[Compiler]
 
-  Legacy_Launcher --> Legacy_Loader & Legacy_Patch & Legacy_Integration & Shared_Core & Shared_Config
+  Legacy_Launcher --> Legacy_Loader & Legacy_Patch & Legacy_Integration & Shared_Core & Shared_Config & Shared_Votes
   Legacy_Loader --> Legacy_Commands & Legacy_Integration & PluginSdk_Commands & PluginSdk_Logging & Shared_Core & Shared_Config & Shared_Data
   Legacy_Patch --> Legacy_Loader & Legacy_Commands & Shared_Core & Shared_Config & Shared_Data
   Legacy_Commands --> PluginSdk_Commands
@@ -178,4 +178,4 @@ graph LR
 
 ---
 
-**[Full file index ▶](Index.md)** · 17 modules · 127 source files · ~13.2k lines
+**[Full file index ▶](Index.md)** · 17 modules · 129 source files · ~16.3k lines

@@ -13,4 +13,4 @@ Single-message constructor with no additional properties; the message string fro
 
 ## Cross-references
 - **Uses:** `System.Exception`
-- **Used by:** [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md), [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md)
+- **Used by:** [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

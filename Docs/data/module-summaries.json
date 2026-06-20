@@ -243,7 +243,7 @@
         "name": "Program",
         "kind": "static class",
         "file": "Legacy/Program.cs",
-        "summary": "Process entry point orchestrating the full startup pipeline for both the Legacy (net48) and Interim (net10) builds."
+        "summary": "Process entry point orchestrating the full startup pipeline (incl. -help and telemetry-consent resolution) for both the Legacy (net48) and Interim (net10) builds."
       },
       {
         "name": "ExternalTools",
@@ -253,7 +253,7 @@
       }
     ],
     "public_api": [
-      "Program.Main(string[] args) \u2014 process entry point",
+      "Program.Main(string[] args) \u2014 process entry point (handles -help and -consent/-noconsent/-withdraw-consent before server start)",
       "Folder.GetDS64() \u2014 resolve the DS64 install directory",
       "Game.RegisterPlugin / SetMainAssembly / GetGameVersion / StartDedicatedServer / RunOnGameThread \u2014 SE engine bridge",
       "ServerControl.CaptureLaunchState / InstallSignalHandlers / SaveWorld / ReloadConfig / SaveAndQuit / QuitWithoutSaving / SaveAndRestart / RestartWithoutSaving \u2014 lifecycle control"
@@ -1042,13 +1042,13 @@
         "name": "ConfigManager",
         "kind": "class",
         "file": "Shared/Config/ConfigManager.cs",
-        "summary": "Singleton root that aggregates all runtime configuration (core, sources, profiles, plugin list, stats) and exposes game/Pulsar directory paths."
+        "summary": "Singleton root that aggregates all runtime configuration (core, sources, profiles, plugin list, stats), exposes game/Pulsar directory paths, and manages the instance.id consent anchor."
       },
       {
         "name": "CoreConfig",
         "kind": "class",
         "file": "Shared/Config/CoreConfig.cs",
-        "summary": "Serialises low-level per-install settings (install GUID, network timeouts, telemetry consent) to config.xml."
+        "summary": "Serialises low-level per-install settings (network timeouts, tri-state telemetry consent) to config.xml; the anonymous identity now lives in the separate instance.id file."
       },
       {
         "name": "SourcesConfig",
@@ -1115,7 +1115,10 @@
       "ConfigManager.EarlyInit(string pulsarDir)",
       "ConfigManager.Init(string gameDir, string modDir, Version gameVersion, RemoteHubConfig[] defaultHubs)",
       "ConfigManager.Instance",
-      "ConfigManager.GetOrCreateInstallId()",
+      "ConfigManager.HasInstanceId() \u2192 bool",
+      "ConfigManager.ReadInstanceId() \u2192 string",
+      "ConfigManager.CreateInstanceId() \u2192 string",
+      "ConfigManager.DeleteInstanceId()",
       "ConfigManager.UpdatePlayerVotes()",
       "CoreConfig.Load(string mainDirectory)",
       "CoreConfig.Save()",
@@ -1187,7 +1190,7 @@
         "name": "Tools",
         "kind": "static class",
         "file": "Shared/Tools.cs",
-        "summary": "Cross-cutting utilities: hashing, message reporting, deep copy, native crash handler, injected service holders."
+        "summary": "Cross-cutting utilities: hashing, message reporting, deep copy, interactive-terminal detection, native crash handler, injected service holders."
       },
       {
         "name": "IExternalTools",
@@ -1217,13 +1220,19 @@
         "name": "Flags",
         "kind": "static class",
         "file": "Shared/Flags.cs",
-        "summary": "Parses Magnetar command-line switches once into read-only flags."
+        "summary": "Parses Magnetar command-line switches once into read-only flags (incl. consent and -help) and renders the usage screen."
       },
       {
         "name": "UpdateType",
         "kind": "enum",
         "file": "Shared/Flags.cs",
         "summary": "Self-update channel: None/Standard/Tester."
+      },
+      {
+        "name": "ConsentChoice",
+        "kind": "enum",
+        "file": "Shared/Flags.cs",
+        "summary": "Telemetry-consent intent from the command line: Unset/Accept/Deny/Withdraw."
       },
       {
         "name": "Launcher",
@@ -1244,10 +1253,10 @@
       "new Preloader(assemblies).Patch(gameDir, cacheDir); PreHooks()/PostHooks(); HasPatches",
       "new Updater(repoName).TryUpdate(); Updater.GameUpdatePrompt(...)",
       "AssemblyResolver.AddSourceFolder/AddAllowedAssemblyName/AddAllowedAssemblyFile + AssemblyResolved event",
-      "Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler",
+      "Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()",
       "Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)",
       "LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose",
-      "Flags.* flags and Flags.LogFlags()",
+      "Flags.* flags (incl. Consent/Help), Flags.LogFlags(), Flags.PrintHelp()",
       "new Launcher(sePath).CanStart()/VerifyConfig()",
       "PluginProgress.ReportDownloading/ReportCompiling/ReportCompiled/ReportSummary"
     ],
@@ -1479,9 +1488,15 @@
   {
     "module": "Shared.Votes",
     "project": "Shared",
-    "purpose": "Provides the client-side telemetry and community-rating layer for Magnetar. It sends anonymized usage tracking events to a remote stats server, fetches aggregate plugin statistics (active player counts, upvote/downvote totals, half-star ratings), and lets consenting players cast and update votes. All player identification uses a truncated SHA-1 hash of a locally-generated install ID, never raw Steam IDs, to satisfy data-protection requirements.",
-    "role": "Sits between the configuration/UI layer (ConfigManager, the launcher UI) and the external Pulsar/Magnetar stats REST service. It is the only module that communicates with that service; other modules consume the cached PluginVotes result through ConfigManager.Instance.Votes rather than calling VotesClient directly.",
+    "purpose": "Provides the client-side telemetry and community-rating layer for Magnetar. It sends anonymous usage tracking events to a remote stats server, fetches aggregate plugin statistics (active player counts, upvote/downvote totals, half-star ratings), and lets consenting players cast and update votes. Participation is opt-in and gated by a local consent state machine (ConsentManager): nothing is sent unless consent is granted, and all identification uses an anonymous instance identifier (the first 20 hex chars of a locally generated instance.id UUID), never a Steam ID or any personal data.",
+    "role": "Sits between the configuration/launcher layer (ConfigManager, Program startup) and the external Pulsar/Magnetar stats REST service. ConsentManager owns the consent decision (flags, interactive prompt, instance.id lifecycle) and exposes Granted/PlayerHash; VotesClient is the only type that talks to the service; other modules consume the cached PluginVotes through ConfigManager.Instance.Votes rather than calling VotesClient directly.",
     "key_types": [
+      {
+        "name": "ConsentManager",
+        "kind": "static class",
+        "file": "Shared/Votes/ConsentManager.cs",
+        "summary": "Telemetry-consent state machine: resolves the decision from flags/instance.id/interactive prompt, derives the anonymous PlayerHash, and handles withdrawal."
+      },
       {
         "name": "VotesClient",
         "kind": "static class",
@@ -1504,24 +1519,27 @@
         "name": "ConsentRequest",
         "kind": "class",
         "file": "Shared/Votes/Model/ConsentRequest.cs",
-        "summary": "Request body for /Consent: hashed player ID and a boolean consent flag."
+        "summary": "Request body for /Consent: anonymous instance hash and a boolean consent flag."
       },
       {
         "name": "TrackRequest",
         "kind": "class",
         "file": "Shared/Votes/Model/TrackRequest.cs",
-        "summary": "Request body for /Track: hashed player ID and the list of enabled plugin IDs at game start."
+        "summary": "Request body for /Track: anonymous instance hash and the list of enabled plugin IDs at game start."
       },
       {
         "name": "VoteRequest",
         "kind": "class",
         "file": "Shared/Votes/Model/VoteRequest.cs",
-        "summary": "Request body for /Vote: plugin ID, hashed player ID, voting token, and +1/0/-1 vote value."
+        "summary": "Request body for /Vote: plugin ID, anonymous instance hash, voting token, and +1/0/-1 vote value."
       }
     ],
     "public_api": [
+      "ConsentManager.Granted / PendingServerConsent / PlayerHash",
+      "ConsentManager.Resolve()",
+      "ConsentManager.Withdraw(string votesServer)",
       "VotesClient.BaseUrl (set by host at startup)",
-      "VotesClient.Consent(bool) \u2192 bool",
+      "VotesClient.Consent(bool, string playerHash = null) \u2192 bool",
       "VotesClient.DownloadVotes() \u2192 PluginVotes",
       "VotesClient.Track(string[]) \u2192 bool",
       "VotesClient.Vote(string, int) \u2192 PluginVote",
@@ -1529,11 +1547,13 @@
     ],
     "depends_on": [
       "Shared.Network (SimpleHttpClient)",
-      "Shared.Config (ConfigManager, CoreConfig.DataHandlingConsent, CoreConfig.InstallId)",
+      "Shared.Config (ConfigManager instance.id, CoreConfig.DataHandlingConsent)",
+      "Shared.Core (Flags consent flags, Tools.IsInteractiveTerminal, LogFile)",
       "Shared.Data (PluginData)",
       "External stats REST API (Pulsar/Magnetar back-end service)"
     ],
     "files_documented": [
+      "Shared/Votes/ConsentManager.cs",
       "Shared/Votes/Model/ConsentRequest.cs",
       "Shared/Votes/Model/PluginVote.cs",
       "Shared/Votes/Model/PluginVotes.cs",

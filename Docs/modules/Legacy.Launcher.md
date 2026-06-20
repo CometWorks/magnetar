@@ -1,6 +1,6 @@
 # Module: Legacy.Launcher
 
-**Project:** `Legacy` · **Files:** 5 · **Source lines:** 1363
+**Project:** `Legacy` · **Files:** 5 · **Source lines:** 1442
 
 ## Purpose
 
@@ -14,35 +14,33 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
-| `Daemon` | static class | [`Legacy/Launcher/Daemon.cs`](../descriptions/Legacy/Launcher/Daemon.cs.md) | Detaches the process from its parent (`-daemon` flag) so the parent terminating does not take the server down — `setsid()` on Linux (re-execing a child when the process is a group leader and `setsid` would `EPERM`), `FreeConsole()` on Windows. |
 | `Folder` | static class | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | Resolves and validates the SE DedicatedServer64 directory from -ds64 override, Steam launch args, Steam library VDF, or the Windows registry. |
 | `Game` | static class | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | Reflection/Mono.Cecil bridge into SE engine internals: registers the plugin, sets MyFileSystem paths, reads the game version from IL, and starts the DS. |
 | `GameLog` | class | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | Adapts SE's MyLog.Default to Magnetar's IGameLog (exists/open/write). |
 | `ServerControl` | static class | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; thread-safe and idempotent. |
-| `Program` | static class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | Process entry point orchestrating the full startup pipeline for both the Legacy (net48) and Interim (net10) builds. |
+| `Program` | static class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | Process entry point orchestrating the full startup pipeline (incl. -help and telemetry-consent resolution) for both the Legacy (net48) and Interim (net10) builds. |
 | `ExternalTools` | class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | IExternalTools adapter that marshals shared-code actions onto the SE game thread via Game.RunOnGameThread. |
 
 ## Files
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`Legacy/Launcher/Daemon.cs`](../descriptions/Legacy/Launcher/Daemon.cs.md) | 160 | Detaches the running process from its parent when `-daemon` is set, so the parent terminating does not take the dedicated server down with it. |
+| [`Legacy/Launcher/Daemon.cs`](../descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | 161 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | 141 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
 | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 512 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
-| [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 389 | Entry point for the Magnetar launcher. |
+| [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 464 | Entry point for the Magnetar launcher. |
 
 ## Public API surface
 
-- `Program.Main(string[] args) — process entry point`
-- `Daemon.Detach() — detach from the parent process when -daemon is set`
+- `Program.Main(string[] args) — process entry point (handles -help and -consent/-noconsent/-withdraw-consent before server start)`
 - `Folder.GetDS64() — resolve the DS64 install directory`
 - `Game.RegisterPlugin / SetMainAssembly / GetGameVersion / StartDedicatedServer / RunOnGameThread — SE engine bridge`
 - `ServerControl.CaptureLaunchState / InstallSignalHandlers / SaveWorld / ReloadConfig / SaveAndQuit / QuitWithoutSaving / SaveAndRestart / RestartWithoutSaving — lifecycle control`
 
 ## Dependencies
 
-**Uses modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md)  
+**Uses modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Votes](Shared.Votes.md)  
 **Used by modules:** [Legacy.Integration](Legacy.Integration.md)  
 **External systems:** GitHub; Harmony; NuGet; SE DS assemblies; Steam
 

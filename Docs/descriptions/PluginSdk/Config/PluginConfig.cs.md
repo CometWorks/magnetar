@@ -28,4 +28,4 @@ Base for all plugin config classes. Provides change notification, sparse XML (de
 
 ## Cross-references
 - **Uses:** `PluginSdk/Config/ConfigAttributes.cs` (`ConfigOptionAttribute` discovery); `PluginSdk/Config/TypeSerialization.cs` (`IsHandled`, `WriteXml`, `ReadXml` for VRage types); `PluginSdk/Tools` (`SerializableDictionary`); `System.Xml.Serialization` (`IXmlSerializable`, `XmlSerializer`), `System.ComponentModel` (`INotifyPropertyChanged`), `System.Reflection`, `System.Collections.Concurrent`.
-- **Used by:** [TestConfig.cs](../../PluginSdkTests/TestConfig.cs.md), [ConfigStorage.cs](ConfigStorage.cs.md), [SchemaTests.cs](../../PluginSdkTests/SchemaTests.cs.md), [ConfigSchema.cs](ConfigSchema.cs.md)
+- **Used by:** [ConfigSchema.cs](ConfigSchema.cs.md), [ConfigStorage.cs](ConfigStorage.cs.md), [SchemaTests.cs](../../PluginSdkTests/SchemaTests.cs.md), [TestConfig.cs](../../PluginSdkTests/TestConfig.cs.md)

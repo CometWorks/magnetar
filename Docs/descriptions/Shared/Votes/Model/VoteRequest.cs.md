@@ -11,7 +11,7 @@ DTO serialized to JSON by `VotesClient.Vote`. All four fields must be populated;
 
 - **Properties:**
   - `PluginId` — identifier of the plugin being voted on.
-  - `PlayerHash` — same truncated SHA-1 hash used in `TrackRequest`; ties the vote to the anonymous player identity without exposing the Steam ID.
+  - `PlayerHash` — same anonymous instance identifier used in `TrackRequest` (first 20 hex chars of the `instance.id` UUID); ties the vote to the anonymous instance identity without exposing any account or Steam ID.
   - `VotingToken` — opaque token obtained from the most recent `PluginVotes` response; the server validates it to reject forged vote requests.
   - `Vote` — integer vote value: `+1` for upvote, `0` to clear a prior vote, `-1` for downvote.
 

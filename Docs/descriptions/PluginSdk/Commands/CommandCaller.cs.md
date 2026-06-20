@@ -20,4 +20,4 @@ Passed by-value (`in`) throughout the dispatch pipeline to avoid unnecessary box
 
 ## Cross-references
 - **Uses:** `VRage.Game.ModAPI.MyPromoteLevel` (SE DS assembly)
-- **Used by:** [ICommandResponder.cs](ICommandResponder.cs.md), [CommandContext.cs](CommandContext.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [ServerCommandResponder.cs](../../Legacy/Commands/ServerCommandResponder.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)
+- **Used by:** [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [ServerCommandResponder.cs](../../Legacy/Commands/ServerCommandResponder.cs.md), [CommandContext.cs](CommandContext.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [ICommandResponder.cs](ICommandResponder.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

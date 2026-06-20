@@ -14,4 +14,4 @@ Lazily hooks `AppDomain.CurrentDomain.AssemblyResolve` the first time a non-empt
 
 ## Cross-references
 - **Uses:** `Shared/LogFile.cs` (resolution logging); .NET `System.Reflection` / `AppDomain` assembly-resolution APIs.
-- **Used by:** [GitHubPlugin.cs](Data/GitHubPlugin.cs.md), [LocalFolderPlugin.cs](Data/LocalFolderPlugin.cs.md), [LocalPlugin.cs](Data/LocalPlugin.cs.md), [Program.cs](../Legacy/Program.cs.md), [Preloader.cs](Preloader.cs.md)
+- **Used by:** [Program.cs](../Legacy/Program.cs.md), [GitHubPlugin.cs](Data/GitHubPlugin.cs.md), [LocalFolderPlugin.cs](Data/LocalFolderPlugin.cs.md), [LocalPlugin.cs](Data/LocalPlugin.cs.md), [Preloader.cs](Preloader.cs.md)

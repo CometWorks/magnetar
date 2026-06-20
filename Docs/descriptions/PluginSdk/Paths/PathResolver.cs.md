@@ -30,4 +30,4 @@ Thin delegation layer over `IPathResolver`. Holds a single private `_backend` fi
 ## Cross-references
 
 - **Uses:** `PluginSdk/Paths/IPathResolver.cs`, `PluginSdk/Paths/ShimPathResolver.cs`
-- **Used by:** [PathResolverTests.cs](../../PluginSdkTests/PathResolverTests.cs.md), [PathResolverBinder.cs](../../Legacy/Paths/PathResolverBinder.cs.md)
+- **Used by:** [PathResolverBinder.cs](../../Legacy/Paths/PathResolverBinder.cs.md), [PathResolverTests.cs](../../PluginSdkTests/PathResolverTests.cs.md)

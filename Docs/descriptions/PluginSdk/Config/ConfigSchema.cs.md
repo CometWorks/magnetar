@@ -44,4 +44,4 @@ One member of a struct config value; same null-omitted nested metadata as `Confi
 
 ## Cross-references
 - **Uses:** `PluginSdk/Config/ConfigAttributes.cs` (all option/layout/struct/enum attributes it reflects over); `PluginSdk/Config/PluginConfig.cs` (`PluginConfig.GetConfigProperties`, type-derivation check); SE DS assemblies (`VRageMath.Color/Vector2D/Vector3D/Vector2I/Vector3I/Base6Directions.Direction`, `VRage.MyPositionAndOrientation`); `System.Reflection`.
-- **Used by:** [SerializationTests.cs](../../PluginSdkTests/SerializationTests.cs.md), [ConfigStorage.cs](ConfigStorage.cs.md), [SchemaTests.cs](../../PluginSdkTests/SchemaTests.cs.md)
+- **Used by:** [ConfigStorage.cs](ConfigStorage.cs.md), [SchemaTests.cs](../../PluginSdkTests/SchemaTests.cs.md), [SerializationTests.cs](../../PluginSdkTests/SerializationTests.cs.md)

@@ -15,4 +15,4 @@ Data-transfer object that describes one remote (GitHub) hub source. The `Trusted
 
 ## Cross-references
 - **Uses:** _(none — pure DTO)_
-- **Used by:** [SourcesConfig.cs](../SourcesConfig.cs.md), [ConfigManager.cs](../ConfigManager.cs.md), [Program.cs](../../../Legacy/Program.cs.md), [PluginList.cs](../../PluginList.cs.md)
+- **Used by:** [Program.cs](../../../Legacy/Program.cs.md), [ConfigManager.cs](../ConfigManager.cs.md), [SourcesConfig.cs](../SourcesConfig.cs.md), [PluginList.cs](../../PluginList.cs.md)

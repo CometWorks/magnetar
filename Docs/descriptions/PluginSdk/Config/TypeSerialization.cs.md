@@ -40,4 +40,4 @@ Reads an object with `position`/`forward`/`up` (case-insensitive keys), each des
 
 ## Cross-references
 - **Uses:** SE DS assemblies (`VRageMath.Color/Vector2D/Vector3D/Vector2I/Vector3I/Vector3/Base6Directions.Direction`, `VRage.MyPositionAndOrientation`); `System.Text.Json`, `System.Xml`, `System.Globalization`.
-- **Used by:** [PluginConfig.cs](PluginConfig.cs.md), [ConfigStorage.cs](ConfigStorage.cs.md)
+- **Used by:** [ConfigStorage.cs](ConfigStorage.cs.md), [PluginConfig.cs](PluginConfig.cs.md)

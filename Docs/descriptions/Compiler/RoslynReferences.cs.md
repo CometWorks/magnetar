@@ -16,4 +16,4 @@ Singleton holding the resolved reference dictionary and the shared Cecil resolve
 
 ## Cross-references
 - **Uses:** Mono.Cecil (`DefaultAssemblyResolver`, `AssemblyDefinition`, `AssemblyNameReference`); Roslyn (`MetadataReference`); `Compiler/LogFile.cs`; SE DS / VRage / .NET framework assemblies (the resolution targets).
-- **Used by:** [Interim.cs](../Legacy/Compiler/Interim.cs.md), [Publicizer.cs](Publicizer.cs.md), [Legacy.cs](../Legacy/Compiler/Legacy.cs.md), [RoslynCompiler.cs](RoslynCompiler.cs.md)
+- **Used by:** [Publicizer.cs](Publicizer.cs.md), [RoslynCompiler.cs](RoslynCompiler.cs.md), [Interim.cs](../Legacy/Compiler/Interim.cs.md), [Legacy.cs](../Legacy/Compiler/Legacy.cs.md)

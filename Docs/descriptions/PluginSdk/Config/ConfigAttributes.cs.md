@@ -99,4 +99,4 @@ Marks one `StructMember`-annotated `string` member as the source of the row capt
 
 ## Cross-references
 - **Uses:** `PluginSdk/Config/PluginConfig.cs` (attributes annotate `PluginConfig` subclasses); `PluginSdk/Tools` (`SerializableDictionary<TKey,TValue>`); SE DS assemblies (`VRageMath.Color/Vector2D/Vector3D/Vector2I/Vector3I/Base6Directions.Direction`, `VRage.MyPositionAndOrientation`); `System.Attribute` reflection.
-- **Used by:** [PluginConfig.cs](PluginConfig.cs.md), [ConfigSchema.cs](ConfigSchema.cs.md), [TestConfig.cs](../../PluginSdkTests/TestConfig.cs.md)
+- **Used by:** [ConfigSchema.cs](ConfigSchema.cs.md), [PluginConfig.cs](PluginConfig.cs.md), [TestConfig.cs](../../PluginSdkTests/TestConfig.cs.md)

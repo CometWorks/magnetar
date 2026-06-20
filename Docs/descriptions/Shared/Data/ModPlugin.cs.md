@@ -24,4 +24,4 @@ Represents a Workshop mod. `Id` is the decimal workshop id string; setting it al
 
 ## Cross-references
 - **Uses:** `PluginData` (Shared/Data/PluginData.cs); `Profile` (Shared/Data/Profile.cs); `ConfigManager.Instance.ModDir` (Shared.Config); ProtoBuf; `System.IO`. Indirectly tied to Steam Workshop mod content laid out by the SE DS.
-- **Used by:** [Patch_MyScriptManager.cs](../../Legacy/Patch/Patch_MyScriptManager.cs.md), [PluginData.cs](PluginData.cs.md), [Patch_MyDefinitionManager.cs](../../Legacy/Patch/Patch_MyDefinitionManager.cs.md), [PluginList.cs](../PluginList.cs.md), [Loader.cs](../Loader.cs.md), [ModPlugin.cs](../../Legacy/Extensions/ModPlugin.cs.md)
+- **Used by:** [ModPlugin.cs](../../Legacy/Extensions/ModPlugin.cs.md), [Patch_MyDefinitionManager.cs](../../Legacy/Patch/Patch_MyDefinitionManager.cs.md), [Patch_MyScriptManager.cs](../../Legacy/Patch/Patch_MyScriptManager.cs.md), [PluginData.cs](PluginData.cs.md), [Loader.cs](../Loader.cs.md), [PluginList.cs](../PluginList.cs.md)

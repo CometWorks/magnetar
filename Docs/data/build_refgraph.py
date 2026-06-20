@@ -120,7 +120,9 @@ for rel in rels:
     if not os.path.exists(dpath):
         continue
     content = open(dpath, encoding="utf-8").read()
-    users = used_by.get(rel, [])
+    # Sort for a deterministic, canonical order (set iteration order varies per
+    # run with hash randomization, which would otherwise churn every file).
+    users = sorted(used_by.get(rel, []))
     if users:
         # relative link from the description file to sibling description files
         links = ", ".join(

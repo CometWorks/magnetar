@@ -14,7 +14,8 @@
     "Legacy.Loader",
     "Legacy.Patch",
     "Shared.Config",
-    "Shared.Core"
+    "Shared.Core",
+    "Shared.Votes"
   ],
   "Legacy.Loader": [
     "Legacy.Commands",

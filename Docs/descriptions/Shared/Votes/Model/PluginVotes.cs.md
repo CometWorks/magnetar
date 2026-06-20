@@ -18,4 +18,4 @@ Aggregates all per-plugin statistics into a keyed dictionary and provides a conv
 
 ## Cross-references
 - **Uses:** `Shared/Data/PluginData.cs` (parameter type of `GetVotesForPlugin`)
-- **Used by:** [VotesClient.cs](../VotesClient.cs.md), [ConfigManager.cs](../../Config/ConfigManager.cs.md)
+- **Used by:** [ConfigManager.cs](../../Config/ConfigManager.cs.md), [VotesClient.cs](../VotesClient.cs.md)

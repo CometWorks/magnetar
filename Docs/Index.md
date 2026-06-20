@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 127 files across 17 modules.
+Every documented source file, grouped by module. 129 files across 17 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -37,11 +37,11 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Legacy/Launcher/Daemon.cs`](descriptions/Legacy/Launcher/Daemon.cs.md) | 160 | 2 | Detaches the running process from its parent when `-daemon` is set, so the parent terminating does not take the dedicated server down with it. |
+| [`Legacy/Launcher/Daemon.cs`](descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | 2 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](descriptions/Legacy/Launcher/Folder.cs.md) | 161 | 2 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](descriptions/Legacy/Launcher/Game.cs.md) | 141 | 2 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
 | [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 512 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
-| [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 389 | 1 | Entry point for the Magnetar launcher. |
+| [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 464 | 1 | Entry point for the Magnetar launcher. |
 
 ## Legacy.Loader  ·  [module doc](modules/Legacy.Loader.md)
 
@@ -95,8 +95,8 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`PluginSdk/Config/ConfigAttributes.cs`](descriptions/PluginSdk/Config/ConfigAttributes.cs.md) | 405 | 1 | Declares the full attribute vocabulary a plugin uses to annotate a `PluginConfig`-derived class so Magnetar can discover, validate, remotely manage and lay out each configuration option in an external Web UI (rendered by the manager app, e.g. |
-| [`PluginSdk/Config/ConfigSchema.cs`](descriptions/PluginSdk/Config/ConfigSchema.cs.md) | 543 | 1 | Reflection-based schema extractor that turns a `PluginConfig`-derived type into a `ConfigSchemaData` document describing its layout tree, options, nested struct definitions and enum definitions. |
+| [`PluginSdk/Config/ConfigAttributes.cs`](descriptions/PluginSdk/Config/ConfigAttributes.cs.md) | 412 | 1 | Declares the full attribute vocabulary a plugin uses to annotate a `PluginConfig`-derived class so Magnetar can discover, validate, remotely manage and lay out each configuration option in an external Web UI (rendered by the manager app, e.g. |
+| [`PluginSdk/Config/ConfigSchema.cs`](descriptions/PluginSdk/Config/ConfigSchema.cs.md) | 550 | 1 | Reflection-based schema extractor that turns a `PluginConfig`-derived type into a `ConfigSchemaData` document describing its layout tree, options, nested struct definitions and enum definitions. |
 | [`PluginSdk/Config/ConfigStorage.cs`](descriptions/PluginSdk/Config/ConfigStorage.cs.md) | 158 | 2 | Save/load facade for `PluginConfig`-derived instances in two formats. **XML** is the local on-disk format: written atomically via a temp file + rename, emitting only non-default values (the sparse format is driven by `PluginConfig`'s `IXmlSerializable` implementation), so missing elements fall back to defaults on load. **JSON** is the remote management wire format — a three-part envelope of `schema` (from `ConfigSchema.Build`), `defaults` (a fresh instance) and `values` (the current config); loading reads only `values` while regenerating schema/defaults on every save. |
 | [`PluginSdk/Config/PluginConfig.cs`](descriptions/PluginSdk/Config/PluginConfig.cs.md) | 298 | 1 | Abstract base class for managed plugin configuration. |
 | [`PluginSdk/Config/TypeSerialization.cs`](descriptions/PluginSdk/Config/TypeSerialization.cs.md) | 413 | 1 | Bespoke XML read/write helpers and `System.Text.Json` converters for the small set of VRage value types that are first-class configuration values: `Color`, `Vector2D`, `Vector3D`, `Vector2I`, `Vector3I`, `Base6Directions.Direction` and `MyPositionAndOrientation`. |
@@ -107,12 +107,12 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 | ---- | ----- | ---- | ----------- |
 | [`PluginSdk/Logging/ILogSink.cs`](descriptions/PluginSdk/Logging/ILogSink.cs.md) | 19 | 3 | Defines the single-method contract that every log destination must satisfy. |
 | [`PluginSdk/Logging/LogEntry.cs`](descriptions/PluginSdk/Logging/LogEntry.cs.md) | 48 | 2 | A single immutable log record that is passed by `in` reference from `Logger` to `ILogSink`. |
-| [`PluginSdk/Logging/LogEnvironment.cs`](descriptions/PluginSdk/Logging/LogEnvironment.cs.md) | 70 | 2 | Acts as the environment probe that decides which `ILogSink` the SDK uses; also hosts the `LineEmitted` agent relay. |
+| [`PluginSdk/Logging/LogEnvironment.cs`](descriptions/PluginSdk/Logging/LogEnvironment.cs.md) | 60 | 2 | Acts as the environment probe that decides which `ILogSink` the SDK uses. |
 | [`PluginSdk/Logging/LogJson.cs`](descriptions/PluginSdk/Logging/LogJson.cs.md) | 51 | 2 | Centralises `System.Text.Json` configuration and serialization helpers so both `MagnetarLogSink` and `QuasarLogSink` produce identical JSON shapes for the optional structured `data` payload. |
 | [`PluginSdk/Logging/LogLevel.cs`](descriptions/PluginSdk/Logging/LogLevel.cs.md) | 16 | 3 | Declares the severity levels used throughout the SDK logging subsystem. |
 | [`PluginSdk/Logging/Logger.cs`](descriptions/PluginSdk/Logging/Logger.cs.md) | 84 | 2 | The primary logging facade a plugin holds as a `static readonly` field. |
 | [`PluginSdk/Logging/MagnetarLogSink.cs`](descriptions/PluginSdk/Logging/MagnetarLogSink.cs.md) | 58 | 2 | The `ILogSink` used when the server runs under standalone Magnetar (no Quasar Agent). |
-| [`PluginSdk/Logging/QuasarLogSink.cs`](descriptions/PluginSdk/Logging/QuasarLogSink.cs.md) | 89 | 2 | The `ILogSink` used when the server process is managed by the Quasar Agent; writes JSON to stdout and raises `LogEnvironment.LineEmitted` for the agent's network relay. |
+| [`PluginSdk/Logging/QuasarLogSink.cs`](descriptions/PluginSdk/Logging/QuasarLogSink.cs.md) | 89 | 2 | The `ILogSink` used when the server process is managed by the Quasar Agent. |
 
 ## PluginSdk.Runtime  ·  [module doc](modules/PluginSdk.Runtime.md)
 
@@ -150,8 +150,8 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Shared/Config/ConfigManager.cs`](descriptions/Shared/Config/ConfigManager.cs.md) | 77 | 2 | `ConfigManager` is the singleton root of all runtime configuration for Magnetar. |
-| [`Shared/Config/CoreConfig.cs`](descriptions/Shared/Config/CoreConfig.cs.md) | 78 | 2 | `CoreConfig` persists the fundamental installation-level settings to `config.xml` in the Pulsar/Magnetar data directory. |
+| [`Shared/Config/ConfigManager.cs`](descriptions/Shared/Config/ConfigManager.cs.md) | 90 | 2 | `ConfigManager` is the singleton root of all runtime configuration for Magnetar. |
+| [`Shared/Config/CoreConfig.cs`](descriptions/Shared/Config/CoreConfig.cs.md) | 74 | 2 | `CoreConfig` persists the fundamental installation-level settings to `config.xml` in the Pulsar/Magnetar data directory. |
 | [`Shared/Config/GitHubPluginConfig.cs`](descriptions/Shared/Config/GitHubPluginConfig.cs.md) | 6 | 3 | `GitHubPluginConfig` is the per-plugin configuration record stored inside a `Profile` for plugins sourced from GitHub releases. |
 | [`Shared/Config/LocalFolderConfig.cs`](descriptions/Shared/Config/LocalFolderConfig.cs.md) | 7 | 3 | `LocalFolderConfig` is the per-plugin configuration record stored inside a `Profile` for plugins sourced from a local development folder (the "DevFolder" feature). |
 | [`Shared/Config/PluginDataConfig.cs`](descriptions/Shared/Config/PluginDataConfig.cs.md) | 10 | 3 | `PluginDataConfig` is the abstract base for per-plugin configuration records that are embedded in a `Profile`. |
@@ -168,15 +168,15 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Shared/AssemblyResolver.cs`](descriptions/Shared/AssemblyResolver.cs.md) | 107 | 2 | Provides a scoped `AppDomain.AssemblyResolve` handler that satisfies managed assembly load requests from one or more "source" folders, but only when the *requesting* assembly is on an allow-list. |
-| [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 79 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
+| [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 149 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
 | [`Shared/Launcher.cs`](descriptions/Shared/Launcher.cs.md) | 52 | 2 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
-| [`Shared/Loader.cs`](descriptions/Shared/Loader.cs.md) | 148 | 2 | The orchestrator that instantiates all enabled plugins at startup. |
+| [`Shared/Loader.cs`](descriptions/Shared/Loader.cs.md) | 156 | 2 | The orchestrator that instantiates all enabled plugins at startup. |
 | [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 97 | 2 | Magnetar's central logging facade. |
 | [`Shared/PluginList.cs`](descriptions/Shared/PluginList.cs.md) | 842 | 1 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](descriptions/Shared/PluginProgress.cs.md) | 45 | 2 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](descriptions/Shared/Preloader.cs.md) | 225 | 1 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |
 | [`Shared/Steam.cs`](descriptions/Shared/Steam.cs.md) | 81 | 2 | Thin Steam helper for the Dedicated Server: resolves the Steam install path cross-platform, redirects `Steamworks.NET` assembly resolution to a bundled copy, and checks Workshop item install state through the *game-server* UGC API. |
-| [`Shared/Tools.cs`](descriptions/Shared/Tools.cs.md) | 179 | 2 | Grab-bag of cross-cutting utilities used throughout Magnetar: SHA-256 hashing of files/strings/folders (used for cache invalidation), human-friendly "time ago" formatting, console/error message reporting, file globbing, filename sanitizing, JSON-based deep copy, and a cross-platform native crash handler. |
+| [`Shared/Tools.cs`](descriptions/Shared/Tools.cs.md) | 196 | 2 | Grab-bag of cross-cutting utilities used throughout Magnetar: SHA-256 hashing of files/strings/folders (used for cache invalidation), human-friendly "time ago" formatting, console/error message reporting, file globbing, filename sanitizing, JSON-based deep copy, interactive-terminal detection, and a cross-platform native crash handler. |
 | [`Shared/Updater.cs`](descriptions/Shared/Updater.cs.md) | 209 | 1 | Handles Magnetar's self-update against a GitHub release repo. |
 
 ## Shared.Data  ·  [module doc](modules/Shared.Data.md)
@@ -210,9 +210,10 @@ Every documented source file, grouped by module. 127 files across 17 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
+| [`Shared/Votes/ConsentManager.cs`](descriptions/Shared/Votes/ConsentManager.cs.md) | 180 | 2 | Owns the telemetry-consent state machine: it decides, once per startup, whether anonymous plugin-usage statistics may be sent, and exposes the result to the rest of the loader through static properties. |
 | [`Shared/Votes/Model/ConsentRequest.cs`](descriptions/Shared/Votes/Model/ConsentRequest.cs.md) | 14 | 3 | Defines the JSON request body sent to the statistics server's `/Consent` endpoint when a user grants or withdraws data-handling consent. |
 | [`Shared/Votes/Model/PluginVote.cs`](descriptions/Shared/Votes/Model/PluginVote.cs.md) | 24 | 3 | Represents the statistics record for a single plugin as returned by the `/Stats` REST endpoint. |
 | [`Shared/Votes/Model/PluginVotes.cs`](descriptions/Shared/Votes/Model/PluginVotes.cs.md) | 24 | 3 | Top-level response container returned by the `/Stats` REST endpoint. |
-| [`Shared/Votes/Model/TrackRequest.cs`](descriptions/Shared/Votes/Model/TrackRequest.cs.md) | 17 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given (anonymized) player. |
+| [`Shared/Votes/Model/TrackRequest.cs`](descriptions/Shared/Votes/Model/TrackRequest.cs.md) | 11 | 3 | Request body POSTed to `/Track` each time the game starts, recording which plugins were active for a given anonymous instance. |
 | [`Shared/Votes/Model/VoteRequest.cs`](descriptions/Shared/Votes/Model/VoteRequest.cs.md) | 20 | 3 | Request body POSTed to `/Vote` when a player changes their vote on a plugin. |
-| [`Shared/Votes/VotesClient.cs`](descriptions/Shared/Votes/VotesClient.cs.md) | 94 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, stats download, session tracking, and voting. |
+| [`Shared/Votes/VotesClient.cs`](descriptions/Shared/Votes/VotesClient.cs.md) | 88 | 2 | The single outbound client for Magnetar's statistics back-end, providing four REST operations: consent management, votes download, session tracking, and voting. |

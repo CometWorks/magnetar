@@ -13,4 +13,4 @@ Holds SE app-id constants and stateless Steam utility methods.
 
 ## Cross-references
 - **Uses:** Steamworks.NET (`SteamGameServerUGC`, `PublishedFileId_t`, `EItemState`); `Microsoft.Win32.Registry`; `System.Runtime.InteropServices.RuntimeInformation`; external system Steam.
-- **Used by:** [Patch_Compile.cs](../Legacy/Patch/Patch_Compile.cs.md), [SteamMods.cs](../Legacy/Loader/SteamMods.cs.md), [Folder.cs](../Legacy/Launcher/Folder.cs.md), [Program.cs](../Legacy/Program.cs.md), [ModPlugin.cs](../Legacy/Extensions/ModPlugin.cs.md)
+- **Used by:** [ModPlugin.cs](../Legacy/Extensions/ModPlugin.cs.md), [Folder.cs](../Legacy/Launcher/Folder.cs.md), [SteamMods.cs](../Legacy/Loader/SteamMods.cs.md), [Patch_Compile.cs](../Legacy/Patch/Patch_Compile.cs.md), [Program.cs](../Legacy/Program.cs.md), [ConsentManager.cs](Votes/ConsentManager.cs.md)

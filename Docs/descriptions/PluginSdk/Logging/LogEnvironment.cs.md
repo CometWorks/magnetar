@@ -20,4 +20,4 @@ Provides the sink factory helpers used by `Logger.Create`, plus the agent log re
 
 ## Cross-references
 - **Uses:** `PluginSdk/Logging/ILogSink.cs`, `PluginSdk/Logging/MagnetarLogSink.cs`, `PluginSdk/Logging/QuasarLogSink.cs`
-- **Used by:** [Logger.cs](Logger.cs.md), [QuasarLogSink.cs](QuasarLogSink.cs.md) (`RaiseLineEmitted`), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)
+- **Used by:** [Logger.cs](Logger.cs.md), [QuasarLogSink.cs](QuasarLogSink.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)

@@ -15,4 +15,4 @@ Thin data-transfer object that pairs a plugin ID (inherited from `PluginDataConf
 
 ## Cross-references
 - **Uses:** `Shared/Config/PluginDataConfig.cs`
-- **Used by:** [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [PluginDataConfig.cs](PluginDataConfig.cs.md), [Profile.cs](../Data/Profile.cs.md)
+- **Used by:** [PluginDataConfig.cs](PluginDataConfig.cs.md), [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [Profile.cs](../Data/Profile.cs.md)

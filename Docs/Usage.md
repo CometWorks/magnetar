@@ -17,6 +17,37 @@ off to the dedicated server's own `Main`.
 See **[Configuration](Configuration.md)** for the config/install directories, DS
 detection, and environment variables.
 
+## Command-line help
+
+Pass `-help` (also `-h` or `--help`) to print the full list of options — Magnetar's
+own switches, the telemetry-consent switches, and the dedicated-server arguments
+Magnetar passes through — then exit without starting the server. On Linux the help
+screen deliberately skips loading the bundled native libraries, so it prints
+cleanly without startup noise.
+
+## Telemetry and consent
+
+Magnetar can send **anonymous** plugin usage statistics (the list of enabled
+plugin IDs, including built-in compatibility plugins) to help prioritize
+development. Nothing else is collected — no personal data, no account or Steam ID,
+no IP address, no world or server content. Participation is **opt-in** and the
+identity is a random anonymous instance ID stored locally (see
+[Configuration → instance.id](Configuration.md#telemetry-consent-instanceid)).
+
+On the **first interactive start**, Magnetar asks once (Y/N) and remembers the
+answer. When there is no interactive terminal (e.g. running headless or under a
+supervisor), telemetry stays **disabled** unless you opt in explicitly. Control it
+with these flags:
+
+| Flag | Effect |
+| ---- | ------ |
+| `-consent` | Enable sending anonymous usage statistics and remember the decision. |
+| `-noconsent` | Disable sending statistics **for this run only** (does not change the stored decision). |
+| `-withdraw-consent` | Ask the statistics server to erase this instance's data, delete the local instance ID, record the denial, then exit without starting the server. |
+
+`-withdraw-consent` is best effort: if the statistics server cannot be reached,
+telemetry is still disabled locally.
+
 ## Daemon mode
 
 Pass `-daemon` to detach the process from its parent (typically

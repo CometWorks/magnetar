@@ -17,4 +17,4 @@ Stateful manager for the directory of profile XML files. It is primary-construct
 
 ## Cross-references
 - **Uses:** `Shared/Data/Profile.cs`, `Shared/LogFile.cs`, `Shared/Tools.cs` (via `Tools.CleanFileName`, `Tools.ShowMessage`)
-- **Used by:** [PluginList.cs](../PluginList.cs.md), [ConfigManager.cs](ConfigManager.cs.md), [Loader.cs](../Loader.cs.md)
+- **Used by:** [ConfigManager.cs](ConfigManager.cs.md), [Loader.cs](../Loader.cs.md), [PluginList.cs](../PluginList.cs.md)

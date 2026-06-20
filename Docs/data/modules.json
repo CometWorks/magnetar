@@ -43,13 +43,14 @@
   "Legacy.Launcher": {
     "project": "Legacy",
     "files": [
+      "Legacy/Launcher/Daemon.cs",
       "Legacy/Launcher/Folder.cs",
       "Legacy/Launcher/Game.cs",
       "Legacy/Launcher/ServerControl.cs",
       "Legacy/Program.cs"
     ],
-    "file_count": 4,
-    "total_lines": 1197,
+    "file_count": 5,
+    "total_lines": 1442,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -123,7 +124,7 @@
       "PluginSdk/Config/TypeSerialization.cs"
     ],
     "file_count": 5,
-    "total_lines": 1817,
+    "total_lines": 1831,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -140,7 +141,7 @@
       "PluginSdk/Logging/QuasarLogSink.cs"
     ],
     "file_count": 8,
-    "total_lines": 391,
+    "total_lines": 425,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -205,7 +206,7 @@
       "Shared/Config/SourcesConfig.cs"
     ],
     "file_count": 12,
-    "total_lines": 521,
+    "total_lines": 530,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -225,7 +226,7 @@
       "Shared/Updater.cs"
     ],
     "file_count": 11,
-    "total_lines": 2064,
+    "total_lines": 2159,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -267,6 +268,7 @@
   "Shared.Votes": {
     "project": "Shared",
     "files": [
+      "Shared/Votes/ConsentManager.cs",
       "Shared/Votes/Model/ConsentRequest.cs",
       "Shared/Votes/Model/PluginVote.cs",
       "Shared/Votes/Model/PluginVotes.cs",
@@ -274,8 +276,8 @@
       "Shared/Votes/Model/VoteRequest.cs",
       "Shared/Votes/VotesClient.cs"
     ],
-    "file_count": 6,
-    "total_lines": 193,
+    "file_count": 7,
+    "total_lines": 361,
     "model": "sonnet",
     "dominant_tier": 2
   }
