@@ -98,7 +98,7 @@ public class PluginLoader : IHandleInputPlugin
             // plugins initialize. Last-registration-wins, so a plugin may
             // override any of them by registering the same prefix later.
             Commands.Register(typeof(SaveCommand).Assembly,
-                typeof(SaveCommand), typeof(RestartCommand), typeof(QuitCommand));
+                typeof(SaveCommand), typeof(RestartCommand), typeof(QuitCommand), typeof(StopCommand));
 
             // Bind the SDK PathResolver facade to the LinuxCompat case-insensitive
             // path cache before plugins initialize, so a plugin may already use it
