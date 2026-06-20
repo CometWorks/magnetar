@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Pulsar.Shared.Config;
 using Pulsar.Shared.Network;
 using Pulsar.Shared.Votes.Model;
 
@@ -16,18 +15,13 @@ public static class VotesClient
     private static string TrackUri => $"{BaseUrl}/Track";
     private static string VoteUri => $"{BaseUrl}/Vote";
 
-    // Hashed anonymous install identifier (see CoreConfig.InstallId)
-    private static string PlayerHash =>
-        playerHash ??= Tools
-            .GetStringHash(ConfigManager.Instance.GetOrCreateInstallId())
-            .Substring(0, 20);
-    private static string playerHash;
-
     // Latest voting token received
     private static string votingToken;
 
-    public static bool Consent(bool consent)
+    public static bool Consent(bool consent, string playerHash = null)
     {
+        playerHash ??= ConsentManager.PlayerHash;
+
         if (consent)
             LogFile.WriteLine($"Registering player consent on the votes server");
         else
@@ -35,7 +29,7 @@ public static class VotesClient
                 $"Withdrawing player consent, removing user data from the votes server"
             );
 
-        var consentRequest = new ConsentRequest() { PlayerHash = PlayerHash, Consent = consent };
+        var consentRequest = new ConsentRequest() { PlayerHash = playerHash, Consent = consent };
 
         return SimpleHttpClient.Post(ConsentUri, consentRequest);
     }
@@ -43,16 +37,16 @@ public static class VotesClient
     // This function may be called from another thread.
     public static PluginVotes DownloadVotes()
     {
-        if (!ConfigManager.Instance.Core.DataHandlingConsent)
+        if (!ConsentManager.Granted)
         {
             LogFile.WriteLine("Downloading plugin votes anonymously...");
             votingToken = null;
             return SimpleHttpClient.Get<PluginVotes>(VotesUri);
         }
 
-        LogFile.WriteLine("Downloading plugin votes for " + PlayerHash);
+        LogFile.WriteLine("Downloading plugin votes for " + ConsentManager.PlayerHash);
 
-        var parameters = new Dictionary<string, string> { ["playerHash"] = PlayerHash };
+        var parameters = new Dictionary<string, string> { ["playerHash"] = ConsentManager.PlayerHash };
         var pluginVotes = SimpleHttpClient.Get<PluginVotes>(VotesUri, parameters);
 
         votingToken = pluginVotes?.VotingToken;
@@ -64,7 +58,7 @@ public static class VotesClient
     {
         var trackRequest = new TrackRequest
         {
-            PlayerHash = PlayerHash,
+            PlayerHash = ConsentManager.PlayerHash,
             EnabledPluginIds = pluginIds,
         };
 
@@ -82,7 +76,7 @@ public static class VotesClient
         LogFile.WriteLine($"Voting {vote} on plugin {pluginId}");
         var voteRequest = new VoteRequest
         {
-            PlayerHash = PlayerHash,
+            PlayerHash = ConsentManager.PlayerHash,
             PluginId = pluginId,
             VotingToken = votingToken,
             Vote = vote,

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Pulsar.Shared.Votes;
 using Pulsar.Shared.Votes.Model;
@@ -24,8 +25,6 @@ public class ConfigManager
 
     public bool SafeMode { get; set; }
     public bool HasLocal { get; set; }
-
-    private readonly object installIdLock = new();
 
     public static void EarlyInit(string pulsarDir)
     {
@@ -53,18 +52,32 @@ public class ConfigManager
         i.List = new PluginList(i.PulsarDir, i.Sources, i.Profiles);
     }
 
-    public string GetOrCreateInstallId()
-    {
-        lock (installIdLock)
-        {
-            if (string.IsNullOrEmpty(Core.InstallId))
-            {
-                Core.InstallId = Guid.NewGuid().ToString("N");
-                Core.Save();
-            }
+    private string InstanceIdPath => Path.Combine(PulsarDir, "instance.id");
 
-            return Core.InstallId;
-        }
+    public bool HasInstanceId() => File.Exists(InstanceIdPath);
+
+    public string ReadInstanceId()
+    {
+        if (!File.Exists(InstanceIdPath))
+            return null;
+
+        return File.ReadAllText(InstanceIdPath).Trim();
+    }
+
+    public string CreateInstanceId()
+    {
+        if (File.Exists(InstanceIdPath))
+            return File.ReadAllText(InstanceIdPath).Trim();
+
+        string id = Guid.NewGuid().ToString("D");
+        File.WriteAllText(InstanceIdPath, id);
+        return id;
+    }
+
+    public void DeleteInstanceId()
+    {
+        if (File.Exists(InstanceIdPath))
+            File.Delete(InstanceIdPath);
     }
 
     public void UpdatePlayerVotes()

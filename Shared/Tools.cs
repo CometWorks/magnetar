@@ -147,6 +147,23 @@ public static class Tools
     public static bool IsNative() =>
         Environment.GetEnvironmentVariable("STEAM_COMPAT_PROTON") is null;
 
+#if NETCOREAPP
+    [DllImport("libc")]
+    private static extern int isatty(int fd);
+#endif
+
+    public static bool IsInteractiveTerminal()
+    {
+        if (Flags.Daemon)
+            return false;
+
+#if NETCOREAPP
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return isatty(0) != 0;
+#endif
+        return !Console.IsInputRedirected;
+    }
+
     private delegate int UnhandledExceptionFilterDelegate(IntPtr exceptionInfo);
 
     [DllImport("kernel32.dll")]
