@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using PluginSdk.Commands;
 using Pulsar.Legacy.Launcher;
+using Pulsar.Shared;
 
 namespace Pulsar.Legacy.Commands;
 
@@ -17,8 +18,23 @@ public sealed class SaveCommand : CommandModule
     [Command("", "Save the world")]
     public void Save()
     {
+        var context = Context;
         Context.Respond("Saving world\u2026");
-        Task.Run(() => ServerControl.SaveWorld());
+        Task.Run(() =>
+        {
+            try
+            {
+                var reply = ServerControl.SaveWorld()
+                    ? "World saved."
+                    : "World save did not finish before the timeout.";
+                Game.RunOnGameThread(() => context.Respond(reply));
+            }
+            catch (System.Exception e)
+            {
+                LogFile.Error($"!save failed: {e}");
+                Game.RunOnGameThread(() => context.Respond(CommandReply.Error($"World save failed: {e.Message}")));
+            }
+        });
     }
 }
 

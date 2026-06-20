@@ -19,7 +19,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Commands/CommandService.cs`](descriptions/Legacy/Commands/CommandService.cs.md) | 114 | 2 | `CommandService` is the host-side owner of the chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. |
-| [`Legacy/Commands/MagnetarCommands.cs`](descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 45 | 2 | Declares three built-in chat-command modules — `!save`, `!restart`, and `!quit` — that Magnetar registers with `CommandService` before any plugin loads. |
+| [`Legacy/Commands/MagnetarCommands.cs`](descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 61 | 2 | Declares three built-in chat-command modules — `!save`, `!restart`, and `!quit` — that Magnetar registers with `CommandService` before any plugin loads. |
 | [`Legacy/Commands/ServerCommandResponder.cs`](descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | 37 | 2 | `ServerCommandResponder` is the `ICommandResponder` implementation that delivers command replies into the SE DS chat system. |
 
 ## Legacy.Integration  ·  [module doc](modules/Legacy.Integration.md)
@@ -40,7 +40,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | [`Legacy/Launcher/Daemon.cs`](descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | 2 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](descriptions/Legacy/Launcher/Folder.cs.md) | 161 | 2 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](descriptions/Legacy/Launcher/Game.cs.md) | 141 | 2 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
-| [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 512 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
+| [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 525 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
 | [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 464 | 1 | Entry point for the Magnetar launcher. |
 
 ## Legacy.Loader  ·  [module doc](modules/Legacy.Loader.md)

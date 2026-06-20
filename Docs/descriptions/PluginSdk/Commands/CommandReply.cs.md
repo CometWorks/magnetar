@@ -29,4 +29,4 @@ Immutable by design. `HasContent` guards against sending empty strings to the ga
 
 ## Cross-references
 - **Uses:** `VRage.Game.MyFontEnum`, `VRageMath.Color` (SE DS assemblies)
-- **Used by:** [ServerCommandResponder.cs](../../Legacy/Commands/ServerCommandResponder.cs.md), [CommandContext.cs](CommandContext.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [ICommandResponder.cs](ICommandResponder.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)
+- **Used by:** [MagnetarCommands.cs](../../Legacy/Commands/MagnetarCommands.cs.md), [ServerCommandResponder.cs](../../Legacy/Commands/ServerCommandResponder.cs.md), [CommandContext.cs](CommandContext.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [ICommandResponder.cs](ICommandResponder.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

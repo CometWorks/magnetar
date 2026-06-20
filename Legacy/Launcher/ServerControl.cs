@@ -28,9 +28,10 @@ namespace Pulsar.Legacy.Launcher;
 /// World access is marshalled to the game's update thread (saving touches live
 /// entities) and every operation null-guards <see cref="MySandboxGame.Static"/>
 /// / <see cref="MySession.Static"/>, so plugins may call from any thread. The
-/// disk write itself runs on a background task, so blocking a worker — or even
-/// the update thread, on the inline fast path — for its completion never
-/// deadlocks.
+/// disk write itself runs on a background task. Completion is detected from
+/// Keen's save-in-progress flags rather than the early async-save callback; if
+/// the caller is already on the update thread, the wait loop pumps
+/// <c>ParallelTasks</c> callbacks so Keen's async-save completion can clear.
 /// </para>
 /// </summary>
 internal static class ServerControl
@@ -134,23 +135,24 @@ internal static class ServerControl
 
         TimeSpan limit = timeout ?? SaveTimeout;
         var started = new ManualResetEventSlim(false);
-        var finished = new ManualResetEventSlim(false);
         bool startedOwnSave = false;
+        bool startFailed = false;
 
         void StartSave()
         {
             try
             {
                 // A save is already running (e.g. an autosave): don't start a
-                // second one, just wait for it via the InProgress flag.
-                if (MyAsyncSaving.InProgress)
+                // second one, just wait for the server to become save-idle.
+                if (IsSaveInProgress())
                     return;
 
                 startedOwnSave = true;
-                MyAsyncSaving.Start(finished.Set);
+                MyAsyncSaving.Start();
             }
             catch (Exception e)
             {
+                startFailed = true;
                 LogFile.Error($"Failed to start world save: {e}");
             }
             finally
@@ -174,31 +176,42 @@ internal static class ServerControl
             return false;
         }
 
-        TimeSpan remaining = limit - stopwatch.Elapsed;
-        if (remaining < TimeSpan.Zero)
-            remaining = TimeSpan.Zero;
+        if (startFailed)
+            return false;
 
-        // Our own save signals completion via the MyAsyncSaving callback; a
-        // pre-existing save is tracked through the InProgress flag.
-        if (startedOwnSave)
-        {
-            if (!finished.Wait(remaining))
-            {
-                LogFile.Warn("World save did not finish within the timeout");
-                return false;
-            }
+        if (WaitForSaveIdle(stopwatch, limit))
             return true;
-        }
+
+        LogFile.Warn(startedOwnSave
+            ? "World save did not finish within the timeout"
+            : "In-progress world save did not finish within the timeout");
+        return false;
+    }
+
+    private static bool WaitForSaveIdle(Stopwatch stopwatch, TimeSpan limit)
+    {
+        bool pumpCallbacks = OnUpdateThread();
 
         while (stopwatch.Elapsed < limit)
         {
-            if (!MyAsyncSaving.InProgress)
+            if (pumpCallbacks)
+                ParallelTasks.Parallel.RunCallbacks();
+
+            if (!IsSaveInProgress())
                 return true;
             Thread.Sleep(50);
         }
 
-        LogFile.Warn("In-progress world save did not finish within the timeout");
-        return false;
+        if (pumpCallbacks)
+            ParallelTasks.Parallel.RunCallbacks();
+
+        return !IsSaveInProgress();
+    }
+
+    private static bool IsSaveInProgress()
+    {
+        MySession session = MySession.Static;
+        return (session != null && session.IsSaveInProgress) || MyAsyncSaving.InProgress;
     }
 
     /// <summary>

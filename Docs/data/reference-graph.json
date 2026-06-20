@@ -19,7 +19,9 @@
       "PluginSdk/Commands/ICommandRegistrar.cs"
     ],
     "Legacy/Commands/MagnetarCommands.cs": [
+      "Legacy/Launcher/Game.cs",
       "PluginSdk/Commands/CommandModule.cs",
+      "PluginSdk/Commands/CommandReply.cs",
       "PluginSdk/Commands/CommandRoot.cs"
     ],
     "Legacy/Commands/ServerCommandResponder.cs": [
@@ -546,6 +548,7 @@
       "Legacy/Program.cs"
     ],
     "Legacy/Launcher/Game.cs": [
+      "Legacy/Commands/MagnetarCommands.cs",
       "Legacy/Launcher/ServerControl.cs",
       "Legacy/Program.cs"
     ],
@@ -625,6 +628,7 @@
       "PluginSdkTests/CommandTests.cs"
     ],
     "PluginSdk/Commands/CommandReply.cs": [
+      "Legacy/Commands/MagnetarCommands.cs",
       "Legacy/Commands/ServerCommandResponder.cs",
       "PluginSdk/Commands/CommandContext.cs",
       "PluginSdk/Commands/CommandDispatcher.cs",
