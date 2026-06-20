@@ -175,7 +175,7 @@ jobs:
         id: linuxcompat
         run: |
           set -euo pipefail
-          sha="$(git ls-remote https://github.com/viktor-ferenczi/se-linux-compat HEAD | cut -f1)"
+          sha="$(git ls-remote https://github.com/CometWorks/linux-compat HEAD | cut -f1)"
           echo "Latest se-linux-compat commit: $sha"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
@@ -191,7 +191,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf se-linux-compat
-          git clone https://github.com/viktor-ferenczi/se-linux-compat se-linux-compat
+          git clone https://github.com/CometWorks/linux-compat se-linux-compat
           git -C se-linux-compat checkout "${{ steps.linuxcompat.outputs.sha }}"
           DOCKER_BUILDKIT=1 docker build \
             -f .github/docker/nativewrappers.Dockerfile \

@@ -11,8 +11,8 @@ depends on the host OS:
 `MagnetarLegacy` runs the dedicated server on .NET Framework 4.8 and is
 Windows-only — the .NET Framework reference assemblies it needs do not exist on
 Linux. `MagnetarInterim` runs the server on .NET 10 (via
-[se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat), plus
-[se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat) on Linux)
+[se-dotnet-compat](https://github.com/CometWorks/dotnet-compat), plus
+[se-linux-compat](https://github.com/CometWorks/linux-compat) on Linux)
 and is built on both platforms.
 
 The per-OS target frameworks are selected in each project with the MSBuild
@@ -113,7 +113,7 @@ It populates `build/Libraries/` with:
 | `Steamworks.NET.dll` | built from [rlabrecque/Steamworks.NET](https://github.com/rlabrecque/Steamworks.NET) by [Scripts/build_steamworks_net.sh](../Scripts/build_steamworks_net.sh) |
 | `libsteam_api.so` | the proprietary Linux Steamworks SDK blob — drop it in `Vendor/` or set `LIBSTEAM_API_SO=` |
 | `libEOSSDK-Linux-Shipping.so` | Epic Online Services SDK (drop it in Magnetar's `Vendor/`, or set `LIBEOSSDK_SO=`) |
-| `libHavok.so`, `libRecastDetour.so`, `libVRageNative.so` | PE-loader replacements for Keen's Windows native DLLs, built from [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat)'s `NativeWrappers/` (or `LIBHAVOK_SO=` etc.) |
+| `libHavok.so`, `libRecastDetour.so`, `libVRageNative.so` | PE-loader replacements for Keen's Windows native DLLs, built from [se-linux-compat](https://github.com/CometWorks/linux-compat)'s `NativeWrappers/` (or `LIBHAVOK_SO=` etc.) |
 
 The proprietary blobs (`libsteam_api.so`, `libEOSSDK-Linux-Shipping.so`) are not
 committed; `build.sh` prints exactly where it looked if one is missing. Override
@@ -229,7 +229,7 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
   DS depot's public **build id** (via `steamcmd +app_info_print`, no depot
   download) and exposes it as the `ds_buildid` output used to key the DS cache.
 * **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and
-  `p7zip-full`; builds the [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat)
+  `p7zip-full`; builds the [se-linux-compat](https://github.com/CometWorks/linux-compat)
   `NativeWrappers` in Docker (see
   [`.github/docker/nativewrappers.Dockerfile`](../.github/docker/nativewrappers.Dockerfile)),
   cached by the upstream commit SHA so they only rebuild when that repo's `HEAD`

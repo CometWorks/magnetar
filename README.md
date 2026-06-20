@@ -9,14 +9,14 @@ Magnetar ships two launchers that drop in for `SpaceEngineersDedicated.exe`:
 | Launcher | Runtime | Platforms |
 | -------- | ------- | --------- |
 | `MagnetarLegacy` | .NET Framework 4.8 | Windows only |
-| `MagnetarInterim` | .NET 10 (via [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat)) | Windows + Linux |
+| `MagnetarInterim` | .NET 10 (via [dotnet-compat](https://github.com/CometWorks/dotnet-compat)) | Windows + Linux |
 
 On **Windows** both launchers are built; on **Linux** only `MagnetarInterim`
 (.NET 10).
 
 Compatibility plugins are loaded implicitly:
-- [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat) for .NET 10 compatibility
-- [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat) for Linux compatibility
+- [dotnet-compat](https://github.com/CometWorks/dotnet-compat) for .NET 10 compatibility
+- [linux-compat](https://github.com/CometWorks/linux-compat) for Linux compatibility
 
 You can register new plugins by making PRs to the [MagnetarHub](https://github.com/CometWorks/magnetar-hub).
 

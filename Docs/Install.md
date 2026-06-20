@@ -9,13 +9,13 @@ installation. Two launchers are provided:
   (Windows only).
 * **`MagnetarInterim`** — runs the Dedicated Server on
   [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) (via
-  [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat);
+  [dotnet-compat](https://github.com/CometWorks/dotnet-compat);
   Windows and Linux).
 
 On **Windows** both launchers are shipped. On **Linux** only `MagnetarInterim`
 is shipped — .NET Framework 4.8 is Windows-only, and the Linux dedicated server
-runs on .NET 10 via [se-dotnet-compat](https://github.com/viktor-ferenczi/se-dotnet-compat)
-plus [se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat).
+runs on .NET 10 via [dotnet-compat](https://github.com/CometWorks/dotnet-compat)
+plus [linux-compat](https://github.com/CometWorks/linux-compat).
 
 ## Prebuilt bundles
 
@@ -34,7 +34,7 @@ After installing, see **[Usage](Usage.md)** for how to run the launcher.
 Releases are produced automatically by the
 [`Release`](../.github/workflows/release.yml) GitHub Actions workflow, which
 builds both platforms (pulling the dedicated server via `steamcmd` and the
-[se-linux-compat](https://github.com/viktor-ferenczi/se-linux-compat) native
+[linux-compat](https://github.com/CometWorks/linux-compat) native
 wrappers) and attaches both `.7z` files. A push to `main` publishes a new public
 release when the version in `Directory.Build.props` is higher than the latest
 release; a manual run produces a draft by default, or a public release if you
