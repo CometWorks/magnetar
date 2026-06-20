@@ -21,4 +21,4 @@ Holds all fields for one log event. The primary constructor (C# 12 syntax) sets 
 
 ## Cross-references
 - **Uses:** `PluginSdk/Logging/LogLevel.cs`, `PluginSdk/Logging/LogJson.cs` (indirectly, through sinks)
-- **Used by:** [Logger.cs](Logger.cs.md), [QuasarLogSink.cs](QuasarLogSink.cs.md), [ILogSink.cs](ILogSink.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md), [MagnetarLogSink.cs](MagnetarLogSink.cs.md)
+- **Used by:** [ILogSink.cs](ILogSink.cs.md), [Logger.cs](Logger.cs.md), [MagnetarLogSink.cs](MagnetarLogSink.cs.md), [QuasarLogSink.cs](QuasarLogSink.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)

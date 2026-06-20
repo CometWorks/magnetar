@@ -35,4 +35,4 @@ Single responsibility: wraps four GitHub URL templates and exposes typed helpers
   - `Shared/LogFile.cs` — `LogFile.WriteLine`, `LogFile.Error`
   - External: GitHub REST API (`api.github.com`), GitHub raw content CDN (`raw.githubusercontent.com`)
   - External: `Newtonsoft.Json` (`JObject`, `JArray`, `JToken`)
-- **Used by:** [Profile.cs](../Data/Profile.cs.md), [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [PluginList.cs](../PluginList.cs.md), [GitHubPlugin.CacheManifest.cs](../Data/GitHubPlugin.CacheManifest.cs.md), [Updater.cs](../Updater.cs.md), [Loader.cs](../Loader.cs.md)
+- **Used by:** [GitHubPlugin.CacheManifest.cs](../Data/GitHubPlugin.CacheManifest.cs.md), [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [Profile.cs](../Data/Profile.cs.md), [Loader.cs](../Loader.cs.md), [PluginList.cs](../PluginList.cs.md), [Updater.cs](../Updater.cs.md)

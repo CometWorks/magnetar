@@ -1,6 +1,6 @@
 # Module: Shared.Config
 
-**Project:** `Shared` · **Files:** 12 · **Source lines:** 521
+**Project:** `Shared` · **Files:** 12 · **Source lines:** 530
 
 ## Purpose
 
@@ -14,8 +14,8 @@ Acts as the configuration backbone shared by both the Legacy (Windows/.NET 4.8) 
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
-| `ConfigManager` | class | [`Shared/Config/ConfigManager.cs`](../descriptions/Shared/Config/ConfigManager.cs.md) | Singleton root that aggregates all runtime configuration (core, sources, profiles, plugin list, stats) and exposes game/Pulsar directory paths. |
-| `CoreConfig` | class | [`Shared/Config/CoreConfig.cs`](../descriptions/Shared/Config/CoreConfig.cs.md) | Serialises low-level per-install settings (install GUID, network timeouts, telemetry consent) to config.xml. |
+| `ConfigManager` | class | [`Shared/Config/ConfigManager.cs`](../descriptions/Shared/Config/ConfigManager.cs.md) | Singleton root that aggregates all runtime configuration (core, sources, profiles, plugin list, stats), exposes game/Pulsar directory paths, and manages the instance.id consent anchor. |
+| `CoreConfig` | class | [`Shared/Config/CoreConfig.cs`](../descriptions/Shared/Config/CoreConfig.cs.md) | Serialises low-level per-install settings (network timeouts, tri-state telemetry consent) to config.xml; the anonymous identity now lives in the separate instance.id file. |
 | `SourcesConfig` | class | [`Shared/Config/SourcesConfig.cs`](../descriptions/Shared/Config/SourcesConfig.cs.md) | Registry of all plugin and mod sources (local/remote hubs, direct plugins, Workshop mods) serialised to Sources/sources.xml. |
 | `ProfilesConfig` | class | [`Shared/Config/ProfilesConfig.cs`](../descriptions/Shared/Config/ProfilesConfig.cs.md) | Manages the Profiles/ directory of named plugin-enable Profile XML files, including backup-and-reset on corruption. |
 | `PluginDataConfig` | class | [`Shared/Config/PluginDataConfig.cs`](../descriptions/Shared/Config/PluginDataConfig.cs.md) | Abstract base for per-plugin config records embedded in a Profile; registers concrete subtypes for XmlSerializer via [XmlInclude]. |
@@ -31,8 +31,8 @@ Acts as the configuration backbone shared by both the Legacy (Windows/.NET 4.8) 
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`Shared/Config/ConfigManager.cs`](../descriptions/Shared/Config/ConfigManager.cs.md) | 77 | `ConfigManager` is the singleton root of all runtime configuration for Magnetar. |
-| [`Shared/Config/CoreConfig.cs`](../descriptions/Shared/Config/CoreConfig.cs.md) | 78 | `CoreConfig` persists the fundamental installation-level settings to `config.xml` in the Pulsar/Magnetar data directory. |
+| [`Shared/Config/ConfigManager.cs`](../descriptions/Shared/Config/ConfigManager.cs.md) | 90 | `ConfigManager` is the singleton root of all runtime configuration for Magnetar. |
+| [`Shared/Config/CoreConfig.cs`](../descriptions/Shared/Config/CoreConfig.cs.md) | 74 | `CoreConfig` persists the fundamental installation-level settings to `config.xml` in the Pulsar/Magnetar data directory. |
 | [`Shared/Config/GitHubPluginConfig.cs`](../descriptions/Shared/Config/GitHubPluginConfig.cs.md) | 6 | `GitHubPluginConfig` is the per-plugin configuration record stored inside a `Profile` for plugins sourced from GitHub releases. |
 | [`Shared/Config/LocalFolderConfig.cs`](../descriptions/Shared/Config/LocalFolderConfig.cs.md) | 7 | `LocalFolderConfig` is the per-plugin configuration record stored inside a `Profile` for plugins sourced from a local development folder (the "DevFolder" feature). |
 | [`Shared/Config/PluginDataConfig.cs`](../descriptions/Shared/Config/PluginDataConfig.cs.md) | 10 | `PluginDataConfig` is the abstract base for per-plugin configuration records that are embedded in a `Profile`. |
@@ -49,7 +49,10 @@ Acts as the configuration backbone shared by both the Legacy (Windows/.NET 4.8) 
 - `ConfigManager.EarlyInit(string pulsarDir)`
 - `ConfigManager.Init(string gameDir, string modDir, Version gameVersion, RemoteHubConfig[] defaultHubs)`
 - `ConfigManager.Instance`
-- `ConfigManager.GetOrCreateInstallId()`
+- `ConfigManager.HasInstanceId() → bool`
+- `ConfigManager.ReadInstanceId() → string`
+- `ConfigManager.CreateInstanceId() → string`
+- `ConfigManager.DeleteInstanceId()`
 - `ConfigManager.UpdatePlayerVotes()`
 - `CoreConfig.Load(string mainDirectory)`
 - `CoreConfig.Save()`

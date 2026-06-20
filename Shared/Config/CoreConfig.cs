@@ -12,11 +12,7 @@ public class CoreConfig
 
     public string VotesServerBaseUrl { get; }
 
-    // Stable, anonymous per-install identifier for plugin statistics. Replaces the
-    // client Steam ID, which is unavailable on a dedicated server (no client API).
-    public string InstallId { get; set; }
-
-    public bool DataHandlingConsent { get; set; }
+    public bool? DataHandlingConsent { get; set; }
     public string DataHandlingConsentDate { get; set; }
     public bool AllowIPv6 { get; set; } = true;
     public int NetworkTimeout { get; set; } = 5000;

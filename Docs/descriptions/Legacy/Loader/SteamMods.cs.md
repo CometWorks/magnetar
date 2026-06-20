@@ -19,4 +19,4 @@ Reflection-bridged wrapper over SE's internal Steam workshop downloader. Exists 
 
 ## Cross-references
 - **Uses:** `Pulsar.Shared` (`LogFile`), `Pulsar.Legacy.Loader`/`Steam` helper (`Steam.IsItemInstalled`); SE DS assemblies: `Sandbox.Engine.Networking` (`MyWorkshop`, `MyGameService`), `VRage.Game` (`MyObjectBuilder_Checkpoint.ModItem`), `VRage.Utils` (`MyLog`), `VRage.GameServices` (`MyGameServiceCallResult`, `WorkshopId`), `ParallelTasks` (`Parallel`, `Task`); `HarmonyLib` (`AccessTools`); BCL `System.Threading`. External system: Steam Workshop.
-- **Used by:** [Patch_MySessionLoader.cs](../Patch/Patch_MySessionLoader.cs.md), [PluginLoader.cs](PluginLoader.cs.md)
+- **Used by:** [PluginLoader.cs](PluginLoader.cs.md), [Patch_MySessionLoader.cs](../Patch/Patch_MySessionLoader.cs.md)

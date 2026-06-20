@@ -6,7 +6,7 @@ public class VoteRequest
     // Id of the plugin
     public string PluginId { get; set; }
 
-    // Obfuscated player identifier, see Track.PlayerHash
+    // Anonymous instance identifier (first 20 hex chars of the instance UUID)
     public string PlayerHash { get; set; }
 
     // Voting token returned with the plugin stats

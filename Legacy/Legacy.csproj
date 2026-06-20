@@ -23,11 +23,17 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <AssemblyName>MagnetarLegacy</AssemblyName>
-    <StartProgram>$(Magnetar)\MagnetarLegacy.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' != 'net48'">
     <AssemblyName>MagnetarInterim</AssemblyName>
-    <StartProgram>$(Magnetar)\MagnetarInterim.exe</StartProgram>
+  </PropertyGroup>
+  <!-- Run the launcher just built from this project's output, not a previously
+       deployed copy. Built from early-available properties because $(TargetPath)
+       is not yet defined this early in an SDK-style project. The apphost has no
+       extension on Linux and ".exe" on Windows (net48 is Windows-only). -->
+  <PropertyGroup>
+    <_LauncherExt Condition="'$(OS)' == 'Windows_NT'">.exe</_LauncherExt>
+    <StartProgram>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', 'bin', '$(Configuration)', '$(TargetFramework)', '$(AssemblyName)$(_LauncherExt)'))</StartProgram>
   </PropertyGroup>
   <PropertyGroup>
     <Platforms>x64</Platforms>

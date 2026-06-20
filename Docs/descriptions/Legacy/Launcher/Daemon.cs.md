@@ -1,6 +1,6 @@
 # Legacy/Launcher/Daemon.cs
 
-**Project:** Legacy · **Namespace:** `Pulsar.Legacy.Launcher` · **Kind:** static class · **Lines:** 160
+**Project:** Legacy · **Namespace:** `Pulsar.Legacy.Launcher` · **Kind:** static class · **Lines:** 164
 
 ## Summary
 Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. Called once from [`Program.MagnetarMain`](../Program.cs.md) after `SetupCoreData` (so `LogFile` is ready) and before the heavy startup work, guarded by [`Flags.Daemon`](../../Shared/Flags.cs.md).
@@ -19,4 +19,4 @@ On Linux the detach is a `setsid()` — the process leaves the parent's session 
 
 ## Cross-references
 - **Uses:** `Shared/LogFile.cs` (detach logging); `libc` / `kernel32.dll` via P/Invoke; `System.Diagnostics.Process` (re-exec).
-- **Used by:** [Program.cs](../Program.cs.md) (`MagnetarMain`, when `Flags.Daemon`).
+- **Used by:** [Program.cs](../Program.cs.md)

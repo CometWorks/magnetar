@@ -30,4 +30,4 @@ Static engine-bridge helpers. Several use reflection because the engine members 
 
 ## Cross-references
 - **Uses:** SE DS assemblies — `Sandbox` (`MySandboxGame`, `MyScriptCompiler`/`VRage.Scripting`), `Sandbox.Engine.Utils.MyFakes`, `Sandbox.Game.MyPlatformGameSettings`, `VRage.FileSystem.MyFileSystem`, `VRage.Plugins.MyPlugins`, `VRage.Utils.MyLog`; `Mono.Cecil` / `Mono.Cecil.Cil` (IL scan); `Pulsar.Shared` (`IGameLog`, `Flags`); reflection.
-- **Used by:** [Program.cs](../Program.cs.md), [ServerControl.cs](ServerControl.cs.md)
+- **Used by:** [ServerControl.cs](ServerControl.cs.md), [Program.cs](../Program.cs.md)

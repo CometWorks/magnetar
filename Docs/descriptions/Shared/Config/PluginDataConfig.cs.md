@@ -15,4 +15,4 @@ Base record that provides the plugin `Id` shared across all plugin configuration
 
 ## Cross-references
 - **Uses:** `Shared/Config/LocalFolderConfig.cs` (via `[XmlInclude]`), `Shared/Config/GitHubPluginConfig.cs` (via `[XmlInclude]`)
-- **Used by:** [Profile.cs](../Data/Profile.cs.md), [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [LocalFolderPlugin.cs](../Data/LocalFolderPlugin.cs.md), [PluginData.cs](../Data/PluginData.cs.md), [PluginList.cs](../PluginList.cs.md), [GitHubPluginConfig.cs](GitHubPluginConfig.cs.md), [LocalFolderConfig.cs](LocalFolderConfig.cs.md)
+- **Used by:** [GitHubPluginConfig.cs](GitHubPluginConfig.cs.md), [LocalFolderConfig.cs](LocalFolderConfig.cs.md), [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [LocalFolderPlugin.cs](../Data/LocalFolderPlugin.cs.md), [PluginData.cs](../Data/PluginData.cs.md), [Profile.cs](../Data/Profile.cs.md), [PluginList.cs](../PluginList.cs.md)

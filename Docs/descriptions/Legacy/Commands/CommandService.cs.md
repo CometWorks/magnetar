@@ -33,4 +33,4 @@ Owns the full server-side command lifecycle: registration, dispatch, error routi
   - `Shared/LogFile` (via `Pulsar.Shared`) — logging
   - SE DS `Sandbox.Game.World.MySession` — session null-guard and identity/promote-level lookup
   - SE DS `VRage.Game.ModAPI.MyPromoteLevel` — promote level for `CommandCaller`
-- **Used by:** [Patch_ServerChat.cs](../Patch/Patch_ServerChat.cs.md), [PluginLoader.cs](../Loader/PluginLoader.cs.md)
+- **Used by:** [PluginLoader.cs](../Loader/PluginLoader.cs.md), [Patch_ServerChat.cs](../Patch/Patch_ServerChat.cs.md)

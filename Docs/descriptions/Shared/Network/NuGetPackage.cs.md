@@ -39,4 +39,4 @@ Lightweight value-style object describing one file within a package folder.
 - **Uses:**
   - External: `NuGet.Frameworks` (`NuGetFramework`, `FrameworkReducer`)
   - External: `NuGet.Packaging` (`PackageFolderReader`, `FrameworkSpecificGroup`)
-- **Used by:** [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [NuGetClient.cs](NuGetClient.cs.md), [LocalFolderPlugin.cs](../Data/LocalFolderPlugin.cs.md)
+- **Used by:** [GitHubPlugin.cs](../Data/GitHubPlugin.cs.md), [LocalFolderPlugin.cs](../Data/LocalFolderPlugin.cs.md), [NuGetClient.cs](NuGetClient.cs.md)

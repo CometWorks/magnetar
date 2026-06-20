@@ -79,7 +79,7 @@ Canonical configuration fixture. Class-level attributes declare the UI layout: `
   - `PluginSdk/Config/` — `PluginConfig`, `BoolOption`, `IntOption`, `LongOption`, `FloatOption`, `DoubleOption`, `StringOption`, `ListOption`, `DictOption`, `EnumOption`, `StructOption`, `ColorOption`, `ColorFormat`, `Vector2DOption`, `Vector3DOption`, `Vector2IOption`, `Vector3IOption`, `DirectionOption`, `PositionAndOrientationOption`, `Tab`, `Section`, `Column`, `EnumCaption`, `StructMember`, `StructCaption`
   - `PluginSdk/Tools/SerializableDictionary.cs` — `SerializableDictionary<TK,TV>`
   - SE DS / VRage assemblies — `VRageMath.Color`, `VRageMath.Vector2D/3D/2I/3I`, `VRageMath.Base6Directions.Direction`, `VRage.MyPositionAndOrientation`
-- **Used by:** [ChangeNotificationTests.cs](ChangeNotificationTests.cs.md), [SerializationTests.cs](SerializationTests.cs.md), [SchemaTests.cs](SchemaTests.cs.md)
+- **Used by:** [ChangeNotificationTests.cs](ChangeNotificationTests.cs.md), [SchemaTests.cs](SchemaTests.cs.md), [SerializationTests.cs](SerializationTests.cs.md)
   - `PluginSdkTests/ChangeNotificationTests.cs`
   - `PluginSdkTests/SchemaTests.cs`
   - `PluginSdkTests/SerializationTests.cs`

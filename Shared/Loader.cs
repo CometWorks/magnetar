@@ -19,12 +19,14 @@ public class Loader
 
     private readonly CoreConfig config;
     private readonly ProfilesConfig profiles;
+    private readonly string[] corePluginIds;
 
     public Loader(string votesServer, string[] forceEnable = null)
     {
         ConfigManager manager = ConfigManager.Instance;
         config = manager.Core;
         profiles = manager.Profiles;
+        corePluginIds = forceEnable;
 
         GitHub.Init();
         LogEnabledPlugins();
@@ -105,16 +107,22 @@ public class Loader
 
     private void ReportEnabledPlugins()
     {
-        if (!ConfigManager.Instance.Core.DataHandlingConsent)
+        if (!ConsentManager.Granted)
             return;
+
+        if (ConsentManager.PendingServerConsent)
+        {
+            if (VotesClient.Consent(true))
+                LogFile.WriteLine("Player consent has been registered on the statistics server");
+            else
+                LogFile.Error("Failed to register player consent on the statistics server");
+        }
 
         LogFile.WriteLine("Reporting plugin usage");
 
-        // Skip local plugins, keep only enabled ones
-        string[] trackablePluginIds = [.. profiles.Current.GetPluginIDs(false)];
+        string[] profilePluginIds = [.. profiles.Current.GetPluginIDs(false)];
+        string[] trackablePluginIds = [.. profilePluginIds.Union(corePluginIds ?? [])];
 
-        // Config has already been validated at this point so all enabled plugins will have list items
-        // FIXME: Move into a background thread
         if (VotesClient.Track(trackablePluginIds))
             LogFile.WriteLine("List of enabled plugins has been sent to the statistics server");
         else

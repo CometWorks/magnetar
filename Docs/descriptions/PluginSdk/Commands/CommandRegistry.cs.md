@@ -24,4 +24,4 @@ Stores `CommandRoot` objects in a case-insensitive `Dictionary<string, CommandRo
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/CommandRoot.cs`, `PluginSdk/Commands/CommandRootAttribute.cs`, `PluginSdk/Commands/CommandAttribute.cs`, `PluginSdk/Commands/PermissionAttribute.cs`, `PluginSdk/Commands/RegisteredCommand.cs`, `PluginSdk/Commands/CommandRegistrationException.cs`, `VRage.Game.ModAPI.MyPromoteLevel` (SE DS assembly)
-- **Used by:** [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)
+- **Used by:** [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

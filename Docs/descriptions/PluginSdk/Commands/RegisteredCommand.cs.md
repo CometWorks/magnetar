@@ -29,4 +29,4 @@ Per-command metadata store. Instantiation happens once per registration; `Invoke
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/CommandModule.cs`, `PluginSdk/Commands/CommandContext.cs`, `PluginSdk/Commands/ArgumentBinder.cs`, `VRage.Game.ModAPI.MyPromoteLevel` (SE DS assembly)
-- **Used by:** [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandRoot.cs](CommandRoot.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md)
+- **Used by:** [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md), [CommandRoot.cs](CommandRoot.cs.md)

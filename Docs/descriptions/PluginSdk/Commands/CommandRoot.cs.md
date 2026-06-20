@@ -29,4 +29,4 @@ Minimal trie node. Holds a case-insensitive `Dictionary<string, Node>` of childr
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/RegisteredCommand.cs`, `VRage.Game.ModAPI.MyPromoteLevel` (SE DS assembly)
-- **Used by:** [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md), [MagnetarCommands.cs](../../Legacy/Commands/MagnetarCommands.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md)
+- **Used by:** [MagnetarCommands.cs](../../Legacy/Commands/MagnetarCommands.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

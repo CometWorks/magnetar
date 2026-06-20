@@ -22,4 +22,4 @@ Inherits the full `Dictionary<TKey, TValue>` API and adds XML round-trip support
 ## Cross-references
 
 - **Uses:** `System.Xml` / `System.Xml.Serialization` (BCL), `PluginSdk/Config/PluginConfig.cs` (documented type-constraint context)
-- **Used by:** [ChangeNotificationTests.cs](../../PluginSdkTests/ChangeNotificationTests.cs.md), [TestConfig.cs](../../PluginSdkTests/TestConfig.cs.md), [SerializationTests.cs](../../PluginSdkTests/SerializationTests.cs.md)
+- **Used by:** [ChangeNotificationTests.cs](../../PluginSdkTests/ChangeNotificationTests.cs.md), [SerializationTests.cs](../../PluginSdkTests/SerializationTests.cs.md), [TestConfig.cs](../../PluginSdkTests/TestConfig.cs.md)

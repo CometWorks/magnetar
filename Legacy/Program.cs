@@ -12,6 +12,7 @@ using Pulsar.Legacy.Loader;
 using Pulsar.Legacy.Patch;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
+using Pulsar.Shared.Votes;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
 
@@ -43,11 +44,20 @@ static class Program
         string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarInterim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
+        // -help just prints usage and exits, so skip loading the bundled native
+        // libraries (which register process lifecycle handlers that emit noise).
+        // Detected from the raw args rather than Flags so Main pulls in no
+        // Magnetar.Shared type before the resolver below is installed.
+        bool helpRequested = args.Any(a =>
+            a.Equals("-h", StringComparison.OrdinalIgnoreCase)
+            || a.Equals("-help", StringComparison.OrdinalIgnoreCase)
+            || a.Equals("--help", StringComparison.OrdinalIgnoreCase));
+
         // On Linux, preload every bundled native .so and register a single
         // DllImport resolver covering every present and future ALC. Must run
         // before any [DllImport] site fires (Steamworks.NET, etc.). On Windows
         // the native dependencies resolve through the normal DLL search path.
-        if (OperatingSystem.IsLinux())
+        if (OperatingSystem.IsLinux() && !helpRequested)
             NativeLibraryPreloader.Initialize(baseDir);
 
         // Probe baseDir too: on Linux the managed Steamworks.NET.dll is staged
@@ -65,6 +75,12 @@ static class Program
     static void MagnetarMain(string[] args)
     {
 #endif
+        if (Flags.Help)
+        {
+            Flags.PrintHelp();
+            return;
+        }
+
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         Tools.InstallNativeCrashHandler("Magnetar");
 
@@ -75,6 +91,16 @@ static class Program
         string baseDir = Path.GetDirectoryName(currentAssembly.Location);
 
         SetupCoreData();
+
+        // -withdraw-consent is a one-shot maintenance action: erase server-side
+        // data, record the denial, and exit without starting the server.
+        if (Flags.Consent == ConsentChoice.Withdraw)
+        {
+            ConsentManager.Withdraw(VotesServer);
+            return;
+        }
+
+        ConsentManager.Resolve();
 
         // Detach from the parent (typically Quasar) before the heavy startup work
         // so the parent terminating cannot take the dedicated server down with it.

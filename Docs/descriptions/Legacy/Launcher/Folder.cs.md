@@ -25,4 +25,4 @@ Static-only utility (all members `static`) that resolves and validates the DS64 
 
 ## Cross-references
 - **Uses:** `Pulsar.Shared` (`Tools.IsNative`, `Steam.AppIdSe1DS`, `Steam.GetSteamPath`); `Gameloop.Vdf` / `Gameloop.Vdf.Linq` (VDF parsing of `libraryfolders.vdf`); `Microsoft.Win32` registry; `System.Runtime.InteropServices.RuntimeInformation` — repo-relative: `Shared/` (Tools, Steam).
-- **Used by:** [Program.cs](../Program.cs.md), [ModPlugin.cs](../Extensions/ModPlugin.cs.md)
+- **Used by:** [ModPlugin.cs](../Extensions/ModPlugin.cs.md), [Program.cs](../Program.cs.md)

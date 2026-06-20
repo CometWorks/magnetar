@@ -34,4 +34,4 @@ Holds a `CommandRegistry` reference (read-only after construction) and an option
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/ArgumentBinder.cs`, `PluginSdk/Commands/CommandContext.cs`, `PluginSdk/Commands/CommandLine.cs`, `PluginSdk/Commands/CommandRegistry.cs`, `PluginSdk/Commands/CommandReply.cs`, `PluginSdk/Commands/CommandRoot.cs`, `PluginSdk/Commands/RegisteredCommand.cs`, `PluginSdk/Commands/ICommandResponder.cs`, `PluginSdk/Commands/CommandCaller.cs`
-- **Used by:** [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md), [CommandService.cs](../../Legacy/Commands/CommandService.cs.md)
+- **Used by:** [CommandService.cs](../../Legacy/Commands/CommandService.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

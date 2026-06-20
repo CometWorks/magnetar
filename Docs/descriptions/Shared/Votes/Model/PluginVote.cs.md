@@ -19,4 +19,4 @@ A plain DTO deserialized from the JSON body of a `GET /Stats` response. Consumed
 
 ## Cross-references
 - **Uses:** nothing (pure DTO)
-- **Used by:** [VotesClient.cs](../VotesClient.cs.md), [PluginVotes.cs](PluginVotes.cs.md)
+- **Used by:** [PluginVotes.cs](PluginVotes.cs.md), [VotesClient.cs](../VotesClient.cs.md)

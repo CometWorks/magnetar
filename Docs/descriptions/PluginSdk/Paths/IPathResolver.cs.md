@@ -23,4 +23,4 @@ The single abstraction point for all path-normalization and case-resolution oper
 ## Cross-references
 
 - **Uses:** _(no internal dependencies; defines a pure contract)_
-- **Used by:** [PathResolver.cs](PathResolver.cs.md), [ShimPathResolver.cs](ShimPathResolver.cs.md), [ReflectionPathResolver.cs](../../Legacy/Paths/ReflectionPathResolver.cs.md), [PathResolverTests.cs](../../PluginSdkTests/PathResolverTests.cs.md)
+- **Used by:** [ReflectionPathResolver.cs](../../Legacy/Paths/ReflectionPathResolver.cs.md), [PathResolver.cs](PathResolver.cs.md), [ShimPathResolver.cs](ShimPathResolver.cs.md), [PathResolverTests.cs](../../PluginSdkTests/PathResolverTests.cs.md)

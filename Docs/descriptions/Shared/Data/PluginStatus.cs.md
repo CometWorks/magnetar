@@ -11,4 +11,4 @@
 
 ## Cross-references
 - **Uses:** none.
-- **Used by:** [GitHubPlugin.cs](GitHubPlugin.cs.md), [LocalFolderPlugin.cs](LocalFolderPlugin.cs.md), [PluginData.cs](PluginData.cs.md), [LocalPlugin.cs](LocalPlugin.cs.md), [PluginInstance.cs](../../Legacy/Loader/PluginInstance.cs.md)
+- **Used by:** [PluginInstance.cs](../../Legacy/Loader/PluginInstance.cs.md), [GitHubPlugin.cs](GitHubPlugin.cs.md), [LocalFolderPlugin.cs](LocalFolderPlugin.cs.md), [LocalPlugin.cs](LocalPlugin.cs.md), [PluginData.cs](PluginData.cs.md)

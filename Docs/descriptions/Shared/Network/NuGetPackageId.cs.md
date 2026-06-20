@@ -26,4 +26,4 @@ Simple two-property record with two alternate XML serialisation shapes for the s
   - External: `NuGet.Versioning.NuGetVersion`
   - External: `ProtoBuf` (`ProtoContract`, `ProtoMember`, `ProtoIgnore`)
   - External: `System.Xml.Serialization` (`XmlElement`, `XmlAttribute`)
-- **Used by:** [NuGetPackageList.cs](NuGetPackageList.cs.md), [NuGetClient.cs](NuGetClient.cs.md)
+- **Used by:** [NuGetClient.cs](NuGetClient.cs.md), [NuGetPackageList.cs](NuGetPackageList.cs.md)

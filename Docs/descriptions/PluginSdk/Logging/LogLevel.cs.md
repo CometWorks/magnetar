@@ -12,4 +12,4 @@ Five severity levels in ascending order: `Debug`, `Info`, `Warning`, `Error`, `C
 
 ## Cross-references
 - **Uses:** VRage `MyLogSeverity` (conceptual mirror; no direct code dependency in this file)
-- **Used by:** [Logger.cs](Logger.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md), [PluginInstance.cs](../../Legacy/Loader/PluginInstance.cs.md), [LogEntry.cs](LogEntry.cs.md), [MagnetarLogSink.cs](MagnetarLogSink.cs.md)
+- **Used by:** [PluginInstance.cs](../../Legacy/Loader/PluginInstance.cs.md), [LogEntry.cs](LogEntry.cs.md), [Logger.cs](Logger.cs.md), [MagnetarLogSink.cs](MagnetarLogSink.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)

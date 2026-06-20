@@ -29,4 +29,4 @@ Classifies a cached file. Values: `Asset` (non-code asset from the repo asset fo
 
 ## Cross-references
 - **Uses:** `Tools.GetFileHash` (Shared.Core helpers); `System.IO`; `System.Xml.Serialization`.
-- **Used by:** [GitHubPlugin.cs](GitHubPlugin.cs.md), [LocalFolderPlugin.cs](LocalFolderPlugin.cs.md), [PluginData.cs](PluginData.cs.md), [GitHubPlugin.CacheManifest.cs](GitHubPlugin.CacheManifest.cs.md), [LocalPlugin.cs](LocalPlugin.cs.md), [Updater.cs](../Updater.cs.md)
+- **Used by:** [GitHubPlugin.CacheManifest.cs](GitHubPlugin.CacheManifest.cs.md), [GitHubPlugin.cs](GitHubPlugin.cs.md), [LocalFolderPlugin.cs](LocalFolderPlugin.cs.md), [LocalPlugin.cs](LocalPlugin.cs.md), [PluginData.cs](PluginData.cs.md), [Updater.cs](../Updater.cs.md)

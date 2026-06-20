@@ -16,4 +16,4 @@ Single method; both parameters are passed by-value (`in`) to avoid allocation wh
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/CommandReply.cs`, `PluginSdk/Commands/CommandCaller.cs`
-- **Used by:** [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md), [ServerCommandResponder.cs](../../Legacy/Commands/ServerCommandResponder.cs.md), [CommandContext.cs](CommandContext.cs.md)
+- **Used by:** [ServerCommandResponder.cs](../../Legacy/Commands/ServerCommandResponder.cs.md), [CommandContext.cs](CommandContext.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

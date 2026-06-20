@@ -5,7 +5,7 @@ line:
 
 | Folder | Holds | Default | Override |
 | ------ | ----- | ------- | -------- |
-| **Magnetar config dir** | Magnetar's own config, logs, preloader cache | Windows: `%APPDATA%\Magnetar`<br>Linux: `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar` | `-config <dir>` |
+| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | Windows: `%APPDATA%\Magnetar`<br>Linux: `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar` | `-config <dir>` |
 | **DS install dir** | The dedicated-server binaries (`DedicatedServer64/`) | Auto-detected (see below) | `-ds64 <dir>` |
 | **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg` **and the world saves** (`Saves/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
 
@@ -71,6 +71,22 @@ flag is present.)
 
 Related pass-through DS flags `-session:<path>` (selects which saved world to
 load) and `-ignorelastsession` take effect with or without a console flag.
+
+## Telemetry consent (instance.id)
+
+Anonymous plugin-usage telemetry is **opt-in** (see
+[Usage → Telemetry and consent](Usage.md#telemetry-and-consent) for what is sent
+and the controlling flags). Two pieces of state live in the **Magnetar config dir**:
+
+* **`instance.id`** — a random anonymous UUID created only when you grant consent.
+  Its presence *is* the record that telemetry is enabled, and the first 20 hex
+  characters of the UUID are the only identifier sent to the statistics server (no
+  Steam ID or account is ever involved). Deleting this file disables telemetry;
+  `-withdraw-consent` deletes it and also asks the server to erase the data.
+* **`config.xml`** — records the human-visible decision in `DataHandlingConsent`
+  (`true` / `false` / unset) and `DataHandlingConsentDate`. An accepted decision is
+  only honored while its `instance.id` exists; a stored `true` with no `instance.id`
+  is treated as undecided and you are prompted again.
 
 ## Environment variables
 

@@ -14,4 +14,4 @@ Receives log entries from a `Logger` and writes them to a backing store. Impleme
 
 ## Cross-references
 - **Uses:** `PluginSdk/Logging/LogEntry.cs`
-- **Used by:** [Logger.cs](Logger.cs.md), [QuasarLogSink.cs](QuasarLogSink.cs.md), [LogEnvironment.cs](LogEnvironment.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md), [MagnetarLogSink.cs](MagnetarLogSink.cs.md)
+- **Used by:** [LogEnvironment.cs](LogEnvironment.cs.md), [Logger.cs](Logger.cs.md), [MagnetarLogSink.cs](MagnetarLogSink.cs.md), [QuasarLogSink.cs](QuasarLogSink.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)

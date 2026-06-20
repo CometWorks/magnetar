@@ -6,7 +6,7 @@ namespace Pulsar.Shared.Votes.Model;
 // this request is NOT sent if the user does not give consent in the first place
 public class ConsentRequest
 {
-    // Hash of the player's Steam ID
+    // Anonymous instance identifier (first 20 hex chars of the instance UUID)
     public string PlayerHash { get; set; }
 
     // True if the consent has just given, false if has just withdrawn

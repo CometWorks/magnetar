@@ -16,4 +16,4 @@ Minimal base providing only the `Context` property. The `internal set` ensures o
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/CommandContext.cs`
-- **Used by:** [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md), [MagnetarCommands.cs](../../Legacy/Commands/MagnetarCommands.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md), [RegisteredCommand.cs](RegisteredCommand.cs.md)
+- **Used by:** [MagnetarCommands.cs](../../Legacy/Commands/MagnetarCommands.cs.md), [CommandRegistry.cs](CommandRegistry.cs.md), [RegisteredCommand.cs](RegisteredCommand.cs.md), [CommandTests.cs](../../PluginSdkTests/CommandTests.cs.md)

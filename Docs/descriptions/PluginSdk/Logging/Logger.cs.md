@@ -28,4 +28,4 @@ Provides per-severity convenience methods and a generic `Log` overload. All path
 
 ## Cross-references
 - **Uses:** `PluginSdk/Logging/ILogSink.cs`, `PluginSdk/Logging/LogEntry.cs`, `PluginSdk/Logging/LogLevel.cs`, `PluginSdk/Logging/LogEnvironment.cs`
-- **Used by:** [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)
+- **Used by:** [PluginStats.cs](../Stats/PluginStats.cs.md), [LoggingTests.cs](../../PluginSdkTests/LoggingTests.cs.md)

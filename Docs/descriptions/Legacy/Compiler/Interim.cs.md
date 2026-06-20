@@ -27,4 +27,4 @@ The public factory consumed by the Legacy launcher. Manages the lifecycle of the
 
 ## Cross-references
 - **Uses:** `Compiler/RoslynCompiler.cs` (target type, instantiated reflectively); `Legacy/Compiler/References.cs` (game assembly enumeration); `Compiler/LogFile.cs` (Compiler-side log initialisation, called reflectively); `Compiler/RoslynReferences.cs` (assembly reference setup, called reflectively); `PluginSdk.Paths` — no; `Pulsar.Compiler` — `ICompiler`, `ICompilerFactory` interfaces
-- **Used by:** [Program.cs](../Program.cs.md), [Legacy.cs](Legacy.cs.md)
+- **Used by:** [Legacy.cs](Legacy.cs.md), [Program.cs](../Program.cs.md)

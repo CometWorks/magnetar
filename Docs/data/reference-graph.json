@@ -125,6 +125,7 @@
     "Legacy/Program.cs": [
       "Legacy/Compiler/Interim.cs",
       "Legacy/Compiler/Legacy.cs",
+      "Legacy/Launcher/Daemon.cs",
       "Legacy/Launcher/Folder.cs",
       "Legacy/Launcher/Game.cs",
       "Legacy/Loader/NativeLibraryPreloader.cs",
@@ -138,7 +139,8 @@
       "Shared/Preloader.cs",
       "Shared/Steam.cs",
       "Shared/Tools.cs",
-      "Shared/Updater.cs"
+      "Shared/Updater.cs",
+      "Shared/Votes/ConsentManager.cs"
     ],
     "PluginSdk/Commands/CommandContext.cs": [
       "PluginSdk/Commands/CommandCaller.cs",
@@ -222,6 +224,7 @@
     "PluginSdk/Logging/QuasarLogSink.cs": [
       "PluginSdk/Logging/ILogSink.cs",
       "PluginSdk/Logging/LogEntry.cs",
+      "PluginSdk/Logging/LogEnvironment.cs",
       "PluginSdk/Logging/LogJson.cs"
     ],
     "PluginSdk/Paths/PathResolver.cs": [
@@ -230,6 +233,17 @@
     ],
     "PluginSdk/Paths/ShimPathResolver.cs": [
       "PluginSdk/Paths/IPathResolver.cs"
+    ],
+    "PluginSdk/Stats/PluginStats.cs": [
+      "PluginSdk/Logging/Logger.cs",
+      "PluginSdk/Stats/StatsSnapshot.cs"
+    ],
+    "PluginSdk/Stats/StatsSchema.cs": [
+      "PluginSdk/Stats/StatsAttributes.cs",
+      "PluginSdk/Stats/StatsSnapshot.cs"
+    ],
+    "PluginSdk/Stats/StatsSnapshot.cs": [
+      "PluginSdk/Stats/StatsSchema.cs"
     ],
     "PluginSdkTests/ChangeNotificationTests.cs": [
       "PluginSdk/Tools/SerializableDictionary.cs",
@@ -404,8 +418,9 @@
       "Shared/Flags.cs",
       "Shared/Network/GitHub.cs",
       "Shared/PluginProgress.cs",
-      "Shared/Votes/VotesClient.cs",
-      "Shared/Tools.cs"
+      "Shared/Tools.cs",
+      "Shared/Votes/ConsentManager.cs",
+      "Shared/Votes/VotesClient.cs"
     ],
     "Shared/Network/GitHub.cs": [
       "Shared/Config/ConfigManager.cs",
@@ -443,22 +458,9 @@
       "Shared/AssemblyResolver.cs",
       "Shared/Tools.cs"
     ],
-    "Shared/Votes/Model/PluginVotes.cs": [
-      "Shared/Data/PluginData.cs",
-      "Shared/Votes/Model/PluginVote.cs"
-    ],
-    "Shared/Votes/VotesClient.cs": [
-      "Shared/Config/ConfigManager.cs",
-      "Shared/Network/SimpleHttpClient.cs",
-      "Shared/Votes/Model/ConsentRequest.cs",
-      "Shared/Votes/Model/PluginVote.cs",
-      "Shared/Votes/Model/PluginVotes.cs",
-      "Shared/Votes/Model/TrackRequest.cs",
-      "Shared/Votes/Model/VoteRequest.cs",
-      "Shared/Tools.cs"
-    ],
     "Shared/Tools.cs": [
-      "Compiler/RoslynCompiler.cs"
+      "Compiler/RoslynCompiler.cs",
+      "Shared/Flags.cs"
     ],
     "Shared/Updater.cs": [
       "Shared/Config/ConfigManager.cs",
@@ -468,6 +470,27 @@
       "Shared/Flags.cs",
       "Shared/Network/GitHub.cs",
       "Shared/Tools.cs"
+    ],
+    "Shared/Votes/ConsentManager.cs": [
+      "Shared/Config/ConfigManager.cs",
+      "Shared/Config/CoreConfig.cs",
+      "Shared/Flags.cs",
+      "Shared/Steam.cs",
+      "Shared/Tools.cs",
+      "Shared/Votes/VotesClient.cs"
+    ],
+    "Shared/Votes/Model/PluginVotes.cs": [
+      "Shared/Data/PluginData.cs",
+      "Shared/Votes/Model/PluginVote.cs"
+    ],
+    "Shared/Votes/VotesClient.cs": [
+      "Shared/Network/SimpleHttpClient.cs",
+      "Shared/Votes/ConsentManager.cs",
+      "Shared/Votes/Model/ConsentRequest.cs",
+      "Shared/Votes/Model/PluginVote.cs",
+      "Shared/Votes/Model/PluginVotes.cs",
+      "Shared/Votes/Model/TrackRequest.cs",
+      "Shared/Votes/Model/VoteRequest.cs"
     ]
   },
   "used_by": {
@@ -514,6 +537,9 @@
     "Legacy/Compiler/References.cs": [
       "Legacy/Compiler/Interim.cs",
       "Legacy/Compiler/Legacy.cs"
+    ],
+    "Legacy/Launcher/Daemon.cs": [
+      "Legacy/Program.cs"
     ],
     "Legacy/Launcher/Folder.cs": [
       "Legacy/Extensions/ModPlugin.cs",
@@ -675,6 +701,7 @@
     ],
     "PluginSdk/Logging/LogEnvironment.cs": [
       "PluginSdk/Logging/Logger.cs",
+      "PluginSdk/Logging/QuasarLogSink.cs",
       "PluginSdkTests/LoggingTests.cs"
     ],
     "PluginSdk/Logging/LogJson.cs": [
@@ -689,6 +716,7 @@
       "PluginSdkTests/LoggingTests.cs"
     ],
     "PluginSdk/Logging/Logger.cs": [
+      "PluginSdk/Stats/PluginStats.cs",
       "PluginSdkTests/LoggingTests.cs"
     ],
     "PluginSdk/Logging/MagnetarLogSink.cs": [
@@ -711,6 +739,16 @@
     ],
     "PluginSdk/Paths/ShimPathResolver.cs": [
       "PluginSdk/Paths/PathResolver.cs"
+    ],
+    "PluginSdk/Stats/StatsAttributes.cs": [
+      "PluginSdk/Stats/StatsSchema.cs"
+    ],
+    "PluginSdk/Stats/StatsSchema.cs": [
+      "PluginSdk/Stats/StatsSnapshot.cs"
+    ],
+    "PluginSdk/Stats/StatsSnapshot.cs": [
+      "PluginSdk/Stats/PluginStats.cs",
+      "PluginSdk/Stats/StatsSchema.cs"
     ],
     "PluginSdk/Tools/SerializableDictionary.cs": [
       "PluginSdkTests/ChangeNotificationTests.cs",
@@ -742,14 +780,15 @@
       "Shared/Loader.cs",
       "Shared/Network/GitHub.cs",
       "Shared/Network/NuGetClient.cs",
-      "Shared/Votes/VotesClient.cs",
-      "Shared/Updater.cs"
+      "Shared/Updater.cs",
+      "Shared/Votes/ConsentManager.cs"
     ],
     "Shared/Config/CoreConfig.cs": [
       "Legacy/Program.cs",
       "Shared/Config/ConfigManager.cs",
       "Shared/Loader.cs",
-      "Shared/Network/GitHub.cs"
+      "Shared/Network/GitHub.cs",
+      "Shared/Votes/ConsentManager.cs"
     ],
     "Shared/Config/GitHubPluginConfig.cs": [
       "Shared/Config/PluginDataConfig.cs",
@@ -882,7 +921,9 @@
       "Legacy/Program.cs",
       "Shared/Data/PluginData.cs",
       "Shared/Loader.cs",
-      "Shared/Updater.cs"
+      "Shared/Tools.cs",
+      "Shared/Updater.cs",
+      "Shared/Votes/ConsentManager.cs"
     ],
     "Shared/LogFile.cs": [
       "Legacy/Launcher/Game.cs"
@@ -932,6 +973,41 @@
     "Shared/Preloader.cs": [
       "Legacy/Program.cs"
     ],
+    "Shared/Steam.cs": [
+      "Legacy/Extensions/ModPlugin.cs",
+      "Legacy/Launcher/Folder.cs",
+      "Legacy/Loader/SteamMods.cs",
+      "Legacy/Patch/Patch_Compile.cs",
+      "Legacy/Program.cs",
+      "Shared/Votes/ConsentManager.cs"
+    ],
+    "Shared/Tools.cs": [
+      "Legacy/Compiler/References.cs",
+      "Legacy/Launcher/Folder.cs",
+      "Legacy/Loader/PluginInstance.cs",
+      "Legacy/Patch/Patch_MyDefinitionErrors.cs",
+      "Legacy/Program.cs",
+      "Shared/Config/ProfilesConfig.cs",
+      "Shared/Data/GitHubPlugin.AssetFile.cs",
+      "Shared/Data/GitHubPlugin.cs",
+      "Shared/Data/LocalFolderPlugin.cs",
+      "Shared/Data/PluginData.cs",
+      "Shared/Data/Profile.cs",
+      "Shared/Launcher.cs",
+      "Shared/Loader.cs",
+      "Shared/PluginList.cs",
+      "Shared/Preloader.cs",
+      "Shared/Updater.cs",
+      "Shared/Votes/ConsentManager.cs"
+    ],
+    "Shared/Updater.cs": [
+      "Legacy/Program.cs"
+    ],
+    "Shared/Votes/ConsentManager.cs": [
+      "Legacy/Program.cs",
+      "Shared/Loader.cs",
+      "Shared/Votes/VotesClient.cs"
+    ],
     "Shared/Votes/Model/ConsentRequest.cs": [
       "Shared/Votes/VotesClient.cs"
     ],
@@ -951,36 +1027,8 @@
     ],
     "Shared/Votes/VotesClient.cs": [
       "Shared/Config/ConfigManager.cs",
-      "Shared/Loader.cs"
-    ],
-    "Shared/Steam.cs": [
-      "Legacy/Extensions/ModPlugin.cs",
-      "Legacy/Launcher/Folder.cs",
-      "Legacy/Loader/SteamMods.cs",
-      "Legacy/Patch/Patch_Compile.cs",
-      "Legacy/Program.cs"
-    ],
-    "Shared/Tools.cs": [
-      "Legacy/Compiler/References.cs",
-      "Legacy/Launcher/Folder.cs",
-      "Legacy/Loader/PluginInstance.cs",
-      "Legacy/Patch/Patch_MyDefinitionErrors.cs",
-      "Legacy/Program.cs",
-      "Shared/Config/ProfilesConfig.cs",
-      "Shared/Data/GitHubPlugin.AssetFile.cs",
-      "Shared/Data/GitHubPlugin.cs",
-      "Shared/Data/LocalFolderPlugin.cs",
-      "Shared/Data/PluginData.cs",
-      "Shared/Data/Profile.cs",
-      "Shared/Launcher.cs",
       "Shared/Loader.cs",
-      "Shared/PluginList.cs",
-      "Shared/Preloader.cs",
-      "Shared/Votes/VotesClient.cs",
-      "Shared/Updater.cs"
-    ],
-    "Shared/Updater.cs": [
-      "Legacy/Program.cs"
+      "Shared/Votes/ConsentManager.cs"
     ]
   }
 }

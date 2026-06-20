@@ -22,4 +22,4 @@ DTO for the three-part JSON document. **Properties:** `Schema`, `Defaults`, `Val
 
 ## Cross-references
 - **Uses:** `PluginSdk/Config/PluginConfig.cs` (the serialized base type and its `IXmlSerializable` sparse format); `PluginSdk/Config/ConfigSchema.cs` (`Build`, `ConfigSchemaData`); `PluginSdk/Config/TypeSerialization.cs` (`JsonConverters`); `System.Text.Json`, `System.Xml.Serialization`, `System.IO`.
-- **Used by:** [SerializationTests.cs](../../PluginSdkTests/SerializationTests.cs.md), [SchemaTests.cs](../../PluginSdkTests/SchemaTests.cs.md)
+- **Used by:** [SchemaTests.cs](../../PluginSdkTests/SchemaTests.cs.md), [SerializationTests.cs](../../PluginSdkTests/SerializationTests.cs.md)

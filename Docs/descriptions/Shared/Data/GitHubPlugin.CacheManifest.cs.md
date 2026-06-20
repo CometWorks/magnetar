@@ -35,4 +35,4 @@ Owns the cache directory layout (`Assets`, `Bin`, `plugin.dll`, `manifest.xml`) 
 
 ## Cross-references
 - **Uses:** `GitHubPlugin.AssetFile` (Shared/Data/GitHubPlugin.AssetFile.cs); `ConfigManager.Instance.PulsarDir` (Shared.Config); `LogFile` (Shared.Core logging); `System.Xml.Serialization`; `System.Runtime.InteropServices.RuntimeInformation`.
-- **Used by:** [GitHubPlugin.cs](GitHubPlugin.cs.md), [LocalFolderPlugin.cs](LocalFolderPlugin.cs.md), [PluginData.cs](PluginData.cs.md), [GitHubPlugin.AssetFile.cs](GitHubPlugin.AssetFile.cs.md), [LocalPlugin.cs](LocalPlugin.cs.md), [Updater.cs](../Updater.cs.md)
+- **Used by:** [GitHubPlugin.AssetFile.cs](GitHubPlugin.AssetFile.cs.md), [GitHubPlugin.cs](GitHubPlugin.cs.md), [LocalFolderPlugin.cs](LocalFolderPlugin.cs.md), [LocalPlugin.cs](LocalPlugin.cs.md), [PluginData.cs](PluginData.cs.md), [Updater.cs](../Updater.cs.md)

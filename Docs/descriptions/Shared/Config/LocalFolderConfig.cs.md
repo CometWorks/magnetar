@@ -15,4 +15,4 @@ Minimal data-transfer object for a dev-mode plugin entry. The `DataFile` propert
 
 ## Cross-references
 - **Uses:** `Shared/Config/PluginDataConfig.cs`
-- **Used by:** [LocalFolderPlugin.cs](../Data/LocalFolderPlugin.cs.md), [PluginDataConfig.cs](PluginDataConfig.cs.md), [Profile.cs](../Data/Profile.cs.md)
+- **Used by:** [PluginDataConfig.cs](PluginDataConfig.cs.md), [LocalFolderPlugin.cs](../Data/LocalFolderPlugin.cs.md), [Profile.cs](../Data/Profile.cs.md)
