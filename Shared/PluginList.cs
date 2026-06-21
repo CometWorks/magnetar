@@ -21,6 +21,22 @@ public class PluginList : IEnumerable<PluginData>
     private readonly Dictionary<string, PluginData> purePlugins = [];
     private readonly Dictionary<string, PluginData> localPlugins = [];
 
+    // Implicit plugins are infrastructure Magnetar loads itself, not user
+    // plugins, so they are excluded from the reported plugin count:
+    //   - se-dotnet-compat / se-linux-compat: compatibility shims (see
+    //     Program.GetCorePlugins) letting the .NET Framework dedicated server
+    //     run under CoreCLR on Linux.
+    //   - 0Harmony / Magnetar.Protocol / Quasar.Agent: runtime support
+    //     libraries deployed into the Local plugin folder (keyed by file name).
+    private static readonly HashSet<string> ImplicitPluginIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "se-dotnet-compat",
+        "se-linux-compat",
+        "0Harmony.dll",
+        "Magnetar.Protocol.dll",
+        "Quasar.Agent.dll",
+    };
+
     private Dictionary<string, PluginData> Plugins =>
         purePlugins
             .Concat(modPlugins)
@@ -73,7 +89,17 @@ public class PluginList : IEnumerable<PluginData>
         }
 
         FindLocalPlugins();
-        LogFile.WriteLine($"Found {Plugins.Count} plugins");
+
+        // Count only real plugins loaded from the plugin hub, local dev folders
+        // or local DLLs. Mods are reported separately and implicit plugins
+        // (compat shims, support libraries) are not counted at all.
+        ICollection<PluginData> loaded = Plugins.Values;
+        int pluginCount = loaded.Count(p =>
+            p is not ModPlugin && !ImplicitPluginIds.Contains(p.Id)
+        );
+        int modCount = loaded.Count(p => p is ModPlugin);
+        LogFile.WriteLine($"Found {pluginCount} plugins");
+        LogFile.WriteLine($"Found {modCount} mods");
 
         // Save changes from InitRemoteList() and FindLocalPlugins()
         SourcesConfig.Save();

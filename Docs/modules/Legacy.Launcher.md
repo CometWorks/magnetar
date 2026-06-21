@@ -41,7 +41,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 ## Dependencies
 
 **Uses modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Votes](Shared.Votes.md)  
-**Used by modules:** [Legacy.Commands](Legacy.Commands.md), [Legacy.Integration](Legacy.Integration.md)
+**Used by modules:** [Legacy.Commands](Legacy.Commands.md), [Legacy.Integration](Legacy.Integration.md)  
 **External systems:** GitHub; Harmony; NuGet; SE DS assemblies; Steam
 
 ---

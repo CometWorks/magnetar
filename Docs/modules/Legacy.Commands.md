@@ -1,10 +1,10 @@
 # Module: Legacy.Commands
 
-**Project:** `Legacy` · **Files:** 3 · **Source lines:** 212
+**Project:** `Legacy` · **Files:** 3 · **Source lines:** 243
 
 ## Purpose
 
-Provides the server-side chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. It owns command registration (via CommandService implementing ICommandRegistrar), dispatch of incoming chat through CommandDispatcher, delivery of replies into the SE DS scripted-message API (ServerCommandResponder), and the three built-in lifecycle commands !save, !restart, and !quit (MagnetarCommands).
+Provides the server-side chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. It owns command registration (via CommandService implementing ICommandRegistrar), dispatch of incoming chat through CommandDispatcher, delivery of replies into the SE DS scripted-message API (ServerCommandResponder), and the four built-in lifecycle commands !save, !restart, !quit, and !stop (MagnetarCommands).
 
 ## Role in Magnetar
 
@@ -18,6 +18,7 @@ Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) an
 | `SaveCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !save command module; acknowledges caller, saves on a worker thread, then posts a completion/timeout reply. |
 | `RestartCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !restart command module; acknowledges caller then saves and restarts the server on a worker thread. |
 | `QuitCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !quit command module; acknowledges caller then shuts down without saving on a worker thread. |
+| `StopCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !stop command module (graceful !quit); acknowledges caller, saves on a worker thread, posts the completion/timeout reply, then shuts the server down without saving again. |
 | `ServerCommandResponder` | class | [`Legacy/Commands/ServerCommandResponder.cs`](../descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | ICommandResponder singleton that delivers CommandReply values into SE DS chat via MyVisualScriptLogicProvider. |
 
 ## Files
@@ -25,7 +26,7 @@ Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) an
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Legacy/Commands/CommandService.cs`](../descriptions/Legacy/Commands/CommandService.cs.md) | 114 | `CommandService` is the host-side owner of the chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. |
-| [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 61 | Declares three built-in chat-command modules — `!save`, `!restart`, and `!quit` — that Magnetar registers with `CommandService` before any plugin loads. |
+| [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 92 | Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers with `CommandService` before any plugin loads. |
 | [`Legacy/Commands/ServerCommandResponder.cs`](../descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | 37 | `ServerCommandResponder` is the `ICommandResponder` implementation that delivers command replies into the SE DS chat system. |
 
 ## Public API surface
@@ -37,7 +38,7 @@ Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) an
 
 ## Dependencies
 
-**Uses modules:** [Legacy.Launcher](Legacy.Launcher.md), [PluginSdk.Commands](PluginSdk.Commands.md)
+**Uses modules:** [Legacy.Launcher](Legacy.Launcher.md), [PluginSdk.Commands](PluginSdk.Commands.md)  
 **Used by modules:** [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md)  
 **External systems:** SE DS assemblies
 

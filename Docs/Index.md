@@ -19,7 +19,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Commands/CommandService.cs`](descriptions/Legacy/Commands/CommandService.cs.md) | 114 | 2 | `CommandService` is the host-side owner of the chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. |
-| [`Legacy/Commands/MagnetarCommands.cs`](descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 61 | 2 | Declares three built-in chat-command modules — `!save`, `!restart`, and `!quit` — that Magnetar registers with `CommandService` before any plugin loads. |
+| [`Legacy/Commands/MagnetarCommands.cs`](descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 92 | 2 | Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers with `CommandService` before any plugin loads. |
 | [`Legacy/Commands/ServerCommandResponder.cs`](descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | 37 | 2 | `ServerCommandResponder` is the `ICommandResponder` implementation that delivers command replies into the SE DS chat system. |
 
 ## Legacy.Integration  ·  [module doc](modules/Legacy.Integration.md)
@@ -172,7 +172,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | [`Shared/Launcher.cs`](descriptions/Shared/Launcher.cs.md) | 52 | 2 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
 | [`Shared/Loader.cs`](descriptions/Shared/Loader.cs.md) | 156 | 2 | The orchestrator that instantiates all enabled plugins at startup. |
 | [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 97 | 2 | Magnetar's central logging facade. |
-| [`Shared/PluginList.cs`](descriptions/Shared/PluginList.cs.md) | 842 | 1 | The plugin catalog. |
+| [`Shared/PluginList.cs`](descriptions/Shared/PluginList.cs.md) | 868 | 1 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](descriptions/Shared/PluginProgress.cs.md) | 45 | 2 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](descriptions/Shared/Preloader.cs.md) | 225 | 1 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |
 | [`Shared/Steam.cs`](descriptions/Shared/Steam.cs.md) | 81 | 2 | Thin Steam helper for the Dedicated Server: resolves the Steam install path cross-platform, redirects `Steamworks.NET` assembly resolution to a bundled copy, and checks Workshop item install state through the *game-server* UGC API. |

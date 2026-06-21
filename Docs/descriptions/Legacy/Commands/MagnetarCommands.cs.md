@@ -1,9 +1,9 @@
 # Legacy/Commands/MagnetarCommands.cs
 
-**Project:** Legacy · **Namespace:** `Pulsar.Legacy.Commands` · **Kind:** class (multiple) · **Lines:** 61
+**Project:** Legacy · **Namespace:** `Pulsar.Legacy.Commands` · **Kind:** class (multiple) · **Lines:** 92
 
 ## Summary
-Declares three built-in chat-command modules — `!save`, `!restart`, and `!quit` — that Magnetar registers with `CommandService` before any plugin loads. Because they are registered first and last-registration wins, a plugin may override any of them. Each command offloads its lifecycle work to a worker thread via `Task.Run` so save/restart work can block to completion without stalling the game-update thread; `!save` acknowledges immediately and then sends a completion, timeout, or failure reply after `ServerControl.SaveWorld()` returns.
+Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers with `CommandService` before any plugin loads. Because they are registered first and last-registration wins, a plugin may override any of them. Each command offloads its lifecycle work to a worker thread via `Task.Run` so save/restart work can block to completion without stalling the game-update thread; `!save` and `!stop` acknowledge immediately and then send a completion, timeout, or failure reply after `ServerControl.SaveWorld()` returns.
 
 ## Types
 
@@ -25,12 +25,18 @@ Handles `!quit`. Responds with "Shutting the server down without saving…" then
 - **Methods:**
   - `Quit()` — `[Command("", "Shut the server down without saving")]`; responds to caller, dispatches `ServerControl.QuitWithoutSaving` on a `Task`
 
+### `StopCommand` — class, public : `CommandModule`
+Handles `!stop` (save the world, then shut down). Responds with "Saving world and shutting the server down…" immediately, then on a worker thread calls `ServerControl.SaveWorld()` and waits for it; it posts a game-thread reply ("World saved, shutting down…" on success, a timeout-anyway message on false, or a failure-anyway message on exception, logging it) and then unconditionally calls `ServerControl.QuitWithoutSaving()` — the world is already persisted, so it quits without saving again. Effectively a graceful `!quit`: combines `!save` semantics with the shutdown of `!quit`.
+
+- **Methods:**
+  - `Stop()` — `[Command("", "Save the world then shut the server down")]`; captures the context, acknowledges the caller, dispatches the save+reply+quit sequence on a `Task`, posting the reply through `Game.RunOnGameThread`
+
 ## Cross-references
 - **Uses:**
   - `PluginSdk/Commands/CommandModule.cs` — base class; provides `Context` (including `Context.Respond`)
   - `PluginSdk/Commands/CommandAttribute.cs` — `[Command]` attribute
   - `PluginSdk/Commands/CommandRootAttribute.cs` — `[CommandRoot]` attribute
-  - `Legacy/Launcher/Game.cs` — `Game.RunOnGameThread` for final `!save` replies
+  - `Legacy/Launcher/Game.cs` — `Game.RunOnGameThread` for final `!save` / `!stop` replies
   - `Legacy/Launcher/ServerControl.cs` — `SaveWorld`, `SaveAndRestart`, `QuitWithoutSaving` implementations
-  - `Shared/LogFile.cs` — logs unexpected `!save` failures
+  - `Shared/LogFile.cs` — logs unexpected `!save` / `!stop` failures
 - **Used by:** [PluginLoader.cs](../Loader/PluginLoader.cs.md)
