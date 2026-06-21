@@ -77,7 +77,7 @@
   {
     "module": "Legacy.Commands",
     "project": "Legacy",
-    "purpose": "Provides the server-side chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. It owns command registration (via CommandService implementing ICommandRegistrar), dispatch of incoming chat through CommandDispatcher, delivery of replies into the SE DS scripted-message API (ServerCommandResponder), and the three built-in lifecycle commands !save, !restart, and !quit (MagnetarCommands).",
+    "purpose": "Provides the server-side chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. It owns command registration (via CommandService implementing ICommandRegistrar), dispatch of incoming chat through CommandDispatcher, delivery of replies into the SE DS scripted-message API (ServerCommandResponder), and the four built-in lifecycle commands !save, !restart, !quit, and !stop (MagnetarCommands).",
     "role": "Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) and the PluginSdk command framework. CommandService is instantiated and held by PluginLoader (Legacy.Loader), installed as the ServerCommands.Registrar so plugins register through the SDK facade, and invoked by the Harmony prefix whenever a global-chat message begins with '!'. MagnetarCommands registers built-in server-lifecycle commands before plugins load, and ServerCommandResponder bridges PluginSdk reply objects onto SE DS MyVisualScriptLogicProvider.",
     "key_types": [
       {
@@ -103,6 +103,12 @@
         "kind": "class",
         "file": "Legacy/Commands/MagnetarCommands.cs",
         "summary": "Built-in !quit command module; acknowledges caller then shuts down without saving on a worker thread."
+      },
+      {
+        "name": "StopCommand",
+        "kind": "class",
+        "file": "Legacy/Commands/MagnetarCommands.cs",
+        "summary": "Built-in !stop command module (graceful !quit); acknowledges caller, saves on a worker thread, posts the completion/timeout reply, then shuts the server down without saving again."
       },
       {
         "name": "ServerCommandResponder",

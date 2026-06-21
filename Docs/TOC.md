@@ -95,17 +95,17 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Legacy.Launcher](modules/Legacy.Launcher.md) | 5 | 1442 | Launcher bootstrap & entry point: argument parsing, DS detection, environment setup, daemon detach, and handoff to the game's `Main`. |
+| [Legacy.Launcher](modules/Legacy.Launcher.md) | 5 | 1455 | Launcher bootstrap & entry point: argument parsing, DS detection, environment setup, daemon detach, and handoff to the game's `Main`. |
 | [Legacy.Loader](modules/Legacy.Loader.md) | 5 | 932 | Runtime plugin host & native bootstrap: instantiates plugins, drives their SE lifecycle, registers components, preloads native libs. |
 | [Legacy.Patch](modules/Legacy.Patch.md) | 11 | 488 | All Harmony patches that adapt the DS binary to Magnetar's headless, in-process, externally-configured hosting model. |
-| [Legacy.Commands](modules/Legacy.Commands.md) | 3 | 196 | Host side of the `!`-prefixed chat-command pipeline and the built-in `!save` / `!restart` / `!quit` commands. |
+| [Legacy.Commands](modules/Legacy.Commands.md) | 3 | 243 | Host side of the `!`-prefixed chat-command pipeline and the built-in `!save` / `!restart` / `!quit` / `!stop` commands. |
 | [Legacy.Integration](modules/Legacy.Integration.md) | 6 | 471 | Glue to SE internals: isolated Roslyn compilation host and Linux case-insensitive path resolution. |
 
 ### `Shared` — cross-target infrastructure
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Shared.Core](modules/Shared.Core.md) | 11 | 2159 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
+| [Shared.Core](modules/Shared.Core.md) | 11 | 2185 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
 | [Shared.Data](modules/Shared.Data.md) | 10 | 1685 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status). |
 | [Shared.Config](modules/Shared.Config.md) | 12 | 530 | All persistent installation configuration: core config, profiles, plugin sources, and the instance.id consent anchor. |
 | [Shared.Network](modules/Shared.Network.md) | 7 | 864 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |

@@ -21,7 +21,7 @@
       "Legacy/Commands/ServerCommandResponder.cs"
     ],
     "file_count": 3,
-    "total_lines": 212,
+    "total_lines": 243,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -226,7 +226,7 @@
       "Shared/Updater.cs"
     ],
     "file_count": 11,
-    "total_lines": 2159,
+    "total_lines": 2185,
     "model": "opus",
     "dominant_tier": 1
   },
