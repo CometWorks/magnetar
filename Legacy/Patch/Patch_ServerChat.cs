@@ -10,10 +10,13 @@ using VRage.Network;
 namespace Pulsar.Legacy.Patch;
 
 /// <summary>
-/// Intercepts global chat on the server before it is relayed to other players.
-/// When a message in the global channel starts with the command prefix and is
-/// handled by a registered command root, the original handler is skipped so the
-/// command text is never broadcast or written to the chat log.
+/// Intercepts player-typed chat on the server before it is relayed to other
+/// players. When a message in a player-typed channel (global, faction or
+/// private) starts with the command prefix and is handled by a registered
+/// command root, the original handler is skipped so the command text is never
+/// relayed or written to the chat log. Scripted/system channels
+/// (GlobalScripted, ChatBot, BroadcastController) are left untouched, since
+/// they are emitted by mods and programmable blocks rather than players.
 /// </summary>
 [HarmonyPatchCategory("Late")]
 [HarmonyPatch(typeof(MyMultiplayerBase), "OnChatMessageReceived_Server")]
@@ -24,7 +27,10 @@ public static class Patch_ServerChat
     {
         try
         {
-            if (msg.Channel != (byte)ChatChannel.Global)
+            var channel = (ChatChannel)msg.Channel;
+            if (channel != ChatChannel.Global &&
+                channel != ChatChannel.Faction &&
+                channel != ChatChannel.Private)
                 return true;
 
             string text = msg.Text;
