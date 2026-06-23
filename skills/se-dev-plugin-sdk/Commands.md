@@ -195,7 +195,9 @@ Levels are Keen's `MyPromoteLevel`: `None`, `Scripter`, `Moderator`,
   binds arguments, runs the handler on the game thread, and sends replies.
 - Suppresses recognised command lines from being broadcast to other players.
 - Generates `!prefix` overview and `!prefix help [cmd]` automatically — do not
-  define a `help` command yourself (the name is reserved).
+  define a `help` command yourself (the name is reserved). When the
+  `MissionScreens` host sender is available, generated help opens as a mission
+  screen through `MagnetarMod`; otherwise it falls back to chat.
 - Several modules — even from different plugins — may share one prefix; their
   commands merge under the same root. If two commands resolve to the same path,
   the **last registration wins** (it overwrites the earlier one), so a plugin

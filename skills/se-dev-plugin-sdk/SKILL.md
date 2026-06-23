@@ -1,6 +1,6 @@
 ---
 name: se-dev-plugin-sdk
-description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables, the UI layout Quasar renders remotely, server-side chat commands, server lifecycle control (save/reload/quit/restart) and reacting to admin shutdown/restart, case-insensitive path resolution that works on both Windows and Linux, to log through one environment-agnostic Logger, and to publish self-describing runtime statistics a consumer can collect and chart.
+description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables, the UI layout Quasar renders remotely, server-side chat commands, client mission-screen popups, server lifecycle control (save/reload/quit/restart) and reacting to admin shutdown/restart, case-insensitive path resolution that works on both Windows and Linux, to log through one environment-agnostic Logger, and to publish self-describing runtime statistics a consumer can collect and chart.
 license: MIT
 ---
 
@@ -29,6 +29,10 @@ storage) is derived from those attributes by reflection.
 The library also lets a plugin declare **server-side chat commands**
 (`!prefix cmd args`) with attribute-decorated methods — no parsing or
 dispatch boilerplate. See [Commands.md](Commands.md).
+
+The library also exposes **mission-screen popups** through `MissionScreens`, so
+server-side plugins can show longer client UI text through the companion
+`MagnetarMod` world mod. See [MissionScreens.md](MissionScreens.md).
 
 The library also gives a plugin a single **`Logger`** that writes to the game
 log when running standalone and to structured JSON when managed by Quasar —
@@ -66,6 +70,7 @@ expect. See [Platform.md](Platform.md).
 | [Mutation.md](Mutation.md) | **Critical reading** before editing a list, dictionary or struct option at runtime — why in-place mutations need `NotifyChanged`. |
 | [Example.md](Example.md) | Complete annotated config class to copy-paste from. |
 | [Commands.md](Commands.md) | Adding server chat commands (`!prefix cmd`) with `[CommandRoot]` / `[Command]` modules. |
+| [MissionScreens.md](MissionScreens.md) | Showing client mission-screen popups from server-side plugins through the bundled `MagnetarMod` receiver. |
 | [Logging.md](Logging.md) | Logging through one environment-agnostic `Logger` — game log when standalone, JSON when managed by Quasar. |
 | [Paths.md](Paths.md) | Resolving filesystem paths case-insensitively via `PathResolver` so file handling works on both Windows and Linux. |
 | [ServerControl.md](ServerControl.md) | Driving the server lifecycle — save, reload config, quit, restart — via the static `ServerControl` facade, and reacting to admin shutdown/restart via its `Terminating` event. |

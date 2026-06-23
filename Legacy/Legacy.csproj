@@ -92,6 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Sandbox.Game" HintPath="$(DS64)\Sandbox.Game.dll" Private="False" />
+    <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
     <Reference Include="Sandbox.Graphics" HintPath="$(DS64)\Sandbox.Graphics.dll" Private="False" />
     <Reference Include="SpaceEngineersDedicated" HintPath="$(DS64)\SpaceEngineersDedicated.exe" Private="False" />
     <Reference Include="SpaceEngineers.Game" HintPath="$(DS64)\SpaceEngineers.Game.dll" Private="False" />

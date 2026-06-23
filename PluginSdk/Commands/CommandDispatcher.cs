@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace PluginSdk.Commands
 {
@@ -174,11 +175,18 @@ namespace PluginSdk.Commands
                 .OrderBy(r => r.Prefix, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            Reply(responder, caller, CommandReply.Info("=== Server Commands ===").WithAuthor(author));
+            var lines = new List<string>
+            {
+                "=== Server Commands ==="
+            };
 
             if (roots.Count == 0)
             {
-                Reply(responder, caller, CommandReply.Info("No server commands available").WithAuthor(author));
+                lines.Add("No server commands available");
+                if (TryShowMissionHelp(caller, "Magnetar Help", "Server Commands", lines))
+                    return;
+
+                ReplyLines(responder, caller, author, lines);
                 return;
             }
 
@@ -186,11 +194,15 @@ namespace PluginSdk.Commands
             {
                 string line = string.IsNullOrEmpty(root.Description)
                     ? $"!{root.Prefix}"
-                    : $"!{root.Prefix} — {root.Description}";
-                Reply(responder, caller, CommandReply.Info(line).WithAuthor(author));
+                    : $"!{root.Prefix} - {root.Description}";
+                lines.Add(line);
             }
 
-            Reply(responder, caller, CommandReply.Info("Type a command to run it or list its sub-commands.").WithAuthor(author));
+            lines.Add("Type a command to run it or list its sub-commands.");
+            if (TryShowMissionHelp(caller, "Magnetar Help", "Server Commands", lines))
+                return;
+
+            ReplyLines(responder, caller, author, lines);
         }
 
         private static void SendOverview(CommandRoot root, CommandCaller caller, ICommandResponder responder)
@@ -199,12 +211,19 @@ namespace PluginSdk.Commands
 
             string header = string.IsNullOrEmpty(root.Description)
                 ? $"=== {root.Title} ==="
-                : $"=== {root.Title} — {root.Description} ===";
-            Reply(responder, caller, CommandReply.Info(header).WithAuthor(root.Title));
+                : $"=== {root.Title} - {root.Description} ===";
+            var lines = new List<string>
+            {
+                header
+            };
 
             if (visible.Count == 0)
             {
-                Reply(responder, caller, CommandReply.Info("No server commands available").WithAuthor(root.Title));
+                lines.Add("No server commands available");
+                if (TryShowMissionHelp(caller, root.Title, "Command Overview", lines))
+                    return;
+
+                ReplyLines(responder, caller, root.Title, lines);
                 return;
             }
 
@@ -212,11 +231,15 @@ namespace PluginSdk.Commands
             {
                 string line = string.IsNullOrEmpty(c.Description)
                     ? $"!{root.Prefix} {string.Join(" ", c.Path)}"
-                    : $"!{root.Prefix} {string.Join(" ", c.Path)} — {c.Description}";
-                Reply(responder, caller, CommandReply.Info(line).WithAuthor(root.Title));
+                    : $"!{root.Prefix} {string.Join(" ", c.Path)} - {c.Description}";
+                lines.Add(line);
             }
 
-            Reply(responder, caller, CommandReply.Info($"Type !{root.Prefix} help <command> for details.").WithAuthor(root.Title));
+            lines.Add($"Type !{root.Prefix} help <command> for details.");
+            if (TryShowMissionHelp(caller, root.Title, "Command Overview", lines))
+                return;
+
+            ReplyLines(responder, caller, root.Title, lines);
         }
 
         private static void SendHelp(CommandRoot root, List<string> path, CommandCaller caller, ICommandResponder responder)
@@ -234,9 +257,49 @@ namespace PluginSdk.Commands
                 return;
             }
 
-            Reply(responder, caller, CommandReply.Info($"Usage: {command.Syntax}").WithAuthor(root.Title));
+            var lines = new List<string>
+            {
+                $"Usage: {command.Syntax}"
+            };
             if (!string.IsNullOrEmpty(command.HelpText))
-                Reply(responder, caller, CommandReply.Info(command.HelpText).WithAuthor(root.Title));
+                lines.Add(command.HelpText);
+
+            if (TryShowMissionHelp(caller, root.Title, "Command Help", lines))
+                return;
+
+            ReplyLines(responder, caller, root.Title, lines);
+        }
+
+        private static bool TryShowMissionHelp(
+            CommandCaller caller,
+            string screenTitle,
+            string currentObjective,
+            List<string> lines)
+        {
+            if (!PluginSdk.MissionScreens.IsHostSenderAvailable)
+                return false;
+
+            var body = new StringBuilder();
+            foreach (string line in lines)
+                body.AppendLine(line);
+
+            return PluginSdk.MissionScreens.ShowToPlayer(
+                caller.IdentityId,
+                screenTitle,
+                null,
+                currentObjective,
+                body.ToString(),
+                "Close");
+        }
+
+        private static void ReplyLines(
+            ICommandResponder responder,
+            CommandCaller caller,
+            string author,
+            List<string> lines)
+        {
+            foreach (string line in lines)
+                Reply(responder, caller, CommandReply.Info(line).WithAuthor(author));
         }
 
         private static void Reply(ICommandResponder responder, CommandCaller caller, in CommandReply reply)
