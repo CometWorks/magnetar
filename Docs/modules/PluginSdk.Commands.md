@@ -1,6 +1,6 @@
 # Module: PluginSdk.Commands
 
-**Project:** `PluginSdk` · **Files:** 17 · **Source lines:** 1226
+**Project:** `PluginSdk` · **Files:** 17 · **Source lines:** 1289
 
 ## Purpose
 
@@ -40,7 +40,7 @@ Plugin-SDK contract layer between a plugin's command logic and the host's SE DS 
 | [`PluginSdk/Commands/CommandAttribute.cs`](../descriptions/PluginSdk/Commands/CommandAttribute.cs.md) | 54 | `CommandAttribute` is the marker that turns a public instance method of a `CommandModule` subclass into a chat command handler. |
 | [`PluginSdk/Commands/CommandCaller.cs`](../descriptions/PluginSdk/Commands/CommandCaller.cs.md) | 37 | `CommandCaller` is an immutable snapshot of the identity and permission level of the player (or server console) who issued a chat command. |
 | [`PluginSdk/Commands/CommandContext.cs`](../descriptions/PluginSdk/Commands/CommandContext.cs.md) | 55 | `CommandContext` is the per-invocation environment that a command handler accesses through `CommandModule.Context`. |
-| [`PluginSdk/Commands/CommandDispatcher.cs`](../descriptions/PluginSdk/Commands/CommandDispatcher.cs.md) | 245 | `CommandDispatcher` is the main entry point for chat message processing. |
+| [`PluginSdk/Commands/CommandDispatcher.cs`](../descriptions/PluginSdk/Commands/CommandDispatcher.cs.md) | 308 | `CommandDispatcher` is the main entry point for chat message processing. |
 | [`PluginSdk/Commands/CommandLine.cs`](../descriptions/PluginSdk/Commands/CommandLine.cs.md) | 69 | `CommandLine` provides a single `Tokenize` method that splits a raw chat string (with the leading `!` already stripped) into an ordered `List<string>` of tokens. |
 | [`PluginSdk/Commands/CommandModule.cs`](../descriptions/PluginSdk/Commands/CommandModule.cs.md) | 21 | `CommandModule` is the plugin-facing base class for a group of chat commands. |
 | [`PluginSdk/Commands/CommandRegistrationException.cs`](../descriptions/PluginSdk/Commands/CommandRegistrationException.cs.md) | 15 | `CommandRegistrationException` is the specific exception thrown by `CommandRegistry` when a module fails to register — for example when the `[CommandRoot]` prefix is already claimed by a different plugin, the prefix is the reserved word `"help"`, a command path starts with the reserved word `"help"`, or the prefix string is empty or contains spaces. |

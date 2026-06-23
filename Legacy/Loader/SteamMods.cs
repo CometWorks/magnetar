@@ -7,8 +7,10 @@ using System.Threading;
 using HarmonyLib;
 using ParallelTasks;
 using Pulsar.Shared;
+using Pulsar.Shared.Data;
 using Sandbox.Engine.Networking;
 using VRage.Game;
+using VRage.GameServices;
 using VRage.Utils;
 
 namespace Pulsar.Legacy.Loader;
@@ -82,7 +84,37 @@ public static class SteamMods
                 [mods, new MyWorkshop.ResultData(), list, new MyWorkshop.CancelToken()]
             );
 
+        if (resultData.Result == MyGameServiceCallResult.OK)
+            RepairLegacyArchives(mods);
+
         MyLog.Default.DecreaseIndent();
         return resultData;
+    }
+
+    public static void RepairLegacyArchives(IEnumerable<MyObjectBuilder_Checkpoint.ModItem> mods)
+    {
+        if (mods is null)
+            return;
+
+        foreach (MyObjectBuilder_Checkpoint.ModItem mod in mods)
+        {
+            if (mod.PublishedFileId == 0 || !mod.IsModData())
+                continue;
+
+            try
+            {
+                string folder = mod.GetModData().Folder;
+                LegacyWorkshopArchive.TryRepair(mod.PublishedFileId, folder);
+            }
+            catch (Exception e)
+            {
+                LogFile.Error(
+                    "Failed checking legacy workshop mod "
+                        + mod.PublishedFileId
+                        + " for extraction: "
+                        + e
+                );
+            }
+        }
     }
 }

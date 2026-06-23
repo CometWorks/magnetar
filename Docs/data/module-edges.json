@@ -6,6 +6,7 @@
   "Legacy.Integration": [
     "Compiler",
     "Legacy.Launcher",
+    "Legacy.Loader",
     "PluginSdk.Runtime",
     "Shared.Core",
     "Shared.Data"
@@ -23,6 +24,7 @@
     "Legacy.Integration",
     "PluginSdk.Commands",
     "PluginSdk.Logging",
+    "PluginSdk.Runtime",
     "Shared.Config",
     "Shared.Core",
     "Shared.Data"

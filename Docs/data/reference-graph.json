@@ -50,6 +50,11 @@
       "Shared/Data/ModPlugin.cs",
       "Shared/Steam.cs"
     ],
+    "Legacy/Integration/MissionScreenSender.cs": [
+      "Legacy/Loader/MagnetarClientMod.cs",
+      "PluginSdk/MissionScreenContent.cs",
+      "PluginSdk/MissionScreens.cs"
+    ],
     "Legacy/Launcher/Folder.cs": [
       "Shared/Steam.cs",
       "Shared/Tools.cs"
@@ -62,6 +67,10 @@
       "Legacy/Launcher/Game.cs",
       "Legacy/Loader/PluginLoader.cs"
     ],
+    "Legacy/Loader/MagnetarClientMod.cs": [
+      "Shared/Flags.cs",
+      "Shared/Steam.cs"
+    ],
     "Legacy/Loader/PluginInstance.cs": [
       "PluginSdk/Logging/LogLevel.cs",
       "Shared/Data/PluginData.cs",
@@ -71,10 +80,13 @@
     "Legacy/Loader/PluginLoader.cs": [
       "Legacy/Commands/CommandService.cs",
       "Legacy/Commands/MagnetarCommands.cs",
+      "Legacy/Integration/MissionScreenSender.cs",
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/PluginInstance.cs",
       "Legacy/Loader/SteamMods.cs",
       "Legacy/Paths/PathResolverBinder.cs",
       "PluginSdk/Commands/ServerCommands.cs",
+      "PluginSdk/MissionScreens.cs",
       "Shared/Config/ConfigManager.cs",
       "Shared/Data/Profile.cs",
       "Shared/Flags.cs",
@@ -97,6 +109,7 @@
       "Shared/Tools.cs"
     ],
     "Legacy/Patch/Patch_MyDefinitionManager.cs": [
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Shared/Config/ConfigManager.cs",
       "Shared/Data/ModPlugin.cs",
       "Shared/Data/Profile.cs",
@@ -110,8 +123,13 @@
       "Shared/PluginList.cs"
     ],
     "Legacy/Patch/Patch_MySessionLoader.cs": [
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/SteamMods.cs",
       "Shared/Flags.cs"
+    ],
+    "Legacy/Patch/Patch_MyWorkshop.cs": [
+      "Legacy/Loader/MagnetarClientMod.cs",
+      "Legacy/Loader/SteamMods.cs"
     ],
     "Legacy/Patch/Patch_ServerChat.cs": [
       "Legacy/Commands/CommandService.cs",
@@ -228,6 +246,9 @@
       "PluginSdk/Logging/LogEntry.cs",
       "PluginSdk/Logging/LogEnvironment.cs",
       "PluginSdk/Logging/LogJson.cs"
+    ],
+    "PluginSdk/MissionScreens.cs": [
+      "PluginSdk/MissionScreenContent.cs"
     ],
     "PluginSdk/Paths/PathResolver.cs": [
       "PluginSdk/Paths/IPathResolver.cs",
@@ -540,6 +561,9 @@
       "Legacy/Compiler/Interim.cs",
       "Legacy/Compiler/Legacy.cs"
     ],
+    "Legacy/Integration/MissionScreenSender.cs": [
+      "Legacy/Loader/PluginLoader.cs"
+    ],
     "Legacy/Launcher/Daemon.cs": [
       "Legacy/Program.cs"
     ],
@@ -551,6 +575,13 @@
       "Legacy/Commands/MagnetarCommands.cs",
       "Legacy/Launcher/ServerControl.cs",
       "Legacy/Program.cs"
+    ],
+    "Legacy/Loader/MagnetarClientMod.cs": [
+      "Legacy/Integration/MissionScreenSender.cs",
+      "Legacy/Loader/PluginLoader.cs",
+      "Legacy/Patch/Patch_MyDefinitionManager.cs",
+      "Legacy/Patch/Patch_MySessionLoader.cs",
+      "Legacy/Patch/Patch_MyWorkshop.cs"
     ],
     "Legacy/Loader/NativeLibraryPreloader.cs": [
       "Legacy/Program.cs"
@@ -567,7 +598,8 @@
     ],
     "Legacy/Loader/SteamMods.cs": [
       "Legacy/Loader/PluginLoader.cs",
-      "Legacy/Patch/Patch_MySessionLoader.cs"
+      "Legacy/Patch/Patch_MySessionLoader.cs",
+      "Legacy/Patch/Patch_MyWorkshop.cs"
     ],
     "Legacy/Patch/Patch_Compile.cs": [
       "Legacy/Patch/Patch_MyDefinitionErrors.cs"
@@ -730,6 +762,14 @@
     "PluginSdk/Logging/QuasarLogSink.cs": [
       "PluginSdk/Logging/LogEnvironment.cs",
       "PluginSdkTests/LoggingTests.cs"
+    ],
+    "PluginSdk/MissionScreenContent.cs": [
+      "Legacy/Integration/MissionScreenSender.cs",
+      "PluginSdk/MissionScreens.cs"
+    ],
+    "PluginSdk/MissionScreens.cs": [
+      "Legacy/Integration/MissionScreenSender.cs",
+      "Legacy/Loader/PluginLoader.cs"
     ],
     "PluginSdk/Paths/IPathResolver.cs": [
       "Legacy/Paths/ReflectionPathResolver.cs",
@@ -920,6 +960,7 @@
     "Shared/Flags.cs": [
       "Legacy/Compiler/Interim.cs",
       "Legacy/Launcher/Game.cs",
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/PluginLoader.cs",
       "Legacy/Patch/Patch_MySessionLoader.cs",
       "Legacy/Program.cs",
@@ -980,6 +1021,7 @@
     "Shared/Steam.cs": [
       "Legacy/Extensions/ModPlugin.cs",
       "Legacy/Launcher/Folder.cs",
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/SteamMods.cs",
       "Legacy/Patch/Patch_Compile.cs",
       "Legacy/Program.cs",

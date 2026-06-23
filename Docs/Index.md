@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 129 files across 17 modules.
+Every documented source file, grouped by module. 135 files across 18 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -30,6 +30,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | [`Legacy/Compiler/Legacy.cs`](descriptions/Legacy/Compiler/Legacy.cs.md) | 86 | 2 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
 | [`Legacy/Compiler/References.cs`](descriptions/Legacy/Compiler/References.cs.md) | 36 | 2 | Provides the list of assembly references that the Roslyn compiler must know about when compiling SE scripts and plugins. |
 | [`Legacy/Extensions/ModPlugin.cs`](descriptions/Legacy/Extensions/ModPlugin.cs.md) | 31 | 2 | Extends `ModPlugin` (the Magnetar data type representing a Steam Workshop mod) with the SE DS API objects needed to register a mod with the game engine at runtime. |
+| [`Legacy/Integration/MissionScreenSender.cs`](descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 119 | 2 | `MissionScreenSender` is the dedicated-server side of the PluginSdk mission-screen facade. |
 | [`Legacy/Paths/PathResolverBinder.cs`](descriptions/Legacy/Paths/PathResolverBinder.cs.md) | 77 | 2 | Wires the `PluginSdk.Paths.PathResolver` facade to the LinuxCompat plugin's case-insensitive path cache at startup. |
 | [`Legacy/Paths/ReflectionPathResolver.cs`](descriptions/Legacy/Paths/ReflectionPathResolver.cs.md) | 94 | 2 | An `IPathResolver` backend that forwards path operations to the LinuxCompat plugin's `PathHelpers` and `PathCache` static methods via pre-bound delegates. |
 
@@ -48,10 +49,11 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Loader/LoaderTools.cs`](descriptions/Legacy/Loader/LoaderTools.cs.md) | 137 | 2 | Process-level utilities for the loader: restarting the dedicated server process with adjusted command-line arguments, and force-precompiling (JIT-preparing) plugin assemblies so member-access errors surface immediately instead of mid-game. |
+| [`Legacy/Loader/MagnetarClientMod.cs`](descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | 102 | 2 | `MagnetarClientMod` manages the implicit Steam Workshop client companion mod that lets server-side PluginSdk features show mission-screen popups on clients. |
 | [`Legacy/Loader/NativeLibraryPreloader.cs`](descriptions/Legacy/Loader/NativeLibraryPreloader.cs.md) | 154 | 1 | Linux-only native-library bootstrap that runs once at the very top of `Main()`. |
 | [`Legacy/Loader/PluginInstance.cs`](descriptions/Legacy/Loader/PluginInstance.cs.md) | 336 | 1 | Runtime wrapper around a single loaded plugin: it locates the plugin's `IPlugin` implementation type in the compiled assembly, instantiates it, performs reflection-based dependency injection of loader services into well-known static fields/methods, and drives the SE plugin lifecycle (`Init` / `Update` / `HandleInput` / `Dispose`). |
-| [`Legacy/Loader/PluginLoader.cs`](descriptions/Legacy/Loader/PluginLoader.cs.md) | 217 | 1 | The top-level plugin host: a singleton `IHandleInputPlugin` that SE itself drives (`Init`/`Update`/`HandleInput`/`Dispose`). |
-| [`Legacy/Loader/SteamMods.cs`](descriptions/Legacy/Loader/SteamMods.cs.md) | 88 | 2 | Downloads/updates Steam Workshop items (mod-plugins referenced by the active profile) by reproducing SE's own blocking workshop-download path. |
+| [`Legacy/Loader/PluginLoader.cs`](descriptions/Legacy/Loader/PluginLoader.cs.md) | 229 | 1 | The top-level plugin host: a singleton `IHandleInputPlugin` that SE itself drives (`Init`/`Update`/`HandleInput`/`Dispose`). |
+| [`Legacy/Loader/SteamMods.cs`](descriptions/Legacy/Loader/SteamMods.cs.md) | 120 | 2 | Downloads/updates Steam Workshop items (mod-plugins referenced by the active profile) by reproducing SE's own blocking workshop-download path. |
 
 ## Legacy.Patch  ·  [module doc](modules/Legacy.Patch.md)
 
@@ -63,11 +65,18 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | [`Legacy/Patch/Patch_ExitThreadSafe.cs`](descriptions/Legacy/Patch/Patch_ExitThreadSafe.cs.md) | 20 | 3 | Prefix-patches `MySandboxGame.ExitThreadSafe` to redirect in-game and admin-triggered exit requests through Magnetar's graceful shutdown path. |
 | [`Legacy/Patch/Patch_LoadScripts.cs`](descriptions/Legacy/Patch/Patch_LoadScripts.cs.md) | 17 | 3 | Postfix-patches `MyScriptManager.LoadScripts` to trigger plugin entity-component registration at the correct point in session startup. |
 | [`Legacy/Patch/Patch_MyDefinitionErrors.cs`](descriptions/Legacy/Patch/Patch_MyDefinitionErrors.cs.md) | 40 | 2 | Prefix-patches `MyDefinitionErrors.Add` to intercept Roslyn compilation-failure error messages and redirect them to Magnetar's own log, replacing SE's raw, path-cluttered error string with a cleaner structured output that pairs the mod name with the per-diagnostic messages already collected by `Patch_Compile`. |
-| [`Legacy/Patch/Patch_MyDefinitionManager.cs`](descriptions/Legacy/Patch/Patch_MyDefinitionManager.cs.md) | 42 | 2 | Prefix-patches `MyDefinitionManager.LoadData` to inject client-side mod definitions for any `ModPlugin` entries in the active Magnetar configuration profile before SE processes the mod list. |
+| [`Legacy/Patch/Patch_MyDefinitionManager.cs`](descriptions/Legacy/Patch/Patch_MyDefinitionManager.cs.md) | 45 | 2 | Prefix-patches `MyDefinitionManager.LoadData` to inject client-side mod definitions for any `ModPlugin` entries in the active Magnetar configuration profile before SE processes the mod list. |
 | [`Legacy/Patch/Patch_MyScriptManager.cs`](descriptions/Legacy/Patch/Patch_MyScriptManager.cs.md) | 78 | 2 | Postfix-patches `MyScriptManager.LoadData` to compile and load scripts for client-side `ModPlugin` entries after SE has processed all normal session mods. |
-| [`Legacy/Patch/Patch_MySessionLoader.cs`](descriptions/Legacy/Patch/Patch_MySessionLoader.cs.md) | 34 | 2 | Contains two Harmony Prefix patches on `MySessionLoader.LoadMultiplayerScenarioWorld` and `MySessionLoader.LoadMultiplayerSession` that enforce a "trusted mods" security policy. |
+| [`Legacy/Patch/Patch_MySessionLoader.cs`](descriptions/Legacy/Patch/Patch_MySessionLoader.cs.md) | 38 | 2 | Contains two Harmony Prefix patches on `MySessionLoader.LoadMultiplayerScenarioWorld` and `MySessionLoader.LoadMultiplayerSession` that enforce a "trusted mods" security policy. |
+| [`Legacy/Patch/Patch_MyWorkshop.cs`](descriptions/Legacy/Patch/Patch_MyWorkshop.cs.md) | 27 | 2 | `Patch_MyWorkshop` intercepts SE's `MyWorkshop.DownloadWorldModsBlocking` path. |
 | [`Legacy/Patch/Patch_PrepareCrashReport.cs`](descriptions/Legacy/Patch/Patch_PrepareCrashReport.cs.md) | 44 | 2 | Prefix-patches `VRage.Platform.Windows.MyCrashReporting.PrepareCrashAnalyticsReporting` to redirect the SE crash reporter to run the correct `SpaceEngineers.exe` binary, which in Magnetar's in-process hosting model is not necessarily the process that crashed. |
-| [`Legacy/Patch/Patch_ServerChat.cs`](descriptions/Legacy/Patch/Patch_ServerChat.cs.md) | 50 | 2 | Prefix-patches `MyMultiplayerBase.OnChatMessageReceived_Server` to intercept global chat messages whose text begins with `'!'` and route them through Magnetar's `CommandService` before SE can broadcast them to other players. |
+| [`Legacy/Patch/Patch_ServerChat.cs`](descriptions/Legacy/Patch/Patch_ServerChat.cs.md) | 56 | 2 | Prefix-patches `MyMultiplayerBase.OnChatMessageReceived_Server` to intercept global chat messages whose text begins with `'!'` and route them through Magnetar's `CommandService` before SE can broadcast them to other players. |
+
+## Other  ·  [module doc](modules/Other.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 113 | 2 | `MagnetarModSession` is the client-side receiver for Magnetar mission-screen packets. |
 
 ## PluginSdk.Commands  ·  [module doc](modules/PluginSdk.Commands.md)
 
@@ -77,7 +86,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | [`PluginSdk/Commands/CommandAttribute.cs`](descriptions/PluginSdk/Commands/CommandAttribute.cs.md) | 54 | 2 | `CommandAttribute` is the marker that turns a public instance method of a `CommandModule` subclass into a chat command handler. |
 | [`PluginSdk/Commands/CommandCaller.cs`](descriptions/PluginSdk/Commands/CommandCaller.cs.md) | 37 | 2 | `CommandCaller` is an immutable snapshot of the identity and permission level of the player (or server console) who issued a chat command. |
 | [`PluginSdk/Commands/CommandContext.cs`](descriptions/PluginSdk/Commands/CommandContext.cs.md) | 55 | 2 | `CommandContext` is the per-invocation environment that a command handler accesses through `CommandModule.Context`. |
-| [`PluginSdk/Commands/CommandDispatcher.cs`](descriptions/PluginSdk/Commands/CommandDispatcher.cs.md) | 245 | 1 | `CommandDispatcher` is the main entry point for chat message processing. |
+| [`PluginSdk/Commands/CommandDispatcher.cs`](descriptions/PluginSdk/Commands/CommandDispatcher.cs.md) | 308 | 1 | `CommandDispatcher` is the main entry point for chat message processing. |
 | [`PluginSdk/Commands/CommandLine.cs`](descriptions/PluginSdk/Commands/CommandLine.cs.md) | 69 | 2 | `CommandLine` provides a single `Tokenize` method that splits a raw chat string (with the leading `!` already stripped) into an ordered `List<string>` of tokens. |
 | [`PluginSdk/Commands/CommandModule.cs`](descriptions/PluginSdk/Commands/CommandModule.cs.md) | 21 | 3 | `CommandModule` is the plugin-facing base class for a group of chat commands. |
 | [`PluginSdk/Commands/CommandRegistrationException.cs`](descriptions/PluginSdk/Commands/CommandRegistrationException.cs.md) | 15 | 3 | `CommandRegistrationException` is the specific exception thrown by `CommandRegistry` when a module fails to register — for example when the `[CommandRoot]` prefix is already claimed by a different plugin, the prefix is the reserved word `"help"`, a command path starts with the reserved word `"help"`, or the prefix string is empty or contains spaces. |
@@ -118,6 +127,8 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
+| [`PluginSdk/MissionScreenContent.cs`](descriptions/PluginSdk/MissionScreenContent.cs.md) | 35 | 2 | `MissionScreenContent` is the immutable payload a plugin passes to `MissionScreens` when it wants Magnetar to show the Space Engineers mission-screen popup on clients. |
+| [`PluginSdk/MissionScreens.cs`](descriptions/PluginSdk/MissionScreens.cs.md) | 95 | 2 | `MissionScreens` is the plugin-facing API for showing Space Engineers mission-screen popups on clients. |
 | [`PluginSdk/Paths/IPathResolver.cs`](descriptions/PluginSdk/Paths/IPathResolver.cs.md) | 48 | 2 | Defines the backend contract for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/PathResolver.cs`](descriptions/PluginSdk/Paths/PathResolver.cs.md) | 48 | 2 | Plugin-facing static facade for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/ShimPathResolver.cs`](descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | 2 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
@@ -168,7 +179,7 @@ Every documented source file, grouped by module. 129 files across 17 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Shared/AssemblyResolver.cs`](descriptions/Shared/AssemblyResolver.cs.md) | 107 | 2 | Provides a scoped `AppDomain.AssemblyResolve` handler that satisfies managed assembly load requests from one or more "source" folders, but only when the *requesting* assembly is on an allow-list. |
-| [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 149 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
+| [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 154 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
 | [`Shared/Launcher.cs`](descriptions/Shared/Launcher.cs.md) | 52 | 2 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
 | [`Shared/Loader.cs`](descriptions/Shared/Loader.cs.md) | 156 | 2 | The orchestrator that instantiates all enabled plugins at startup. |
 | [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 97 | 2 | Magnetar's central logging facade. |
