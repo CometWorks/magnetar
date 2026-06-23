@@ -1,6 +1,6 @@
 # Module: Legacy.Patch
 
-**Project:** `Legacy` · **Files:** 11 · **Source lines:** 488
+**Project:** `Legacy` · **Files:** 12 · **Source lines:** 528
 
 ## Purpose
 
@@ -36,11 +36,12 @@ Acts as the glue layer between the unmodified SE DS assemblies and the rest of M
 | [`Legacy/Patch/Patch_ExitThreadSafe.cs`](../descriptions/Legacy/Patch/Patch_ExitThreadSafe.cs.md) | 20 | Prefix-patches `MySandboxGame.ExitThreadSafe` to redirect in-game and admin-triggered exit requests through Magnetar's graceful shutdown path. |
 | [`Legacy/Patch/Patch_LoadScripts.cs`](../descriptions/Legacy/Patch/Patch_LoadScripts.cs.md) | 17 | Postfix-patches `MyScriptManager.LoadScripts` to trigger plugin entity-component registration at the correct point in session startup. |
 | [`Legacy/Patch/Patch_MyDefinitionErrors.cs`](../descriptions/Legacy/Patch/Patch_MyDefinitionErrors.cs.md) | 40 | Prefix-patches `MyDefinitionErrors.Add` to intercept Roslyn compilation-failure error messages and redirect them to Magnetar's own log, replacing SE's raw, path-cluttered error string with a cleaner structured output that pairs the mod name with the per-diagnostic messages already collected by `Patch_Compile`. |
-| [`Legacy/Patch/Patch_MyDefinitionManager.cs`](../descriptions/Legacy/Patch/Patch_MyDefinitionManager.cs.md) | 42 | Prefix-patches `MyDefinitionManager.LoadData` to inject client-side mod definitions for any `ModPlugin` entries in the active Magnetar configuration profile before SE processes the mod list. |
+| [`Legacy/Patch/Patch_MyDefinitionManager.cs`](../descriptions/Legacy/Patch/Patch_MyDefinitionManager.cs.md) | 45 | Prefix-patches `MyDefinitionManager.LoadData` to inject client-side mod definitions for any `ModPlugin` entries in the active Magnetar configuration profile before SE processes the mod list. |
 | [`Legacy/Patch/Patch_MyScriptManager.cs`](../descriptions/Legacy/Patch/Patch_MyScriptManager.cs.md) | 78 | Postfix-patches `MyScriptManager.LoadData` to compile and load scripts for client-side `ModPlugin` entries after SE has processed all normal session mods. |
-| [`Legacy/Patch/Patch_MySessionLoader.cs`](../descriptions/Legacy/Patch/Patch_MySessionLoader.cs.md) | 34 | Contains two Harmony Prefix patches on `MySessionLoader.LoadMultiplayerScenarioWorld` and `MySessionLoader.LoadMultiplayerSession` that enforce a "trusted mods" security policy. |
+| [`Legacy/Patch/Patch_MySessionLoader.cs`](../descriptions/Legacy/Patch/Patch_MySessionLoader.cs.md) | 38 | Contains two Harmony Prefix patches on `MySessionLoader.LoadMultiplayerScenarioWorld` and `MySessionLoader.LoadMultiplayerSession` that enforce a "trusted mods" security policy. |
+| [`Legacy/Patch/Patch_MyWorkshop.cs`](../descriptions/Legacy/Patch/Patch_MyWorkshop.cs.md) | 27 | `Patch_MyWorkshop` intercepts SE's `MyWorkshop.DownloadWorldModsBlocking` path. |
 | [`Legacy/Patch/Patch_PrepareCrashReport.cs`](../descriptions/Legacy/Patch/Patch_PrepareCrashReport.cs.md) | 44 | Prefix-patches `VRage.Platform.Windows.MyCrashReporting.PrepareCrashAnalyticsReporting` to redirect the SE crash reporter to run the correct `SpaceEngineers.exe` binary, which in Magnetar's in-process hosting model is not necessarily the process that crashed. |
-| [`Legacy/Patch/Patch_ServerChat.cs`](../descriptions/Legacy/Patch/Patch_ServerChat.cs.md) | 50 | Prefix-patches `MyMultiplayerBase.OnChatMessageReceived_Server` to intercept global chat messages whose text begins with `'!'` and route them through Magnetar's `CommandService` before SE can broadcast them to other players. |
+| [`Legacy/Patch/Patch_ServerChat.cs`](../descriptions/Legacy/Patch/Patch_ServerChat.cs.md) | 56 | Prefix-patches `MyMultiplayerBase.OnChatMessageReceived_Server` to intercept global chat messages whose text begins with `'!'` and route them through Magnetar's `CommandService` before SE can broadcast them to other players. |
 
 ## Public API surface
 

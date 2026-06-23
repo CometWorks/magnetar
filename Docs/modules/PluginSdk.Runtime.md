@@ -1,6 +1,6 @@
 # Module: PluginSdk.Runtime
 
-**Project:** `PluginSdk` · **Files:** 5 · **Source lines:** 353
+**Project:** `PluginSdk` · **Files:** 7 · **Source lines:** 483
 
 ## Purpose
 
@@ -25,6 +25,8 @@ Acts as the plugin-facing contract layer between plugin code and the underlying 
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
+| [`PluginSdk/MissionScreenContent.cs`](../descriptions/PluginSdk/MissionScreenContent.cs.md) | 35 | `MissionScreenContent` is the immutable payload a plugin passes to `MissionScreens` when it wants Magnetar to show the Space Engineers mission-screen popup on clients. |
+| [`PluginSdk/MissionScreens.cs`](../descriptions/PluginSdk/MissionScreens.cs.md) | 95 | `MissionScreens` is the plugin-facing API for showing Space Engineers mission-screen popups on clients. |
 | [`PluginSdk/Paths/IPathResolver.cs`](../descriptions/PluginSdk/Paths/IPathResolver.cs.md) | 48 | Defines the backend contract for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/PathResolver.cs`](../descriptions/PluginSdk/Paths/PathResolver.cs.md) | 48 | Plugin-facing static facade for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/ShimPathResolver.cs`](../descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
@@ -44,8 +46,8 @@ Acts as the plugin-facing contract layer between plugin code and the underlying 
 
 ## Dependencies
 
-**Uses modules:** _none_  
-**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [PluginSdkTests](PluginSdkTests.md)  
+**Uses modules:** _none_
+**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Loader](Legacy.Loader.md), [PluginSdkTests](PluginSdkTests.md)
 **External systems:** LinuxCompat plugin (provides the real IPathResolver implementation on Linux, not in this repo); MagnetarInterim (binds ServerControl and installs PathResolver backend); MagnetarLegacy (binds ServerControl and installs PathResolver backend); SE DS assemblies (VRage.Utils.MyLog used in ServerControl.RaiseTerminating)
 
 ---

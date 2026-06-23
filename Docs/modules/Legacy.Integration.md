@@ -1,6 +1,6 @@
 # Module: Legacy.Integration
 
-**Project:** `Legacy` · **Files:** 6 · **Source lines:** 471
+**Project:** `Legacy` · **Files:** 7 · **Source lines:** 590
 
 ## Purpose
 
@@ -31,6 +31,7 @@ Acts as the integration layer within the Legacy project, connecting Magnetar's a
 | [`Legacy/Compiler/Legacy.cs`](../descriptions/Legacy/Compiler/Legacy.cs.md) | 86 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
 | [`Legacy/Compiler/References.cs`](../descriptions/Legacy/Compiler/References.cs.md) | 36 | Provides the list of assembly references that the Roslyn compiler must know about when compiling SE scripts and plugins. |
 | [`Legacy/Extensions/ModPlugin.cs`](../descriptions/Legacy/Extensions/ModPlugin.cs.md) | 31 | Extends `ModPlugin` (the Magnetar data type representing a Steam Workshop mod) with the SE DS API objects needed to register a mod with the game engine at runtime. |
+| [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 119 | `MissionScreenSender` is the dedicated-server side of the PluginSdk mission-screen facade. |
 | [`Legacy/Paths/PathResolverBinder.cs`](../descriptions/Legacy/Paths/PathResolverBinder.cs.md) | 77 | Wires the `PluginSdk.Paths.PathResolver` facade to the LinuxCompat plugin's case-insensitive path cache at startup. |
 | [`Legacy/Paths/ReflectionPathResolver.cs`](../descriptions/Legacy/Paths/ReflectionPathResolver.cs.md) | 94 | An `IPathResolver` backend that forwards path operations to the LinuxCompat plugin's `PathHelpers` and `PathCache` static methods via pre-bound delegates. |
 
@@ -44,8 +45,8 @@ Acts as the integration layer within the Legacy project, connecting Magnetar's a
 
 ## Dependencies
 
-**Uses modules:** [Compiler](Compiler.md), [Legacy.Launcher](Legacy.Launcher.md), [PluginSdk.Runtime](PluginSdk.Runtime.md), [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md)  
-**Used by modules:** [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md)  
+**Uses modules:** [Compiler](Compiler.md), [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [PluginSdk.Runtime](PluginSdk.Runtime.md), [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md)
+**Used by modules:** [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md)
 **External systems:** LinuxCompat plugin (runtime optional); SE DS assemblies
 
 ---

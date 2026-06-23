@@ -32,11 +32,12 @@
       "Legacy/Compiler/Legacy.cs",
       "Legacy/Compiler/References.cs",
       "Legacy/Extensions/ModPlugin.cs",
+      "Legacy/Integration/MissionScreenSender.cs",
       "Legacy/Paths/PathResolverBinder.cs",
       "Legacy/Paths/ReflectionPathResolver.cs"
     ],
-    "file_count": 6,
-    "total_lines": 471,
+    "file_count": 7,
+    "total_lines": 590,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -58,13 +59,14 @@
     "project": "Legacy",
     "files": [
       "Legacy/Loader/LoaderTools.cs",
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/NativeLibraryPreloader.cs",
       "Legacy/Loader/PluginInstance.cs",
       "Legacy/Loader/PluginLoader.cs",
       "Legacy/Loader/SteamMods.cs"
     ],
-    "file_count": 5,
-    "total_lines": 932,
+    "file_count": 6,
+    "total_lines": 1078,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -80,11 +82,22 @@
       "Legacy/Patch/Patch_MyDefinitionManager.cs",
       "Legacy/Patch/Patch_MyScriptManager.cs",
       "Legacy/Patch/Patch_MySessionLoader.cs",
+      "Legacy/Patch/Patch_MyWorkshop.cs",
       "Legacy/Patch/Patch_PrepareCrashReport.cs",
       "Legacy/Patch/Patch_ServerChat.cs"
     ],
-    "file_count": 11,
-    "total_lines": 488,
+    "file_count": 12,
+    "total_lines": 528,
+    "model": "sonnet",
+    "dominant_tier": 2
+  },
+  "Other": {
+    "project": "MagnetarMod",
+    "files": [
+      "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
+    ],
+    "file_count": 1,
+    "total_lines": 113,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -110,7 +123,7 @@
       "PluginSdk/Commands/ServerCommands.cs"
     ],
     "file_count": 17,
-    "total_lines": 1226,
+    "total_lines": 1289,
     "model": "sonnet",
     "dominant_tier": 1
   },
@@ -148,14 +161,16 @@
   "PluginSdk.Runtime": {
     "project": "PluginSdk",
     "files": [
+      "PluginSdk/MissionScreenContent.cs",
+      "PluginSdk/MissionScreens.cs",
       "PluginSdk/Paths/IPathResolver.cs",
       "PluginSdk/Paths/PathResolver.cs",
       "PluginSdk/Paths/ShimPathResolver.cs",
       "PluginSdk/ServerControl.cs",
       "PluginSdk/Tools/SerializableDictionary.cs"
     ],
-    "file_count": 5,
-    "total_lines": 353,
+    "file_count": 7,
+    "total_lines": 483,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -226,7 +241,7 @@
       "Shared/Updater.cs"
     ],
     "file_count": 11,
-    "total_lines": 2185,
+    "total_lines": 2190,
     "model": "opus",
     "dominant_tier": 1
   },

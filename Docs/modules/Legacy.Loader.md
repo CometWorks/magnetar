@@ -1,6 +1,6 @@
 # Module: Legacy.Loader
 
-**Project:** `Legacy` · **Files:** 5 · **Source lines:** 932
+**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1078
 
 ## Purpose
 
@@ -25,10 +25,11 @@ This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Win
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Legacy/Loader/LoaderTools.cs`](../descriptions/Legacy/Loader/LoaderTools.cs.md) | 137 | Process-level utilities for the loader: restarting the dedicated server process with adjusted command-line arguments, and force-precompiling (JIT-preparing) plugin assemblies so member-access errors surface immediately instead of mid-game. |
+| [`Legacy/Loader/MagnetarClientMod.cs`](../descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | 102 | `MagnetarClientMod` manages the implicit Steam Workshop client companion mod that lets server-side PluginSdk features show mission-screen popups on clients. |
 | [`Legacy/Loader/NativeLibraryPreloader.cs`](../descriptions/Legacy/Loader/NativeLibraryPreloader.cs.md) | 154 | Linux-only native-library bootstrap that runs once at the very top of `Main()`. |
 | [`Legacy/Loader/PluginInstance.cs`](../descriptions/Legacy/Loader/PluginInstance.cs.md) | 336 | Runtime wrapper around a single loaded plugin: it locates the plugin's `IPlugin` implementation type in the compiled assembly, instantiates it, performs reflection-based dependency injection of loader services into well-known static fields/methods, and drives the SE plugin lifecycle (`Init` / `Update` / `HandleInput` / `Dispose`). |
-| [`Legacy/Loader/PluginLoader.cs`](../descriptions/Legacy/Loader/PluginLoader.cs.md) | 217 | The top-level plugin host: a singleton `IHandleInputPlugin` that SE itself drives (`Init`/`Update`/`HandleInput`/`Dispose`). |
-| [`Legacy/Loader/SteamMods.cs`](../descriptions/Legacy/Loader/SteamMods.cs.md) | 88 | Downloads/updates Steam Workshop items (mod-plugins referenced by the active profile) by reproducing SE's own blocking workshop-download path. |
+| [`Legacy/Loader/PluginLoader.cs`](../descriptions/Legacy/Loader/PluginLoader.cs.md) | 229 | The top-level plugin host: a singleton `IHandleInputPlugin` that SE itself drives (`Init`/`Update`/`HandleInput`/`Dispose`). |
+| [`Legacy/Loader/SteamMods.cs`](../descriptions/Legacy/Loader/SteamMods.cs.md) | 120 | Downloads/updates Steam Workshop items (mod-plugins referenced by the active profile) by reproducing SE's own blocking workshop-download path. |
 
 ## Public API surface
 
@@ -42,8 +43,8 @@ This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Win
 
 ## Dependencies
 
-**Uses modules:** [Legacy.Commands](Legacy.Commands.md), [Legacy.Integration](Legacy.Integration.md), [PluginSdk.Commands](PluginSdk.Commands.md), [PluginSdk.Logging](PluginSdk.Logging.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md)  
-**Used by modules:** [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Patch](Legacy.Patch.md)  
+**Uses modules:** [Legacy.Commands](Legacy.Commands.md), [Legacy.Integration](Legacy.Integration.md), [PluginSdk.Commands](PluginSdk.Commands.md), [PluginSdk.Logging](PluginSdk.Logging.md), [PluginSdk.Runtime](PluginSdk.Runtime.md), [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md)
+**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Patch](Legacy.Patch.md)
 **External systems:** Harmony; NuGet; SE DS assemblies; Steam
 
 ---

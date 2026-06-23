@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 using ProtoBuf;
@@ -56,13 +55,14 @@ public class ModPlugin : PluginData
                 && !Directory.Exists(Path.Combine(modLocation, "Data"))
             )
             {
-                string legacyFile = Directory
-                    .EnumerateFiles(modLocation, "*_legacy.bin")
-                    .FirstOrDefault();
+                string legacyFile = LegacyWorkshopArchive.FindLegacyArchive(modLocation);
                 if (legacyFile is not null)
                 {
-                    isLegacy = true;
-                    modLocation = legacyFile;
+                    if (!LegacyWorkshopArchive.TryExtract(WorkshopId, legacyFile, modLocation))
+                    {
+                        isLegacy = true;
+                        modLocation = legacyFile;
+                    }
                 }
             }
             return modLocation;
