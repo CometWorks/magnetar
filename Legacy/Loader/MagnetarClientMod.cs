@@ -15,7 +15,7 @@ internal static class MagnetarClientMod
 
     public static HashSet<ulong> GetWorkshopIdsForUpdate(IEnumerable<ulong> configuredIds)
     {
-        var ids = new HashSet<ulong>(configuredIds ?? []);
+        var ids = new HashSet<ulong>(configuredIds ?? Enumerable.Empty<ulong>());
 
         if (IsCrossplayEnabled())
         {
@@ -35,20 +35,34 @@ internal static class MagnetarClientMod
         if (checkpoint == null)
             return;
 
-        checkpoint.Mods ??= [];
+        ApplyToModList(ref checkpoint.Mods);
+    }
+
+    public static void ApplyToModList(ref List<MyObjectBuilder_Checkpoint.ModItem> mods)
+    {
+        if (mods == null)
+            mods = new List<MyObjectBuilder_Checkpoint.ModItem>();
+
+        ApplyToModList(mods);
+    }
+
+    public static void ApplyToModList(List<MyObjectBuilder_Checkpoint.ModItem> mods)
+    {
+        if (mods == null)
+            return;
 
         if (IsCrossplayEnabled())
         {
-            int removed = checkpoint.Mods.RemoveAll(IsMagnetarMod);
+            int removed = mods.RemoveAll(IsMagnetarMod);
             if (removed > 0)
                 LogFile.WriteLine($"Crossplay enabled; removed MagnetarMod client companion ({WorkshopId}) from world mods.");
             return;
         }
 
-        if (checkpoint.Mods.Any(IsMagnetarMod))
+        if (mods.Any(IsMagnetarMod))
             return;
 
-        checkpoint.Mods.Add(new MyObjectBuilder_Checkpoint.ModItem(WorkshopId, WorkshopService));
+        mods.Add(CreateModItem());
         LogFile.WriteLine($"Added required MagnetarMod client companion ({WorkshopId}) to world mods.");
     }
 
@@ -64,4 +78,10 @@ internal static class MagnetarClientMod
 
     private static bool IsMagnetarMod(MyObjectBuilder_Checkpoint.ModItem mod)
         => mod.PublishedFileId == WorkshopId;
+
+    private static MyObjectBuilder_Checkpoint.ModItem CreateModItem()
+        => new MyObjectBuilder_Checkpoint.ModItem(WorkshopId, WorkshopService)
+        {
+            FriendlyName = "MagnetarMod",
+        };
 }
