@@ -32,6 +32,7 @@ public static class Flags
     public static bool MakeCheckFile { get; private set; }
     public static bool TrustedMods { get; private set; }
     public static bool Daemon { get; private set; }
+    public static bool NoImplicitMod { get; private set; }
     public static ConsentChoice Consent { get; private set; }
     public static bool Help { get; private set; }
 
@@ -53,6 +54,7 @@ public static class Flags
         MakeCheckFile = HasArg("mkcheck");
         TrustedMods = HasArg("hardened");
         Daemon = HasArg("daemon");
+        NoImplicitMod = HasArg("noimplicitmod");
 
         if (HasArg("withdraw-consent"))
             Consent = ConsentChoice.Withdraw;
@@ -92,6 +94,8 @@ public static class Flags
             changed.Add("TrustedMods");
         if (Daemon)
             changed.Add("Daemon");
+        if (NoImplicitMod)
+            changed.Add("NoImplicitMod");
         if (Consent != ConsentChoice.Unset)
             changed.Add(Consent.ToString());
 
@@ -115,6 +119,7 @@ public static class Flags
         Console.WriteLine("  -daemon             Detach from the parent process and console so the");
         Console.WriteLine("                      server keeps running after the parent exits");
         Console.WriteLine("  -hardened           Load only trusted mods, stripping untrusted Workshop mods");
+        Console.WriteLine("  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod");
         Console.WriteLine("  -mkcheck            Regenerate the Libraries checksum file (bitrot detection)");
         Console.WriteLine("  -keepintro          Do not suppress the game intro video");
         Console.WriteLine("  -debug              Launch the managed debugger at startup");

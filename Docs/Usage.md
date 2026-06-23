@@ -25,6 +25,13 @@ Magnetar passes through — then exit without starting the server. On Linux the 
 screen deliberately skips loading the bundled native libraries, so it prints
 cleanly without startup noise.
 
+## Client companion mod
+
+By default Magnetar auto-loads the Steam Workshop `MagnetarMod` client companion
+so server-side PluginSdk features can open mission-screen popups on clients. Pass
+`-noimplicitmod` to skip adding it and remove it from the active world mod list
+for that run.
+
 ## Telemetry and consent
 
 Magnetar can send **anonymous** plugin usage statistics (the list of enabled

@@ -17,6 +17,13 @@ internal static class MagnetarClientMod
     {
         var ids = new HashSet<ulong>(configuredIds ?? Enumerable.Empty<ulong>());
 
+        if (Flags.NoImplicitMod)
+        {
+            ids.Remove(WorkshopId);
+            LogFile.WriteLine("MagnetarMod client companion disabled by -noimplicitmod.");
+            return ids;
+        }
+
         if (IsCrossplayEnabled())
         {
             ids.Remove(WorkshopId);
@@ -50,6 +57,14 @@ internal static class MagnetarClientMod
     {
         if (mods == null)
             return;
+
+        if (Flags.NoImplicitMod)
+        {
+            int removed = mods.RemoveAll(IsMagnetarMod);
+            if (removed > 0)
+                LogFile.WriteLine($"Removed MagnetarMod client companion ({WorkshopId}) from world mods because -noimplicitmod is set.");
+            return;
+        }
 
         if (IsCrossplayEnabled())
         {
