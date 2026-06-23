@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Pulsar.Legacy.Extensions;
+using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
@@ -19,6 +20,8 @@ public static class Patch_MyDefinitionManager
     {
         try
         {
+            MagnetarClientMod.ApplyToModList(ref mods);
+
             HashSet<ulong> currentMods = [.. mods.Select(x => x.PublishedFileId)];
             List<MyObjectBuilder_Checkpoint.ModItem> newMods = [.. mods];
 
