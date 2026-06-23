@@ -149,7 +149,8 @@ public class PluginLoader : IHandleInputPlugin
         PluginList list = ConfigManager.Instance.List;
         Profile current = ConfigManager.Instance.Profiles.Current;
 
-        IEnumerable<ulong> steamIDs = list.GetModPlugins(current, []).Select(x => x.WorkshopId);
+        IEnumerable<ulong> steamIDs = MagnetarClientMod.GetWorkshopIdsForUpdate(
+            list.GetModPlugins(current, []).Select(x => x.WorkshopId));
         SteamMods.Update(steamIDs);
     }
 

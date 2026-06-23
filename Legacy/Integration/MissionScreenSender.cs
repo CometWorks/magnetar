@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using PluginSdk;
+using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
@@ -86,7 +87,9 @@ internal static class MissionScreenSender
 
         foreach (MyObjectBuilder_Checkpoint.ModItem mod in MySession.Static.Mods)
         {
-            if (ContainsModName(mod.Name) || ContainsModName(mod.FriendlyName))
+            if (mod.PublishedFileId == MagnetarClientMod.WorkshopId ||
+                ContainsModName(mod.Name) ||
+                ContainsModName(mod.FriendlyName))
                 return true;
         }
 

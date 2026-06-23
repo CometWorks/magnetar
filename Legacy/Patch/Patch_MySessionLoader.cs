@@ -17,6 +17,8 @@ internal class Patch_MySessionLoader
         MyMultiplayerBase multiplayerSession
     )
     {
+        MagnetarClientMod.ApplyToCheckpoint(world?.Checkpoint);
+
         if (Flags.TrustedMods)
             world.Checkpoint.Mods.RemoveAll(SteamMods.IsModUntrusted);
     }
@@ -28,6 +30,8 @@ internal class Patch_MySessionLoader
         MyMultiplayerBase multiplayerSession
     )
     {
+        MagnetarClientMod.ApplyToCheckpoint(world?.Checkpoint);
+
         if (Flags.TrustedMods)
             world.Checkpoint.Mods.RemoveAll(SteamMods.IsModUntrusted);
     }
