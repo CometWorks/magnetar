@@ -5,8 +5,10 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using HarmonyLib;
+using PluginSdk;
 using PluginSdk.Commands;
 using Pulsar.Legacy.Commands;
+using Pulsar.Legacy.Integration;
 using Pulsar.Legacy.Paths;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
@@ -100,6 +102,14 @@ public class PluginLoader : IHandleInputPlugin
             Commands.Register(typeof(SaveCommand).Assembly,
                 typeof(SaveCommand), typeof(RestartCommand), typeof(QuitCommand), typeof(StopCommand));
 
+            // Bind plugin-facing mission-screen popup support before plugins
+            // initialize. Clients need the paired MagnetarMod world mod loaded
+            // so there is script-side code able to receive and open the GUI.
+            MissionScreens.Bind(
+                MissionScreenSender.ShowToPlayer,
+                MissionScreenSender.ShowToSteam,
+                MissionScreenSender.ShowToAll);
+
             // Bind the SDK PathResolver facade to the LinuxCompat case-insensitive
             // path cache before plugins initialize, so a plugin may already use it
             // from its own Init(); otherwise the pass-through shim stays active
@@ -176,6 +186,7 @@ public class PluginLoader : IHandleInputPlugin
         plugins.Clear();
 
         ServerCommands.Registrar = null;
+        MissionScreens.Bind(null, null, null);
         Commands = null;
 
         LogFile.Dispose();
