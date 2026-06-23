@@ -83,8 +83,9 @@ graph TD
 5. **Compile** — Roslyn compiles source plugins in an isolated context, with
    publicized SE assemblies as references. *(Compiler, Legacy.Integration)*
 6. **Load & run** — `PluginLoader` instantiates each plugin, injects services,
-   registers SE components, wires the chat-command pipeline, then drives the SE
-   plugin lifecycle. *(Legacy.Loader, Legacy.Commands, PluginSdk.*)*
+   registers SE components, wires the chat-command pipeline and the mission-screen
+   senders (backing client popups via the bundled `MagnetarMod` world mod), then
+   drives the SE plugin lifecycle. *(Legacy.Loader, Legacy.Commands, Legacy.Integration, PluginSdk.*)*
 7. **Hand off** to the dedicated server's own `Main`.
 
 ## Module catalog
@@ -96,17 +97,17 @@ Grouped by project. Click a module for its full doc.
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
 | [Legacy.Launcher](modules/Legacy.Launcher.md) | 5 | 1455 | Launcher bootstrap & entry point: argument parsing, DS detection, environment setup, daemon detach, and handoff to the game's `Main`. |
-| [Legacy.Loader](modules/Legacy.Loader.md) | 5 | 932 | Runtime plugin host & native bootstrap: instantiates plugins, drives their SE lifecycle, registers components, preloads native libs. |
-| [Legacy.Patch](modules/Legacy.Patch.md) | 11 | 488 | All Harmony patches that adapt the DS binary to Magnetar's headless, in-process, externally-configured hosting model. |
+| [Legacy.Loader](modules/Legacy.Loader.md) | 6 | 1078 | Runtime plugin host & native bootstrap: instantiates plugins, drives their SE lifecycle, registers components, manages the implicit MagnetarMod client companion, wires the mission-screen senders, prefetches Workshop mods (expanding legacy archives), preloads native libs. |
+| [Legacy.Patch](modules/Legacy.Patch.md) | 12 | 528 | All Harmony patches that adapt the DS binary to Magnetar's headless, in-process, externally-configured hosting model, including injecting the MagnetarMod client companion into SE's mod-loading pipeline. |
 | [Legacy.Commands](modules/Legacy.Commands.md) | 3 | 243 | Host side of the `!`-prefixed chat-command pipeline and the built-in `!save` / `!restart` / `!quit` / `!stop` commands. |
-| [Legacy.Integration](modules/Legacy.Integration.md) | 6 | 471 | Glue to SE internals: isolated Roslyn compilation host and Linux case-insensitive path resolution. |
+| [Legacy.Integration](modules/Legacy.Integration.md) | 7 | 590 | Glue to SE internals: isolated Roslyn compilation host, Linux case-insensitive path resolution, and the host-side mission-screen sender that pushes popups to clients via the MagnetarMod world mod. |
 
 ### `Shared` — cross-target infrastructure
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Shared.Core](modules/Shared.Core.md) | 11 | 2185 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
-| [Shared.Data](modules/Shared.Data.md) | 10 | 1685 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status). |
+| [Shared.Core](modules/Shared.Core.md) | 11 | 2190 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
+| [Shared.Data](modules/Shared.Data.md) | 11 | 1897 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status), plus legacy Workshop `*_legacy.bin` archive expansion. |
 | [Shared.Config](modules/Shared.Config.md) | 12 | 530 | All persistent installation configuration: core config, profiles, plugin sources, and the instance.id consent anchor. |
 | [Shared.Network](modules/Shared.Network.md) | 7 | 864 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
 | [Shared.Votes](modules/Shared.Votes.md) | 7 | 361 | Opt-in client-side telemetry and community plugin-rating layer, with the consent state machine that gates it. |
@@ -122,9 +123,9 @@ Grouped by project. Click a module for its full doc.
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
 | [PluginSdk.Config](modules/PluginSdk.Config.md) | 5 | 1831 | Declarative, attribute-driven plugin configuration → local XML, remote JSON envelope, and Quasar UI schema. |
-| [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1226 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions. |
+| [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1289 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions, mission-screen help rendering. |
 | [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 425 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
-| [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 5 | 353 | Host-agnostic path resolution and dedicated-server lifecycle control (`ServerControl`). |
+| [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 7 | 483 | Host-agnostic path resolution, dedicated-server lifecycle control (`ServerControl`), and mission-screen popups (`MissionScreens`) pushed to clients. |
 | [PluginSdk.Stats](modules/PluginSdk.Stats.md) | 4 | 498 | Self-describing runtime telemetry: attribute-declared counters / gauges / discrete values published as snapshots a consumer (Quasar Agent) rolls up and charts. |
 
 ### `PluginSdkTests` — specifications
@@ -132,6 +133,17 @@ Grouped by project. Click a module for its full doc.
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
 | [PluginSdkTests](modules/PluginSdkTests.md) | 8 | 2261 | xUnit tests that specify and regression-guard every public `PluginSdk` API. |
+
+### `MagnetarMod` — companion in-game world mod
+
+Not part of the .NET solution: an SE1 `Data/Scripts` mod compiled in-game, shipped
+alongside the launcher and auto-loaded as an implicit client mod (unless disabled
+with `-noimplicitmod` or running crossplay). It is the client-side receiver for
+server-pushed content.
+
+| Module | Files | Lines | What it does |
+| ------ | ----- | ----- | ------------ |
+| [MagnetarMod](modules/MagnetarMod.md) | 1 | 113 | Session component that receives mission-screen payloads from the server over a secure multiplayer channel and renders them via the SE ModAPI — the client counterpart to `PluginSdk.MissionScreens` / `Legacy.Integration`'s mission-screen sender. |
 
 ## Module dependency graph
 
@@ -178,4 +190,4 @@ graph LR
 
 ---
 
-**[Full file index ▶](Index.md)** · 17 modules · 129 source files · ~16.3k lines
+**[Full file index ▶](Index.md)** · 18 modules · 136 source files · ~17.2k lines

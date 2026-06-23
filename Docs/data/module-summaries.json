@@ -139,8 +139,8 @@
   {
     "module": "Legacy.Integration",
     "project": "Legacy",
-    "purpose": "Provides the glue between the Legacy launcher and two cross-cutting concerns: (1) Roslyn script compilation, isolated in a separate AppDomain (.NET Framework) or a collectible AssemblyLoadContext (.NET Core), with compiler assembly references seeded from SE DS game DLLs; (2) case-insensitive path resolution on Linux, wired from the PluginSdk PathResolver facade to the LinuxCompat plugin's path cache via reflection. It also bridges Magnetar's ModPlugin data type to the SE DS mod-registration API (MyObjectBuilder_Checkpoint.ModItem, MyModContext).",
-    "role": "Acts as the integration layer within the Legacy project, connecting Magnetar's abstractions to SE DS internals and optional OS-compatibility plugins. It is not a user-facing subsystem; it is called once at launcher startup and thereafter operates transparently under the compiler pipeline and the plugin SDK path facade.",
+    "purpose": "Provides the glue between the Legacy launcher and two cross-cutting concerns: (1) Roslyn script compilation, isolated in a separate AppDomain (.NET Framework) or a collectible AssemblyLoadContext (.NET Core), with compiler assembly references seeded from SE DS game DLLs; (2) case-insensitive path resolution on Linux, wired from the PluginSdk PathResolver facade to the LinuxCompat plugin's path cache via reflection. It also bridges Magnetar's ModPlugin data type to the SE DS mod-registration API (MyObjectBuilder_Checkpoint.ModItem, MyModContext), and hosts the server-side sender that transports plugin-declared mission-screen popups to clients through the bundled MagnetarMod world mod via SE multiplayer messaging.",
+    "role": "Acts as the integration layer within the Legacy project, connecting Magnetar's abstractions and the PluginSdk facades to SE DS internals and optional OS-compatibility plugins. It is not a user-facing subsystem; it is called at launcher startup (compiler pipeline, path facade wiring) and, for mission screens, on demand whenever a plugin requests a popup.",
     "key_types": [
       {
         "name": "CompilerFactory (Interim)",
@@ -189,6 +189,12 @@
         "kind": "class",
         "file": "Legacy/Paths/ReflectionPathResolver.cs",
         "summary": "IPathResolver backend bound to LinuxCompat static methods via pre-created delegates; zero reflection overhead on the hot path."
+      },
+      {
+        "name": "MissionScreenSender",
+        "kind": "static class",
+        "file": "Legacy/Integration/MissionScreenSender.cs",
+        "summary": "Host-side implementation of the PluginSdk MissionScreens facade; serializes a MissionScreenContent into a versioned binary packet and sends it to a Steam id, an identity, or all online players via MyAPIGateway.Multiplayer.SendMessageTo on the game thread, gated on the bundled MagnetarMod client receiver being enabled as a world mod."
       }
     ],
     "public_api": [
@@ -196,13 +202,17 @@
       "ModPluginExtensions.GetModItem(ModPlugin) \u2014 converts a Magnetar mod descriptor to MyObjectBuilder_Checkpoint.ModItem for SE DS registration",
       "ModPluginExtensions.GetModContext(ModPlugin) \u2014 converts a Magnetar mod descriptor to MyModContext for SE DS registration",
       "References.GetReferences(exeLocation) \u2014 enumerates all Roslyn compiler assembly references for a given game directory",
-      "CompilerFactory.Create(debugBuild) \u2014 creates a ready-to-use ICompiler instance with appropriate preprocessor flags"
+      "CompilerFactory.Create(debugBuild) \u2014 creates a ready-to-use ICompiler instance with appropriate preprocessor flags",
+      "MissionScreenSender.ShowToPlayer/ShowToSteam/ShowToAll(MissionScreenContent) \u2014 internal host backends bound to the PluginSdk MissionScreens facade that send mission-screen popups to clients over the SE multiplayer channel"
     ],
     "depends_on": [
       "Compiler",
       "PluginSdk.Paths",
+      "PluginSdk.MissionScreens",
       "Shared.Core",
       "Shared.Data",
+      "Legacy.Loader (MagnetarClientMod)",
+      "Legacy.Launcher (RunOnGameThread)",
       "SE DS assemblies",
       "LinuxCompat plugin (runtime optional)"
     ],
@@ -212,7 +222,8 @@
       "Legacy/Compiler/References.cs",
       "Legacy/Extensions/ModPlugin.cs",
       "Legacy/Paths/PathResolverBinder.cs",
-      "Legacy/Paths/ReflectionPathResolver.cs"
+      "Legacy/Paths/ReflectionPathResolver.cs",
+      "Legacy/Integration/MissionScreenSender.cs"
     ]
   },
   {
@@ -288,8 +299,8 @@
   {
     "module": "Legacy.Loader",
     "project": "Legacy",
-    "purpose": "Runtime plugin host and native bootstrap for the SE1 dedicated server. It instantiates compiled plugins, drives their SE lifecycle (Init/Update/HandleInput/Dispose), registers their SE session and entity components, applies late Harmony patches, wires up the chat-command pipeline, prefetches Steam Workshop mod content, and on Linux preloads native libraries and aliases Windows DLL names to their .so equivalents.",
-    "role": "This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) targets: the single SE-visible IHandleInputPlugin (PluginLoader) that fans the engine lifecycle out to every loaded Magnetar plugin, quarantines misbehaving plugins via first-chance exception attribution, and supplies the cross-platform plumbing (process restart, JIT precompile, native library resolution) needed to run the headless DS on both platforms.",
+    "purpose": "Runtime plugin host and native bootstrap for the SE1 dedicated server. It instantiates compiled plugins, drives their SE lifecycle (Init/Update/HandleInput/Dispose), registers their SE session and entity components, applies late Harmony patches, wires up the chat-command pipeline and mission-screen popup senders, prefetches Steam Workshop mod content (including the implicit MagnetarMod client companion), and on Linux preloads native libraries and aliases Windows DLL names to their .so equivalents.",
+    "role": "This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) targets: the single SE-visible IHandleInputPlugin (PluginLoader) that fans the engine lifecycle out to every loaded Magnetar plugin, quarantines misbehaving plugins via first-chance exception attribution, manages the bundled MagnetarMod client world mod that backs plugin mission-screen popups, and supplies the cross-platform plumbing (process restart, JIT precompile, native library resolution) needed to run the headless DS on both platforms.",
     "key_types": [
       {
         "name": "PluginLoader",
@@ -307,7 +318,13 @@
         "name": "SteamMods",
         "kind": "static class",
         "file": "Legacy/Loader/SteamMods.cs",
-        "summary": "Reflection-bridged wrapper over SE's non-public MyWorkshop.DownloadModsBlocking to prefetch workshop mod content."
+        "summary": "Reflection-bridged wrapper over SE's internal MyWorkshop downloader to prefetch mod-plugin workshop content; also expands legacy `*_legacy.bin` archives after download and tests whether a mod is untrusted."
+      },
+      {
+        "name": "MagnetarClientMod",
+        "kind": "static class",
+        "file": "Legacy/Loader/MagnetarClientMod.cs",
+        "summary": "Policy + mechanics for the implicit MagnetarMod client companion world mod (workshop id 3750200326): injects it into workshop-id sets and checkpoint mod lists, removing/skipping it under -noimplicitmod or any crossplay configuration."
       },
       {
         "name": "NativeLibraryPreloader",
@@ -328,6 +345,7 @@
       "PluginLoader.RegisterSessionComponents() / RegisterEntityComponents()",
       "PluginInstance.TryGet(PluginData, Assembly, out PluginInstance)",
       "SteamMods.Update(IEnumerable<ulong>) / IsModUntrusted(ModItem)",
+      "MagnetarClientMod.WorkshopId / GetWorkshopIdsForUpdate(IEnumerable<ulong>) / ApplyToCheckpoint(MyObjectBuilder_Checkpoint) / ApplyToModList(...)",
       "NativeLibraryPreloader.Initialize(string baseDir)",
       "LoaderTools.Restart(bool, bool?) / Precompile(Assembly)"
     ],
@@ -335,8 +353,11 @@
       "Shared.Core",
       "Shared.Data",
       "Shared.Config",
+      "PluginSdk",
       "PluginSdk.Commands",
       "Legacy.Commands",
+      "Legacy.Integration",
+      "Legacy.Paths",
       "Legacy.Patch",
       "Harmony",
       "SE DS assemblies",
@@ -345,6 +366,7 @@
     ],
     "files_documented": [
       "Legacy/Loader/LoaderTools.cs",
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/NativeLibraryPreloader.cs",
       "Legacy/Loader/PluginInstance.cs",
       "Legacy/Loader/PluginLoader.cs",
@@ -354,7 +376,7 @@
   {
     "module": "Legacy.Patch",
     "project": "Legacy",
-    "purpose": "Provides all Harmony patches that adapt the Space Engineers Dedicated Server binary to Magnetar's in-process, headless, externally-configured hosting model. The patches cover: stripping the WinForms/Telerik configuration UI and Windows Service branch from DedicatedServer.Run; rerouting crash reporting, process exit, and chat commands; injecting client-mod definitions and scripts into SE's loading pipeline; enforcing a trusted-mods security policy; and capturing Roslyn compilation diagnostics with clean, cross-platform file paths.",
+    "purpose": "Provides all Harmony patches that adapt the Space Engineers Dedicated Server binary to Magnetar's in-process, headless, externally-configured hosting model. The patches cover: stripping the WinForms/Telerik configuration UI and Windows Service branch from DedicatedServer.Run; rerouting crash reporting, process exit, and chat commands; injecting the MagnetarMod client companion and client-mod definitions/scripts into SE's loading and workshop-download pipelines; enforcing a trusted-mods security policy; and capturing Roslyn compilation diagnostics with clean, cross-platform file paths.",
     "role": "Acts as the glue layer between the unmodified SE DS assemblies and the rest of Magnetar. Every patch in this module is registered via HarmonyLib under one of two categories: \"Early\" (applied at loader startup before the server initialises) or \"Late\" (applied from PluginLoader.Init once plugins are ready). Together the patches intercept the exact SE entry points needed by Legacy.Loader, Legacy.Launcher, Legacy.Commands, and the client-mod support in Shared.Data/Shared.Config, without requiring source changes to the SE binaries.",
     "key_types": [
       {
@@ -397,7 +419,7 @@
         "name": "Patch_MyDefinitionManager",
         "kind": "static class",
         "file": "Legacy/Patch/Patch_MyDefinitionManager.cs",
-        "summary": "Harmony Prefix on MyDefinitionManager.LoadData; injects ModPlugin workshop mod-items into SE's definition-loading mod list from the active Magnetar profile"
+        "summary": "Harmony Prefix on MyDefinitionManager.LoadData; injects the MagnetarMod client companion via MagnetarClientMod.ApplyToModList, then appends ModPlugin workshop mod-items from the active Magnetar profile into SE's definition-loading mod list"
       },
       {
         "name": "Patch_MyScriptManager",
@@ -409,7 +431,13 @@
         "name": "Patch_MySessionLoader",
         "kind": "class",
         "file": "Legacy/Patch/Patch_MySessionLoader.cs",
-        "summary": "Two Harmony Prefixes on MySessionLoader multiplayer-load methods; strips untrusted (non-locally-installed Steam) mods from the checkpoint when the -hardened flag is set"
+        "summary": "Two Harmony Prefixes on MySessionLoader multiplayer-load methods; apply the MagnetarMod client companion to the world checkpoint via MagnetarClientMod.ApplyToCheckpoint, then strip untrusted (non-locally-installed Steam) mods when the -hardened flag is set"
+      },
+      {
+        "name": "Patch_MyWorkshop",
+        "kind": "static class",
+        "file": "Legacy/Patch/Patch_MyWorkshop.cs",
+        "summary": "Harmony patch (Early) on MyWorkshop.DownloadWorldModsBlocking; injects/strips the MagnetarMod client companion before download and asks SteamMods to expand legacy `*_legacy.bin` archives afterward."
       },
       {
         "name": "Patch_PrepareCrashReport",
@@ -421,7 +449,7 @@
         "name": "Patch_ServerChat",
         "kind": "static class",
         "file": "Legacy/Patch/Patch_ServerChat.cs",
-        "summary": "Harmony Prefix on MyMultiplayerBase.OnChatMessageReceived_Server; routes !-prefixed global chat messages through CommandService and suppresses broadcast when handled"
+        "summary": "Harmony Prefix on MyMultiplayerBase.OnChatMessageReceived_Server; routes !-prefixed player-typed chat (Global/Faction/Private) through CommandService and suppresses broadcast when handled, while leaving scripted/system channels untouched"
       }
     ],
     "public_api": [
@@ -450,6 +478,7 @@
       "Legacy/Patch/Patch_MyDefinitionManager.cs",
       "Legacy/Patch/Patch_MyScriptManager.cs",
       "Legacy/Patch/Patch_MySessionLoader.cs",
+      "Legacy/Patch/Patch_MyWorkshop.cs",
       "Legacy/Patch/Patch_PrepareCrashReport.cs",
       "Legacy/Patch/Patch_ServerChat.cs"
     ]
@@ -488,7 +517,7 @@
         "name": "CommandDispatcher",
         "kind": "class",
         "file": "PluginSdk/Commands/CommandDispatcher.cs",
-        "summary": "Parses chat messages, resolves command paths, checks permissions, binds arguments, invokes handlers, and generates built-in help listings."
+        "summary": "Parses chat messages, resolves command paths, checks permissions, binds arguments, invokes handlers, and generates built-in help/overview/detail listings; multi-line help is preferentially shown as an in-game mission-screen popup (via PluginSdk.MissionScreens) and only falls back to line-by-line chat replies when no mission-screen host sender is available."
       },
       {
         "name": "CommandRegistry",
@@ -576,7 +605,8 @@
       "ICommandResponder.Send(in CommandReply, in CommandCaller)"
     ],
     "depends_on": [
-      "SE DS assemblies (VRage.Game.ModAPI.MyPromoteLevel, VRage.Game.MyFontEnum, VRageMath.Color)"
+      "SE DS assemblies (VRage.Game.ModAPI.MyPromoteLevel, VRage.Game.MyFontEnum, VRageMath.Color)",
+      "PluginSdk/MissionScreens.cs (CommandDispatcher renders help/overview/detail as mission-screen popups via MissionScreens.IsHostSenderAvailable and MissionScreens.ShowToPlayer)"
     ],
     "files_documented": [
       "PluginSdk/Commands/ArgumentBinder.cs",
@@ -752,8 +782,8 @@
   {
     "module": "PluginSdk.Runtime",
     "project": "PluginSdk",
-    "purpose": "Provides plugins with a stable, host-agnostic API surface for two cross-cutting runtime concerns: (1) cross-platform case-insensitive path resolution that works identically on Windows and Linux by swapping a backend at startup, and (2) dedicated-server lifecycle control (save, reload config, quit, restart) and a pre-teardown notification event \u2014 all backed by host-bound delegates that default to safe no-ops until the launcher installs real implementations.",
-    "role": "Acts as the plugin-facing contract layer between plugin code and the underlying host launchers (MagnetarInterim on Linux/.NET 10, MagnetarLegacy on Windows/.NET 4.8). Plugins call PathResolver and ServerControl unconditionally; the host injects real backends at startup. This decoupling means the same plugin binary runs on both platforms without conditional compilation.",
+    "purpose": "Provides plugins with a stable, host-agnostic API surface for cross-cutting runtime concerns: (1) cross-platform case-insensitive path resolution that works identically on Windows and Linux by swapping a backend at startup, (2) dedicated-server lifecycle control (save, reload config, quit, restart) and a pre-teardown notification event, and (3) sending Space Engineers mission-screen popups to clients (per-player, per-Steam-id, or broadcast) for rendering by the bundled MagnetarMod client receiver \u2014 all backed by host-bound delegates that default to safe no-ops until the launcher installs real implementations.",
+    "role": "Acts as the plugin-facing contract layer between plugin code and the underlying host launchers (MagnetarInterim on Linux/.NET 10, MagnetarLegacy on Windows/.NET 4.8). Plugins call PathResolver, ServerControl, and MissionScreens unconditionally; the host injects real backends at startup. This decoupling means the same plugin binary runs on both platforms without conditional compilation.",
     "key_types": [
       {
         "name": "IPathResolver",
@@ -790,6 +820,18 @@
         "kind": "class",
         "file": "PluginSdk/Tools/SerializableDictionary.cs",
         "summary": "Generic Dictionary subclass implementing IXmlSerializable so XmlSerializer can round-trip dictionary-typed plugin config options."
+      },
+      {
+        "name": "MissionScreens",
+        "kind": "static class",
+        "file": "PluginSdk/MissionScreens.cs",
+        "summary": "Plugin-facing facade for showing SE mission-screen popups to a player, a Steam id, or all clients, backed by host-bound sender delegates."
+      },
+      {
+        "name": "MissionScreenContent",
+        "kind": "readonly struct",
+        "file": "PluginSdk/MissionScreenContent.cs",
+        "summary": "Immutable text payload (title, objective prefix/text, description, OK caption) rendered by the MagnetarMod client on SE's mission screen."
       }
     ],
     "public_api": [
@@ -800,21 +842,28 @@
       "ServerControl.Terminating (event Action<ServerTerminationKind>) \u2014 fires before teardown when an admin drives shutdown or restart from in-game",
       "ServerControl.Bind(...) \u2014 internal; host installs real delegate implementations at launcher startup",
       "ServerControl.RaiseTerminating(ServerTerminationKind) \u2014 internal; host fires the Terminating event with per-subscriber fault isolation",
-      "SerializableDictionary<TKey,TValue> \u2014 XML-serializable dictionary for use in PluginConfig-derived classes"
+      "SerializableDictionary<TKey,TValue> \u2014 XML-serializable dictionary for use in PluginConfig-derived classes",
+      "MissionScreens.ShowToPlayer / ShowToSteam / ShowToAll(...) \u2014 send a mission-screen popup to one player (identity or Steam id) or all clients; string-parameter and MissionScreenContent overloads; return false when unbound or content is empty",
+      "MissionScreens.IsHostSenderAvailable \u2014 true once the host has installed a server-side sender (does not guarantee the client receiver is enabled)",
+      "MissionScreens.ChannelId / ProtocolVersion / ShowMissionScreenPacket \u2014 network channel/protocol constants shared with the MagnetarMod client receiver",
+      "MissionScreens.Bind(...) \u2014 internal; host installs the real sender delegates at launcher startup"
     ],
     "depends_on": [
       "PluginSdk.Config",
       "SE DS assemblies (VRage.Utils.MyLog used in ServerControl.RaiseTerminating)",
-      "MagnetarInterim (binds ServerControl and installs PathResolver backend)",
-      "MagnetarLegacy (binds ServerControl and installs PathResolver backend)",
-      "LinuxCompat plugin (provides the real IPathResolver implementation on Linux, not in this repo)"
+      "MagnetarInterim (binds ServerControl, MissionScreens, and installs PathResolver backend)",
+      "MagnetarLegacy (binds ServerControl, MissionScreens, and installs PathResolver backend)",
+      "LinuxCompat plugin (provides the real IPathResolver implementation on Linux, not in this repo)",
+      "MagnetarMod (the bundled in-repo client world mod that renders MissionScreens payloads on SE's mission-screen UI)"
     ],
     "files_documented": [
       "PluginSdk/Paths/IPathResolver.cs",
       "PluginSdk/Paths/PathResolver.cs",
       "PluginSdk/Paths/ShimPathResolver.cs",
       "PluginSdk/ServerControl.cs",
-      "PluginSdk/Tools/SerializableDictionary.cs"
+      "PluginSdk/Tools/SerializableDictionary.cs",
+      "PluginSdk/MissionScreens.cs",
+      "PluginSdk/MissionScreenContent.cs"
     ]
   },
   {
@@ -1226,7 +1275,7 @@
         "name": "Flags",
         "kind": "static class",
         "file": "Shared/Flags.cs",
-        "summary": "Parses Magnetar command-line switches once into read-only flags (incl. consent and -help) and renders the usage screen."
+        "summary": "Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, consent and -help) and renders the usage screen."
       },
       {
         "name": "UpdateType",
@@ -1262,7 +1311,7 @@
       "Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()",
       "Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)",
       "LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose",
-      "Flags.* flags (incl. Consent/Help), Flags.LogFlags(), Flags.PrintHelp()",
+      "Flags.* flags (incl. NoImplicitMod/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()",
       "new Launcher(sePath).CanStart()/VerifyConfig()",
       "PluginProgress.ReportDownloading/ReportCompiling/ReportCompiled/ReportSummary"
     ],
@@ -1295,7 +1344,7 @@
   {
     "module": "Shared.Data",
     "project": "Shared",
-    "purpose": "Defines the plugin-entry data model for Magnetar's plugin list. PluginData is the abstract base for every plugin kind (GitHub-compiled, local source folder, local DLL, Steam Workshop mod, and an obsolete placeholder), each knowing how to produce its assembly, gate on runtime/platform, update profiles, and report status. It also models user-activated profiles and the on-disk compile cache for GitHub plugins.",
+    "purpose": "Defines the plugin-entry data model for Magnetar's plugin list. PluginData is the abstract base for every plugin kind (GitHub-compiled, local source folder, local DLL, Steam Workshop mod, and an obsolete placeholder), each knowing how to produce its assembly, gate on runtime/platform, update profiles, and report status. It also models user-activated profiles and the on-disk compile cache for GitHub plugins. Also includes `LegacyWorkshopArchive`, which expands early Workshop `*_legacy.bin` archives into a normal mod folder.",
     "role": "This is the core domain layer the launcher/loader operates on: the plugin list is a collection of PluginData instances, and loading a plugin means calling TryLoadAssembly/GetAssembly on them. GitHubPlugin drives Roslyn compilation from a downloaded repo archive plus NuGet restore, caching results via CacheManifest; LocalFolderPlugin compiles a dev folder each launch; LocalPlugin loads a prebuilt DLL; ModPlugin locates Workshop mod content. Profiles persist which plugins are enabled. The runtime/platform gating (NETFramework vs NETCoreApp, Windows vs Linux) is central to the dual net48/net10 Magnetar fork.",
     "key_types": [
       {
@@ -1344,7 +1393,7 @@
         "name": "ModPlugin",
         "kind": "class",
         "file": "Shared/Data/ModPlugin.cs",
-        "summary": "Steam Workshop mod entry by numeric id; loads no assembly, only locates mod content (incl. legacy *_legacy.bin)."
+        "summary": "The PluginData for a Steam Workshop mod (by numeric id); loads no assembly, resolves the extracted mod folder (handling legacy `*_legacy.bin` packaging) and registers the id in the active Profile."
       },
       {
         "name": "ObsoletePlugin",
@@ -1363,6 +1412,12 @@
         "kind": "enum",
         "file": "Shared/Data/PluginStatus.cs",
         "summary": "Load/health states (None, Network, Updated, Error, Blocked, Runtime, Platform) driving status display and load gating."
+      },
+      {
+        "name": "LegacyWorkshopArchive",
+        "kind": "static class",
+        "file": "Shared/Data/LegacyWorkshopArchive.cs",
+        "summary": "Locates and expands early Workshop `*_legacy.bin` ZIP packages into the normal mod `Data/` tree so downstream DS code can read them."
       }
     ],
     "public_api": [
@@ -1394,6 +1449,7 @@
       "Shared/Data/GitHubPlugin.AssetFile.cs",
       "Shared/Data/GitHubPlugin.CacheManifest.cs",
       "Shared/Data/GitHubPlugin.cs",
+      "Shared/Data/LegacyWorkshopArchive.cs",
       "Shared/Data/LocalFolderPlugin.cs",
       "Shared/Data/LocalPlugin.cs",
       "Shared/Data/ModPlugin.cs",
@@ -1566,6 +1622,39 @@
       "Shared/Votes/Model/TrackRequest.cs",
       "Shared/Votes/Model/VoteRequest.cs",
       "Shared/Votes/VotesClient.cs"
+    ]
+  },
+  {
+    "module": "MagnetarMod",
+    "project": "MagnetarMod",
+    "purpose": "The companion in-game Space Engineers world mod (a Data/Scripts mod) bundled with Magnetar. Its session component receives server-pushed content over a dedicated secure multiplayer channel and renders it on connected clients, currently mission-screen popups.",
+    "role": "Client-side counterpart to the server-side mission-screen path: PluginSdk.MissionScreens (the plugin-facing facade) and Legacy.Integration.MissionScreenSender (the host sender) serialize and push payloads, and this mod's MagnetarModSession deserializes them and calls the SE ModAPI to show the popup. It shares the same channel id (48731), protocol version, packet-type discriminator, and five-string field layout as the server side.",
+    "key_types": [
+      {
+        "name": "MagnetarModSession",
+        "kind": "sealed class (MySessionComponentBase, NoUpdate session component)",
+        "file": "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs",
+        "summary": "Registers a secure message handler on channel 48731, deserializes versioned show-mission-screen frames from the server, and renders them via MyAPIGateway.Utilities.ShowMissionScreen on the game thread."
+      },
+      {
+        "name": "MagnetarModSession.MissionScreenPacket",
+        "kind": "sealed class (private nested data holder)",
+        "file": "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs",
+        "summary": "Mutable holder for the five deserialized payload strings (title, objective prefix, objective, description, OK-button caption), mirroring PluginSdk.MissionScreenContent."
+      }
+    ],
+    "public_api": [
+      "MagnetarMod.MagnetarModSession (public sealed MySessionComponentBase; entry point invoked by the SE engine, no callable plugin API)",
+      "MagnetarModSession.LoadData() (public override)",
+      "MagnetarModSession.UnloadData() (protected override)"
+    ],
+    "depends_on": [
+      "SE ModAPI / VRage",
+      "PluginSdk.MissionScreens (shared wire protocol)",
+      "Legacy.Integration (server sender)"
+    ],
+    "files_documented": [
+      "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
     ]
   }
 ]

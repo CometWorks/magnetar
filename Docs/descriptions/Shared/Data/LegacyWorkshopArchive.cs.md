@@ -22,4 +22,4 @@ Shared helper for repairing legacy Workshop mod folders.
 
 ## Cross-references
 - **Uses:** `LogFile` (Shared/LogFile.cs); BCL `System.IO`, `System.IO.Compression`, `System.Linq`.
-- **Used by:** [ModPlugin.cs](ModPlugin.cs.md), [SteamMods.cs](../../Legacy/Loader/SteamMods.cs.md)
+- **Used by:** [SteamMods.cs](../../Legacy/Loader/SteamMods.cs.md), [ModPlugin.cs](ModPlugin.cs.md)

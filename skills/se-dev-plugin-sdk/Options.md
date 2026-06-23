@@ -84,8 +84,8 @@ The plugin still gets a flat `List<Node>`; the tree shape is purely a UI hint.
 `SerializableDictionary<TKey, TValue>` (see [Config.md](Config.md#supported-property-types)).
 
 - `TKey`: `string`, `int`, or `long`.
-- `TValue`: any scalar, or a user struct (set `TreeParentField` to a struct
-  member referencing another entry's key for a tree-rendered dictionary).
+- `TValue`: any scalar, an enum, or a user struct (set `TreeParentField` to a
+  struct member referencing another entry's key for a tree-rendered dictionary).
 
 ```csharp
 [DictOption(description: "Per-player quotas")]

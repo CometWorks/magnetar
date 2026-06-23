@@ -228,7 +228,7 @@ namespace PluginSdk.Config
     /// <summary>
     /// Marks a <see cref="SerializableDictionary{TKey,TValue}"/> configuration
     /// option. The key type must be <c>string</c>, <c>int</c> or <c>long</c>;
-    /// the value type must be one of the supported scalar types.
+    /// the value type may be a supported scalar, an enum, or a user struct.
     /// <paramref name="maxCount"/> of <c>0</c> means unlimited.
     ///
     /// <para>

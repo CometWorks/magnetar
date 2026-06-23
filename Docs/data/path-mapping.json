@@ -103,6 +103,7 @@
   "Shared/Data/GitHubPlugin.AssetFile.cs": "Docs/descriptions/Shared/Data/GitHubPlugin.AssetFile.cs.md",
   "Shared/Data/GitHubPlugin.CacheManifest.cs": "Docs/descriptions/Shared/Data/GitHubPlugin.CacheManifest.cs.md",
   "Shared/Data/GitHubPlugin.cs": "Docs/descriptions/Shared/Data/GitHubPlugin.cs.md",
+  "Shared/Data/LegacyWorkshopArchive.cs": "Docs/descriptions/Shared/Data/LegacyWorkshopArchive.cs.md",
   "Shared/Data/LocalFolderPlugin.cs": "Docs/descriptions/Shared/Data/LocalFolderPlugin.cs.md",
   "Shared/Data/LocalPlugin.cs": "Docs/descriptions/Shared/Data/LocalPlugin.cs.md",
   "Shared/Data/ModPlugin.cs": "Docs/descriptions/Shared/Data/ModPlugin.cs.md",

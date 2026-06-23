@@ -14,7 +14,8 @@ namespace PluginSdk.Tools
     ///
     /// <para>
     /// Allowed key types: <c>string</c>, <c>int</c>, <c>long</c>. Allowed
-    /// value types: the scalar types listed in <see cref="PluginConfig"/>.
+    /// value types: the scalar types listed in <see cref="PluginConfig"/>, an
+    /// enum, or a user-defined struct.
     /// </para>
     /// </summary>
     [XmlRoot("Dictionary")]

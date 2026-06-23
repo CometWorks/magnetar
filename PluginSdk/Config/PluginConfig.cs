@@ -42,7 +42,8 @@ namespace PluginSdk.Config
     ///         scalar types above, an enum, or a user-defined <i>Struct</i>.</description></item>
     ///   <item><description><see cref="SerializableDictionary{TKey,TValue}"/>
     ///         where <c>TKey</c> is <c>string</c>, <c>int</c> or <c>long</c>,
-    ///         and <c>TValue</c> is one of the scalar types above.</description></item>
+    ///         and <c>TValue</c> is one of the scalar types above, an enum, or
+    ///         a user-defined <i>Struct</i>.</description></item>
     ///   <item><description>A user-defined Struct whose public fields and
     ///         properties are the scalar types above, a <c>List&lt;T&gt;</c>
     ///         or <see cref="SerializableDictionary{TKey,TValue}"/> of

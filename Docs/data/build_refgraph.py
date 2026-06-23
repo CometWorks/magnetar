@@ -46,6 +46,7 @@ ALLOWED_PROJ = {
     "Shared": {"Shared", "Compiler"},
     "Legacy": {"Legacy", "Shared", "PluginSdk", "Compiler"},
     "PluginSdkTests": {"PluginSdkTests", "PluginSdk"},
+    "MagnetarMod": {"MagnetarMod"},  # in-game mod; references SE ModAPI only
 }
 
 

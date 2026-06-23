@@ -18,7 +18,7 @@ Plugin-SDK contract layer between a plugin's command logic and the host's SE DS 
 | `CommandAttribute` | class | [`PluginSdk/Commands/CommandAttribute.cs`](../descriptions/PluginSdk/Commands/CommandAttribute.cs.md) | Method-level attribute that marks a handler and provides its sub-path, description, and help text. |
 | `CommandRootAttribute` | class | [`PluginSdk/Commands/CommandRootAttribute.cs`](../descriptions/PluginSdk/Commands/CommandRootAttribute.cs.md) | Class-level attribute that declares the !prefix namespace a CommandModule contributes to. |
 | `PermissionAttribute` | class | [`PluginSdk/Commands/PermissionAttribute.cs`](../descriptions/PluginSdk/Commands/PermissionAttribute.cs.md) | Method-level attribute that sets the minimum MyPromoteLevel required to run a command; defaults to Admin when absent. |
-| `CommandDispatcher` | class | [`PluginSdk/Commands/CommandDispatcher.cs`](../descriptions/PluginSdk/Commands/CommandDispatcher.cs.md) | Parses chat messages, resolves command paths, checks permissions, binds arguments, invokes handlers, and generates built-in help listings. |
+| `CommandDispatcher` | class | [`PluginSdk/Commands/CommandDispatcher.cs`](../descriptions/PluginSdk/Commands/CommandDispatcher.cs.md) | Parses chat messages, resolves command paths, checks permissions, binds arguments, invokes handlers, and generates built-in help/overview/detail listings; multi-line help is preferentially shown as an in-game mission-screen popup (via PluginSdk.MissionScreens) and only falls back to line-by-line chat replies when no mission-screen host sender is available. |
 | `CommandRegistry` | class | [`PluginSdk/Commands/CommandRegistry.cs`](../descriptions/PluginSdk/Commands/CommandRegistry.cs.md) | Stores all registered CommandRoot objects keyed by prefix and enforces registration invariants. |
 | `CommandRoot` | class | [`PluginSdk/Commands/CommandRoot.cs`](../descriptions/PluginSdk/Commands/CommandRoot.cs.md) | Internal trie of RegisteredCommand nodes under one !prefix namespace; supports greedy path resolution. |
 | `RegisteredCommand` | class | [`PluginSdk/Commands/RegisteredCommand.cs`](../descriptions/PluginSdk/Commands/RegisteredCommand.cs.md) | Internal per-command metadata cache (reflection info, permission level, syntax string) used by the dispatcher at runtime. |
@@ -71,7 +71,7 @@ Plugin-SDK contract layer between a plugin's command logic and the host's SE DS 
 
 **Uses modules:** _none_  
 **Used by modules:** [Legacy.Commands](Legacy.Commands.md), [Legacy.Loader](Legacy.Loader.md), [PluginSdkTests](PluginSdkTests.md)  
-**External systems:** SE DS assemblies (VRage.Game.ModAPI.MyPromoteLevel, VRage.Game.MyFontEnum, VRageMath.Color)
+**External systems:** PluginSdk/MissionScreens.cs (CommandDispatcher renders help/overview/detail as mission-screen popups via MissionScreens.IsHostSenderAvailable and MissionScreens.ShowToPlayer); SE DS assemblies (VRage.Game.ModAPI.MyPromoteLevel, VRage.Game.MyFontEnum, VRageMath.Color)
 
 ---
 [◀ Back to TOC](../TOC.md) · [Full file index](../Index.md)

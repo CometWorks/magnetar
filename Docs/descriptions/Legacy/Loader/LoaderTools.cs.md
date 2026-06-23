@@ -1,6 +1,6 @@
 # Legacy/Loader/LoaderTools.cs
 
-**Project:** Legacy · **Namespace:** `Pulsar.Legacy.Loader` · **Kind:** static class · **Lines:** 138
+**Project:** Legacy · **Namespace:** `Pulsar.Legacy.Loader` · **Kind:** static class · **Lines:** 137
 
 ## Summary
 Process-level utilities for the loader: restarting the dedicated server process with adjusted command-line arguments, and force-precompiling (JIT-preparing) plugin assemblies so member-access errors surface immediately instead of mid-game. The restart logic is cross-platform — on Linux/.NET it uses the `libc` `execv` syscall to replace the process image (preserving PID, stdio and tty for systemd/tmux supervision), and on Windows it spawns a fresh `Process`. The precompile logic walks every method of every type via reflection and calls `RuntimeHelpers.PrepareMethod`, while rejecting Harmony `[HarmonyReversePatch]` methods that are incompatible with Pulsar.

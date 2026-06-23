@@ -1,10 +1,10 @@
 # Module: Shared.Data
 
-**Project:** `Shared` · **Files:** 10 · **Source lines:** 1685
+**Project:** `Shared` · **Files:** 11 · **Source lines:** 1897
 
 ## Purpose
 
-Defines the plugin-entry data model for Magnetar's plugin list. PluginData is the abstract base for every plugin kind (GitHub-compiled, local source folder, local DLL, Steam Workshop mod, and an obsolete placeholder), each knowing how to produce its assembly, gate on runtime/platform, update profiles, and report status. It also models user-activated profiles and the on-disk compile cache for GitHub plugins.
+Defines the plugin-entry data model for Magnetar's plugin list. PluginData is the abstract base for every plugin kind (GitHub-compiled, local source folder, local DLL, Steam Workshop mod, and an obsolete placeholder), each knowing how to produce its assembly, gate on runtime/platform, update profiles, and report status. It also models user-activated profiles and the on-disk compile cache for GitHub plugins. Also includes `LegacyWorkshopArchive`, which expands early Workshop `*_legacy.bin` archives into a normal mod folder.
 
 ## Role in Magnetar
 
@@ -21,10 +21,11 @@ This is the core domain layer the launcher/loader operates on: the plugin list i
 | `GitHubPlugin.GitHubSource` | class | [`Shared/Data/GitHubPlugin.cs`](../descriptions/Shared/Data/GitHubPlugin.cs.md) | A named selectable alternate version pinning a commit and optional repo. |
 | `LocalFolderPlugin` | class | [`Shared/Data/LocalFolderPlugin.cs`](../descriptions/Shared/Data/LocalFolderPlugin.cs.md) | Compiles a plugin from a local source folder each launch, using git ls-files (or fallback) and optional NuGet restore. |
 | `LocalPlugin` | class | [`Shared/Data/LocalPlugin.cs`](../descriptions/Shared/Data/LocalPlugin.cs.md) | Loads a prebuilt local DLL, detecting its target runtime via Mono.Cecil and reading sidecar XML metadata. |
-| `ModPlugin` | class | [`Shared/Data/ModPlugin.cs`](../descriptions/Shared/Data/ModPlugin.cs.md) | Steam Workshop mod entry by numeric id; loads no assembly, only locates mod content (incl. legacy *_legacy.bin). |
+| `ModPlugin` | class | [`Shared/Data/ModPlugin.cs`](../descriptions/Shared/Data/ModPlugin.cs.md) | The PluginData for a Steam Workshop mod (by numeric id); loads no assembly, resolves the extracted mod folder (handling legacy `*_legacy.bin` packaging) and registers the id in the active Profile. |
 | `ObsoletePlugin` | class | [`Shared/Data/ObsoletePlugin.cs`](../descriptions/Shared/Data/ObsoletePlugin.cs.md) | No-op placeholder PluginData kept as a ProtoBuf subtype for removed/superseded plugins. |
 | `Profile` | class | [`Shared/Data/Profile.cs`](../descriptions/Shared/Data/Profile.cs.md) | Named set of enabled plugins (GitHub configs, dev folders, local DLLs, mods) with add/remove and description helpers. |
 | `PluginStatus` | enum | [`Shared/Data/PluginStatus.cs`](../descriptions/Shared/Data/PluginStatus.cs.md) | Load/health states (None, Network, Updated, Error, Blocked, Runtime, Platform) driving status display and load gating. |
+| `LegacyWorkshopArchive` | static class | [`Shared/Data/LegacyWorkshopArchive.cs`](../descriptions/Shared/Data/LegacyWorkshopArchive.cs.md) | Locates and expands early Workshop `*_legacy.bin` ZIP packages into the normal mod `Data/` tree so downstream DS code can read them. |
 
 ## Files
 
@@ -33,6 +34,7 @@ This is the core domain layer the launcher/loader operates on: the plugin list i
 | [`Shared/Data/GitHubPlugin.AssetFile.cs`](../descriptions/Shared/Data/GitHubPlugin.AssetFile.cs.md) | 77 | Defines `GitHubPlugin.AssetFile`, the XML-serializable record describing one cached file that belongs to a compiled GitHub plugin: either a non-code asset extracted from the source archive, a NuGet library DLL, or NuGet content. |
 | [`Shared/Data/GitHubPlugin.CacheManifest.cs`](../descriptions/Shared/Data/GitHubPlugin.CacheManifest.cs.md) | 241 | Defines `GitHubPlugin.CacheManifest`, the persistent on-disk cache record for a compiled GitHub plugin. |
 | [`Shared/Data/GitHubPlugin.cs`](../descriptions/Shared/Data/GitHubPlugin.cs.md) | 381 | `GitHubPlugin` is the `PluginData` implementation that compiles a plugin from C# source pulled directly from a GitHub repository archive. |
+| [`Shared/Data/LegacyWorkshopArchive.cs`](../descriptions/Shared/Data/LegacyWorkshopArchive.cs.md) | 212 | `LegacyWorkshopArchive` locates and expands early Space Engineers Workshop packages that Steam stores as a single `*_legacy.bin` ZIP archive instead of loose mod files. |
 | [`Shared/Data/LocalFolderPlugin.cs`](../descriptions/Shared/Data/LocalFolderPlugin.cs.md) | 334 | `LocalFolderPlugin` is the developer-facing `PluginData` that compiles a plugin from a local source folder on every launch (no GitHub download, no cache). |
 | [`Shared/Data/LocalPlugin.cs`](../descriptions/Shared/Data/LocalPlugin.cs.md) | 109 | `LocalPlugin` is the `PluginData` for a pre-compiled plugin DLL sitting on disk (not compiled by Magnetar, not from GitHub). |
 | [`Shared/Data/ModPlugin.cs`](../descriptions/Shared/Data/ModPlugin.cs.md) | 81 | `ModPlugin` is the `PluginData` for a Steam Workshop mod referenced by its numeric workshop id. |

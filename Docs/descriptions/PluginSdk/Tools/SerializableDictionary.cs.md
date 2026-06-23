@@ -4,13 +4,13 @@
 
 ## Summary
 
-Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. Plugin configuration options that map one scalar to another (e.g. `string → int` threshold tables, `string → string` name overrides) use this type as the declared field/property type in their `PluginConfig`-derived class. The serialized XML element is named `Dictionary` and each entry is wrapped in an `Entry` element containing `Key` and `Value` child elements, each delegating to a per-type `XmlSerializer` instance.
+Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. Plugin configuration options that map a key to a value (e.g. `string → int` threshold tables, `string → string` name overrides, or `string → struct` per-entry records) use this type as the declared field/property type in their `PluginConfig`-derived class. The serialized XML element is named `Dictionary` and each entry is wrapped in an `Entry` element containing `Key` and `Value` child elements, each delegating to a per-type `XmlSerializer` instance.
 
 ## Types
 
 ### `SerializableDictionary<TKey, TValue>` — class, public : `Dictionary<TKey, TValue>`, `IXmlSerializable`
 
-Inherits the full `Dictionary<TKey, TValue>` API and adds XML round-trip support via `IXmlSerializable`. The class is marked `[XmlRoot("Dictionary")]`. Allowed key types are `string`, `int`, `long`; allowed value types are the scalar types supported by `PluginConfig` (documented there). Two `XmlSerializer` instances are created fresh on each `ReadXml`/`WriteXml` call (one for `TKey`, one for `TValue`).
+Inherits the full `Dictionary<TKey, TValue>` API and adds XML round-trip support via `IXmlSerializable`. The class is marked `[XmlRoot("Dictionary")]`. Allowed key types are `string`, `int`, `long`; allowed value types are the scalar types supported by `PluginConfig`, an enum, or a user-defined struct (documented there). Two `XmlSerializer` instances are created fresh on each `ReadXml`/`WriteXml` call (one for `TKey`, one for `TValue`).
 
 - **Methods:**
   - `SerializableDictionary()` — default constructor; forwards to `Dictionary<TKey, TValue>()`
