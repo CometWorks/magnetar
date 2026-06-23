@@ -174,11 +174,16 @@ message, plus the **author** label shown as the sender.
   `WithAuthor`. If no author is set at all, the host shows `Server`.
 
 `Broadcast` replies go to every player; otherwise the reply is private to the
-caller. Build replies fluently:
+caller. Set it fluently with `AsBroadcast()` (defaults to `true`). Build replies
+fluently:
 
 ```csharp
 return CommandReply.Ok("done").WithColor(Color.LightGreen).WithAuthor("Ess");
+return CommandReply.Info("server restarting").AsBroadcast();
 ```
+
+Return `CommandReply.None` to send nothing — a silent success when the command
+already replied through `Context.Respond(...)` or has no user-facing output.
 
 ## Permissions and visibility
 

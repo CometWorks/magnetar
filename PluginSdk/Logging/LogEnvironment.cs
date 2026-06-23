@@ -40,8 +40,8 @@ namespace PluginSdk.Logging
         public static event Action<string> LineEmitted;
 
         /// <summary>
-        /// Raises <see cref="LineEmitted"/>. A faulting subscriber must never
-        /// disrupt the plugin's logging call, so exceptions are swallowed.
+        /// Raises <see cref="LineEmitted"/>. Subscriber exceptions are not caught
+        /// here — they propagate to the caller (see the body comment for why).
         /// </summary>
         internal static void RaiseLineEmitted(string line)
         {

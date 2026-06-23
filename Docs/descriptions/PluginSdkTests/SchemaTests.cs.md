@@ -1,6 +1,6 @@
 # PluginSdkTests/SchemaTests.cs
 
-**Project:** PluginSdkTests · **Namespace:** `PluginSdk.Tests` · **Kind:** test classes · **Lines:** 526
+**Project:** PluginSdkTests · **Namespace:** `PluginSdk.Tests` · **Kind:** test classes · **Lines:** 525
 
 ## Summary
 Specifies the schema and JSON-envelope subsystems of `PluginSdk.Config`. The file contains three test classes: `SchemaTests` drives `ConfigSchema.Build`, verifying the complete layout tree (tabs, sections, columns) extracted from class-level attributes, per-property metadata (type tokens, min/max ranges, parent container IDs), collection shapes (list element types, dict key/value types), struct member discovery (including transitive inner structs), tree-list `TreeParentField` metadata, enum member ordering and `[EnumCaption]` overrides, `[StructCaption]` validation (non-string member, missing `[StructMember]`, duplicate captions all throw `InvalidOperationException`). `JsonEnvelopeTests` drives `ConfigStorage.SaveJson`/`LoadJson`, verifying the three-part `{schema, defaults, values}` envelope shape, camelCase key names, enum-by-name encoding, sparse `defaults` vs `values` contrast, and backward-compatible flat-JSON loading. `SparseXmlTests` drives `ConfigStorage.SaveXml`/`LoadXml`, verifying that only changed properties appear in the file, that a missing property on load retains the constructor default, and that struct values at their default are omitted entirely.

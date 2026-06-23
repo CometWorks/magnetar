@@ -109,6 +109,8 @@ def module_of(rel):
         return "PluginSdk.Runtime", "PluginSdk"  # Paths/, Tools/, ServerControl.cs
     if top == "PluginSdkTests":
         return "PluginSdkTests", "PluginSdkTests"
+    if top == "MagnetarMod":
+        return "MagnetarMod", "MagnetarMod"  # companion in-game world mod
     return "Other", top
 
 

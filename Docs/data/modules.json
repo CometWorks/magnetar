@@ -91,7 +91,7 @@
     "model": "sonnet",
     "dominant_tier": 2
   },
-  "Other": {
+  "MagnetarMod": {
     "project": "MagnetarMod",
     "files": [
       "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
@@ -251,6 +251,7 @@
       "Shared/Data/GitHubPlugin.AssetFile.cs",
       "Shared/Data/GitHubPlugin.CacheManifest.cs",
       "Shared/Data/GitHubPlugin.cs",
+      "Shared/Data/LegacyWorkshopArchive.cs",
       "Shared/Data/LocalFolderPlugin.cs",
       "Shared/Data/LocalPlugin.cs",
       "Shared/Data/ModPlugin.cs",
@@ -259,8 +260,8 @@
       "Shared/Data/PluginStatus.cs",
       "Shared/Data/Profile.cs"
     ],
-    "file_count": 10,
-    "total_lines": 1685,
+    "file_count": 11,
+    "total_lines": 1897,
     "model": "opus",
     "dominant_tier": 1
   },

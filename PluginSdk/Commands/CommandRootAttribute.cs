@@ -16,10 +16,10 @@ namespace PluginSdk.Commands
     /// no handler.
     /// </para>
     /// <para>
-    /// Several modules may share one prefix as long as they belong to the same
-    /// plugin; their commands are merged under that root. Two different plugins
-    /// declaring the same prefix is a conflict and the second registration is
-    /// rejected.
+    /// Several modules — even from different plugins — may share one prefix;
+    /// their commands are merged under that root. If two commands resolve to the
+    /// same path, the last registration wins, so a later plugin may override an
+    /// earlier one.
     /// </para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]

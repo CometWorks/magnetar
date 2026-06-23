@@ -93,6 +93,7 @@
       "Shared/PluginList.cs"
     ],
     "Legacy/Loader/SteamMods.cs": [
+      "Shared/Data/LegacyWorkshopArchive.cs",
       "Shared/Steam.cs"
     ],
     "Legacy/Patch/Patch_Compile.cs": [
@@ -401,6 +402,7 @@
     ],
     "Shared/Data/ModPlugin.cs": [
       "Shared/Config/ConfigManager.cs",
+      "Shared/Data/LegacyWorkshopArchive.cs",
       "Shared/Data/PluginData.cs",
       "Shared/Data/Profile.cs"
     ],
@@ -907,6 +909,10 @@
       "Shared/Data/LocalPlugin.cs",
       "Shared/Data/PluginData.cs",
       "Shared/Updater.cs"
+    ],
+    "Shared/Data/LegacyWorkshopArchive.cs": [
+      "Legacy/Loader/SteamMods.cs",
+      "Shared/Data/ModPlugin.cs"
     ],
     "Shared/Data/LocalFolderPlugin.cs": [
       "Shared/PluginList.cs"

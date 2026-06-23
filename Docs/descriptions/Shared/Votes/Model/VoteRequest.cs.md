@@ -1,6 +1,6 @@
 # Shared/Votes/Model/VoteRequest.cs
 
-**Project:** Shared · **Namespace:** `Pulsar.Shared.Votes.Model` · **Kind:** class · **Lines:** 19
+**Project:** Shared · **Namespace:** `Pulsar.Shared.Votes.Model` · **Kind:** class · **Lines:** 20
 
 ## Summary
 Request body POSTed to `/Vote` when a player changes their vote on a plugin. The `VotingToken` field, received with the previous `/Stats` response and cached in `VotesClient`, links this request back to an authenticated stats session, making it harder to programmatically fabricate votes without first fetching real stats. The vote value uses the signed-integer convention (`+1`/`0`/`-1`) shared with `PluginVote.Vote`.

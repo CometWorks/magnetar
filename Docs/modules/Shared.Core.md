@@ -24,7 +24,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | `Steam` | static class | [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | Cross-platform Steam path resolution, Steamworks.NET resolver, and game-server UGC install checks. |
 | `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing info.log, fail-soft. |
 | `IGameLog` | interface | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | Abstraction over the SE DS native log. |
-| `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. consent and -help) and renders the usage screen. |
+| `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, consent and -help) and renders the usage screen. |
 | `UpdateType` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Self-update channel: None/Standard/Tester. |
 | `ConsentChoice` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Telemetry-consent intent from the command line: Unset/Accept/Deny/Withdraw. |
 | `Launcher` | class | [`Shared/Launcher.cs`](../descriptions/Shared/Launcher.cs.md) | Pre-launch sanity checks (SE running, dropped -plugin switch, config presence). |
@@ -56,7 +56,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 - `Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()`
 - `Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)`
 - `LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose`
-- `Flags.* flags (incl. Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
+- `Flags.* flags (incl. NoImplicitMod/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
 - `new Launcher(sePath).CanStart()/VerifyConfig()`
 - `PluginProgress.ReportDownloading/ReportCompiling/ReportCompiled/ReportSummary`
 

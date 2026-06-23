@@ -1,6 +1,6 @@
 # Shared/Config/LocalFolderConfig.cs
 
-**Project:** Shared · **Namespace:** `Pulsar.Shared.Config` · **Kind:** class · **Lines:** 8
+**Project:** Shared · **Namespace:** `Pulsar.Shared.Config` · **Kind:** class · **Lines:** 7
 
 ## Summary
 `LocalFolderConfig` is the per-plugin configuration record stored inside a `Profile` for plugins sourced from a local development folder (the "DevFolder" feature). It extends `PluginDataConfig` with the path to an explicit data file and a debug-build flag, supporting the developer workflow where a plugin is compiled locally and loaded directly without going through GitHub releases.

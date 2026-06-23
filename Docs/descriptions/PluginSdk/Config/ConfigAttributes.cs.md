@@ -57,7 +57,7 @@ Marks a `List<T>` option whose element type is a supported scalar, enum, or stru
 - **Methods:** `ListOptionAttribute(int maxCount = 0, string description = null)`.
 
 ### DictOptionAttribute — sealed class, public : `ConfigOptionAttribute`
-Marks a `SerializableDictionary<TKey,TValue>` option (key must be `string`/`int`/`long`; value a supported scalar/struct).
+Marks a `SerializableDictionary<TKey,TValue>` option (key must be `string`/`int`/`long`; value a supported scalar, enum, or struct).
 - **Properties:** `MaxCount` — max entry count, `0` = unlimited; `TreeParentField` (settable) — name of a struct member on the value type referencing another entry's key; when set the UI renders the dict as a tree.
 - **Methods:** `DictOptionAttribute(int maxCount = 0, string description = null)`.
 
