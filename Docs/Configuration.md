@@ -98,6 +98,7 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
 | Variable             | Effect                                                           |
 | -------------------- | ---------------------------------------------------------------- |
 | `MAGNETAR_SAFE_MODE` | When `1`, disables preloader patches for a one-off recovery run. |
+| `MAGNETAR_GITHUB_TOKEN` | GitHub token used for GitHub API/archive downloads when `-github-token` is not supplied. |
 | `XDG_CONFIG_HOME`    | Overrides the Magnetar config-dir base (Linux).                  |
 | `XDG_DATA_HOME`      | Overrides the Magnetar install-dir base (Linux).                 |
 | `DS64`               | Build-time override for the DS reference path.                   |

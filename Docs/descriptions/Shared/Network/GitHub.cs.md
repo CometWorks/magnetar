@@ -1,6 +1,6 @@
 # Shared/Network/GitHub.cs
 
-**Project:** Shared · **Namespace:** `Pulsar.Shared.Network` · **Kind:** static class · **Lines:** 140
+**Project:** Shared · **Namespace:** `Pulsar.Shared.Network` · **Kind:** static class · **Lines:** 149
 
 ## Summary
 `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. It provides download streams for repository ZIP archives and individual files (used when installing GitHub-hosted plugins), commit SHA lookups (used to detect upstream changes), and release version queries (used for update checks). It also performs one-time TLS 1.2 enablement, which is required on Windows 7/Server 2008 targets where .NET Framework 4.8 does not enable TLS 1.2 by default.
@@ -9,7 +9,7 @@
 
 ### `GitHub` — static class, public
 
-Single responsibility: wraps four GitHub URL templates and exposes typed helpers on top of them. All HTTP work goes through `GetStream`, which creates a `HttpWebRequest` with the `Pulsar` user-agent string, enables gzip/deflate decompression, applies the configured `NetworkTimeout`, and optionally blocks IPv6 binding via a `BindIPEndPointDelegate`. The full response is buffered into a rewound `MemoryStream` before returning so callers do not hold the connection open.
+Single responsibility: wraps four GitHub URL templates and exposes typed helpers on top of them. All HTTP work goes through `GetStream`, which creates a `HttpWebRequest` with the `Pulsar` user-agent string, enables gzip/deflate decompression, applies the configured `NetworkTimeout`, adds a bearer token from `Flags.GitHubToken` for known GitHub hosts when present, and optionally blocks IPv6 binding via a `BindIPEndPointDelegate`. The full response is buffered into a rewound `MemoryStream` before returning so callers do not hold the connection open.
 
 - **Fields:**
   - `CommitInfo` — URL template: `https://api.github.com/repos/{0}/commits/{1}`
@@ -19,7 +19,8 @@ Single responsibility: wraps four GitHub URL templates and exposes typed helpers
 
 - **Methods:**
   - `Init()` — sets `ServicePointManager.SecurityProtocol |= Tls12`; logs a non-fatal error if the platform does not support TLS 1.2 and continues
-  - `GetStream(Uri)` — core HTTP fetch: creates `HttpWebRequest`, applies `CoreConfig` timeout and optional IPv6 block, copies the response body into a `MemoryStream`, rewinds it, and returns it to the caller
+  - `GetStream(Uri)` — core HTTP fetch: creates `HttpWebRequest`, applies `CoreConfig` timeout, adds `Authorization: Bearer <token>` when `Flags.GitHubToken` is set and the host is GitHub-owned, applies optional IPv6 block, copies the response body into a `MemoryStream`, rewinds it, and returns it to the caller
+  - `IsGitHubHost(string host)` — private guard that limits bearer-token attachment to `github.com`, `api.github.com`, `raw.githubusercontent.com`, and `codeload.github.com`
   - `BlockIPv6(ServicePoint, IPEndPoint, int)` — `BindIPEndPointDelegate` callback; allows IPv4 endpoints through (`IPAddress.Any`) and throws for IPv6, effectively forcing IPv4-only connections
   - `GetRepoArchive(string repo, string reference)` — builds a ZIP download URI from `FetchRepo` and delegates to `GetStream`; logs the URL before fetching
   - `GetRepoFile(string repo, string reference, string file)` — builds a raw file URI from `FetchFile` and delegates to `GetStream`; strips a leading slash from `file` before appending

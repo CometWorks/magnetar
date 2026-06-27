@@ -33,6 +33,7 @@ public static class Flags
     public static bool TrustedMods { get; private set; }
     public static bool Daemon { get; private set; }
     public static bool NoImplicitMod { get; private set; }
+    public static string GitHubToken { get; private set; }
     public static ConsentChoice Consent { get; private set; }
     public static bool Help { get; private set; }
 
@@ -55,6 +56,7 @@ public static class Flags
         TrustedMods = HasArg("hardened");
         Daemon = HasArg("daemon");
         NoImplicitMod = HasArg("noimplicitmod");
+        GitHubToken = GetArgValue("github-token") ?? Environment.GetEnvironmentVariable("MAGNETAR_GITHUB_TOKEN");
 
         if (HasArg("withdraw-consent"))
             Consent = ConsentChoice.Withdraw;
@@ -96,6 +98,8 @@ public static class Flags
             changed.Add("Daemon");
         if (NoImplicitMod)
             changed.Add("NoImplicitMod");
+        if (!string.IsNullOrWhiteSpace(GitHubToken))
+            changed.Add("GitHubToken");
         if (Consent != ConsentChoice.Unset)
             changed.Add(Consent.ToString());
 
@@ -120,6 +124,7 @@ public static class Flags
         Console.WriteLine("                      server keeps running after the parent exits");
         Console.WriteLine("  -hardened           Load only trusted mods, stripping untrusted Workshop mods");
         Console.WriteLine("  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod");
+        Console.WriteLine("  -github-token <pat> Use a GitHub token for API/archive downloads");
         Console.WriteLine("  -mkcheck            Regenerate the Libraries checksum file (bitrot detection)");
         Console.WriteLine("  -keepintro          Do not suppress the game intro video");
         Console.WriteLine("  -debug              Launch the managed debugger at startup");
@@ -151,4 +156,16 @@ public static class Flags
         Environment
             .GetCommandLineArgs()
             .Any(arg => arg.Equals($"-{argument}", StringComparison.OrdinalIgnoreCase));
+
+    private static string GetArgValue(string argument)
+    {
+        string[] args = Environment.GetCommandLineArgs();
+        for (var index = 0; index < args.Length - 1; index++)
+        {
+            if (args[index].Equals($"-{argument}", StringComparison.OrdinalIgnoreCase))
+                return args[index + 1];
+        }
+
+        return null;
+    }
 }
