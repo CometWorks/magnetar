@@ -25,6 +25,11 @@ Magnetar passes through — then exit without starting the server. On Linux the 
 screen deliberately skips loading the bundled native libraries, so it prints
 cleanly without startup noise.
 
+Use `-github-token <token>` when running under a supervisor that needs Magnetar's
+GitHub API and archive downloads to use an authenticated REST API rate limit. The
+same value can also be supplied with `MAGNETAR_GITHUB_TOKEN`. Quasar passes its
+stored GitHub update token this way for managed servers.
+
 ## Client companion mod
 
 By default Magnetar auto-loads the Steam Workshop `MagnetarMod` client companion

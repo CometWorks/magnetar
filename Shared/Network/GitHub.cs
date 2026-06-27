@@ -36,6 +36,9 @@ public static class GitHub
         request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
         CoreConfig config = ConfigManager.Instance.Core;
         request.Timeout = config.NetworkTimeout;
+        if (!string.IsNullOrWhiteSpace(Flags.GitHubToken) && IsGitHubHost(uri.Host))
+            request.Headers[HttpRequestHeader.Authorization] = "Bearer " + Flags.GitHubToken.Trim();
+
         if (!config.AllowIPv6)
             request.ServicePoint.BindIPEndPointDelegate = BlockIPv6;
 
@@ -46,6 +49,12 @@ public static class GitHub
         output.Position = 0;
         return output;
     }
+
+    private static bool IsGitHubHost(string host) =>
+        host.Equals("github.com", StringComparison.OrdinalIgnoreCase) ||
+        host.Equals("api.github.com", StringComparison.OrdinalIgnoreCase) ||
+        host.Equals("raw.githubusercontent.com", StringComparison.OrdinalIgnoreCase) ||
+        host.Equals("codeload.github.com", StringComparison.OrdinalIgnoreCase);
 
     private static IPEndPoint BlockIPv6(
         ServicePoint servicePoint,

@@ -1,6 +1,6 @@
 # Module: Shared.Core
 
-**Project:** `Shared` · **Files:** 11 · **Source lines:** 2190
+**Project:** `Shared` · **Files:** 11 · **Source lines:** 2207
 
 ## Purpose
 
@@ -24,7 +24,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | `Steam` | static class | [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | Cross-platform Steam path resolution, Steamworks.NET resolver, and game-server UGC install checks. |
 | `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing info.log, fail-soft. |
 | `IGameLog` | interface | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | Abstraction over the SE DS native log. |
-| `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, consent and -help) and renders the usage screen. |
+| `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, GitHub token, consent and -help) and renders the usage screen. |
 | `UpdateType` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Self-update channel: None/Standard/Tester. |
 | `ConsentChoice` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Telemetry-consent intent from the command line: Unset/Accept/Deny/Withdraw. |
 | `Launcher` | class | [`Shared/Launcher.cs`](../descriptions/Shared/Launcher.cs.md) | Pre-launch sanity checks (SE running, dropped -plugin switch, config presence). |
@@ -35,7 +35,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Shared/AssemblyResolver.cs`](../descriptions/Shared/AssemblyResolver.cs.md) | 107 | Provides a scoped `AppDomain.AssemblyResolve` handler that satisfies managed assembly load requests from one or more "source" folders, but only when the *requesting* assembly is on an allow-list. |
-| [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | 154 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
+| [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | 171 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/string/enum flags for the rest of the loader. |
 | [`Shared/Launcher.cs`](../descriptions/Shared/Launcher.cs.md) | 52 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
 | [`Shared/Loader.cs`](../descriptions/Shared/Loader.cs.md) | 156 | The orchestrator that instantiates all enabled plugins at startup. |
 | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | 97 | Magnetar's central logging facade. |
@@ -56,7 +56,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 - `Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()`
 - `Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)`
 - `LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose`
-- `Flags.* flags (incl. NoImplicitMod/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
+- `Flags.* flags (incl. NoImplicitMod/GitHubToken/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
 - `new Launcher(sePath).CanStart()/VerifyConfig()`
 - `PluginProgress.ReportDownloading/ReportCompiling/ReportCompiled/ReportSummary`
 
