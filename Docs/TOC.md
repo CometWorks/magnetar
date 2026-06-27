@@ -49,8 +49,9 @@ plugins, then hand off to the dedicated server.
 | **MagnetarLegacy** | .NET Framework 4.8 | Windows only | `Legacy.csproj` (net48) |
 | **MagnetarInterim** | .NET 10 | Windows + Linux | `Legacy.csproj` (net10.0) |
 
-The code is organised into five .NET projects. Their compile-time reference
-direction (a strict DAG) is the backbone of the module layering below:
+The launcher/plugin-loader code is organised into five .NET solution projects.
+Their compile-time reference direction (a strict DAG) is the backbone of the
+module layering below:
 
 ```mermaid
 graph TD
@@ -100,7 +101,7 @@ Grouped by project. Click a module for its full doc.
 | [Legacy.Loader](modules/Legacy.Loader.md) | 6 | 1078 | Runtime plugin host & native bootstrap: instantiates plugins, drives their SE lifecycle, registers components, manages the implicit MagnetarMod client companion, wires the mission-screen senders, prefetches Workshop mods (expanding legacy archives), preloads native libs. |
 | [Legacy.Patch](modules/Legacy.Patch.md) | 12 | 528 | All Harmony patches that adapt the DS binary to Magnetar's headless, in-process, externally-configured hosting model, including injecting the MagnetarMod client companion into SE's mod-loading pipeline. |
 | [Legacy.Commands](modules/Legacy.Commands.md) | 3 | 243 | Host side of the `!`-prefixed chat-command pipeline and the built-in `!save` / `!restart` / `!quit` / `!stop` commands. |
-| [Legacy.Integration](modules/Legacy.Integration.md) | 7 | 590 | Glue to SE internals: isolated Roslyn compilation host, Linux case-insensitive path resolution, and the host-side mission-screen sender that pushes popups to clients via the MagnetarMod world mod. |
+| [Legacy.Integration](modules/Legacy.Integration.md) | 7 | 613 | Glue to SE internals: isolated Roslyn compilation host, Linux case-insensitive path resolution, and the host-side mission-screen sender that pushes popups to clients via the MagnetarMod world mod. |
 
 ### `Shared` — cross-target infrastructure
 
@@ -136,14 +137,17 @@ Grouped by project. Click a module for its full doc.
 
 ### `MagnetarMod` — companion in-game world mod
 
-Not part of the .NET solution: an SE1 `Data/Scripts` mod compiled in-game, shipped
-alongside the launcher and auto-loaded as an implicit client mod (unless disabled
-with `-noimplicitmod` or running crossplay). It is the client-side receiver for
-server-pushed content.
+An SE1 `Data/Scripts` mod compiled in-game, shipped alongside the launcher and
+auto-loaded as an implicit client mod (unless disabled with `-noimplicitmod` or
+running crossplay). It is the client-side receiver for server-pushed content.
+`MagnetarMod/MagnetarMod.csproj` is an MDK2 project for IDE support, local
+builds, and ModAPI analyzer coverage. It is present in `Magnetar.sln`, but only
+the `Workshop|Any CPU` solution configuration selects it for build; normal
+`Debug`/`Release` solution builds skip it.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [MagnetarMod](modules/MagnetarMod.md) | 1 | 113 | Session component that receives mission-screen payloads from the server over a secure multiplayer channel and renders them via the SE ModAPI — the client counterpart to `PluginSdk.MissionScreens` / `Legacy.Integration`'s mission-screen sender. |
+| [MagnetarMod](modules/MagnetarMod.md) | 1 | 114 | Session component that receives mission-screen payloads from the server over a secure multiplayer channel and renders them via the SE ModAPI — the client counterpart to `PluginSdk.MissionScreens` / `Legacy.Integration`'s mission-screen sender. |
 
 ## Module dependency graph
 

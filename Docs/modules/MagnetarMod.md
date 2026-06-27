@@ -1,6 +1,6 @@
 # Module: MagnetarMod
 
-**Project:** `MagnetarMod` · **Files:** 1 · **Source lines:** 113
+**Project:** `MagnetarMod` · **Files:** 1 · **Source lines:** 114
 
 ## Purpose
 
@@ -8,20 +8,20 @@ The companion in-game Space Engineers world mod (a Data/Scripts mod) bundled wit
 
 ## Role in Magnetar
 
-Client-side counterpart to the server-side mission-screen path: PluginSdk.MissionScreens (the plugin-facing facade) and Legacy.Integration.MissionScreenSender (the host sender) serialize and push payloads, and this mod's MagnetarModSession deserializes them and calls the SE ModAPI to show the popup. It shares the same channel id (48731), protocol version, packet-type discriminator, and five-string field layout as the server side.
+Client-side counterpart to the server-side mission-screen path: PluginSdk.MissionScreens (the plugin-facing facade) and Legacy.Integration.MissionScreenSender (the host sender) serialize and push payloads, and this mod's MagnetarModSession deserializes them and calls the SE ModAPI to show the popup. It shares the same channel id (48731), protocol version, packet-type discriminator, and ProtoBuf field layout as the server side.
 
 ## Key types
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
 | `MagnetarModSession` | sealed class (MySessionComponentBase, NoUpdate session component) | [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Registers a secure message handler on channel 48731, deserializes versioned show-mission-screen frames from the server, and renders them via MyAPIGateway.Utilities.ShowMissionScreen on the game thread. |
-| `MagnetarModSession.MissionScreenPacket` | sealed class (private nested data holder) | [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Mutable holder for the five deserialized payload strings (title, objective prefix, objective, description, OK-button caption), mirroring PluginSdk.MissionScreenContent. |
+| `MagnetarModSession.MissionScreenPacket` | sealed class (public nested ProtoBuf DTO) | [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Mutable holder for the protocol version, packet type, and five deserialized payload strings, mirroring the server-side ProtoBuf field layout. |
 
 ## Files
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 113 | Client-side Space Engineers world-mod session component that receives server-pushed mission-screen popups and renders them through the SE ModAPI. |
+| [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 114 | Client-side Space Engineers world-mod session component that receives server-pushed mission-screen popups and renders them through the SE ModAPI. |
 
 ## Public API surface
 
