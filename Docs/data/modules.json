@@ -37,7 +37,7 @@
       "Legacy/Paths/ReflectionPathResolver.cs"
     ],
     "file_count": 7,
-    "total_lines": 590,
+    "total_lines": 613,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -97,7 +97,7 @@
       "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
     ],
     "file_count": 1,
-    "total_lines": 113,
+    "total_lines": 114,
     "model": "sonnet",
     "dominant_tier": 2
   },

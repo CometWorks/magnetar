@@ -38,6 +38,10 @@ jobs:
 
           rsync -a --delete \
             --exclude 'README.md' \
+            --exclude 'MagnetarMod.csproj' \
+            --exclude '*.mdk.local.ini' \
+            --exclude 'bin/' \
+            --exclude 'obj/' \
             MagnetarMod/ "$STAGING/"
 
           SBMI_FILE="MagnetarMod/modinfo.sbmi"

@@ -1,6 +1,5 @@
 using System;
-using System.IO;
-using System.Text;
+using ProtoBuf;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRage.Utils;
@@ -67,27 +66,13 @@ namespace MagnetarMod
 
             try
             {
-                using (MemoryStream stream = new MemoryStream(data))
-                using (BinaryReader reader = new BinaryReader(stream, Encoding.UTF8))
-                {
-                    byte version = reader.ReadByte();
-                    if (version != ProtocolVersion)
-                        return false;
+                if (MyAPIGateway.Utilities == null)
+                    return false;
 
-                    byte packetType = reader.ReadByte();
-                    if (packetType != ShowMissionScreenPacket)
-                        return false;
-
-                    packet = new MissionScreenPacket
-                    {
-                        ScreenTitle = reader.ReadString(),
-                        CurrentObjectivePrefix = reader.ReadString(),
-                        CurrentObjective = reader.ReadString(),
-                        ScreenDescription = reader.ReadString(),
-                        OkButtonCaption = reader.ReadString()
-                    };
-                    return true;
-                }
+                packet = MyAPIGateway.Utilities.SerializeFromBinary<MissionScreenPacket>(data);
+                return packet != null &&
+                       packet.ProtocolVersion == ProtocolVersion &&
+                       packet.PacketType == ShowMissionScreenPacket;
             }
             catch (Exception e)
             {
@@ -101,12 +86,28 @@ namespace MagnetarMod
             return string.IsNullOrEmpty(value) ? null : value;
         }
 
-        private sealed class MissionScreenPacket
+        [ProtoContract]
+        public sealed class MissionScreenPacket
         {
+            [ProtoMember(1)]
+            public byte ProtocolVersion;
+
+            [ProtoMember(2)]
+            public byte PacketType;
+
+            [ProtoMember(3)]
             public string ScreenTitle;
+
+            [ProtoMember(4)]
             public string CurrentObjectivePrefix;
+
+            [ProtoMember(5)]
             public string CurrentObjective;
+
+            [ProtoMember(6)]
             public string ScreenDescription;
+
+            [ProtoMember(7)]
             public string OkButtonCaption;
         }
     }

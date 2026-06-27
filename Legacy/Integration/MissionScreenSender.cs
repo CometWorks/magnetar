@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using PluginSdk;
+using ProtoBuf;
 using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox.Game.World;
@@ -31,7 +30,7 @@ internal static class MissionScreenSender
     public static bool ShowToSteam(ulong steamId, MissionScreenContent content)
     {
         if (steamId == 0UL || !content.HasContent || MyAPIGateway.Multiplayer == null ||
-            MySession.Static == null || !ReceiverModLoaded())
+            MyAPIGateway.Utilities == null || MySession.Static == null || !ReceiverModLoaded())
             return false;
 
         byte[] payload = Serialize(content);
@@ -42,7 +41,7 @@ internal static class MissionScreenSender
     public static bool ShowToAll(MissionScreenContent content)
     {
         if (!content.HasContent || MySession.Static == null || MyAPIGateway.Multiplayer == null ||
-            !ReceiverModLoaded())
+            MyAPIGateway.Utilities == null || !ReceiverModLoaded())
             return false;
 
         byte[] payload = Serialize(content);
@@ -102,18 +101,42 @@ internal static class MissionScreenSender
 
     private static byte[] Serialize(MissionScreenContent content)
     {
-        using MemoryStream stream = new();
-        using BinaryWriter writer = new(stream, Encoding.UTF8);
-        writer.Write(MissionScreens.ProtocolVersion);
-        writer.Write(MissionScreens.ShowMissionScreenPacket);
-        WriteString(writer, content.ScreenTitle);
-        WriteString(writer, content.CurrentObjectivePrefix);
-        WriteString(writer, content.CurrentObjective);
-        WriteString(writer, content.ScreenDescription);
-        WriteString(writer, content.OkButtonCaption);
-        return stream.ToArray();
+        var packet = new MissionScreenPacket
+        {
+            ProtocolVersion = MissionScreens.ProtocolVersion,
+            PacketType = MissionScreens.ShowMissionScreenPacket,
+            ScreenTitle = content.ScreenTitle ?? string.Empty,
+            CurrentObjectivePrefix = content.CurrentObjectivePrefix ?? string.Empty,
+            CurrentObjective = content.CurrentObjective ?? string.Empty,
+            ScreenDescription = content.ScreenDescription ?? string.Empty,
+            OkButtonCaption = content.OkButtonCaption ?? string.Empty
+        };
+
+        return MyAPIGateway.Utilities.SerializeToBinary(packet);
     }
 
-    private static void WriteString(BinaryWriter writer, string value)
-        => writer.Write(value ?? string.Empty);
+    [ProtoContract]
+    private sealed class MissionScreenPacket
+    {
+        [ProtoMember(1)]
+        public byte ProtocolVersion;
+
+        [ProtoMember(2)]
+        public byte PacketType;
+
+        [ProtoMember(3)]
+        public string ScreenTitle;
+
+        [ProtoMember(4)]
+        public string CurrentObjectivePrefix;
+
+        [ProtoMember(5)]
+        public string CurrentObjective;
+
+        [ProtoMember(6)]
+        public string ScreenDescription;
+
+        [ProtoMember(7)]
+        public string OkButtonCaption;
+    }
 }

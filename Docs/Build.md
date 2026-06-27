@@ -185,6 +185,27 @@ overrides — are documented in [Configuration.md](Configuration.md).
 
 ---
 
+## MagnetarMod MDK2 project
+
+The companion world mod under [MagnetarMod/](../MagnetarMod/) has its own MDK2
+project:
+
+```sh
+dotnet build MagnetarMod/MagnetarMod.csproj
+dotnet build Magnetar.sln -c Workshop
+```
+
+It targets `net48`, uses `Mal.Mdk2.References` and
+`Mal.Mdk2.ModAnalyzers`, and reads the local Space Engineers install from
+`MagnetarMod/MagnetarMod.mdk.local.ini`. It is included in `Magnetar.sln` only
+for the `Workshop|Any CPU` solution configuration. The normal `Debug` and
+`Release` solution configurations leave `MagnetarMod` unselected for build, so
+the regular release pipeline's `dotnet build -c Release Magnetar.sln` does not
+build the mod project. Space Engineers still compiles the world mod when loading
+it; the MDK2 project is for local/workshop validation and analyzer coverage.
+
+---
+
 ## How the multi-target build works
 
 * **Target frameworks** are OS-conditional in

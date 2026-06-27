@@ -1,6 +1,6 @@
 # Module: Legacy.Integration
 
-**Project:** `Legacy` · **Files:** 7 · **Source lines:** 590
+**Project:** `Legacy` · **Files:** 7 · **Source lines:** 613
 
 ## Purpose
 
@@ -22,7 +22,7 @@ Acts as the integration layer within the Legacy project, connecting Magnetar's a
 | `ModPluginExtensions` | static class | [`Legacy/Extensions/ModPlugin.cs`](../descriptions/Legacy/Extensions/ModPlugin.cs.md) | Extension methods on ModPlugin that produce SE DS mod-registration objects (MyObjectBuilder_Checkpoint.ModItem and MyModContext). |
 | `PathResolverBinder` | static class | [`Legacy/Paths/PathResolverBinder.cs`](../descriptions/Legacy/Paths/PathResolverBinder.cs.md) | One-shot startup helper that discovers LinuxCompat PathHelpers/PathCache types and installs a ReflectionPathResolver into the PluginSdk PathResolver facade. |
 | `ReflectionPathResolver` | class | [`Legacy/Paths/ReflectionPathResolver.cs`](../descriptions/Legacy/Paths/ReflectionPathResolver.cs.md) | IPathResolver backend bound to LinuxCompat static methods via pre-created delegates; zero reflection overhead on the hot path. |
-| `MissionScreenSender` | static class | [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | Host-side implementation of the PluginSdk MissionScreens facade; serializes a MissionScreenContent into a versioned binary packet and sends it to a Steam id, an identity, or all online players via MyAPIGateway.Multiplayer.SendMessageTo on the game thread, gated on the bundled MagnetarMod client receiver being enabled as a world mod. |
+| `MissionScreenSender` | static class | [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | Host-side implementation of the PluginSdk MissionScreens facade; serializes a MissionScreenContent into a versioned ProtoBuf packet and sends it to a Steam id, an identity, or all online players via MyAPIGateway.Multiplayer.SendMessageTo on the game thread, gated on the bundled MagnetarMod client receiver being enabled as a world mod. |
 
 ## Files
 
@@ -32,7 +32,7 @@ Acts as the integration layer within the Legacy project, connecting Magnetar's a
 | [`Legacy/Compiler/Legacy.cs`](../descriptions/Legacy/Compiler/Legacy.cs.md) | 86 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
 | [`Legacy/Compiler/References.cs`](../descriptions/Legacy/Compiler/References.cs.md) | 36 | Provides the list of assembly references that the Roslyn compiler must know about when compiling SE scripts and plugins. |
 | [`Legacy/Extensions/ModPlugin.cs`](../descriptions/Legacy/Extensions/ModPlugin.cs.md) | 31 | Extends `ModPlugin` (the Magnetar data type representing a Steam Workshop mod) with the SE DS API objects needed to register a mod with the game engine at runtime. |
-| [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 119 | Host-side sender that delivers plugin-declared mission-screen popups to clients over Space Engineers' multiplayer messaging API. |
+| [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 142 | Host-side sender that delivers plugin-declared mission-screen popups to clients over Space Engineers' multiplayer messaging API. |
 | [`Legacy/Paths/PathResolverBinder.cs`](../descriptions/Legacy/Paths/PathResolverBinder.cs.md) | 77 | Wires the `PluginSdk.Paths.PathResolver` facade to the LinuxCompat plugin's case-insensitive path cache at startup. |
 | [`Legacy/Paths/ReflectionPathResolver.cs`](../descriptions/Legacy/Paths/ReflectionPathResolver.cs.md) | 94 | An `IPathResolver` backend that forwards path operations to the LinuxCompat plugin's `PathHelpers` and `PathCache` static methods via pre-bound delegates. |
 
