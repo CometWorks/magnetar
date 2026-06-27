@@ -14,7 +14,7 @@
 # NativeWrappers/Makefile and CMakeLists.txt).
 
 # ---- build stage ------------------------------------------------------------
-FROM ubuntu:24.04 AS build
+FROM debian:12 AS build
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
