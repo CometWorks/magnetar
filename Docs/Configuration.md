@@ -17,6 +17,13 @@ Overrides where Magnetar stores its own configuration, logs, and the preloader
 cache. A relative path resolves against the launcher's directory. This does
 **not** affect the dedicated server's config or saves.
 
+Each Magnetar startup creates a new timestamped `info_yyyyMMdd_HHmmssfff.log`
+file in this directory and updates `info.current` with the active file name.
+This matches the Dedicated Server's per-start log history: failed startup
+attempts are preserved instead of being overwritten. The compiler AppDomain and
+Quasar.Agent's PluginSdk log mirror both use the active file named by
+`info.current`.
+
 * **Install dir (default, where the launcher lives)**
   * Windows — `%APPDATA%\Magnetar`.
   * Linux — `$XDG_DATA_HOME/Magnetar`, falling back to `~/.local/share/Magnetar`.
