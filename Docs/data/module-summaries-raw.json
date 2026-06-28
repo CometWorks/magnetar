@@ -163,7 +163,7 @@
             "name": "CompilerFactory (Legacy)",
             "kind": "class",
             "file": "Legacy/Compiler/Legacy.cs",
-            "summary": "NETFRAMEWORK-only factory that hosts Pulsar.Compiler in a separate AppDomain and returns RoslynCompiler as a transparent MarshalByRefObject proxy."
+            "summary": "NETFRAMEWORK-only factory that hosts Magnetar.Compiler in a separate AppDomain probing both the Legacy library root and compiler dependency subdirectory."
           },
           {
             "name": "References",

@@ -27,7 +27,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Compiler/Interim.cs`](descriptions/Legacy/Compiler/Interim.cs.md) | 147 | 2 | Active only under `#if NETCOREAPP` (the Interim/.NET 10 build). |
-| [`Legacy/Compiler/Legacy.cs`](descriptions/Legacy/Compiler/Legacy.cs.md) | 86 | 2 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
+| [`Legacy/Compiler/Legacy.cs`](descriptions/Legacy/Compiler/Legacy.cs.md) | 92 | 2 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
 | [`Legacy/Compiler/References.cs`](descriptions/Legacy/Compiler/References.cs.md) | 36 | 2 | Provides the list of assembly references that the Roslyn compiler must know about when compiling SE scripts and plugins. |
 | [`Legacy/Extensions/ModPlugin.cs`](descriptions/Legacy/Extensions/ModPlugin.cs.md) | 31 | 2 | Extends `ModPlugin` (the Magnetar data type representing a Steam Workshop mod) with the SE DS API objects needed to register a mod with the game engine at runtime. |
 | [`Legacy/Integration/MissionScreenSender.cs`](descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 142 | 2 | Host-side sender that delivers plugin-declared mission-screen popups to clients over Space Engineers' multiplayer messaging API. |

@@ -61,7 +61,9 @@ This builds both launchers. Each project's targets then:
   its dependencies into the Magnetar install folder, by default
   `%APPDATA%\Magnetar` (override with the `Magnetar` property/env var). The
   launcher executable lands at the root; its managed dependencies go under
-  `Libraries\MagnetarLegacy\` or `Libraries\MagnetarInterim\`.
+  `Libraries\MagnetarLegacy\` or `Libraries\MagnetarInterim\`. Roslyn compiler
+  dependencies that are private to source-plugin compilation live in the
+  matching `Compiler\` subdirectory.
 
 To build just one launcher, restrict the target framework:
 
