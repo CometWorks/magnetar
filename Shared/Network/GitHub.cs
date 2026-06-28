@@ -10,7 +10,7 @@ public static class GitHub
 {
     private const string CommitInfo = "https://api.github.com/repos/{0}/commits/{1}";
     private const string ReleaseInfo = "https://api.github.com/repos/{0}/releases";
-    private const string FetchRepo = "https://github.com/{0}/archive/{1}.zip";
+    private const string FetchRepo = "https://api.github.com/repos/{0}/zipball/{1}";
     private const string FetchFile = "https://raw.githubusercontent.com/{0}/{1}/";
 
     public static void Init()
@@ -36,8 +36,9 @@ public static class GitHub
         request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
         CoreConfig config = ConfigManager.Instance.Core;
         request.Timeout = config.NetworkTimeout;
-        if (!string.IsNullOrWhiteSpace(Flags.GitHubToken) && IsGitHubHost(uri.Host))
-            request.Headers[HttpRequestHeader.Authorization] = "Bearer " + Flags.GitHubToken.Trim();
+        string authorization = GetAuthorizationHeader();
+        if (authorization is not null && IsGitHubHost(uri.Host))
+            request.Headers[HttpRequestHeader.Authorization] = authorization;
 
         if (!config.AllowIPv6)
             request.ServicePoint.BindIPEndPointDelegate = BlockIPv6;
@@ -55,6 +56,24 @@ public static class GitHub
         host.Equals("api.github.com", StringComparison.OrdinalIgnoreCase) ||
         host.Equals("raw.githubusercontent.com", StringComparison.OrdinalIgnoreCase) ||
         host.Equals("codeload.github.com", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetAuthorizationHeader()
+    {
+        string token = Flags.GitHubToken?.Trim();
+        if (string.IsNullOrWhiteSpace(token))
+            return null;
+
+        if (token.StartsWith("Authorization:", StringComparison.OrdinalIgnoreCase))
+            token = token.Substring("Authorization:".Length).Trim();
+
+        if (
+            token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+            || token.StartsWith("token ", StringComparison.OrdinalIgnoreCase)
+        )
+            return token;
+
+        return "token " + token;
+    }
 
     private static IPEndPoint BlockIPv6(
         ServicePoint servicePoint,

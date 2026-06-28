@@ -55,15 +55,9 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
     {
         string applicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        string libraryDir = Path.Combine("Libraries", Assembly.GetExecutingAssembly().GetName().Name);
-        string compilerDir = Path.Combine(libraryDir, "Compiler");
+        string privateBinPath = @"Libraries\MagnetarLegacy\Compiler";
 
-        // deploy.bat keeps Magnetar.Compiler and shared dependencies in the
-        // launcher library root, while Roslyn-private dependencies live under
-        // Compiler. The child AppDomain must probe both.
-        string privateBinPath = string.Join(Path.PathSeparator.ToString(), libraryDir, compilerDir);
-
-        string configurationFile = Path.Combine(libraryDir, "Magnetar.Compiler.dll.config");
+        string configurationFile = @"Libraries\MagnetarLegacy\Magnetar.Compiler.dll.config";
 
         AppDomainSetup current = AppDomain.CurrentDomain.SetupInformation;
         AppDomainSetup config = new()

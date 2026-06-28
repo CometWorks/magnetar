@@ -210,7 +210,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Shared/Network/GitHub.cs`](descriptions/Shared/Network/GitHub.cs.md) | 140 | 2 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
+| [`Shared/Network/GitHub.cs`](descriptions/Shared/Network/GitHub.cs.md) | 168 | 2 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
 | [`Shared/Network/NuGetClient.cs`](descriptions/Shared/Network/NuGetClient.cs.md) | 248 | 1 | `NuGetClient` wraps the NuGet v3 client SDK to download and extract packages from `api.nuget.org` into a local cache inside Magnetar's data directory. |
 | [`Shared/Network/NuGetLogger.cs`](descriptions/Shared/Network/NuGetLogger.cs.md) | 87 | 2 | `NuGetLogger` adapts the NuGet SDK's `ILogger` interface to Magnetar's `LogFile` / NLog pipeline. |
 | [`Shared/Network/NuGetPackage.cs`](descriptions/Shared/Network/NuGetPackage.cs.md) | 124 | 2 | `NuGetPackage` represents a single NuGet package that has already been extracted to disk. |
