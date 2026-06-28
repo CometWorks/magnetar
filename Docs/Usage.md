@@ -27,10 +27,10 @@ cleanly without startup noise.
 
 Use `-github-token <token>` when running under a supervisor that needs Magnetar's
 GitHub API and archive downloads to use an authenticated REST API rate limit. For
-public GitHub resources, a fine-grained personal access token with Public
-repositories access and no added permissions is enough. The same value can also
-be supplied with `MAGNETAR_GITHUB_TOKEN`. Quasar passes its stored GitHub update
-token this way for managed servers.
+public GitHub resources, generate a classic personal access token at
+https://github.com/settings/tokens/new with no permissions selected. The same
+value can also be supplied with `MAGNETAR_GITHUB_TOKEN`. Quasar passes its
+stored GitHub update token this way for managed servers.
 
 ## Client companion mod
 

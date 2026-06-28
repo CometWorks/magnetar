@@ -57,7 +57,7 @@ internal class CompilerFactory(string[] probeDirs, string gameDir, string logDir
 
         string privateBinPath = @"Libraries\MagnetarLegacy\Compiler";
 
-        string configurationFile = @"Libraries\MagnetarLegacy\Pulsar.Compiler.dll.config";
+        string configurationFile = @"Libraries\MagnetarLegacy\Magnetar.Compiler.dll.config";
 
         AppDomainSetup current = AppDomain.CurrentDomain.SetupInformation;
         AppDomainSetup config = new()

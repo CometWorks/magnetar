@@ -1,6 +1,6 @@
 # Module: Shared.Network
 
-**Project:** `Shared` · **Files:** 7 · **Source lines:** 873
+**Project:** `Shared` · **Files:** 7 · **Source lines:** 892
 
 ## Purpose
 
@@ -14,7 +14,7 @@ Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub 
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
-| `GitHub` | static class | [`Shared/Network/GitHub.cs`](../descriptions/Shared/Network/GitHub.cs.md) | Wraps GitHub REST API and raw CDN for repo archive downloads, single-file fetches, commit hash lookups, release version queries, and optional bearer-token authentication. |
+| `GitHub` | static class | [`Shared/Network/GitHub.cs`](../descriptions/Shared/Network/GitHub.cs.md) | Wraps GitHub REST API and raw CDN for repo archive downloads, single-file fetches, commit hash lookups, and release version queries. |
 | `NuGetClient` | class | [`Shared/Network/NuGetClient.cs`](../descriptions/Shared/Network/NuGetClient.cs.md) | Full NuGet v3 client: resolves transitive dependencies, downloads packages from nuget.org, and extracts them into the local Magnetar package cache. |
 | `NuGetLogger` | class | [`Shared/Network/NuGetLogger.cs`](../descriptions/Shared/Network/NuGetLogger.cs.md) | Adapts NuGet.Common.ILogger to Magnetar's LogFile/NLog pipeline with a [NuGet] prefix and mapped log levels. |
 | `NuGetPackage` | class | [`Shared/Network/NuGetPackage.cs`](../descriptions/Shared/Network/NuGetPackage.cs.md) | Represents an extracted on-disk NuGet package; resolves the best-matching lib and content files for the active target framework. |
@@ -27,7 +27,7 @@ Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub 
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`Shared/Network/GitHub.cs`](../descriptions/Shared/Network/GitHub.cs.md) | 149 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
+| [`Shared/Network/GitHub.cs`](../descriptions/Shared/Network/GitHub.cs.md) | 168 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
 | [`Shared/Network/NuGetClient.cs`](../descriptions/Shared/Network/NuGetClient.cs.md) | 248 | `NuGetClient` wraps the NuGet v3 client SDK to download and extract packages from `api.nuget.org` into a local cache inside Magnetar's data directory. |
 | [`Shared/Network/NuGetLogger.cs`](../descriptions/Shared/Network/NuGetLogger.cs.md) | 87 | `NuGetLogger` adapts the NuGet SDK's `ILogger` interface to Magnetar's `LogFile` / NLog pipeline. |
 | [`Shared/Network/NuGetPackage.cs`](../descriptions/Shared/Network/NuGetPackage.cs.md) | 124 | `NuGetPackage` represents a single NuGet package that has already been extracted to disk. |
@@ -38,7 +38,7 @@ Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub 
 ## Public API surface
 
 - `GitHub.Init() — must be called at startup to enable TLS 1.2`
-- `GitHub.GetStream(Uri) — core GitHub-aware HTTP fetch returning a buffered MemoryStream`
+- `GitHub.GetStream(Uri) — core authenticated HTTP fetch returning a buffered MemoryStream`
 - `GitHub.GetRepoArchive(string repo, string reference) — download a repo ZIP`
 - `GitHub.GetRepoFile(string repo, string reference, string file) — download a single raw file`
 - `GitHub.GetRepoHash(string repo, string reference, out string hash) — resolve a git ref to its commit SHA`
