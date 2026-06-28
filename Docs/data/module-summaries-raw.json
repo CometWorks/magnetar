@@ -1115,7 +1115,7 @@
             "name": "LogFile",
             "kind": "static class",
             "file": "Shared/LogFile.cs",
-            "summary": "NLog-backed central logging facade writing info.log, fail-soft."
+            "summary": "NLog-backed central logging facade writing per-start info_*.log files, fail-soft."
           },
           {
             "name": "IGameLog",

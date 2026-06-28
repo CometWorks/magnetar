@@ -26,7 +26,7 @@ Provides the compilation backend for Magnetar's plugin loader. The Legacy/Interi
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`Compiler/LogFile.cs`](../descriptions/Compiler/LogFile.cs.md) | 79 | Minimal NLog-backed file logger used by the Compiler module to record Roslyn reference loading, publicizing, and compilation diagnostics to a flat `info.log` file. |
+| [`Compiler/LogFile.cs`](../descriptions/Compiler/LogFile.cs.md) | 122 | Minimal NLog-backed file logger used by the Compiler module to record Roslyn reference loading, publicizing, and compilation diagnostics to the active Magnetar `info_*.log` file. |
 | [`Compiler/PublicizedAssemblies.cs`](../descriptions/Compiler/PublicizedAssemblies.cs.md) | 77 | Bridges Roslyn source analysis with assembly publicizing. |
 | [`Compiler/Publicizer.cs`](../descriptions/Compiler/Publicizer.cs.md) | 151 | Performs the actual IL-level publicizing of an SE DS assembly using Mono.Cecil: it reads the assembly from disk, forces every non-public type, field, method, and property to public, and re-emits it to an in-memory `MetadataReference` for Roslyn. |
 | [`Compiler/RoslynCompiler.cs`](../descriptions/Compiler/RoslynCompiler.cs.md) | 171 | The core in-process C# compiler used to build local/Workshop plugins from source at server startup. |

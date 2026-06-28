@@ -8,7 +8,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Compiler/LogFile.cs`](descriptions/Compiler/LogFile.cs.md) | 79 | 2 | Minimal NLog-backed file logger used by the Compiler module to record Roslyn reference loading, publicizing, and compilation diagnostics to a flat `info.log` file. |
+| [`Compiler/LogFile.cs`](descriptions/Compiler/LogFile.cs.md) | 122 | 2 | Minimal NLog-backed file logger used by the Compiler module to record Roslyn reference loading, publicizing, and compilation diagnostics to the active Magnetar `info_*.log` file. |
 | [`Compiler/PublicizedAssemblies.cs`](descriptions/Compiler/PublicizedAssemblies.cs.md) | 77 | 2 | Bridges Roslyn source analysis with assembly publicizing. |
 | [`Compiler/Publicizer.cs`](descriptions/Compiler/Publicizer.cs.md) | 151 | 1 | Performs the actual IL-level publicizing of an SE DS assembly using Mono.Cecil: it reads the assembly from disk, forces every non-public type, field, method, and property to public, and re-emits it to an in-memory `MetadataReference` for Roslyn. |
 | [`Compiler/RoslynCompiler.cs`](descriptions/Compiler/RoslynCompiler.cs.md) | 171 | 1 | The core in-process C# compiler used to build local/Workshop plugins from source at server startup. |
@@ -182,7 +182,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 154 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
 | [`Shared/Launcher.cs`](descriptions/Shared/Launcher.cs.md) | 52 | 2 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
 | [`Shared/Loader.cs`](descriptions/Shared/Loader.cs.md) | 156 | 2 | The orchestrator that instantiates all enabled plugins at startup. |
-| [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 97 | 2 | Magnetar's central logging facade. |
+| [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 129 | 2 | Magnetar's central logging facade writing per-start `info_*.log` files. |
 | [`Shared/PluginList.cs`](descriptions/Shared/PluginList.cs.md) | 868 | 1 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](descriptions/Shared/PluginProgress.cs.md) | 45 | 2 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](descriptions/Shared/Preloader.cs.md) | 225 | 1 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |

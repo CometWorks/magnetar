@@ -22,7 +22,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | `Tools` | static class | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | Cross-cutting utilities: hashing, message reporting, deep copy, interactive-terminal detection, native crash handler, injected service holders. |
 | `IExternalTools` | interface | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | Bridge to run an Action on the SE main thread. |
 | `Steam` | static class | [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | Cross-platform Steam path resolution, Steamworks.NET resolver, and game-server UGC install checks. |
-| `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing info.log, fail-soft. |
+| `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing per-start `info_*.log` files, fail-soft. |
 | `IGameLog` | interface | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | Abstraction over the SE DS native log. |
 | `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, GitHub token, consent and -help) and renders the usage screen. |
 | `UpdateType` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Self-update channel: None/Standard/Tester. |
@@ -55,7 +55,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 - `AssemblyResolver.AddSourceFolder/AddAllowedAssemblyName/AddAllowedAssemblyFile + AssemblyResolved event`
 - `Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()`
 - `Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)`
-- `LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose`
+- `LogFile.Init(mainPath)/WriteLine/Error/Warn/Open/Dispose`
 - `Flags.* flags (incl. NoImplicitMod/GitHubToken/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
 - `new Launcher(sePath).CanStart()/VerifyConfig()`
 - `PluginProgress.ReportDownloading/ReportCompiling/ReportCompiled/ReportSummary`

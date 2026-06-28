@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using NLog;
 using NLog.Config;
@@ -17,19 +19,22 @@ public static class LogFile
 {
     public static IGameLog GameLog = null;
 
-    private const string fileName = "info.log";
+    private const string fileNameBase = "info";
+    private const string fileExtension = ".log";
+    private const string currentLogFileName = "info.current";
     private static Logger logger;
     private static LogFactory logFactory;
     private static string file;
 
     public static void Init(string mainPath)
     {
-        file = Path.Combine(mainPath, fileName);
+        file = CreateTimestampedLogPath(mainPath);
+        WriteCurrentLogMarker(mainPath, file);
         LoggingConfiguration config = new();
         config.AddRuleForAllLevels(
             new NLog.Targets.FileTarget()
             {
-                DeleteOldFileOnStartup = true,
+                DeleteOldFileOnStartup = false,
                 ReplaceFileContentsOnEachWrite = false,
                 FileName = file,
                 KeepFileOpen = false,
@@ -47,6 +52,34 @@ public static class LogFile
         catch
         {
             logger = null;
+        }
+    }
+
+    private static string CreateTimestampedLogPath(string mainPath)
+    {
+        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff", CultureInfo.InvariantCulture);
+        string fileName = $"{fileNameBase}_{timestamp}{fileExtension}";
+        string path = Path.Combine(mainPath, fileName);
+
+        for (int suffix = 1; File.Exists(path); suffix++)
+        {
+            fileName = $"{fileNameBase}_{timestamp}_{suffix}{fileExtension}";
+            path = Path.Combine(mainPath, fileName);
+        }
+
+        return path;
+    }
+
+    private static void WriteCurrentLogMarker(string mainPath, string logPath)
+    {
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(mainPath, currentLogFileName),
+                Path.GetFileName(logPath));
+        }
+        catch
+        {
         }
     }
 
