@@ -17,8 +17,9 @@
 #                                       under Steam-only networking
 #   * libHavok.so / libRecastDetour.so / libVRageNative.so
 #                                     - PE-loader replacements for the
-#                                       Windows native DLLs Keen ships; built
-#                                       from se-linux-compat/NativeWrappers
+#                                       Windows native DLLs Keen ships;
+#                                       downloaded from the
+#                                       CometWorks/linux-native-wrappers release
 #
 # After this script runs, build:
 #   dotnet build  -c Release Magnetar.sln
@@ -132,19 +133,24 @@ echo "  copied libsteam_api.so from $STEAM_SO_SRC"
 #   * EOSSDK:               Vendor/libEOSSDK-Linux-Shipping.so
 #                          (the Epic SDK redistributable; drop it in Vendor/)
 #   * Havok/RecastDetour/
-#     VRageNative:         se-linux-compat/NativeWrappers/build/lib*.so
-#                          (built from se-linux-compat sources, external repo)
+#     VRageNative:         downloaded from the CometWorks/linux-native-wrappers
+#                          GitHub release by fetch_native_wrappers.sh into
+#                          build/native/ (see that script; the prebuilt asset
+#                          replaces the old se-linux-compat Docker/source build)
 #
 # Per-library env overrides: $LIBEOSSDK_SO, $LIBHAVOK_SO, $LIBRECASTDETOUR_SO,
-# $LIBVRAGENATIVE_SO. Otherwise probed under Vendor/ then the sibling
-# se-linux-compat checkout.
+# $LIBVRAGENATIVE_SO. Otherwise probed under Vendor/ then the fetched
+# build/native/ folder.
 
 echo
 echo "############################################################"
 echo "# build: Linux-compat native libraries"
 echo "############################################################"
 
-LINUXCOMPAT_NATIVE="${LINUXCOMPAT_NATIVE:-$MAGNETAR_REPO_DIR/../se-linux-compat/NativeWrappers/build}"
+# Download the prebuilt wrappers into build/native/ (cached by release tag).
+bash "$SCRIPTS_DIR/fetch_native_wrappers.sh" "${CLEAN_ARGS[@]}"
+
+LINUXCOMPAT_NATIVE="${LINUXCOMPAT_NATIVE:-$BUILD_DIR/native}"
 
 stage_native() {
     local soname="$1"

@@ -170,35 +170,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends p7zip-full ca-certificates curl
 
-      # --- se-linux-compat native wrappers (cached by upstream commit) -------
-      - name: Resolve se-linux-compat commit
-        id: linuxcompat
-        run: |
-          set -euo pipefail
-          sha="$(git ls-remote https://github.com/CometWorks/linux-compat HEAD | cut -f1)"
-          echo "Latest se-linux-compat commit: $sha"
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-
-      - name: Cache native wrappers
-        id: nativecache
-        uses: actions/cache@v5
-        with:
-          path: native
-          key: nativewrappers-${{ steps.linuxcompat.outputs.sha }}
-
-      - name: Build native wrappers (Docker)
-        if: steps.nativecache.outputs.cache-hit != 'true'
-        run: |
-          set -euo pipefail
-          rm -rf se-linux-compat
-          git clone https://github.com/CometWorks/linux-compat se-linux-compat
-          git -C se-linux-compat checkout "${{ steps.linuxcompat.outputs.sha }}"
-          DOCKER_BUILDKIT=1 docker build \
-            -f .github/docker/nativewrappers.Dockerfile \
-            -o type=local,dest=native \
-            se-linux-compat/NativeWrappers
-          echo "Built native wrappers:"
-          ls -l native
+      # The native wrappers (libHavok/libRecastDetour/libVRageNative) are no
+      # longer built here: build.sh's fetch_native_wrappers.sh downloads them
+      # from the CometWorks/linux-native-wrappers release (cached by tag under
+      # build/native/).
 
       # --- Vendor proprietary blobs (always downloaded, never cached) --------
       - name: Download Vendor archive
@@ -277,9 +252,10 @@ jobs:
       - name: Build and package (build.sh)
         env:
           DS64: ${{ github.workspace }}/ds64
-          LIBHAVOK_SO: ${{ github.workspace }}/native/libHavok.so
-          LIBRECASTDETOUR_SO: ${{ github.workspace }}/native/libRecastDetour.so
-          LIBVRAGENATIVE_SO: ${{ github.workspace }}/native/libVRageNative.so
+          # build.sh downloads the native wrappers from the
+          # linux-native-wrappers release; the token only lifts the GitHub API
+          # rate limit while resolving the latest tag.
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           set -euo pipefail
