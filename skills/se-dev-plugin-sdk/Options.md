@@ -211,7 +211,7 @@ records UI metadata — the on-disk and on-wire formats are fixed.
 
 | Attribute | Property type | XML format | JSON format |
 |---|---|---|---|
-| `[ColorOption(ColorFormat.Rgb)]` | `Color` | `#RRGGBB` written, `#RRGGBB`/`#RRGGBBAA` both accepted | `"#RRGGBBAA"` |
+| `[ColorOption(ColorFormat.Rgb)]` | `Color` | `#RRGGBBAA` written, `#RRGGBB`/`#RRGGBBAA` both accepted | `"#RRGGBBAA"` |
 | `[ColorOption(ColorFormat.Rgba)]` | `Color` | `#RRGGBBAA` | `"#RRGGBBAA"` |
 | `[Vector2DOption]` | `Vector2D` | `"x y"` (G17 doubles) | `{ "x": …, "y": … }` |
 | `[Vector3DOption]` | `Vector3D` | `"x y z"` (G17 doubles) | `{ "x": …, "y": …, "z": … }` |
@@ -223,9 +223,10 @@ records UI metadata — the on-disk and on-wire formats are fixed.
 Notes:
 
 - **Color storage is always RGBA** — `ColorFormat` only selects whether the UI
-  exposes the alpha slider. `Rgb` writes the shorter `#RRGGBB` form on disk
-  (alpha forced to 255 on load) and emits `hasAlpha: false` in the schema;
-  `Rgba` writes the full `#RRGGBBAA` form and emits `hasAlpha: true`.
+  exposes the alpha slider (`hasAlpha: false` in the schema for `Rgb`,
+  `hasAlpha: true` for `Rgba`). Both formats write the full `#RRGGBBAA` form
+  on disk; the shorter `#RRGGBB` form is accepted on load (alpha forced
+  to 255).
 - **`Direction` is stored by member name**, not its underlying byte value, so
   the VRage enum staying in its current order is not a load-bearing assumption.
   The schema entry also embeds the full member list under

@@ -147,7 +147,7 @@ The simplest reply is the **return value**:
 | `void` | Sends nothing. Call `Context.Respond(...)` yourself if needed. |
 | `string` | Sent privately to the caller (white). |
 | `CommandReply` | Full control: colour, font, author, broadcast. |
-| `IEnumerable<string>` | One private line per item. |
+| `IEnumerable` | One reply per item: `string` items are sent privately, `CommandReply` items with their full formatting; empty items are skipped. |
 
 Or reply explicitly through the context at any point:
 
