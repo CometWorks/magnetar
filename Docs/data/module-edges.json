@@ -64,7 +64,8 @@
     "Shared.Network"
   ],
   "Shared.Network": [
-    "Shared.Config"
+    "Shared.Config",
+    "Shared.Core"
   ],
   "Shared.Votes": [
     "Shared.Config",

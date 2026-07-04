@@ -1,6 +1,6 @@
 # Module: Shared.Core
 
-**Project:** `Shared` · **Files:** 11 · **Source lines:** 2207
+**Project:** `Shared` · **Files:** 11 · **Source lines:** 2240
 
 ## Purpose
 
@@ -22,9 +22,9 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | `Tools` | static class | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | Cross-cutting utilities: hashing, message reporting, deep copy, interactive-terminal detection, native crash handler, injected service holders. |
 | `IExternalTools` | interface | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | Bridge to run an Action on the SE main thread. |
 | `Steam` | static class | [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | Cross-platform Steam path resolution, Steamworks.NET resolver, and game-server UGC install checks. |
-| `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing per-start `info_*.log` files, fail-soft. |
+| `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing per-start info_*.log files, fail-soft. |
 | `IGameLog` | interface | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | Abstraction over the SE DS native log. |
-| `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, GitHub token, consent and -help) and renders the usage screen. |
+| `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, consent and -help) and renders the usage screen. |
 | `UpdateType` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Self-update channel: None/Standard/Tester. |
 | `ConsentChoice` | enum | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Telemetry-consent intent from the command line: Unset/Accept/Deny/Withdraw. |
 | `Launcher` | class | [`Shared/Launcher.cs`](../descriptions/Shared/Launcher.cs.md) | Pre-launch sanity checks (SE running, dropped -plugin switch, config presence). |
@@ -38,7 +38,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | 171 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/string/enum flags for the rest of the loader. |
 | [`Shared/Launcher.cs`](../descriptions/Shared/Launcher.cs.md) | 52 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
 | [`Shared/Loader.cs`](../descriptions/Shared/Loader.cs.md) | 156 | The orchestrator that instantiates all enabled plugins at startup. |
-| [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | 97 | Magnetar's central logging facade. |
+| [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | 130 | Magnetar's central logging facade writing per-start `info_*.log` files. |
 | [`Shared/PluginList.cs`](../descriptions/Shared/PluginList.cs.md) | 868 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](../descriptions/Shared/PluginProgress.cs.md) | 45 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](../descriptions/Shared/Preloader.cs.md) | 225 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |
@@ -55,15 +55,15 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 - `AssemblyResolver.AddSourceFolder/AddAllowedAssemblyName/AddAllowedAssemblyFile + AssemblyResolved event`
 - `Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()`
 - `Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)`
-- `LogFile.Init(mainPath)/WriteLine/Error/Warn/Open/Dispose`
-- `Flags.* flags (incl. NoImplicitMod/GitHubToken/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
+- `LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose`
+- `Flags.* flags (incl. NoImplicitMod/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
 - `new Launcher(sePath).CanStart()/VerifyConfig()`
 - `PluginProgress.ReportDownloading/ReportCompiling/ReportCompiled/ReportSummary`
 
 ## Dependencies
 
 **Uses modules:** [Compiler](Compiler.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Network](Shared.Network.md), [Shared.Votes](Shared.Votes.md)  
-**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Votes](Shared.Votes.md)  
+**Used by modules:** [Legacy.Integration](Legacy.Integration.md), [Legacy.Launcher](Legacy.Launcher.md), [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md), [Shared.Config](Shared.Config.md), [Shared.Data](Shared.Data.md), [Shared.Network](Shared.Network.md), [Shared.Votes](Shared.Votes.md)  
 **External systems:** GitHub; Harmony; NuGet; SE DS assemblies; Steam
 
 ---

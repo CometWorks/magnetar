@@ -56,7 +56,7 @@ Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub 
 
 ## Dependencies
 
-**Uses modules:** [Shared.Config](Shared.Config.md)  
+**Uses modules:** [Shared.Config](Shared.Config.md), [Shared.Core](Shared.Core.md)  
 **Used by modules:** [Shared.Core](Shared.Core.md), [Shared.Data](Shared.Data.md), [Shared.Votes](Shared.Votes.md)  
 **External systems:** GitHub; NuGet
 

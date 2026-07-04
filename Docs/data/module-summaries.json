@@ -45,7 +45,7 @@
         "name": "LogFile",
         "kind": "static class",
         "file": "Compiler/LogFile.cs",
-        "summary": "Self-contained NLog file logger (info.log) used across the Compiler module, swallowing all logging exceptions."
+        "summary": "Self-contained NLog file logger appending to the per-startup info_*.log resolved from the info.current marker, used across the Compiler module, swallowing all logging exceptions."
       }
     ],
     "public_api": [
@@ -164,7 +164,7 @@
         "name": "CompilerFactory (Legacy)",
         "kind": "class",
         "file": "Legacy/Compiler/Legacy.cs",
-        "summary": "NETFRAMEWORK-only factory that hosts Magnetar.Compiler in a separate AppDomain probing both the Legacy library root and compiler dependency subdirectory."
+        "summary": "NETFRAMEWORK-only factory that hosts Magnetar.Compiler in a separate AppDomain with PrivateBinPath Libraries\\MagnetarLegacy\\Compiler."
       },
       {
         "name": "References",

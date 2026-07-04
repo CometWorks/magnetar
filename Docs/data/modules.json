@@ -9,7 +9,7 @@
       "Compiler/RoslynReferences.cs"
     ],
     "file_count": 5,
-    "total_lines": 562,
+    "total_lines": 605,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -37,7 +37,7 @@
       "Legacy/Paths/ReflectionPathResolver.cs"
     ],
     "file_count": 7,
-    "total_lines": 619,
+    "total_lines": 613,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -137,7 +137,7 @@
       "PluginSdk/Config/TypeSerialization.cs"
     ],
     "file_count": 5,
-    "total_lines": 1831,
+    "total_lines": 1832,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -170,7 +170,7 @@
       "PluginSdk/Tools/SerializableDictionary.cs"
     ],
     "file_count": 7,
-    "total_lines": 483,
+    "total_lines": 484,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -241,7 +241,7 @@
       "Shared/Updater.cs"
     ],
     "file_count": 11,
-    "total_lines": 2190,
+    "total_lines": 2240,
     "model": "opus",
     "dominant_tier": 1
   },

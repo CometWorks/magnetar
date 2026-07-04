@@ -1,6 +1,6 @@
 # PluginSdk/Tools/SerializableDictionary.cs
 
-**Project:** PluginSdk · **Namespace:** `PluginSdk.Tools` · **Kind:** class · **Lines:** 79
+**Project:** PluginSdk · **Namespace:** `PluginSdk.Tools` · **Kind:** class · **Lines:** 80
 
 ## Summary
 

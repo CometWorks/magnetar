@@ -1,6 +1,6 @@
 # Module: Legacy.Integration
 
-**Project:** `Legacy` · **Files:** 7 · **Source lines:** 619
+**Project:** `Legacy` · **Files:** 7 · **Source lines:** 613
 
 ## Purpose
 
@@ -17,19 +17,19 @@ Acts as the integration layer within the Legacy project, connecting Magnetar's a
 | `CompilerFactory (Interim)` | class | [`Legacy/Compiler/Interim.cs`](../descriptions/Legacy/Compiler/Interim.cs.md) | NETCOREAPP-only factory that loads Pulsar.Compiler into a collectible AssemblyLoadContext and creates RoslynCompiler instances via reflection-wrapped CompilerWrapper. |
 | `CompilerWrapper` | class | [`Legacy/Compiler/Interim.cs`](../descriptions/Legacy/Compiler/Interim.cs.md) | File-local reflection bridge implementing ICompiler over a RoslynCompiler instance living in an isolated AssemblyLoadContext. |
 | `CompilerLoadContext` | class | [`Legacy/Compiler/Interim.cs`](../descriptions/Legacy/Compiler/Interim.cs.md) | Collectible AssemblyLoadContext that resolves compiler-private assemblies from Libraries/MagnetarInterim/Compiler/. |
-| `CompilerFactory (Legacy)` | class | [`Legacy/Compiler/Legacy.cs`](../descriptions/Legacy/Compiler/Legacy.cs.md) | NETFRAMEWORK-only factory that hosts Magnetar.Compiler in a separate AppDomain probing both the Legacy library root and compiler dependency subdirectory. |
+| `CompilerFactory (Legacy)` | class | [`Legacy/Compiler/Legacy.cs`](../descriptions/Legacy/Compiler/Legacy.cs.md) | NETFRAMEWORK-only factory that hosts Magnetar.Compiler in a separate AppDomain with PrivateBinPath Libraries\MagnetarLegacy\Compiler. |
 | `References` | static class | [`Legacy/Compiler/References.cs`](../descriptions/Legacy/Compiler/References.cs.md) | Enumerates Roslyn compiler references: glob-matched SE game DLLs plus a fixed set of framework/library assembly names. |
 | `ModPluginExtensions` | static class | [`Legacy/Extensions/ModPlugin.cs`](../descriptions/Legacy/Extensions/ModPlugin.cs.md) | Extension methods on ModPlugin that produce SE DS mod-registration objects (MyObjectBuilder_Checkpoint.ModItem and MyModContext). |
 | `PathResolverBinder` | static class | [`Legacy/Paths/PathResolverBinder.cs`](../descriptions/Legacy/Paths/PathResolverBinder.cs.md) | One-shot startup helper that discovers LinuxCompat PathHelpers/PathCache types and installs a ReflectionPathResolver into the PluginSdk PathResolver facade. |
 | `ReflectionPathResolver` | class | [`Legacy/Paths/ReflectionPathResolver.cs`](../descriptions/Legacy/Paths/ReflectionPathResolver.cs.md) | IPathResolver backend bound to LinuxCompat static methods via pre-created delegates; zero reflection overhead on the hot path. |
-| `MissionScreenSender` | static class | [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | Host-side implementation of the PluginSdk MissionScreens facade; serializes a MissionScreenContent into a versioned ProtoBuf packet and sends it to a Steam id, an identity, or all online players via MyAPIGateway.Multiplayer.SendMessageTo on the game thread, gated on the bundled MagnetarMod client receiver being enabled as a world mod. |
+| `MissionScreenSender` | static class | [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | Host-side implementation of the PluginSdk MissionScreens facade; serializes a MissionScreenContent into a versioned binary packet and sends it to a Steam id, an identity, or all online players via MyAPIGateway.Multiplayer.SendMessageTo on the game thread, gated on the bundled MagnetarMod client receiver being enabled as a world mod. |
 
 ## Files
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Legacy/Compiler/Interim.cs`](../descriptions/Legacy/Compiler/Interim.cs.md) | 147 | Active only under `#if NETCOREAPP` (the Interim/.NET 10 build). |
-| [`Legacy/Compiler/Legacy.cs`](../descriptions/Legacy/Compiler/Legacy.cs.md) | 92 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
+| [`Legacy/Compiler/Legacy.cs`](../descriptions/Legacy/Compiler/Legacy.cs.md) | 86 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
 | [`Legacy/Compiler/References.cs`](../descriptions/Legacy/Compiler/References.cs.md) | 36 | Provides the list of assembly references that the Roslyn compiler must know about when compiling SE scripts and plugins. |
 | [`Legacy/Extensions/ModPlugin.cs`](../descriptions/Legacy/Extensions/ModPlugin.cs.md) | 31 | Extends `ModPlugin` (the Magnetar data type representing a Steam Workshop mod) with the SE DS API objects needed to register a mod with the game engine at runtime. |
 | [`Legacy/Integration/MissionScreenSender.cs`](../descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 142 | Host-side sender that delivers plugin-declared mission-screen popups to clients over Space Engineers' multiplayer messaging API. |

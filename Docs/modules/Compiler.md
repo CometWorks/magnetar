@@ -1,6 +1,6 @@
 # Module: Compiler
 
-**Project:** `Compiler` · **Files:** 5 · **Source lines:** 562
+**Project:** `Compiler` · **Files:** 5 · **Source lines:** 605
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Provides the compilation backend for Magnetar's plugin loader. The Legacy/Interi
 | `RoslynReferences` | class | [`Compiler/RoslynReferences.cs`](../descriptions/Compiler/RoslynReferences.cs.md) | Process-wide singleton that resolves and caches the recursive SE DS assembly reference closure via Mono.Cecil. |
 | `PublicizedAssemblies` | class | [`Compiler/PublicizedAssemblies.cs`](../descriptions/Compiler/PublicizedAssemblies.cs.md) | Scans source for IgnoresAccessChecksTo attributes and substitutes publicized MetadataReferences at compile time. |
 | `Publicizer` | static class | [`Compiler/Publicizer.cs`](../descriptions/Compiler/Publicizer.cs.md) | Mono.Cecil IL rewriter that forces non-public types/fields/methods/properties public and re-emits an in-memory reference. |
-| `LogFile` | static class | [`Compiler/LogFile.cs`](../descriptions/Compiler/LogFile.cs.md) | Self-contained NLog file logger (info.log) used across the Compiler module, swallowing all logging exceptions. |
+| `LogFile` | static class | [`Compiler/LogFile.cs`](../descriptions/Compiler/LogFile.cs.md) | Self-contained NLog file logger appending to the per-startup info_*.log resolved from the info.current marker, used across the Compiler module, swallowing all logging exceptions. |
 
 ## Files
 
