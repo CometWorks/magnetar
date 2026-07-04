@@ -27,7 +27,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Compiler/Interim.cs`](descriptions/Legacy/Compiler/Interim.cs.md) | 147 | 2 | Active only under `#if NETCOREAPP` (the Interim/.NET 10 build). |
-| [`Legacy/Compiler/Legacy.cs`](descriptions/Legacy/Compiler/Legacy.cs.md) | 92 | 2 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
+| [`Legacy/Compiler/Legacy.cs`](descriptions/Legacy/Compiler/Legacy.cs.md) | 86 | 2 | Active only under `#if NETFRAMEWORK` (the .NET Framework 4.8 / Windows build). |
 | [`Legacy/Compiler/References.cs`](descriptions/Legacy/Compiler/References.cs.md) | 36 | 2 | Provides the list of assembly references that the Roslyn compiler must know about when compiling SE scripts and plugins. |
 | [`Legacy/Extensions/ModPlugin.cs`](descriptions/Legacy/Extensions/ModPlugin.cs.md) | 31 | 2 | Extends `ModPlugin` (the Magnetar data type representing a Steam Workshop mod) with the SE DS API objects needed to register a mod with the game engine at runtime. |
 | [`Legacy/Integration/MissionScreenSender.cs`](descriptions/Legacy/Integration/MissionScreenSender.cs.md) | 142 | 2 | Host-side sender that delivers plugin-declared mission-screen popups to clients over Space Engineers' multiplayer messaging API. |
@@ -107,7 +107,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | [`PluginSdk/Config/ConfigAttributes.cs`](descriptions/PluginSdk/Config/ConfigAttributes.cs.md) | 412 | 1 | Declares the full attribute vocabulary a plugin uses to annotate a `PluginConfig`-derived class so Magnetar can discover, validate, remotely manage and lay out each configuration option in an external Web UI (rendered by the manager app, e.g. |
 | [`PluginSdk/Config/ConfigSchema.cs`](descriptions/PluginSdk/Config/ConfigSchema.cs.md) | 550 | 1 | Reflection-based schema extractor that turns a `PluginConfig`-derived type into a `ConfigSchemaData` document describing its layout tree, options, nested struct definitions and enum definitions. |
 | [`PluginSdk/Config/ConfigStorage.cs`](descriptions/PluginSdk/Config/ConfigStorage.cs.md) | 158 | 2 | Save/load facade for `PluginConfig`-derived instances in two formats. **XML** is the local on-disk format: written atomically via a temp file + rename, emitting only non-default values (the sparse format is driven by `PluginConfig`'s `IXmlSerializable` implementation), so missing elements fall back to defaults on load. **JSON** is the remote management wire format — a three-part envelope of `schema` (from `ConfigSchema.Build`), `defaults` (a fresh instance) and `values` (the current config); loading reads only `values` while regenerating schema/defaults on every save. |
-| [`PluginSdk/Config/PluginConfig.cs`](descriptions/PluginSdk/Config/PluginConfig.cs.md) | 298 | 1 | Abstract base class for managed plugin configuration. |
+| [`PluginSdk/Config/PluginConfig.cs`](descriptions/PluginSdk/Config/PluginConfig.cs.md) | 299 | 1 | Abstract base class for managed plugin configuration. |
 | [`PluginSdk/Config/TypeSerialization.cs`](descriptions/PluginSdk/Config/TypeSerialization.cs.md) | 413 | 1 | Bespoke XML read/write helpers and `System.Text.Json` converters for the small set of VRage value types that are first-class configuration values: `Color`, `Vector2D`, `Vector3D`, `Vector2I`, `Vector3I`, `Base6Directions.Direction` and `MyPositionAndOrientation`. |
 
 ## PluginSdk.Logging  ·  [module doc](modules/PluginSdk.Logging.md)
@@ -133,7 +133,7 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | [`PluginSdk/Paths/PathResolver.cs`](descriptions/PluginSdk/Paths/PathResolver.cs.md) | 48 | 2 | Plugin-facing static facade for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/ShimPathResolver.cs`](descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | 2 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
 | [`PluginSdk/ServerControl.cs`](descriptions/PluginSdk/ServerControl.cs.md) | 142 | 2 | Exposes the dedicated server's lifecycle controls (save, reload config, quit, restart) as a stable plugin-facing API, decoupled from the host launcher implementation. |
-| [`PluginSdk/Tools/SerializableDictionary.cs`](descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 79 | 2 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
+| [`PluginSdk/Tools/SerializableDictionary.cs`](descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 80 | 2 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
 
 ## PluginSdk.Stats  ·  [module doc](modules/PluginSdk.Stats.md)
 
@@ -179,10 +179,10 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Shared/AssemblyResolver.cs`](descriptions/Shared/AssemblyResolver.cs.md) | 107 | 2 | Provides a scoped `AppDomain.AssemblyResolve` handler that satisfies managed assembly load requests from one or more "source" folders, but only when the *requesting* assembly is on an allow-list. |
-| [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 154 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/enum flags for the rest of the loader. |
+| [`Shared/Flags.cs`](descriptions/Shared/Flags.cs.md) | 171 | 2 | Parses Magnetar's own command-line switches once at startup (in a static constructor) and exposes them as read-only boolean/string/enum flags for the rest of the loader. |
 | [`Shared/Launcher.cs`](descriptions/Shared/Launcher.cs.md) | 52 | 2 | Performs pre-launch sanity checks before Magnetar starts the SE Dedicated Server: refuses to start if the SE process is already running, rejects the removed `-plugin` switch, and verifies that an app `.config` exists when the SE folder ships one. |
 | [`Shared/Loader.cs`](descriptions/Shared/Loader.cs.md) | 156 | 2 | The orchestrator that instantiates all enabled plugins at startup. |
-| [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 129 | 2 | Magnetar's central logging facade writing per-start `info_*.log` files. |
+| [`Shared/LogFile.cs`](descriptions/Shared/LogFile.cs.md) | 130 | 2 | Magnetar's central logging facade writing per-start `info_*.log` files. |
 | [`Shared/PluginList.cs`](descriptions/Shared/PluginList.cs.md) | 868 | 1 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](descriptions/Shared/PluginProgress.cs.md) | 45 | 2 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](descriptions/Shared/Preloader.cs.md) | 225 | 1 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |

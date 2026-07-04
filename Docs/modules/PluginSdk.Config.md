@@ -1,6 +1,6 @@
 # Module: PluginSdk.Config
 
-**Project:** `PluginSdk` · **Files:** 5 · **Source lines:** 1831
+**Project:** `PluginSdk` · **Files:** 5 · **Source lines:** 1832
 
 ## Purpose
 
@@ -29,7 +29,7 @@ One of the developer-facing pillars of the PluginSdk. It lets plugins expose typ
 | [`PluginSdk/Config/ConfigAttributes.cs`](../descriptions/PluginSdk/Config/ConfigAttributes.cs.md) | 412 | Declares the full attribute vocabulary a plugin uses to annotate a `PluginConfig`-derived class so Magnetar can discover, validate, remotely manage and lay out each configuration option in an external Web UI (rendered by the manager app, e.g. |
 | [`PluginSdk/Config/ConfigSchema.cs`](../descriptions/PluginSdk/Config/ConfigSchema.cs.md) | 550 | Reflection-based schema extractor that turns a `PluginConfig`-derived type into a `ConfigSchemaData` document describing its layout tree, options, nested struct definitions and enum definitions. |
 | [`PluginSdk/Config/ConfigStorage.cs`](../descriptions/PluginSdk/Config/ConfigStorage.cs.md) | 158 | Save/load facade for `PluginConfig`-derived instances in two formats. **XML** is the local on-disk format: written atomically via a temp file + rename, emitting only non-default values (the sparse format is driven by `PluginConfig`'s `IXmlSerializable` implementation), so missing elements fall back to defaults on load. **JSON** is the remote management wire format — a three-part envelope of `schema` (from `ConfigSchema.Build`), `defaults` (a fresh instance) and `values` (the current config); loading reads only `values` while regenerating schema/defaults on every save. |
-| [`PluginSdk/Config/PluginConfig.cs`](../descriptions/PluginSdk/Config/PluginConfig.cs.md) | 298 | Abstract base class for managed plugin configuration. |
+| [`PluginSdk/Config/PluginConfig.cs`](../descriptions/PluginSdk/Config/PluginConfig.cs.md) | 299 | Abstract base class for managed plugin configuration. |
 | [`PluginSdk/Config/TypeSerialization.cs`](../descriptions/PluginSdk/Config/TypeSerialization.cs.md) | 413 | Bespoke XML read/write helpers and `System.Text.Json` converters for the small set of VRage value types that are first-class configuration values: `Color`, `Vector2D`, `Vector3D`, `Vector2I`, `Vector3I`, `Base6Directions.Direction` and `MyPositionAndOrientation`. |
 
 ## Public API surface

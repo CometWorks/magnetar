@@ -107,26 +107,26 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Shared.Core](modules/Shared.Core.md) | 11 | 2190 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
+| [Shared.Core](modules/Shared.Core.md) | 11 | 2240 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
 | [Shared.Data](modules/Shared.Data.md) | 11 | 1897 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status), plus legacy Workshop `*_legacy.bin` archive expansion. |
 | [Shared.Config](modules/Shared.Config.md) | 12 | 530 | All persistent installation configuration: core config, profiles, plugin sources, and the instance.id consent anchor. |
-| [Shared.Network](modules/Shared.Network.md) | 7 | 864 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
+| [Shared.Network](modules/Shared.Network.md) | 7 | 892 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
 | [Shared.Votes](modules/Shared.Votes.md) | 7 | 361 | Opt-in client-side telemetry and community plugin-rating layer, with the consent state machine that gates it. |
 
 ### `Compiler` — the plugin compiler
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Compiler](modules/Compiler.md) | 5 | 562 | In-process Roslyn compiler that builds SE plugins from source, resolving and publicizing the SE assembly closure as references. |
+| [Compiler](modules/Compiler.md) | 5 | 605 | In-process Roslyn compiler that builds SE plugins from source, resolving and publicizing the SE assembly closure as references. |
 
 ### `PluginSdk` — the public plugin API
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [PluginSdk.Config](modules/PluginSdk.Config.md) | 5 | 1831 | Declarative, attribute-driven plugin configuration → local XML, remote JSON envelope, and Quasar UI schema. |
+| [PluginSdk.Config](modules/PluginSdk.Config.md) | 5 | 1832 | Declarative, attribute-driven plugin configuration → local XML, remote JSON envelope, and Quasar UI schema. |
 | [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1289 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions, mission-screen help rendering. |
 | [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 425 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
-| [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 7 | 483 | Host-agnostic path resolution, dedicated-server lifecycle control (`ServerControl`), and mission-screen popups (`MissionScreens`) pushed to clients. |
+| [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 7 | 484 | Host-agnostic path resolution, dedicated-server lifecycle control (`ServerControl`), and mission-screen popups (`MissionScreens`) pushed to clients. |
 | [PluginSdk.Stats](modules/PluginSdk.Stats.md) | 4 | 498 | Self-describing runtime telemetry: attribute-declared counters / gauges / discrete values published as snapshots a consumer (Quasar Agent) rolls up and charts. |
 
 ### `PluginSdkTests` — specifications
@@ -194,4 +194,4 @@ graph LR
 
 ---
 
-**[Full file index ▶](Index.md)** · 18 modules · 136 source files · ~17.2k lines
+**[Full file index ▶](Index.md)** · 18 modules · 136 source files · ~17.3k lines

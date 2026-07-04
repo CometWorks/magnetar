@@ -5,7 +5,7 @@ line:
 
 | Folder | Holds | Default | Override |
 | ------ | ----- | ------- | -------- |
-| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | Windows: `%APPDATA%\Magnetar`<br>Linux: `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar` | `-config <dir>` |
+| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | Windows: `<launcher dir>\MagnetarLegacy` or `<launcher dir>\MagnetarInterim` (named after the launcher, next to the binary; falls back to `MagnetarLegacy` if the named folder does not exist)<br>Linux: `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar` | `-config <dir>` |
 | **DS install dir** | The dedicated-server binaries (`DedicatedServer64/`) | Auto-detected (see below) | `-ds64 <dir>` |
 | **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg` **and the world saves** (`Saves/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
 
@@ -25,7 +25,8 @@ Quasar.Agent's PluginSdk log mirror both use the active file named by
 `info.current`.
 
 * **Install dir (default, where the launcher lives)**
-  * Windows — `%APPDATA%\Magnetar`.
+  * Windows — the extracted `Magnetar\` tree next to the dedicated-server
+    installation.
   * Linux — `$XDG_DATA_HOME/Magnetar`, falling back to `~/.local/share/Magnetar`.
 
 ### `-ds64 <dir>` — dedicated-server install location

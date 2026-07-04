@@ -1,6 +1,6 @@
 # PluginSdk/Config/PluginConfig.cs
 
-**Project:** PluginSdk · **Namespace:** `PluginSdk.Config` · **Kind:** Abstract base class · **Lines:** 298
+**Project:** PluginSdk · **Namespace:** `PluginSdk.Config` · **Kind:** Abstract base class · **Lines:** 299
 
 ## Summary
 Abstract base class for managed plugin configuration. A plugin derives from it and declares one public read/write property per option, each annotated with the matching attribute from `ConfigAttributes` and using a setter that calls `SetField` to raise `PropertyChanged` (the C# 14 `field` contextual keyword supplies the backing field, defaults via property initializer). The class implements `IXmlSerializable` to provide the sparse "only non-default values" on-disk XML format, and `INotifyPropertyChanged` so the host observes changes. It centralizes the supported property type set (scalars, enums by name, `List<T>`, `SerializableDictionary`, nested user structs, and VRage value types) and the deep value-equality logic used to decide which properties differ from their defaults.

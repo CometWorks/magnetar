@@ -115,7 +115,7 @@ It populates `build/Libraries/` with:
 | `Steamworks.NET.dll` | built from [rlabrecque/Steamworks.NET](https://github.com/rlabrecque/Steamworks.NET) by [Scripts/build_steamworks_net.sh](../Scripts/build_steamworks_net.sh) |
 | `libsteam_api.so` | the proprietary Linux Steamworks SDK blob — drop it in `Vendor/` or set `LIBSTEAM_API_SO=` |
 | `libEOSSDK-Linux-Shipping.so` | Epic Online Services SDK (drop it in Magnetar's `Vendor/`, or set `LIBEOSSDK_SO=`) |
-| `libHavok.so`, `libRecastDetour.so`, `libVRageNative.so` | PE-loader replacements for Keen's Windows native DLLs, built from [se-linux-compat](https://github.com/CometWorks/linux-compat)'s `NativeWrappers/` (or `LIBHAVOK_SO=` etc.) |
+| `libHavok.so`, `libRecastDetour.so`, `libVRageNative.so` | PE-loader replacements for Keen's Windows native DLLs, downloaded prebuilt from the [linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers) GitHub release by [Scripts/fetch_native_wrappers.sh](../Scripts/fetch_native_wrappers.sh) into `build/native/` (or `LIBHAVOK_SO=` etc.) |
 
 The proprietary blobs (`libsteam_api.so`, `libEOSSDK-Linux-Shipping.so`) are not
 committed; `build.sh` prints exactly where it looked if one is missing. Override
@@ -252,14 +252,15 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
   DS depot's public **build id** (via `steamcmd +app_info_print`, no depot
   download) and exposes it as the `ds_buildid` output used to key the DS cache.
 * **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and
-  `p7zip-full`; builds the [se-linux-compat](https://github.com/CometWorks/linux-compat)
-  `NativeWrappers` in Docker (see
-  [`.github/docker/nativewrappers.Dockerfile`](../.github/docker/nativewrappers.Dockerfile)),
-  cached by the upstream commit SHA so they only rebuild when that repo's `HEAD`
-  changes; restores the cached **DS library set** (or downloads the **Windows**
-  DS depot via `steamcmd` on a cache miss — see below); downloads the Vendor
-  blobs; then runs [`build.sh`](../build.sh) and uploads the bundle, renamed to
-  `MagnetarForLinux-<version>.7z`.
+  `p7zip-full`; restores the cached **DS library set** (or downloads the
+  **Windows** DS depot via `steamcmd` on a cache miss — see below); downloads
+  the Vendor blobs; then runs [`build.sh`](../build.sh), which fetches the
+  prebuilt native wrappers from the
+  [linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers)
+  release via
+  [Scripts/fetch_native_wrappers.sh](../Scripts/fetch_native_wrappers.sh)
+  (cached by release tag under `build/native/`), and uploads the bundle,
+  renamed to `MagnetarForLinux-<version>.7z`.
 * **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
   ships the .NET Framework 4.8 targeting pack); restores the cached DS library
   set (or downloads via `steamcmd` on a miss); builds `Magnetar.sln` with

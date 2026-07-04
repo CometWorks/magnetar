@@ -1,6 +1,6 @@
 # Module: PluginSdk.Runtime
 
-**Project:** `PluginSdk` · **Files:** 7 · **Source lines:** 483
+**Project:** `PluginSdk` · **Files:** 7 · **Source lines:** 484
 
 ## Purpose
 
@@ -33,7 +33,7 @@ Acts as the plugin-facing contract layer between plugin code and the underlying 
 | [`PluginSdk/Paths/PathResolver.cs`](../descriptions/PluginSdk/Paths/PathResolver.cs.md) | 48 | Plugin-facing static facade for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/ShimPathResolver.cs`](../descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
 | [`PluginSdk/ServerControl.cs`](../descriptions/PluginSdk/ServerControl.cs.md) | 142 | Exposes the dedicated server's lifecycle controls (save, reload config, quit, restart) as a stable plugin-facing API, decoupled from the host launcher implementation. |
-| [`PluginSdk/Tools/SerializableDictionary.cs`](../descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 79 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
+| [`PluginSdk/Tools/SerializableDictionary.cs`](../descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 80 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
 
 ## Public API surface
 

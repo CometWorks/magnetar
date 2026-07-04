@@ -431,6 +431,9 @@
       "Shared/Network/GitHub.cs",
       "Shared/Tools.cs"
     ],
+    "Shared/Flags.cs": [
+      "Shared/Network/GitHub.cs"
+    ],
     "Shared/Launcher.cs": [
       "Shared/Tools.cs"
     ],
@@ -449,7 +452,8 @@
     ],
     "Shared/Network/GitHub.cs": [
       "Shared/Config/ConfigManager.cs",
-      "Shared/Config/CoreConfig.cs"
+      "Shared/Config/CoreConfig.cs",
+      "Shared/Flags.cs"
     ],
     "Shared/Network/NuGetClient.cs": [
       "Shared/Config/ConfigManager.cs",
@@ -972,6 +976,7 @@
       "Legacy/Program.cs",
       "Shared/Data/PluginData.cs",
       "Shared/Loader.cs",
+      "Shared/Network/GitHub.cs",
       "Shared/Tools.cs",
       "Shared/Updater.cs",
       "Shared/Votes/ConsentManager.cs"
@@ -983,6 +988,7 @@
       "Shared/Data/GitHubPlugin.CacheManifest.cs",
       "Shared/Data/GitHubPlugin.cs",
       "Shared/Data/Profile.cs",
+      "Shared/Flags.cs",
       "Shared/Loader.cs",
       "Shared/PluginList.cs",
       "Shared/Updater.cs"

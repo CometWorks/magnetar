@@ -7,7 +7,7 @@ Minimal NLog-backed file logger used by the Compiler module to record Roslyn ref
 
 ## Types
 ### LogFile — static class, public
-Owns a single named NLog `Logger` ("Pulsar") and its `LogFactory`, configured to append timestamped lines to the active `info_*.log` named by `<mainPath>/info.current`. If the marker is missing, it creates a new timestamped file and marker. Every public method is wrapped in try/catch so logging failures never propagate into the compile pipeline; on a write failure the logger is disposed.
+Owns a single named NLog `Logger` ("Pulsar") and its `LogFactory`, configured to append timestamped lines to the active `info_*.log` named by `<mainPath>/info.current`. If the marker is missing or its content is not a bare `info_*.log` file name, it falls back to a new timestamped file name and rewrites the marker. Every public method is wrapped in try/catch so logging failures never propagate into the compile pipeline; on a write failure the logger is disposed.
 - **Fields:** `fileNameBase` / `fileExtension` / `currentLogFileName` — naming constants; `logger` — the active NLog `Logger`, or `null` when uninitialized/disposed; `logFactory` — the `LogFactory` owning configuration and lifetime.
 - **Methods:**
   - `Init(string mainPath)` — resolves the active log file from `info.current`, builds a `LoggingConfiguration` with a single `FileTarget` (append mode: `DeleteOldFileOnStartup=false`, `ReplaceFileContentsOnEachWrite=false`, `KeepFileOpen=false`); layout is `${longdate} [${level:uppercase=true}] (${threadid}) ${message:withexception=true}`; creates the `LogFactory` with `ThrowExceptions=false` and obtains the `"Pulsar"` logger, nulling it on failure.
