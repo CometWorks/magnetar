@@ -24,12 +24,12 @@ A published value is always a `double`. Everything else is structure around it:
 ```
 StatsSnapshot               // one publication from one provider
 ├── UtcTimestamp            // when it was captured (UTC)
-└── Groups : StatGroup[]    // one or more groups
+└── Groups : List<StatGroup>          // one or more groups
     ├── Schema              // StatsSchemaData — carried INLINE (self-describing)
     │   ├── Name
     │   ├── LabelDescription
-    │   └── Fields[]        // name, kind, unit, aggregation hints — ordered
-    └── Instances : StatInstance[]
+    │   └── Fields : List<StatFieldInfo>  // name, kind, unit, aggregation hints — ordered
+    └── Instances : List<StatInstance>
         ├── Label           // which row (e.g. a Steam id), or null
         └── Values : double[]   // positionally parallel to Schema.Fields
 ```
