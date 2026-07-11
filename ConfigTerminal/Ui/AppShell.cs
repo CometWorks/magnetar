@@ -3,6 +3,7 @@ using Terminal.Gui;
 using Magnetar.ConfigTerminal.Io;
 using Magnetar.ConfigTerminal.Model;
 using Magnetar.ConfigTerminal.Process;
+using Magnetar.ConfigTerminal.State;
 
 namespace Magnetar.ConfigTerminal.Ui;
 
@@ -17,6 +18,7 @@ internal sealed class AppShell : Toplevel
     private readonly AtomicFile writer = new();
     private readonly MagnetarProcess process;
     private readonly ProcessMonitor monitor;
+    private readonly ToolSettings settings;
 
     private DsInstance instance;
     private View content;
@@ -29,6 +31,7 @@ internal sealed class AppShell : Toplevel
         instance = DsInstance.Open(binding);
         process = new MagnetarProcess(binding);
         monitor = new ProcessMonitor(process);
+        settings = ToolSettings.Load(binding.MagnetarConfigDir);
 
         ColorScheme = TurboVisionTheme.Desktop;
         Add(new DesktopBackground());
@@ -83,6 +86,10 @@ internal sealed class AppShell : Toplevel
                 new MenuItem("_Browse", "", ShowWorlds),
                 new MenuItem("_New World…", "", ShowNewWorldWizard),
             }),
+            new MenuBarItem("_Plugins", new[]
+            {
+                new MenuItem("_Manage Plugins", "", ShowPlugins),
+            }),
             new MenuBarItem("_Tools", new[]
             {
                 new MenuItem("_Logs", "", ShowLogs),
@@ -113,6 +120,7 @@ internal sealed class AppShell : Toplevel
             new StatusItem(Key.F4, "~F4~ Logs", ShowLogs),
             new StatusItem(Key.F6, "~F6~ Start/Stop", ToggleServer),
             new StatusItem(Key.F7, "~F7~ Settings", ShowServerSettings),
+            new StatusItem(Key.F8, "~F8~ Plugins", ShowPlugins),
             new StatusItem(Key.F10, "~F10~ Quit", () => RequestQuit()),
         });
         // The status bar owns the bottom row; the live state line sits just above it.
@@ -198,6 +206,8 @@ internal sealed class AppShell : Toplevel
     public void ShowWorldContent(View view) => SetContent(view);
 
     public void ShowLogs() => SetContent(new LogViewerView(binding));
+
+    public void ShowPlugins() => SetContent(new PluginsView(binding.MagnetarConfigDir, writer, settings));
 
     public void ShowNewWorldWizard() => NewWorldWizard.Run(this);
 

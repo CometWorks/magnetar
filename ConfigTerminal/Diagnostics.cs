@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Magnetar.ConfigTerminal.Model;
 using Magnetar.ConfigTerminal.Process;
 
@@ -46,6 +47,25 @@ internal static class Diagnostics
         Console.WriteLine($"Templates ({instance.Templates.Templates.Count}):");
         foreach (WorldTemplate t in instance.Templates.Templates)
             Console.WriteLine($"    {t.DisplayName}  ({t.FolderName})");
+
+        Console.WriteLine();
+        try
+        {
+            var plugins = new MagnetarPlugins(binding.MagnetarConfigDir, new Io.AtomicFile());
+            var dlls = plugins.LocalDlls();
+            Console.WriteLine($"Local DLLs ({dlls.Count(d => d.Enabled)} enabled of {dlls.Count}):");
+            foreach (LocalDllInfo d in dlls)
+                Console.WriteLine($"  {(d.Enabled ? "[x]" : "[ ]")} {d.FileName}");
+
+            var devs = plugins.DevFolderPlugins();
+            Console.WriteLine($"Dev-folder plugins ({devs.Count}):");
+            foreach (DevFolderPlugin p in devs)
+                Console.WriteLine($"  {p.Id}  [{p.DataFile}]  {p.Folder ?? "(no source)"}{(p.SourceMissing ? " !missing" : "")}");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Plugins: could not read ({e.Message})");
+        }
 
         Console.WriteLine();
         var proc = new MagnetarProcess(binding);

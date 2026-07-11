@@ -6,10 +6,17 @@ net10.0 (net48 target guarded for Windows). The companion `magnetar.pid` writer
 is added to the Legacy launcher. The full **configure-a-new-world → start to
 "Game ready" → stop** flow is verified end-to-end against a live DS install +
 patched launcher (see `ConfigTerminalTests/LiveEndToEndTests.cs`, gated behind
-`MAGNETAR_LIVE=1`). A headless `-diag` mode reports an instance's state without
-the UI. Remaining polish (external-change watcher/conflict flow, incremental
-search, advanced-fields toggle, `ToolSettings` persistence, packaging/build
-wiring, full docs refresh) is tracked against §14 phases 6–7.
+`MAGNETAR_LIVE=1`). A headless `-diag` mode reports an instance's state (incl. plugins) without
+the UI. **Magnetar plugin management is also implemented** (see below): a
+Plugins view enables/disables local DLLs from the instance's `Local/` folder and
+adds dev-folder plugins Quasar-style by picking a manifest `.xml` (folder +
+filename + folder-name id derived), editing `Profiles/Current.xml` and
+`Sources/sources.xml` via the same XDocument-upsert approach; the last-visited
+folder is persisted in `ConfigTerminal.xml` (`ToolSettings`). Round-trip
+compatibility is verified against Magnetar's own `XmlSerializer`
+(`ConfigTerminalTests/PluginInteropTests.cs`). Remaining polish (external-change
+watcher/conflict flow, incremental search, advanced-fields toggle,
+packaging/build wiring, full docs refresh) is tracked against §14 phases 6–7.
 
 A cross-platform console (TUI) application to configure **and operate** a
 Space Engineers 1 Dedicated Server instance running under Magnetar: the DS's
@@ -120,9 +127,11 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
 
 - Fleet management — running or monitoring more than one Magnetar instance
   from one tool session. One (config dir, data dir) pair per invocation.
-- Magnetar's own plugin configuration (`Profiles/Current.xml`,
-  `sources.xml`) — already covered by Magnetar itself and Quasar; may be
-  integrated later behind the same UI shell.
+- ~~Magnetar's own plugin configuration~~ — **now in scope and implemented**:
+  the Plugins view edits `Profiles/Current.xml` and `Sources/sources.xml`
+  (local-DLL enable/disable + Quasar-style dev-folder add by picking a manifest
+  XML). Remote/hub plugin browsing and mod-list source management remain out of
+  scope for now.
 - Steam Workshop metadata lookup / mod dependency resolution (Quasar's
   `QuasarWorkshopModResolver`) — requires network + Steam API; mods are edited
   by ID and name only. Candidate for a later phase.

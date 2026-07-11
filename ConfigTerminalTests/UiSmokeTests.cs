@@ -69,6 +69,7 @@ public class UiSmokeTests : IDisposable
             shell.ShowServerSettings();
             shell.ShowWorlds();
             shell.ShowNewWorldDefaults();
+            shell.ShowPlugins();
             for (int i = 0; i < 2; i++)
             {
                 bool wait = false;
