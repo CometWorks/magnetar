@@ -14,11 +14,13 @@ separate Plugins views (1) enable/disable **local DLLs** from the instance's
 plugin catalogs** and enable them (with dependency pull-in), (4) manage the
 **plugin sources** (`RemoteHubSources`/`RemotePluginSources`/`LocalHubSources`),
 and (5) manage the **mod sources** (`ModSources`), including optional Steam
-Workshop name lookup, collection expansion and dependency resolution. All edits go
-to `Profiles/Current.xml` and `Sources/sources.xml` via the same XDocument-upsert
-approach; hub catalogs are read offline from Magnetar's own protobuf caches under
-`Sources/Hubs`/`Sources/Plugins` with a minimal wire reader (no `Shared`
-reference). The last-visited manifest folder and an optional Steam Web API key are
+Workshop name lookup, collection expansion and dependency resolution; a Profiles
+view (6) manages **named plugin profiles** (`Profiles/<Key>.xml`) — load, save-new,
+update, rename, delete — mirroring Magnetar's own in-game `ProfilesConfig` UI, with
+`Current.xml` the active set. All edits go to `Profiles/*.xml` and
+`Sources/sources.xml` via the same XDocument-upsert approach; hub catalogs are read
+offline from Magnetar's own protobuf caches under `Sources/Hubs`/`Sources/Plugins`
+with a minimal wire reader (no `Shared` reference). The last-visited manifest folder and an optional Steam Web API key are
 persisted in `ConfigTerminal.xml` (`ToolSettings`). Round-trip compatibility is
 verified against Magnetar's own `XmlSerializer` for both `Profile` and
 `SourcesConfig` (`ConfigTerminalTests/PluginInteropTests.cs`), the protobuf reader
@@ -154,6 +156,13 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
 - **Manage mod sources** — edit the `<ModSources>` list in `sources.xml` (kept
   in lockstep with the enabled ids in `Profile.Mods`): add mods by Workshop id
   or by pasting Workshop/collection URLs, toggle, rename and remove them.
+- **Manage plugin profiles** — named presets of the enabled-plugin set stored as
+  `Profiles/<Key>.xml`, with `Current.xml` the active set the server loads.
+  **Load** a preset into the active set, **Save As** a new preset, **Update**
+  (overwrite) an existing one, **Rename** and **Delete** — mirroring Magnetar's
+  own in-game profile UI (`Pulsar.Shared.Config.ProfilesConfig`) but from the
+  terminal. "Current" is reserved and never listed; the preset whose enabled set
+  matches the active one is marked.
 - **Steam Workshop metadata & dependency resolution** — optionally look up mod
   **names**, expand **collections**, and resolve transitive **dependencies** from
   the Steam Web API (the piece Magnetar itself leaves as a TODO). Name lookup and
@@ -468,6 +477,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   │                                 (Local DLLs, DevFolder, GitHub hub plugins, Mods)
 │   ├── PluginSourcesDocument.cs     XDocument wrapper for Sources/sources.xml
 │   │                                 (Remote/Local hub + plugin + Mod sources)
+│   ├── ProfileCatalog.cs           named-profile management (load/save/rename/delete)
 │   ├── MagnetarPlugins.cs           facade joining catalog + profile + sources
 │   ├── ProtoReader.cs               minimal protobuf wire reader (no protobuf-net dep)
 │   ├── HubCatalog.cs                parse Sources/{Hubs,Plugins}/*.bin → HubPluginInfo
@@ -505,6 +515,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── HubPluginsView.cs            browse hub catalog + enable (with dependencies)
 │   ├── PluginSourcesView.cs         manage remote/local hub + remote plugin sources
 │   ├── ModSourcesView.cs            manage ModSources + Steam Workshop resolution
+│   ├── ProfilesView.cs             load/save/update/rename/delete named profiles
 │   ├── ManifestPicker.cs           dev-folder manifest .xml picker
 │   └── Dialogs.cs                   confirm-discard, save-error, stop-confirm, about, help, prompt
 └── State/
@@ -912,6 +923,35 @@ confined to `DefaultHttpFetcher` (injectable, so all parsing is offline-testable
 and JSON is read with the dependency-free `MiniJson` so both TFMs build without
 `System.Text.Json`.
 
+**Profiles** are named presets of the enabled set, one XML file per profile under
+`Profiles/`, exactly as Magnetar's `ProfilesConfig` stores them:
+`Profiles/<Key>.xml` where `Key = CleanFileName(Name)` (invalid filename chars →
+`-`, replicated from `Tools.CleanFileName`). `Current.xml` is the **active** set
+the server loads and is reserved — never a listed preset.
+
+```csharp
+sealed class ProfileCatalog          // mirrors Pulsar.Shared.Config.ProfilesConfig
+{
+    IReadOnlyList<ProfileInfo> NamedProfiles();  // Profiles/*.xml except Current + .bak
+    string ActiveMatchKey();          // the preset whose enabled set equals Current, or null
+    bool   SaveCurrentAs(string name);// snapshot Current → new <Key>.xml (false on collision)
+    void   Update(string key);        // overwrite an existing preset with the active set
+    void   Load(string key);          // copy a preset's enabled set into Current.xml
+    void   Rename(string key, string newName);   // delete old file, write under the new key
+    void   Delete(string key);        // remove a preset (never Current)
+}
+```
+
+The operations map 1:1 to Magnetar's `ProfilesConfig` (`Save`/`Add`, `Update` =
+overwrite, `Load` = copy-into-Current, `Rename`, `Remove`), but as in-place
+XDocument edits rather than round-tripping Keen types — a snapshot/overwrite even
+**preserves unknown elements** in the target preset. Unlike Magnetar's in-game UI
+(which has no draft↔profile matching), the tool computes an order-independent
+signature of the four enabled sets so it can mark *which* preset the active set
+currently matches — a small standalone-tool convenience. As everywhere else,
+"applies on next server start" holds: loading a profile rewrites `Current.xml`, and
+Magnetar re-reads it when it next launches.
+
 ---
 
 ## 6. The option metadata registry
@@ -1072,6 +1112,7 @@ Windows / dialogs:
 | **Hub Plugins** | list of the cached hub/remote catalog (Space/Enter toggles enabled; dependencies pulled in) with an author/tagline/description details pane | `Plugins → Hub Plugins` |
 | **Plugin Sources** | manage `RemoteHub`/`RemotePlugin`/`LocalHub` sources: Add Hub/Plugin/Local, Space toggles, Remove | `Plugins → Plugin Sources` |
 | **Mods** | `ModSources` list (Space toggles active, in lockstep with `Profile.Mods`); Add (id or Workshop/collection URLs), Rename, Remove; Resolve Names / Resolve Dependencies / Steam API Key via the Workshop resolver | `Plugins → Mods` |
+| **Plugin Profiles** | saved-preset list (the one matching the active set marked); Load (apply to `Current.xml`), Save As New, Update (overwrite), Rename, Delete | `Plugins → Profiles` |
 | **Help** | key reference + file-format primer (the §2 précis) | F1 |
 
 ### 8.3 The generic option form
@@ -1412,7 +1453,12 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
   catalog-join, dependency pull-in, and `ModSources`↔`Profile.Mods` lockstep
   (`PluginConfigTests`). Interop against the **deployed `Magnetar.Shared.dll`**:
   the tool-written `Profile` and `SourcesConfig` deserialize with Magnetar's own
-  `XmlSerializer` and pass `Profile.Validate()` (`PluginInteropTests`).
+  `XmlSerializer` and pass `Profile.Validate()`, and a tool-written **named
+  profile** is discovered and validated by Magnetar's real `ProfilesConfig.Load`
+  (`PluginInteropTests`).
+- **Profile management** — `ProfileCatalog` save-new (+ collision), load
+  round-trip, update-overwrite, rename (file move), delete, the reserved-"Current"
+  guards, and `CleanFileName`-compatible keying (`ProfileCatalogTests`).
 - **Hub catalog reader** — the `ProtoReader`/`HubCatalog` wire parser against a
   **real captured `magnetar-hub.bin`** fixture (identity, kind, `RepoId`, author,
   dependencies), plus empty/missing-file cases (`HubCatalogTests`).
@@ -1426,7 +1472,7 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
 - **UI smoke tests** — Terminal.Gui v1 ships `FakeDriver` (used by its own
   test suite): instantiate the shell headless, drive key events
   (open form → edit → F2 → assert file content), and navigate every primary view
-  including the four Plugins views. Kept minimal — the logic lives below the UI on
+  including the five Plugins views. Kept minimal — the logic lives below the UI on
   purpose.
 
 `Sandbox.sbc` fixtures must be small hand-made worlds (empty sector), not
@@ -1507,10 +1553,11 @@ net48 build.
 `PluginProfileDocument`/`PluginSourcesDocument` (local DLLs, dev folders, hub
 `GitHub` plugins, `Mods`, and all source lists); `ProtoReader`/`HubCatalog`
 offline reader for the cached hub/plugin blobs; `MagnetarPlugins` façade;
-`WorkshopResolver` + `MiniJson` for Steam name/collection/dependency lookup; the
-`PluginsView`, `HubPluginsView`, `PluginSourcesView` and `ModSourcesView` UI, plus
-`-diag` reporting and interop/round-trip/live tests. *Done — see the status note
-at the top of this document.*
+`WorkshopResolver` + `MiniJson` for Steam name/collection/dependency lookup;
+`ProfileCatalog` for named-profile load/save/update/rename/delete; the
+`PluginsView`, `HubPluginsView`, `PluginSourcesView`, `ModSourcesView` and
+`ProfilesView` UI, plus `-diag` reporting and interop/round-trip/live tests.
+*Done — see the status note at the top of this document.*
 
 ---
 

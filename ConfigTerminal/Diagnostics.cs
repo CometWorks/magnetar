@@ -74,6 +74,13 @@ internal static class Diagnostics
             Console.WriteLine($"Mods ({modList.Count(m => m.Active)} active of {modList.Count}):");
             foreach (ModView m in modList)
                 Console.WriteLine($"  {(m.Active ? "[x]" : "[ ]")} {m.Id,-12} {m.Name}");
+
+            var catalog = new ProfileCatalog(binding.MagnetarConfigDir, new Io.AtomicFile());
+            var namedProfiles = catalog.NamedProfiles();
+            string activeMatch = catalog.ActiveMatchKey();
+            Console.WriteLine($"Profiles ({namedProfiles.Count} saved; active set matches: {activeMatch ?? "none"}):");
+            foreach (ProfileInfo pr in namedProfiles)
+                Console.WriteLine($"  {(pr.MatchesActive ? "->" : "  ")} {pr.Name}");
         }
         catch (Exception e)
         {

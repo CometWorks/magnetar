@@ -73,6 +73,7 @@ public class UiSmokeTests : IDisposable
             shell.ShowHubPlugins();
             shell.ShowPluginSources();
             shell.ShowModSources();
+            shell.ShowProfiles();
             for (int i = 0; i < 2; i++)
             {
                 bool wait = false;

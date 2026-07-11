@@ -92,6 +92,7 @@ internal sealed class AppShell : Toplevel
                 new MenuItem("_Hub Plugins", "", ShowHubPlugins),
                 new MenuItem("Plugin _Sources", "", ShowPluginSources),
                 new MenuItem("_Mods", "", ShowModSources),
+                new MenuItem("_Profiles", "", ShowProfiles),
             }),
             new MenuBarItem("_Tools", new[]
             {
@@ -217,6 +218,8 @@ internal sealed class AppShell : Toplevel
     public void ShowPluginSources() => SetContent(new PluginSourcesView(binding.MagnetarConfigDir, writer));
 
     public void ShowModSources() => SetContent(new ModSourcesView(binding.MagnetarConfigDir, writer, settings));
+
+    public void ShowProfiles() => SetContent(new ProfilesView(binding.MagnetarConfigDir, writer, OnConfigSaved));
 
     public void ShowNewWorldWizard() => NewWorldWizard.Run(this);
 

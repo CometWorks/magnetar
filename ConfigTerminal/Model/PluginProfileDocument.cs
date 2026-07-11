@@ -40,31 +40,102 @@ internal sealed class PluginProfileDocument
         this.xml = xml;
     }
 
-    public static string PathFor(string magnetarConfigDir) =>
-        Path.Combine(magnetarConfigDir, "Profiles", ProfileName + ".xml");
+    public static string ProfilesDir(string magnetarConfigDir) =>
+        Path.Combine(magnetarConfigDir, "Profiles");
 
-    public static PluginProfileDocument Open(string magnetarConfigDir)
+    /// <summary>Path of the active profile (<c>Profiles/Current.xml</c>).</summary>
+    public static string PathFor(string magnetarConfigDir) =>
+        PathForKey(magnetarConfigDir, ProfileName);
+
+    /// <summary>Path of a named profile (<c>Profiles/&lt;key&gt;.xml</c>).</summary>
+    public static string PathForKey(string magnetarConfigDir, string key) =>
+        Path.Combine(magnetarConfigDir, "Profiles", key + ".xml");
+
+    /// <summary>Magnetar's profile file-name key: <c>Tools.CleanFileName(name)</c>.</summary>
+    public static string CleanKey(string name)
     {
-        string path = PathFor(magnetarConfigDir);
+        var invalid = new HashSet<char>(Path.GetInvalidFileNameChars());
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in name ?? string.Empty)
+            sb.Append(invalid.Contains(c) ? '-' : c);
+        return sb.ToString();
+    }
+
+    /// <summary>Opens the active profile (Current.xml), creating a skeleton when absent.</summary>
+    public static PluginProfileDocument Open(string magnetarConfigDir) =>
+        OpenPath(PathFor(magnetarConfigDir), ProfileName);
+
+    /// <summary>Opens the named profile <c>&lt;key&gt;.xml</c>, creating a skeleton when absent.</summary>
+    public static PluginProfileDocument OpenNamed(string magnetarConfigDir, string key) =>
+        OpenPath(PathForKey(magnetarConfigDir, key), key);
+
+    private static PluginProfileDocument OpenPath(string path, string skeletonName)
+    {
         XDocument doc = File.Exists(path)
             ? XDocument.Load(path, LoadOptions.PreserveWhitespace)
-            : CreateSkeleton();
+            : CreateSkeleton(skeletonName);
         return new PluginProfileDocument(path, doc);
     }
 
-    private static XDocument CreateSkeleton()
+    private static XDocument CreateSkeleton(string name)
     {
         return new XDocument(
             new XDeclaration("1.0", "utf-8", null),
             new XElement("Profile",
                 new XAttribute(XNamespace.Xmlns + "xsi", Xsi.NamespaceName),
                 new XAttribute(XNamespace.Xmlns + "xsd", Xsd.NamespaceName),
-                new XElement("Name", ProfileName),
+                new XElement("Name", name),
                 new XElement("GitHub"),
                 new XElement("DevFolder"),
                 new XElement("Local"),
                 new XElement("Mods")));
     }
+
+    /// <summary>The profile's display name (<c>&lt;Name&gt;</c>); its key is <see cref="CleanKey"/> of it.</summary>
+    public string Name
+    {
+        get => Root.Element("Name")?.Value?.Trim() ?? ProfileName;
+        set
+        {
+            XElement el = Root.Element("Name");
+            if (el == null)
+                Root.AddFirst(new XElement("Name", value));
+            else
+                el.Value = value;
+        }
+    }
+
+    /// <summary>Replaces this profile's four plugin collections with clones from another profile.</summary>
+    public void CopyCollectionsFrom(PluginProfileDocument source)
+    {
+        foreach (string name in new[] { "GitHub", "DevFolder", "Local", "Mods" })
+        {
+            XElement mine = List(name);
+            XElement theirs = source.Root.Element(name);
+            mine.ReplaceNodes(theirs?.Elements().Select(e => new XElement(e)) ?? System.Linq.Enumerable.Empty<XElement>());
+        }
+    }
+
+    /// <summary>
+    /// A canonical signature of the four enabled sets (order-independent), used to
+    /// tell whether the active profile matches a saved one.
+    /// </summary>
+    public string CollectionsSignature()
+    {
+        string Join(IEnumerable<string> vals) => string.Join(",",
+            (vals ?? System.Linq.Enumerable.Empty<string>())
+            .Select(v => (v ?? string.Empty).Trim())
+            .OrderBy(v => v, StringComparer.OrdinalIgnoreCase));
+
+        string gh = Join(Root.Element("GitHub")?.Elements("GitHubPluginConfig").Select(e => e.Element("Id")?.Value));
+        string dev = Join(Root.Element("DevFolder")?.Elements("LocalFolderConfig").Select(e => e.Element("Id")?.Value));
+        string loc = Join(Root.Element("Local")?.Elements("string").Select(e => e.Value));
+        string mod = Join(Root.Element("Mods")?.Elements("unsignedLong").Select(e => e.Value));
+        return $"GH[{gh}]|DEV[{dev}]|LOC[{loc}]|MOD[{mod}]";
+    }
+
+    /// <summary>Writes this profile to an explicit path (used by profile save/rename).</summary>
+    public void SaveTo(AtomicFile writer, string path) => writer.WriteText(path, XmlOut.ToXmlString(xml));
 
     private XElement Root => xml.Root;
 

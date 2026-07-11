@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 using Magnetar.ConfigTerminal.Io;
@@ -177,6 +178,65 @@ public class PluginInteropTests
                         foundMod = true;
                 }
                 Assert.True(foundMod, "ModSource ID did not round-trip");
+            }
+            finally
+            {
+                AppDomain.CurrentDomain.AssemblyResolve -= resolver;
+            }
+        }
+        finally
+        {
+            try { Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void Named_profile_loads_through_Magnetar_ProfilesConfig()
+    {
+        string sharedDll = SharedDllPath();
+        if (!File.Exists(sharedDll))
+            return; // skipped when Magnetar is not installed
+
+        string dir = Path.Combine(Path.GetTempPath(), "mcprofint_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            // The tool seeds an active set and saves it as a named profile.
+            var writer = new AtomicFile();
+            PluginProfileDocument current = PluginProfileDocument.Open(dir);
+            current.EnableLocalDll("Essentials.dll");
+            current.Save(writer);
+            var catalog = new ProfileCatalog(dir, writer);
+            catalog.SaveCurrentAs("Survival Preset");
+
+            string binDir = Path.GetDirectoryName(sharedDll);
+            ResolveEventHandler resolver = (_, e) =>
+            {
+                string name = new AssemblyName(e.Name).Name;
+                string candidate = Path.Combine(binDir, name + ".dll");
+                return File.Exists(candidate) ? Assembly.LoadFrom(candidate) : null;
+            };
+            AppDomain.CurrentDomain.AssemblyResolve += resolver;
+            try
+            {
+                Assembly shared = Assembly.LoadFrom(sharedDll);
+                Type cfgType = shared.GetType("Pulsar.Shared.Config.ProfilesConfig");
+                Assert.NotNull(cfgType);
+
+                // Magnetar's own loader must discover the named profile and the
+                // active Current, both passing Validate() (Load discards invalid ones).
+                object config = cfgType.GetMethod("Load").Invoke(null, new object[] { dir });
+                var namedProfiles = ((System.Collections.IEnumerable)cfgType.GetProperty("Profiles").GetValue(config))
+                    .Cast<object>().ToList();
+
+                Type profileType = shared.GetType("Pulsar.Shared.Data.Profile");
+                bool foundPreset = namedProfiles.Any(p =>
+                    (string)profileType.GetProperty("Name").GetValue(p) == "Survival Preset");
+                Assert.True(foundPreset, "Magnetar's ProfilesConfig.Load did not load the tool-written profile");
+
+                object current2 = cfgType.GetProperty("Current").GetValue(config);
+                Assert.NotNull(current2);
+                Assert.True((bool)profileType.GetMethod("Validate").Invoke(current2, null));
             }
             finally
             {
