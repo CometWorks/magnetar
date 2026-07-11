@@ -137,6 +137,63 @@ internal sealed class PluginProfileDocument
         return true;
     }
 
+    // --- hub / remote plugins (Profile.GitHub: HashSet<GitHubPluginConfig>) ---
+    // A plugin is enabled by naming its PluginData.Id in a <GitHubPluginConfig>.
+
+    public IReadOnlyList<string> GitHubPlugins =>
+        Root.Element("GitHub")?.Elements("GitHubPluginConfig")
+            .Select(e => e.Element("Id")?.Value?.Trim())
+            .Where(v => !string.IsNullOrEmpty(v)).ToList() ?? new List<string>();
+
+    public bool EnableGitHub(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return false;
+        XElement list = List("GitHub");
+        if (list.Elements("GitHubPluginConfig").Any(e => IdEq(e.Element("Id")?.Value, id)))
+            return false;
+        list.Add(new XElement("GitHubPluginConfig", new XElement("Id", id)));
+        return true;
+    }
+
+    public bool DisableGitHub(string id)
+    {
+        XElement removed = Root.Element("GitHub")?.Elements("GitHubPluginConfig")
+            .FirstOrDefault(e => IdEq(e.Element("Id")?.Value, id));
+        if (removed == null)
+            return false;
+        removed.Remove();
+        return true;
+    }
+
+    // --- mods (Profile.Mods: HashSet<ulong> of Steam Workshop ids) ---
+
+    public IReadOnlyList<ulong> Mods =>
+        Root.Element("Mods")?.Elements("unsignedLong")
+            .Select(e => ulong.TryParse((e.Value ?? string.Empty).Trim(), out ulong v) ? v : 0UL)
+            .Where(v => v != 0).ToList() ?? new List<ulong>();
+
+    public bool EnableMod(ulong id)
+    {
+        if (id == 0)
+            return false;
+        XElement list = List("Mods");
+        if (list.Elements("unsignedLong").Any(e => (e.Value ?? string.Empty).Trim() == id.ToString()))
+            return false;
+        list.Add(new XElement("unsignedLong", id.ToString()));
+        return true;
+    }
+
+    public bool DisableMod(ulong id)
+    {
+        XElement removed = Root.Element("Mods")?.Elements("unsignedLong")
+            .FirstOrDefault(e => (e.Value ?? string.Empty).Trim() == id.ToString());
+        if (removed == null)
+            return false;
+        removed.Remove();
+        return true;
+    }
+
     public void Save(AtomicFile writer) => writer.WriteText(FilePath, XmlOut.ToXmlString(xml));
 
     private static bool IdEq(string a, string b) =>

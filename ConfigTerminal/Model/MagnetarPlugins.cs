@@ -24,6 +24,25 @@ internal sealed class DevFolderPlugin
     public bool SourceMissing; // profile enables it but no sources entry (or folder gone)
 }
 
+/// <summary>A hub/remote plugin from a cached catalog, joined with its enabled state.</summary>
+internal sealed class HubPluginView
+{
+    public HubPluginInfo Info;
+    public bool Enabled;      // named in Profile.GitHub
+    public string Id => Info.Id;
+}
+
+/// <summary>A Magnetar mod source, joined with its active (Profile.Mods) state.</summary>
+internal sealed class ModView
+{
+    public long Id;
+    public string Name;
+    public bool SourceEnabled;   // ModSources <Enabled>
+    public bool InProfile;       // id present in Profile.Mods
+    public bool IsDependency;    // marked as a resolved dependency (name suffix)
+    public bool Active => SourceEnabled && InProfile;
+}
+
 /// <summary>
 /// Facade over Magnetar's plugin config for one instance: the active profile
 /// (enabled set) and the dev-folder sources. Enables/disables local DLLs (from
@@ -155,6 +174,202 @@ internal sealed class MagnetarPlugins
 
         if (plugin.Folder != null && sources.RemoveByFolder(plugin.Folder))
             sources.Save(writer);
+    }
+
+    // --- hub / remote plugins ---
+
+    public string HubDir => Path.Combine(configDir, "Sources", "Hubs");
+    public string RemotePluginDir => Path.Combine(configDir, "Sources", "Plugins");
+
+    /// <summary>
+    /// The browsable plugin catalog: every plugin from the cached hub/plugin
+    /// blobs (<c>Sources/Hubs/*.bin</c>, <c>Sources/Plugins/*.bin</c>) joined with
+    /// its enabled state (named in <c>Profile.GitHub</c>). Obsolete and hidden
+    /// entries are dropped; duplicates across sources are merged by Id. Offline —
+    /// it reads only what Magnetar has already downloaded.
+    /// </summary>
+    public IReadOnlyList<HubPluginView> HubCatalogPlugins()
+    {
+        var enabled = new HashSet<string>(profile.GitHubPlugins, StringComparer.OrdinalIgnoreCase);
+        var byId = new Dictionary<string, HubPluginInfo>(StringComparer.OrdinalIgnoreCase);
+
+        foreach ((string dir, IReadOnlyList<(string repo, string name)> labels) in HubBinFiles())
+        {
+            if (!Directory.Exists(dir))
+                continue;
+            foreach (string bin in SafeEnumerateBin(dir))
+            {
+                string label = LabelForBin(bin, labels);
+                foreach (HubPluginInfo p in HubCatalog.ReadFile(bin, label))
+                {
+                    if (p.Kind == HubPluginKind.Obsolete || p.Hidden)
+                        continue;
+                    if (!byId.ContainsKey(p.Id))
+                        byId[p.Id] = p;
+                }
+            }
+        }
+
+        return byId.Values
+            .Select(p => new HubPluginView { Info = p, Enabled = enabled.Contains(p.Id) })
+            .OrderBy(v => v.Info.FriendlyName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Enables or disables a hub plugin in the profile. Enabling also pulls in the
+    /// plugin's catalog-declared dependencies (matching Magnetar's own
+    /// <c>UpdateProfile</c>). Returns the ids actually enabled (for user feedback).
+    /// </summary>
+    public IReadOnlyList<string> SetHubPluginEnabled(string id, bool enabled)
+    {
+        var touched = new List<string>();
+        if (enabled)
+        {
+            var catalog = HubCatalogPlugins().ToDictionary(v => v.Id, v => v.Info, StringComparer.OrdinalIgnoreCase);
+            var toEnable = new List<string> { id };
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < toEnable.Count; i++)
+            {
+                string cur = toEnable[i];
+                if (!seen.Add(cur))
+                    continue;
+                if (profile.EnableGitHub(cur))
+                    touched.Add(cur);
+                if (catalog.TryGetValue(cur, out HubPluginInfo info) && info.DependencyIds != null)
+                    toEnable.AddRange(info.DependencyIds);
+            }
+        }
+        else
+        {
+            if (profile.DisableGitHub(id))
+                touched.Add(id);
+        }
+
+        if (touched.Count > 0)
+            profile.Save(writer);
+        return touched;
+    }
+
+    // --- plugin sources (remote hub / remote plugin / local hub) ---
+
+    public IReadOnlyList<RemoteHubSource> RemoteHubs() => sources.RemoteHubs;
+    public IReadOnlyList<RemotePluginSource> RemotePlugins() => sources.RemotePlugins;
+    public IReadOnlyList<LocalHubSource> LocalHubs() => sources.LocalHubs;
+
+    public bool AddRemoteHub(string name, string repo, string branch)
+    {
+        bool added = sources.AddRemoteHub(name, repo, branch);
+        if (added) sources.Save(writer);
+        return added;
+    }
+
+    public bool AddRemotePlugin(string name, string repo, string branch, string file)
+    {
+        bool added = sources.AddRemotePlugin(name, repo, branch, file);
+        if (added) sources.Save(writer);
+        return added;
+    }
+
+    public bool AddLocalHub(string name, string folder)
+    {
+        bool added = sources.AddLocalHub(name, folder);
+        if (added) sources.Save(writer);
+        return added;
+    }
+
+    public void RemoveRemoteHub(string repo) { if (sources.RemoveRemoteHub(repo)) sources.Save(writer); }
+    public void RemoveRemotePlugin(string repo) { if (sources.RemoveRemotePlugin(repo)) sources.Save(writer); }
+    public void RemoveLocalHub(string folder) { if (sources.RemoveLocalHub(folder)) sources.Save(writer); }
+
+    public void SetRemoteHubEnabled(string repo, bool on) { if (sources.SetRemoteHubEnabled(repo, on)) sources.Save(writer); }
+    public void SetRemotePluginEnabled(string repo, bool on) { if (sources.SetRemotePluginEnabled(repo, on)) sources.Save(writer); }
+    public void SetLocalHubEnabled(string folder, bool on) { if (sources.SetLocalHubEnabled(folder, on)) sources.Save(writer); }
+
+    // --- mods (ModSources joined with Profile.Mods) ---
+
+    /// <summary>The managed mod list: ModSources entries joined with Profile.Mods membership.</summary>
+    public IReadOnlyList<ModView> Mods()
+    {
+        var inProfile = new HashSet<ulong>(profile.Mods);
+        return sources.ModSources
+            .Select(m => new ModView
+            {
+                Id = m.Id,
+                Name = m.Name,
+                SourceEnabled = m.Enabled,
+                InProfile = m.Id > 0 && inProfile.Contains((ulong)m.Id),
+            })
+            .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>Adds a mod to ModSources and (when active) the profile, in lockstep.</summary>
+    public void AddMod(long id, string name, bool active = true)
+    {
+        if (id <= 0)
+            return;
+        sources.AddMod(id, name, active);
+        sources.Save(writer);
+        if (active ? profile.EnableMod((ulong)id) : profile.DisableMod((ulong)id))
+            profile.Save(writer);
+    }
+
+    public void SetModName(long id, string name)
+    {
+        if (sources.SetModName(id, name))
+            sources.Save(writer);
+    }
+
+    /// <summary>Toggles a mod on/off, keeping ModSources.Enabled and Profile.Mods in sync.</summary>
+    public void SetModActive(long id, bool active)
+    {
+        if (id <= 0)
+            return;
+        if (sources.SetModEnabled(id, active))
+            sources.Save(writer);
+        if (active ? profile.EnableMod((ulong)id) : profile.DisableMod((ulong)id))
+            profile.Save(writer);
+    }
+
+    /// <summary>Removes a mod from both ModSources and Profile.Mods.</summary>
+    public void RemoveMod(long id)
+    {
+        bool changed = sources.RemoveMod(id);
+        if (changed) sources.Save(writer);
+        if (id > 0 && profile.DisableMod((ulong)id))
+            profile.Save(writer);
+    }
+
+    // --- helpers ---
+
+    private IEnumerable<(string dir, IReadOnlyList<(string repo, string name)> labels)> HubBinFiles()
+    {
+        yield return (HubDir, sources.RemoteHubs.Select(h => (h.Repo, h.Name)).ToList());
+        yield return (RemotePluginDir, sources.RemotePlugins.Select(p => (p.Repo, p.Name)).ToList());
+    }
+
+    private static string LabelForBin(string binPath, IReadOnlyList<(string repo, string name)> labels)
+    {
+        string stem = Path.GetFileNameWithoutExtension(binPath);
+        foreach ((string repo, string name) in labels)
+        {
+            if (repo != null && string.Equals(repo.Replace('/', '-'), stem, StringComparison.OrdinalIgnoreCase))
+                return name ?? stem;
+        }
+        return stem;
+    }
+
+    private static IEnumerable<string> SafeEnumerateBin(string dir)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(dir, "*.bin", SearchOption.TopDirectoryOnly);
+        }
+        catch
+        {
+            return Array.Empty<string>();
+        }
     }
 
     private static IEnumerable<string> SafeEnumerate(string dir)

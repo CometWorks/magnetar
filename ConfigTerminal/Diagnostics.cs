@@ -61,6 +61,19 @@ internal static class Diagnostics
             Console.WriteLine($"Dev-folder plugins ({devs.Count}):");
             foreach (DevFolderPlugin p in devs)
                 Console.WriteLine($"  {p.Id}  [{p.DataFile}]  {p.Folder ?? "(no source)"}{(p.SourceMissing ? " !missing" : "")}");
+
+            var hub = plugins.HubCatalogPlugins();
+            Console.WriteLine($"Hub plugins ({hub.Count(h => h.Enabled)} enabled of {hub.Count} in catalog):");
+            foreach (HubPluginView h in hub)
+                Console.WriteLine($"  {(h.Enabled ? "[x]" : "[ ]")} {h.Info.FriendlyName,-28} {h.Info.RepoId ?? h.Info.Id}");
+
+            Console.WriteLine($"Plugin sources: {plugins.RemoteHubs().Count} hub, " +
+                $"{plugins.RemotePlugins().Count} plugin, {plugins.LocalHubs().Count} local");
+
+            var modList = plugins.Mods();
+            Console.WriteLine($"Mods ({modList.Count(m => m.Active)} active of {modList.Count}):");
+            foreach (ModView m in modList)
+                Console.WriteLine($"  {(m.Active ? "[x]" : "[ ]")} {m.Id,-12} {m.Name}");
         }
         catch (Exception e)
         {

@@ -7,16 +7,26 @@ is added to the Legacy launcher. The full **configure-a-new-world → start to
 "Game ready" → stop** flow is verified end-to-end against a live DS install +
 patched launcher (see `ConfigTerminalTests/LiveEndToEndTests.cs`, gated behind
 `MAGNETAR_LIVE=1`). A headless `-diag` mode reports an instance's state (incl. plugins) without
-the UI. **Magnetar plugin management is also implemented** (see below): a
-Plugins view enables/disables local DLLs from the instance's `Local/` folder and
-adds dev-folder plugins Quasar-style by picking a manifest `.xml` (folder +
-filename + folder-name id derived), editing `Profiles/Current.xml` and
-`Sources/sources.xml` via the same XDocument-upsert approach; the last-visited
-folder is persisted in `ConfigTerminal.xml` (`ToolSettings`). Round-trip
-compatibility is verified against Magnetar's own `XmlSerializer`
-(`ConfigTerminalTests/PluginInteropTests.cs`). Remaining polish (external-change
-watcher/conflict flow, incremental search, advanced-fields toggle,
-packaging/build wiring, full docs refresh) is tracked against §14 phases 6–7.
+the UI. **Full Magnetar plugin and mod management is implemented** (see below):
+separate Plugins views (1) enable/disable **local DLLs** from the instance's
+`Local/` folder, (2) add **dev-folder plugins** Quasar-style by picking a manifest
+`.xml` (folder + filename + folder-name id derived), (3) **browse hub/remote
+plugin catalogs** and enable them (with dependency pull-in), (4) manage the
+**plugin sources** (`RemoteHubSources`/`RemotePluginSources`/`LocalHubSources`),
+and (5) manage the **mod sources** (`ModSources`), including optional Steam
+Workshop name lookup, collection expansion and dependency resolution. All edits go
+to `Profiles/Current.xml` and `Sources/sources.xml` via the same XDocument-upsert
+approach; hub catalogs are read offline from Magnetar's own protobuf caches under
+`Sources/Hubs`/`Sources/Plugins` with a minimal wire reader (no `Shared`
+reference). The last-visited manifest folder and an optional Steam Web API key are
+persisted in `ConfigTerminal.xml` (`ToolSettings`). Round-trip compatibility is
+verified against Magnetar's own `XmlSerializer` for both `Profile` and
+`SourcesConfig` (`ConfigTerminalTests/PluginInteropTests.cs`), the protobuf reader
+against a real captured hub cache (`HubCatalogTests`), and the Workshop resolver
+against fixtures plus a live Steam API call (`WorkshopResolverTests`,
+`WorkshopLiveTests`). Remaining polish (external-change watcher/conflict flow,
+incremental search, advanced-fields toggle, packaging/build wiring) is tracked
+against §14 phases 6–7.
 
 A cross-platform console (TUI) application to configure **and operate** a
 Space Engineers 1 Dedicated Server instance running under Magnetar: the DS's
@@ -128,18 +138,43 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
   folder, and add **dev-folder plugins** Quasar-style by picking a manifest
   `.xml` (the folder, filename and folder-name id are derived), with the
   last-visited folder remembered in `ConfigTerminal.xml` for the next add.
+- **Browse hub/remote plugin catalogs** — list the plugins offered by the
+  instance's configured hub/remote sources, read **offline** from the protobuf
+  caches Magnetar already downloads into `Sources/Hubs/*.bin` and
+  `Sources/Plugins/*.bin` (parsed by a tiny built-in wire reader — no `Shared`
+  reference, no network, no game types). A details pane shows author, tagline and
+  description; enabling a plugin writes a `<GitHubPluginConfig>` into
+  `Profile.GitHub` and pulls in the plugin's catalog-declared dependencies,
+  exactly like Magnetar's own `UpdateProfile`.
+- **Manage plugin catalog sources** — add / remove / enable the
+  `<RemoteHubSources>` (GitHub hub catalogs like MagnetarHub),
+  `<RemotePluginSources>` (single remote plugin repos) and `<LocalHubSources>`
+  (local manifest folders) in `sources.xml`, preserving the fields Magnetar
+  manages itself (`LastCheck`, `Hash`).
+- **Manage mod sources** — edit the `<ModSources>` list in `sources.xml` (kept
+  in lockstep with the enabled ids in `Profile.Mods`): add mods by Workshop id
+  or by pasting Workshop/collection URLs, toggle, rename and remove them.
+- **Steam Workshop metadata & dependency resolution** — optionally look up mod
+  **names**, expand **collections**, and resolve transitive **dependencies** from
+  the Steam Web API (the piece Magnetar itself leaves as a TODO). Name lookup and
+  collection expansion use the keyless `ISteamRemoteStorage` endpoints;
+  dependency resolution uses `IPublishedFileService/GetDetails` and needs a Steam
+  Web API key (stored in `ConfigTerminal.xml`). Modelled on Quasar's
+  `QuasarWorkshopModResolver`; all wire parsing is offline-testable.
 
 ### Out of scope (this iteration)
 
 - Fleet management — running or monitoring more than one Magnetar instance
   from one tool session. One (config dir, data dir) pair per invocation.
-- Remote/hub plugin browsing and mod-list source management — the local-DLL
-  and dev-folder parts of Magnetar's plugin configuration are now in scope (see
-  "Manage Magnetar plugins" above), but browsing hub/remote plugin catalogs and
-  editing `<ModSources>` remain deferred.
-- Steam Workshop metadata lookup / mod dependency resolution (Quasar's
-  `QuasarWorkshopModResolver`) — requires network + Steam API; mods are edited
-  by ID and name only. Candidate for a later phase.
+- Fetching / refreshing hub catalogs over the network — the tool **reads**
+  Magnetar's already-downloaded catalog caches (`Sources/Hubs/*.bin`,
+  `Sources/Plugins/*.bin`) offline; refreshing them from GitHub remains
+  Magnetar's job (it re-fetches on server start). Adding a source the user then
+  starts the server once to populate is the intended flow. (Steam Workshop
+  *mod* metadata lookup **is** in scope — that is a small, discrete API call.)
+- Compiling / installing Quasar **UI** plugins (`quasar-hub`) — this tool
+  configures the server-side Magnetar plugins only; the Quasar Blazor UI owns its
+  own plugin lifecycle.
 - Editing `Sandbox.sbc` content (entities, players, factions) — we only ever
   *read* it as a fallback, never write it.
 - Remote management — this is a local tool operating on the local filesystem.
@@ -401,7 +436,7 @@ format details are tuned against real logs during implementation.
 | Profiles shared across servers, `History/` snapshots per mutation | One instance at a time; single `.bak` per file (matching Magnetar's existing `ProfilesConfig` convention) | Simplicity; history can be added later without format changes. |
 | Web UI (Blazor), editing decoupled from a supervisor process | Terminal.Gui v1 TUI, direct file editing | The whole point of this tool. |
 | Fleet supervisor: many servers, `GoalState` reconciliation loop, agent WebSocket channel, auto-restart policy | Single instance, direct start/stop, PID-file status polling, no reconciliation | The tool operates exactly one Magnetar (one folder pair); Magnetar's own `AutoRestartEnabled` watchdog covers in-process restarts. |
-| Manages Magnetar plugin/source config and agent deployment | Out of scope (phase 2+) | Keep the tool focused; Magnetar already owns those files. |
+| Manages Magnetar plugin/source config and agent deployment | Manages plugins (local, dev-folder, hub), plugin/mod **sources** and mod lists by editing `Profiles/Current.xml` + `Sources/sources.xml` in place; **agent deployment stays out of scope** | We adopt Quasar's source→profile model but as in-place XDocument upserts (no parallel store), and never deploy/compile agents — Magnetar owns that. |
 | Blocks `-ignorelastsession` in launch args, forces `IgnoreLastSession=false` silently | Explains the precedence and asks before flipping `IgnoreLastSession` | The user may have set it deliberately; a local tool should be transparent, not managerial. |
 | Password always re-rendered from profile | Password write-only field: set/clear only, existing hash preserved untouched | We don't store the plaintext anywhere. |
 
@@ -428,7 +463,17 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── PasswordHasher.cs
 │   ├── WorldTemplateCatalog.cs      enumerate <DS install>/Content/CustomWorlds
 │   ├── DsInstance.cs                aggregate root binding all of the above
-│   └── EditSession.cs               snapshot / dirty-tracking / validation engine
+│   ├── EditSession.cs               snapshot / dirty-tracking / validation engine
+│   ├── PluginProfileDocument.cs     XDocument wrapper for Profiles/Current.xml
+│   │                                 (Local DLLs, DevFolder, GitHub hub plugins, Mods)
+│   ├── PluginSourcesDocument.cs     XDocument wrapper for Sources/sources.xml
+│   │                                 (Remote/Local hub + plugin + Mod sources)
+│   ├── MagnetarPlugins.cs           facade joining catalog + profile + sources
+│   ├── ProtoReader.cs               minimal protobuf wire reader (no protobuf-net dep)
+│   ├── HubCatalog.cs                parse Sources/{Hubs,Plugins}/*.bin → HubPluginInfo
+│   ├── WorkshopResolver.cs          Steam Workshop names / collections / dependencies
+│   ├── DefaultHttpFetcher.cs        the resolver's live HTTP transport (injectable)
+│   └── Json/MiniJson.cs             tiny dependency-free JSON reader (net48 + net10)
 ├── Io/
 │   ├── AtomicFile.cs                temp+rename atomic writer, .bak backup
 │   ├── XmlOut.cs                    shared XmlWriterSettings / Utf8StringWriter
@@ -456,9 +501,14 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── AccessListView.cs            admins / banned / reserved editors
 │   ├── PasswordDialog.cs
 │   ├── LogViewerView.cs             virtualized log view: follow, search, exceptions
-│   └── Dialogs.cs                   confirm-discard, save-error, stop-confirm, about, help
+│   ├── PluginsView.cs               local DLLs + dev-folder plugins
+│   ├── HubPluginsView.cs            browse hub catalog + enable (with dependencies)
+│   ├── PluginSourcesView.cs         manage remote/local hub + remote plugin sources
+│   ├── ModSourcesView.cs            manage ModSources + Steam Workshop resolution
+│   ├── ManifestPicker.cs           dev-folder manifest .xml picker
+│   └── Dialogs.cs                   confirm-discard, save-error, stop-confirm, about, help, prompt
 └── State/
-    └── ToolSettings.cs              recent folder pairs, exe/ds64 paths, extra launch args
+    └── ToolSettings.cs              last manifest folder, Steam Web API key
 
 ConfigTerminalTests/
 └── ConfigTerminalTests.csproj       xUnit, net10.0 (+ net48 on Windows), fixture files
@@ -811,6 +861,57 @@ sealed class ExceptionIndexer       // over the current window, incremental
 Search runs over the loaded window with an offer to "search further back"
 (extends the window chunk-by-chunk) — bounded memory even on multi-GB logs.
 
+### 5.10 Plugin, source and mod management
+
+Magnetar's plugin config is two `XmlSerializer` files the tool edits by the same
+upsert discipline as the DS files (unknown elements preserved, Magnetar-managed
+fields like `LastCheck`/`Hash` untouched):
+
+- `Profiles/Current.xml` (`Pulsar.Shared.Data.Profile`) — the **enabled set**:
+  `Local` (`<string>` DLL file names), `DevFolder` (`<LocalFolderConfig>`),
+  `GitHub` (`<GitHubPluginConfig>` naming a hub plugin by its `Id`), `Mods`
+  (`<unsignedLong>` Workshop ids). `Profile.Validate()` requires all four present,
+  so the skeleton always writes them.
+- `Sources/sources.xml` (`Pulsar.Shared.Config.SourcesConfig`) — the **catalog
+  sources**: `RemoteHubSources` (`<RemoteHub>` {Name, Repo, Branch, Enabled,
+  Trusted, +managed LastCheck/Hash}), `RemotePluginSources` (`<RemotePlugin>`
+  {…, File}), `LocalHubSources`, `LocalPluginSources` (dev folders), and
+  `ModSources` (`<Mod>` {Name, `ID` (long), Enabled}).
+
+```csharp
+sealed class MagnetarPlugins        // façade over both documents + the catalog caches
+{
+    IReadOnlyList<LocalDllInfo>   LocalDlls();          // Local/ folder ∪ Profile.Local
+    IReadOnlyList<DevFolderPlugin> DevFolderPlugins();  // Profile.DevFolder ⋈ LocalPluginSources
+    IReadOnlyList<HubPluginView>  HubCatalogPlugins();  // cached catalog ⋈ Profile.GitHub
+    IReadOnlyList<string>         SetHubPluginEnabled(string id, bool on);  // + dependency pull-in
+    // source management: {RemoteHubs,RemotePlugins,LocalHubs} × {Add,Remove,SetEnabled}
+    IReadOnlyList<ModView>        Mods();                // ModSources ⋈ Profile.Mods (lockstep)
+    void AddMod(long id, string name, bool active);      // ModSources + Profile.Mods together
+}
+```
+
+**Hub catalog browsing is offline.** Magnetar downloads each hub's catalog into a
+protobuf-net blob (`Sources/Hubs/<owner-repo>.bin`, a serialized
+`PluginData[]`; single-plugin sources into `Sources/Plugins/*.bin`). The tool
+reads these with `ProtoReader` (a ~100-line Protocol-Buffers wire reader) keyed on
+the `[ProtoMember]` field numbers of `PluginData`/`GitHubPlugin` — **no
+protobuf-net or `Shared` reference, no game types, no network.** Unknown fields are
+skipped so a schema growth degrades gracefully; obsolete/hidden entries are
+dropped. Enabling a plugin writes `<GitHubPluginConfig><Id>` and transitively
+enables its `DependencyIds`, mirroring `PluginData.UpdateProfile`.
+
+**Mods** are managed by editing `ModSources` and keeping `Profile.Mods` in
+lockstep (a mod is *active* iff its source is enabled **and** its id is in the
+profile). Ids are added directly or extracted from pasted Workshop/collection
+URLs. `WorkshopResolver` optionally enriches them from the Steam Web API — name
+lookup and collection expansion via the keyless `ISteamRemoteStorage` endpoints,
+and transitive dependency resolution (BFS over each item's `children`) via
+`IPublishedFileService/GetDetails`, which needs a Steam Web API key. Network use is
+confined to `DefaultHttpFetcher` (injectable, so all parsing is offline-testable),
+and JSON is read with the dependency-free `MiniJson` so both TFMs build without
+`System.Text.Json`.
+
 ---
 
 ## 6. The option metadata registry
@@ -967,6 +1068,10 @@ Windows / dialogs:
 | **Log viewer** | file selector (game + Magnetar groups, active file marked); virtualized read-only text pane; `End` toggles follow; `/` search with n/N navigation and "search further back" offer; exception blocks highlighted (red), `x`/`X` jump next/previous; `F4` cycles active game ↔ active Magnetar log | `Tools → Logs` (F4) |
 | **Stop confirm** (dialog) | graceful stop (SIGTERM, saves world) with progress; on timeout offers force-kill behind an explicit data-loss warning | F6 / dashboard Stop |
 | **Reload prompt** (dialog, Linux) | after saving live-reloadable cfg fields with a running server detected: offer SIGHUP | after save |
+| **Local & Dev Plugins** | two panes: local DLLs from `Local/` (Space toggles) and dev-folder plugins (Enter/Add picks a manifest `.xml`) | `Plugins → Local & Dev Plugins` |
+| **Hub Plugins** | list of the cached hub/remote catalog (Space/Enter toggles enabled; dependencies pulled in) with an author/tagline/description details pane | `Plugins → Hub Plugins` |
+| **Plugin Sources** | manage `RemoteHub`/`RemotePlugin`/`LocalHub` sources: Add Hub/Plugin/Local, Space toggles, Remove | `Plugins → Plugin Sources` |
+| **Mods** | `ModSources` list (Space toggles active, in lockstep with `Profile.Mods`); Add (id or Workshop/collection URLs), Rename, Remove; Resolve Names / Resolve Dependencies / Steam API Key via the Workshop resolver | `Plugins → Mods` |
 | **Help** | key reference + file-format primer (the §2 précis) | F1 |
 
 ### 8.3 The generic option form
@@ -1301,10 +1406,28 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
 - **WorldTemplateCatalog / wizard staging** — template scan fixture tree;
   wizard's cfg staging writes exactly the four §9.6 fields; post-creation
   cleanup clears `PremadeCheckpointPath`.
+- **Plugin / source / mod config** — profile and sources upsert round-trips
+  (`GitHub`, `Mods`, `RemoteHub`/`RemotePlugin`/`LocalHub`, `ModSources`) with
+  sibling and Magnetar-managed-field preservation; the `MagnetarPlugins` façade's
+  catalog-join, dependency pull-in, and `ModSources`↔`Profile.Mods` lockstep
+  (`PluginConfigTests`). Interop against the **deployed `Magnetar.Shared.dll`**:
+  the tool-written `Profile` and `SourcesConfig` deserialize with Magnetar's own
+  `XmlSerializer` and pass `Profile.Validate()` (`PluginInteropTests`).
+- **Hub catalog reader** — the `ProtoReader`/`HubCatalog` wire parser against a
+  **real captured `magnetar-hub.bin`** fixture (identity, kind, `RepoId`, author,
+  dependencies), plus empty/missing-file cases (`HubCatalogTests`).
+- **Workshop resolver** — id extraction from URLs/text, `GetPublishedFileDetails`
+  / `GetCollectionDetails` parsing, collection expansion, non-mod filtering, and
+  the transitive dependency BFS — all against scripted `IHttpFetcher` fixtures, no
+  network (`WorkshopResolverTests`), plus a `MAGNETAR_LIVE`-gated real Steam API
+  call and an enable-on-a-copy-of-the-installed-instance check (`WorkshopLiveTests`).
+- **MiniJson** — object/array/string-escape/number parsing exercised via the
+  resolver fixtures.
 - **UI smoke tests** — Terminal.Gui v1 ships `FakeDriver` (used by its own
   test suite): instantiate the shell headless, drive key events
-  (open form → edit → F2 → assert file content). Kept minimal — the logic
-  lives below the UI on purpose.
+  (open form → edit → F2 → assert file content), and navigate every primary view
+  including the four Plugins views. Kept minimal — the logic lives below the UI on
+  purpose.
 
 `Sandbox.sbc` fixtures must be small hand-made worlds (empty sector), not
 real saves, to keep the repo lean.
@@ -1380,6 +1503,15 @@ Build/publish integration, dist bundles, docs updates (§13), UI smoke tests,
 manual test pass on: Linux xterm/kitty/ssh, Windows Terminal, conhost,
 net48 build.
 
+**Phase 8 — plugin & mod management**
+`PluginProfileDocument`/`PluginSourcesDocument` (local DLLs, dev folders, hub
+`GitHub` plugins, `Mods`, and all source lists); `ProtoReader`/`HubCatalog`
+offline reader for the cached hub/plugin blobs; `MagnetarPlugins` façade;
+`WorkshopResolver` + `MiniJson` for Steam name/collection/dependency lookup; the
+`PluginsView`, `HubPluginsView`, `PluginSourcesView` and `ModSourcesView` UI, plus
+`-diag` reporting and interop/round-trip/live tests. *Done — see the status note
+at the top of this document.*
+
 ---
 
 ## 15. Risks and open questions
@@ -1429,7 +1561,22 @@ net48 build.
 - **Log size/performance** — SE logs can reach GBs on long-running servers;
   the windowed reader (§5.9) bounds memory, but rendering and search UX on
   huge files needs profiling with real logs (Phase 5).
-- **Future**: Magnetar plugin profile editing in the same shell, Workshop
-  metadata lookup for mods, Windows graceful stop / live-reload channel via
-  the Remote API, timestamped edit history. All deliberately excluded now;
-  the layering keeps them cheap to add.
+- **Hub catalog is read-only / offline** — the tool browses whatever Magnetar
+  has already cached in `Sources/{Hubs,Plugins}/*.bin`; it never fetches or
+  refreshes a catalog itself. Add a source, then start the server once so
+  Magnetar populates the cache. A newly-added source therefore shows no plugins
+  until that first start — the Hub Plugins view says so. Fetching catalogs
+  in-tool (GitHub zip walk like Quasar/Magnetar) is a possible later addition.
+- **Protobuf catalog format coupling** — the offline reader keys on the
+  `[ProtoMember]` field numbers of `PluginData`/`GitHubPlugin`. These are part of
+  Magnetar's on-disk cache contract and stable, but a field-number change would
+  need the reader updated; `HubCatalogTests` (real-fixture) catches regressions,
+  and unknown fields are skipped so additive changes are harmless.
+- **Steam Web API key storage** — the optional key for dependency resolution is
+  stored in plaintext in `ConfigTerminal.xml` (unlike Quasar's DataProtection
+  encryption, which is Windows-centric). It is a low-sensitivity read-only key;
+  encrypting it per-platform is a possible hardening step. Name lookup and
+  collection expansion need no key at all.
+- **Future**: Windows graceful stop / live-reload channel via the Remote API,
+  in-tool hub catalog refresh, timestamped edit history. All deliberately
+  excluded now; the layering keeps them cheap to add.

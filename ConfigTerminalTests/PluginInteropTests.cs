@@ -101,4 +101,91 @@ public class PluginInteropTests
             try { Directory.Delete(dir, true); } catch { }
         }
     }
+
+    [Fact]
+    public void Hub_and_mod_edits_round_trip_through_Magnetar_serializers()
+    {
+        string sharedDll = SharedDllPath();
+        if (!File.Exists(sharedDll))
+            return; // skipped when Magnetar is not installed
+
+        string dir = Path.Combine(Path.GetTempPath(), "mcinterop2_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            // Enable a hub plugin + a mod in the profile, and add a remote hub +
+            // a mod source in sources.xml — all through the tool's own model.
+            PluginProfileDocument profile = PluginProfileDocument.Open(dir);
+            profile.EnableGitHub("HUB-GUID-1");
+            profile.EnableMod(2599830339);
+            profile.Save(new AtomicFile());
+
+            PluginSourcesDocument sources = PluginSourcesDocument.Open(dir);
+            sources.AddRemoteHub("MagnetarHub", "CometWorks/magnetar-hub", "main");
+            sources.AddMod(2599830339, "Some Mod", true);
+            sources.Save(new AtomicFile());
+
+            string binDir = Path.GetDirectoryName(sharedDll);
+            ResolveEventHandler resolver = (_, e) =>
+            {
+                string name = new AssemblyName(e.Name).Name;
+                string candidate = Path.Combine(binDir, name + ".dll");
+                return File.Exists(candidate) ? Assembly.LoadFrom(candidate) : null;
+            };
+            AppDomain.CurrentDomain.AssemblyResolve += resolver;
+            try
+            {
+                Assembly shared = Assembly.LoadFrom(sharedDll);
+
+                // Profile: GitHub + Mods populate and Validate() passes.
+                Type profileType = shared.GetType("Pulsar.Shared.Data.Profile");
+                object profileObj;
+                using (FileStream fs = File.OpenRead(PluginProfileDocument.PathFor(dir)))
+                    profileObj = new XmlSerializer(profileType).Deserialize(fs);
+                Assert.True((bool)profileType.GetMethod("Validate").Invoke(profileObj, null));
+
+                var github = (IEnumerable)profileType.GetProperty("GitHub").GetValue(profileObj);
+                bool foundHub = false;
+                foreach (object cfg in github)
+                    if ((string)cfg.GetType().GetProperty("Id").GetValue(cfg) == "HUB-GUID-1")
+                        foundHub = true;
+                Assert.True(foundHub, "GitHub plugin id did not round-trip");
+
+                var modsSet = (IEnumerable)profileType.GetProperty("Mods").GetValue(profileObj);
+                Assert.Contains(2599830339UL, System.Linq.Enumerable.Cast<ulong>(modsSet));
+
+                // SourcesConfig: RemoteHub + ModSources deserialize with the right values.
+                Type sourcesType = shared.GetType("Pulsar.Shared.Config.SourcesConfig");
+                Assert.NotNull(sourcesType);
+                object sourcesObj;
+                using (FileStream fs = File.OpenRead(PluginSourcesDocument.PathFor(dir)))
+                    sourcesObj = new XmlSerializer(sourcesType).Deserialize(fs);
+
+                var remoteHubs = (IEnumerable)sourcesType.GetProperty("RemoteHubSources").GetValue(sourcesObj);
+                bool foundRepo = false;
+                foreach (object h in remoteHubs)
+                    if ((string)h.GetType().GetProperty("Repo").GetValue(h) == "CometWorks/magnetar-hub")
+                        foundRepo = true;
+                Assert.True(foundRepo, "RemoteHub repo did not round-trip");
+
+                var modSources = (IEnumerable)sourcesType.GetProperty("ModSources").GetValue(sourcesObj);
+                bool foundMod = false;
+                foreach (object md in modSources)
+                {
+                    long id = Convert.ToInt64(md.GetType().GetProperty("ID").GetValue(md));
+                    if (id == 2599830339)
+                        foundMod = true;
+                }
+                Assert.True(foundMod, "ModSource ID did not round-trip");
+            }
+            finally
+            {
+                AppDomain.CurrentDomain.AssemblyResolve -= resolver;
+            }
+        }
+        finally
+        {
+            try { Directory.Delete(dir, true); } catch { }
+        }
+    }
 }

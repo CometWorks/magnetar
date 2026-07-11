@@ -70,6 +70,9 @@ public class UiSmokeTests : IDisposable
             shell.ShowWorlds();
             shell.ShowNewWorldDefaults();
             shell.ShowPlugins();
+            shell.ShowHubPlugins();
+            shell.ShowPluginSources();
+            shell.ShowModSources();
             for (int i = 0; i < 2; i++)
             {
                 bool wait = false;
