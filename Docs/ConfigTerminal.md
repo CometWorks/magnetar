@@ -122,16 +122,21 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
   `~/.config/SpaceEngineersDedicated` on Linux; Windows defaults per
   [Configuration.md](Configuration.md)) are selectable, so non-standard
   deployments work.
+- **Manage Magnetar plugins** — enable/disable the instance's plugins by
+  editing `Profiles/Current.xml` and `Sources/sources.xml` (same XDocument
+  upsert as the DS files): toggle **local DLLs** from the instance's `Local/`
+  folder, and add **dev-folder plugins** Quasar-style by picking a manifest
+  `.xml` (the folder, filename and folder-name id are derived), with the
+  last-visited folder remembered in `ConfigTerminal.xml` for the next add.
 
 ### Out of scope (this iteration)
 
 - Fleet management — running or monitoring more than one Magnetar instance
   from one tool session. One (config dir, data dir) pair per invocation.
-- ~~Magnetar's own plugin configuration~~ — **now in scope and implemented**:
-  the Plugins view edits `Profiles/Current.xml` and `Sources/sources.xml`
-  (local-DLL enable/disable + Quasar-style dev-folder add by picking a manifest
-  XML). Remote/hub plugin browsing and mod-list source management remain out of
-  scope for now.
+- Remote/hub plugin browsing and mod-list source management — the local-DLL
+  and dev-folder parts of Magnetar's plugin configuration are now in scope (see
+  "Manage Magnetar plugins" above), but browsing hub/remote plugin catalogs and
+  editing `<ModSources>` remain deferred.
 - Steam Workshop metadata lookup / mod dependency resolution (Quasar's
   `QuasarWorkshopModResolver`) — requires network + Steam API; mods are edited
   by ID and name only. Candidate for a later phase.
