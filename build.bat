@@ -14,6 +14,13 @@ REM   <Magnetar>\LICENSE
 REM   <Magnetar>\Libraries\MagnetarLegacy\...
 REM   <Magnetar>\Libraries\MagnetarInterim\...
 REM
+REM We additionally publish the ConfigTerminal TUI (net48, no runtime needed)
+REM into <Magnetar>\Config\ and drop a <Magnetar>\MagnetarConfig.bat shim next
+REM to the launchers so operators can configure the instance from the install:
+REM
+REM   <Magnetar>\MagnetarConfig.bat   (launches Config\MagnetarConfig.exe)
+REM   <Magnetar>\Config\MagnetarConfig.exe + Terminal.Gui.dll + deps
+REM
 REM We point `Magnetar` at a staging tree under build\ (so the real
 REM %APPDATA%\Magnetar install is left untouched), then 7-Zip the staged
 REM Magnetar\ folder into dist\MagnetarForWindows.<date>.<hash>.7z.
@@ -97,6 +104,25 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM ---- stage the ConfigTerminal TUI (MagnetarConfig) --------------------------
+REM Ships the terminal configuration UI next to the launchers. Windows uses the
+REM net48 build so no .NET runtime is required. Its managed deps (Terminal.Gui,
+REM NStack, ...) live alongside the exe in Config\, and a root MagnetarConfig.bat
+REM shim next to MagnetarInterim.exe launches it.
+echo.
+echo ############################################################
+echo # publish: ConfigTerminal / MagnetarConfig (net48)
+echo ############################################################
+dotnet publish "%REPO_DIR%\ConfigTerminal\ConfigTerminal.csproj" -c Release -f net48 -p:DebugType=None -p:DebugSymbols=false -o "%MAGNETAR_STAGE%\Config"
+if errorlevel 1 (
+    echo ERROR: ConfigTerminal publish failed. 1>&2
+    exit /b 1
+)
+
+REM Root shim so MagnetarConfig launches from beside MagnetarInterim.exe.
+> "%MAGNETAR_STAGE%\MagnetarConfig.bat" echo @echo off
+>>"%MAGNETAR_STAGE%\MagnetarConfig.bat" echo "%%~dp0Config\MagnetarConfig.exe" %%*
+
 REM ---- verify the staged tree ------------------------------------------------
 set "MISSING=0"
 for %%F in (MagnetarLegacy.exe MagnetarInterim.exe MagnetarInterim.dll LICENSE) do (
@@ -112,6 +138,12 @@ if not exist "%MAGNETAR_STAGE%\Libraries\MagnetarLegacy\" (
 if not exist "%MAGNETAR_STAGE%\Libraries\MagnetarInterim\" (
     echo MISSING: %MAGNETAR_STAGE%\Libraries\MagnetarInterim 1>&2
     set "MISSING=1"
+)
+for %%F in ("Config\MagnetarConfig.exe" "Config\Terminal.Gui.dll" "MagnetarConfig.bat") do (
+    if not exist "%MAGNETAR_STAGE%\%%~F" (
+        echo MISSING: %MAGNETAR_STAGE%\%%~F 1>&2
+        set "MISSING=1"
+    )
 )
 if "%MISSING%"=="1" (
     echo ERROR: staged tree is incomplete - did deploy.bat run? 1>&2

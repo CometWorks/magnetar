@@ -26,9 +26,10 @@ verified against Magnetar's own `XmlSerializer` for both `Profile` and
 `SourcesConfig` (`ConfigTerminalTests/PluginInteropTests.cs`), the protobuf reader
 against a real captured hub cache (`HubCatalogTests`), and the Workshop resolver
 against fixtures plus a live Steam API call (`WorkshopResolverTests`,
-`WorkshopLiveTests`). Remaining polish (external-change watcher/conflict flow,
-incremental search, advanced-fields toggle, packaging/build wiring) is tracked
-against §14 phases 6–7.
+`WorkshopLiveTests`). Build/packaging is wired: `build.sh`/`build.bat` ship
+`MagnetarConfig` in each bundle next to the launcher (§13). Remaining polish
+(external-change watcher/conflict flow, incremental search, advanced-fields
+toggle) is tracked against §14 phase 6.
 
 A cross-platform console (TUI) application to configure **and operate** a
 Space Engineers 1 Dedicated Server instance running under Magnetar: the DS's
@@ -1482,14 +1483,26 @@ real saves, to keep the repo lean.
 
 ## 13. Build, packaging and documentation integration
 
-- `Magnetar.sln`: add `ConfigTerminal` + `ConfigTerminalTests` projects.
-- `build.sh` / `build.bat`: publish `MagnetarConfig` alongside the launcher
-  into the same bundle trees (`dist/`); Linux stages the net10.0 build,
-  Windows bundle ships the net48 build (no extra runtime requirement) —
-  follow the existing publish targets in `Legacy.csproj` for per-OS staging.
-- Terminal.Gui + NStack.Core DLLs land next to the executable (normal
-  `dotnet publish` behaviour; no native components, so no changes to the
-  native-wrapper release flow).
+- `Magnetar.sln`: `ConfigTerminal` + `ConfigTerminalTests` projects added. **Done.**
+- `build.sh` / `build.bat`: **`MagnetarConfig` now ships in each bundle next to
+  the launcher.** Rather than co-mingling it with the launcher's own
+  assemblies, it gets its own folder + a root launcher, mirroring how the
+  MagnetarInterim apphost sits under `Bin/` with a root shim — so its
+  Terminal.Gui/NStack/System.Management deps stay isolated and can never clash
+  with the launcher's:
+  - **Linux** (`Scripts/package_magnetar_for_linux.sh`): a framework-dependent
+    net10.0 publish is staged into `Magnetar/Config/`, with a `Magnetar/MagnetarConfig`
+    bash launcher (`cd Config; exec ./MagnetarConfig`) beside `Magnetar/MagnetarInterim`.
+    `install.sh` deploys both to `~/.local/share/Magnetar/`, so the tool runs as
+    `~/.local/share/Magnetar/MagnetarConfig`.
+  - **Windows** (`build.bat`): a net48 publish (no runtime requirement) is staged
+    into `<Magnetar>\Config\`, with a `<Magnetar>\MagnetarConfig.bat` shim next to
+    `MagnetarInterim.exe`.
+  Both packagers verify the config apphost/shim is present before packing, and
+  the Linux path-leak check covers the staged `Config/` tree.
+- Terminal.Gui + NStack.Core (and System.Management) DLLs land next to the
+  executable in its own folder (normal `dotnet publish` behaviour; no native
+  components, so no changes to the native-wrapper release flow).
 - Docs to update when implemented: `README.md` (feature mention),
   `Docs/Usage.md` (new section "Configuring the server"), `Docs/Layout.md`
   (new folders), the handbook (`Docs/TOC.md` + new module docs via the
@@ -1545,9 +1558,12 @@ incremental search, advanced-fields toggle, help screens, `-netdriver`,
 `ToolSettings` recent pairs + per-pair overrides.
 
 **Phase 7 — packaging + docs**
-Build/publish integration, dist bundles, docs updates (§13), UI smoke tests,
-manual test pass on: Linux xterm/kitty/ssh, Windows Terminal, conhost,
-net48 build.
+Build/publish integration and dist bundles (§13) — **done**: `MagnetarConfig`
+ships in the Linux and Windows bundles next to the launcher (own `Config/`
+folder + a root launcher/shim; the Linux path is verified end-to-end producing
+`dist/MagnetarForLinux.7z`). UI smoke tests done. Still to do: a manual test
+pass on Linux xterm/kitty/ssh, Windows Terminal and conhost, and the net48
+build/bundle on a Windows host.
 
 **Phase 8 — plugin & mod management**
 `PluginProfileDocument`/`PluginSourcesDocument` (local DLLs, dev folders, hub
