@@ -357,6 +357,10 @@ internal static class ServerControl
 
     private static void FlushAll()
     {
+        // Remove the pid file before flushing logs so a reader polling during
+        // shutdown sees it disappear promptly. A crash skips this path, leaving a
+        // stale file the reader detects by probing the (now dead) pid.
+        try { PidFile.Delete(); } catch { }
         try { Console.Out.Flush(); } catch { }
         try { Console.Error.Flush(); } catch { }
         try { MyLog.Default?.Flush(); } catch { }

@@ -1,6 +1,15 @@
 # ConfigTerminal — Terminal UI Configuration Tool for Magnetar
 
-**Status: design / implementation plan — no code exists yet.**
+**Status: implemented (initial vertical slice).** The `ConfigTerminal` /
+`MagnetarConfig` project and its `ConfigTerminalTests` suite exist and build on
+net10.0 (net48 target guarded for Windows). The companion `magnetar.pid` writer
+is added to the Legacy launcher. The full **configure-a-new-world → start to
+"Game ready" → stop** flow is verified end-to-end against a live DS install +
+patched launcher (see `ConfigTerminalTests/LiveEndToEndTests.cs`, gated behind
+`MAGNETAR_LIVE=1`). A headless `-diag` mode reports an instance's state without
+the UI. Remaining polish (external-change watcher/conflict flow, incremental
+search, advanced-fields toggle, `ToolSettings` persistence, packaging/build
+wiring, full docs refresh) is tracked against §14 phases 6–7.
 
 A cross-platform console (TUI) application to configure **and operate** a
 Space Engineers 1 Dedicated Server instance running under Magnetar: the DS's
