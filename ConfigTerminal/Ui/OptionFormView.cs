@@ -296,13 +296,16 @@ internal sealed class OptionFormView : Window
                 {
                     case (Key)' ':
                     case Key.CursorRight:
-                    case Key.CursorDown:
                         SelectedItem = (SelectedItem + 1) % count;
                         return true;
                     case Key.CursorLeft:
-                    case Key.CursorUp:
                         SelectedItem = (SelectedItem - 1 + count) % count;
                         return true;
+                    // Leave Up/Down to the form so they move focus between fields
+                    // rather than being swallowed as radio-cursor movement.
+                    case Key.CursorUp:
+                    case Key.CursorDown:
+                        return false;
                 }
             }
             return base.ProcessKey(kb);
