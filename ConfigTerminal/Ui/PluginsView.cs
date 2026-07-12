@@ -82,7 +82,7 @@ internal sealed class PluginsView : Window
         devs = plugins.DevFolderPlugins().ToList();
 
         localList.SetSource(locals.Select(FormatLocal).ToList());
-        devList.SetSource(devs.Select(FormatDev).ToList());
+        devList.SetSource(FormatDevList(devs));
     }
 
     private static string FormatLocal(LocalDllInfo d)
@@ -92,11 +92,23 @@ internal sealed class PluginsView : Window
         return $"{box} {d.FileName}{missing}";
     }
 
-    private static string FormatDev(DevFolderPlugin p)
+    // Pad the id and manifest columns to a common width so the rows line up.
+    private static List<string> FormatDevList(List<DevFolderPlugin> devs)
     {
-        string flag = p.SourceMissing ? "  ! source folder missing" : "";
-        string folder = p.Folder ?? "(no source entry)";
-        return $"{p.Id}   [{p.DataFile}]   {folder}{flag}";
+        if (devs.Count == 0)
+            return new List<string>();
+
+        int idWidth = devs.Max(p => (p.Id ?? string.Empty).Length);
+        int fileWidth = devs.Max(p => $"[{p.DataFile}]".Length);
+
+        return devs.Select(p =>
+        {
+            string flag = p.SourceMissing ? "  ! source folder missing" : "";
+            string folder = p.Folder ?? "(no source entry)";
+            string id = (p.Id ?? string.Empty).PadRight(idWidth);
+            string file = $"[{p.DataFile}]".PadRight(fileWidth);
+            return $"{id}   {file}   {folder}{flag}";
+        }).ToList();
     }
 
     private void ToggleLocal()

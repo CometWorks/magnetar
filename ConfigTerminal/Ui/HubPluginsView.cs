@@ -16,9 +16,17 @@ namespace Magnetar.ConfigTerminal.Ui;
 /// </summary>
 internal sealed class HubPluginsView : Window
 {
+    private const string CachedEmptyMessage =
+        "No hub plugins cached yet.\n\n" +
+        "Magnetar downloads the plugin catalog on server start from the\n" +
+        "configured hub sources. Add a source under Plugins ▸ Plugin Sources,\n" +
+        "then start the server once so it fetches the catalog.";
+
     private readonly MagnetarPlugins plugins;
+    private readonly TextField filter;
     private readonly ListView list;
     private readonly TextView details;
+    private List<HubPluginView> allItems = new();
     private List<HubPluginView> items = new();
     private string defaultHubLabel;
 
@@ -32,11 +40,15 @@ internal sealed class HubPluginsView : Window
         {
             X = 0, Y = 0, Width = Dim.Percent(55), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
+        var filterLabel = new Label("Filter: ") { X = 0, Y = 0 };
+        filter = new TextField(string.Empty)
+        { X = Pos.Right(filterLabel), Y = 0, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        filter.TextChanged += _ => ApplyFilter();
         list = new ListView(Array.Empty<string>())
-        { X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        { X = 0, Y = 1, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
         list.SelectedItemChanged += _ => ShowDetails();
         list.OpenSelectedItem += _ => Toggle();
-        listFrame.Add(list);
+        listFrame.Add(filterLabel, filter, list);
 
         var detailFrame = new FrameView("Details")
         {
@@ -73,20 +85,40 @@ internal sealed class HubPluginsView : Window
     {
         plugins.Reload();
         defaultHubLabel = plugins.DefaultHubLabel;
-        items = plugins.HubCatalogPlugins().ToList();
+        allItems = plugins.HubCatalogPlugins().ToList();
+        ApplyFilter();
+    }
+
+    // Narrow the catalog to rows matching the filter box (name/id/author/tagline).
+    private void ApplyFilter()
+    {
+        string q = (filter.Text?.ToString() ?? string.Empty).Trim();
+        items = string.IsNullOrEmpty(q)
+            ? allItems.ToList()
+            : allItems.Where(v => Matches(v, q)).ToList();
+
         int keep = list.SelectedItem;
         list.SetSource(items.Select(Format).ToList());
         if (items.Count > 0)
+        {
             list.SelectedItem = Math.Min(Math.Max(0, keep), items.Count - 1);
-        ShowDetails();
-
-        if (items.Count == 0)
-            details.Text =
-                "No hub plugins cached yet.\n\n" +
-                "Magnetar downloads the plugin catalog on server start from the\n" +
-                "configured hub sources. Add a source under Plugins ▸ Plugin Sources,\n" +
-                "then start the server once so it fetches the catalog.";
+            ShowDetails();
+        }
+        else
+        {
+            details.Text = allItems.Count == 0 ? CachedEmptyMessage : $"No plugins match “{q}”.";
+        }
     }
+
+    private static bool Matches(HubPluginView v, string q)
+    {
+        HubPluginInfo p = v.Info;
+        return Contains(p.FriendlyName, q) || Contains(p.Id, q)
+            || Contains(p.Author, q) || Contains(p.Tooltip, q);
+    }
+
+    private static bool Contains(string s, string q) =>
+        s != null && s.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
 
     private string Format(HubPluginView v)
     {

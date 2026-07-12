@@ -1410,6 +1410,8 @@ Developed and used on Linux now; must work on Windows unchanged later:
 
 ## 12. Testing strategy
 
+On Linux, for testing on a terminal use `tmux` if available.
+
 New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
 
 - **Registry invariants** — unique ids/xml names, enum choices sane, defaults
