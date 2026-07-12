@@ -4,6 +4,12 @@ using System.Net;
 using Newtonsoft.Json.Linq;
 using Pulsar.Shared.Config;
 
+// This network layer intentionally uses the classic WebRequest/ServicePoint stack:
+// it is shared with the net48 build (where these APIs are current) and relies on
+// ServicePoint.BindIPEndPointDelegate to block IPv6, which HttpClient cannot do.
+// SYSLIB0014 (net10.0 obsoletion) is therefore suppressed here.
+#pragma warning disable SYSLIB0014
+
 namespace Pulsar.Shared.Network;
 
 public static class GitHub
