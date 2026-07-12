@@ -78,13 +78,8 @@ internal sealed class MagnetarProcess
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(exe),
         };
-#if NETFRAMEWORK
-        // net48 has no ArgumentList; join into the escaped Arguments string.
-        psi.Arguments = ArgumentEscaping.Join(spec.BuildArgs());
-#else
         foreach (string arg in spec.BuildArgs())
             psi.ArgumentList.Add(arg);
-#endif
 
         SysProcess proc;
         try
@@ -170,7 +165,10 @@ internal sealed class MagnetarProcess
             return OpResult.Fail($"Force-kill failed: {e.Message}");
         }
 
-        return WaitForExit(gracePeriod)
+        bool exited = WaitForExit(gracePeriod);
+        if (exited)
+            TryDeleteStalePid(Query()); // Force-kill skips the launcher's clean shutdown, so clear the leftover pid file ourselves.
+        return exited
             ? OpResult.Success("Server killed.")
             : OpResult.Fail("Process still present after force-kill.");
     }
