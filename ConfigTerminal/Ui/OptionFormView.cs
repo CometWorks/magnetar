@@ -134,10 +134,17 @@ internal sealed class OptionFormView : Window
         form.SetNeedsDisplay();
     }
 
+    // Vertical rows a field's editor occupies; multi-line text needs several so
+    // it isn't clipped to one line and doesn't overlap the fields below it.
+    private const int MultilineRows = 3;
+    private static int RowHeight(OptionDefinition def) =>
+        def.Kind == OptionKind.MultilineText ? MultilineRows : 1;
+
     private View BuildRow(OptionDefinition def, ref int y)
     {
         const int labelWidth = 34;
-        var container = new View { X = 0, Y = y, Width = Dim.Fill(), Height = 1 };
+        int rows = RowHeight(def);
+        var container = new View { X = 0, Y = y, Width = Dim.Fill(), Height = rows };
 
         var label = new Label(def.Label + StatusGlyph(def))
         {
@@ -155,7 +162,8 @@ internal sealed class OptionFormView : Window
             container.Add(editor);
         }
 
-        y += 1;
+        // Advance past the editor, leaving a blank line after tall multi-line rows.
+        y += rows + (rows > 1 ? 1 : 0);
         return container;
     }
 
@@ -210,7 +218,7 @@ internal sealed class OptionFormView : Window
             }
             case OptionKind.MultilineText:
             {
-                var tv = new TextView { X = x, Y = 0, Width = Dim.Fill(1), Height = 3, Text = document.Get(def) };
+                var tv = new TextView { X = x, Y = 0, Width = Dim.Fill(1), Height = MultilineRows, Text = document.Get(def) };
                 tv.Leave += _ =>
                 {
                     document.Set(def, tv.Text.ToString().TrimEnd('\n'));
