@@ -28,6 +28,7 @@ internal sealed class AppShell : Toplevel
     private Label statusLabel;
     private DashboardView dashboard;
     private bool starting; // UI-only: bridges the gap before the pid file appears
+    private bool warnedNoSafeStop; // Windows: the "no safe stop" notice is shown at most once
 
     public AppShell(InstanceBinding binding)
     {
@@ -275,9 +276,8 @@ internal sealed class AppShell : Toplevel
                 RefreshStatus();
                 if (result.Ok)
                 {
+                    // No success popup: the status bar already shows the running state.
                     onReady?.Invoke();
-                    if (onReady == null)
-                        Dialogs.Info("Server", result.Message);
                 }
                 else
                 {
@@ -364,6 +364,22 @@ internal sealed class AppShell : Toplevel
             Dialogs.Info("Server", "The server is not running.");
             return;
         }
+
+        // Windows has no signal path to the detached process, so there is no safe
+        // (save + quit) stop — only a force-kill. Warn about that once per session,
+        // then just confirm the kill.
+        if (!PlatformPaths.IsLinux)
+        {
+            if (!warnedNoSafeStop)
+            {
+                Dialogs.Info("Stop server",
+                    "Safe stop is not available on Windows in this build. A Magnetar instance can only be force-killed, which loses any progress since the last save.");
+                warnedNoSafeStop = true;
+            }
+            ForceKillServer();
+            return;
+        }
+
         if (!Dialogs.Confirm("Stop server", "Send SIGTERM so the server saves the world and quits?"))
             return;
 
@@ -373,9 +389,8 @@ internal sealed class AppShell : Toplevel
             {
                 monitor.Poll();
                 RefreshStatus();
-                if (result.Ok)
-                    Dialogs.Info("Server", result.Message);
-                else
+                // No success popup: the status bar already shows the stopped state.
+                if (!result.Ok)
                     OfferForceKill(result.Message);
             });
     }
@@ -383,11 +398,20 @@ internal sealed class AppShell : Toplevel
     private void OfferForceKill(string message)
     {
         if (Dialogs.Confirm("Stop timed out", message + "\n\nForce-kill the process? Progress since the last save will be LOST.", "Force kill", "Wait"))
-        {
-            Dialogs.RunBackground(
-                () => process.ForceKill(TimeSpan.FromSeconds(15)),
-                r => { monitor.Poll(); RefreshStatus(); Dialogs.Info("Server", r.Message); });
-        }
+            ForceKill();
+    }
+
+    private void ForceKillServer()
+    {
+        if (Dialogs.Confirm("Force-kill server", "Force-kill the server now? Progress since the last save will be LOST.", "Force kill", "Cancel"))
+            ForceKill();
+    }
+
+    private void ForceKill()
+    {
+        Dialogs.RunBackground(
+            () => process.ForceKill(TimeSpan.FromSeconds(15)),
+            r => { monitor.Poll(); RefreshStatus(); if (!r.Ok) Dialogs.Error("Force-kill", r.Message); });
     }
 
     public void RestartServer()
