@@ -1,18 +1,16 @@
 using System;
 using System.Linq;
 using Terminal.Gui;
-using Magnetar.ConfigTerminal.Logs;
 using Magnetar.ConfigTerminal.Model;
-using Magnetar.ConfigTerminal.Process;
 
 namespace Magnetar.ConfigTerminal.Ui;
 
 /// <summary>
-/// DS-faithful new-world creation (§2.7 / §9.6): pick a template, name the world,
-/// seed the cfg's SessionSettings from the template, stage the cfg
-/// (WorldName / PremadeCheckpointPath / clear LoadWorld), then optionally start
-/// the DS with -ignorelastsession so it materializes the world and reaches
-/// "Game ready". Post-creation the staged PremadeCheckpointPath is cleared.
+/// New-world creation by folder copy (§2.7 / §9.6): pick a template, name the
+/// world, then copy the template into <c>Saves/&lt;name&gt;</c> and stamp the name
+/// into its <c>Sandbox_config.sbc</c> (see <see cref="WorldCreator"/>). No server
+/// start — the world exists and is editable immediately, and is activated so the
+/// DS loads it next.
 /// </summary>
 internal static class NewWorldWizard
 {
@@ -33,139 +31,59 @@ internal static class NewWorldWizard
         if (string.IsNullOrWhiteSpace(name))
             return;
 
-        // Seed the cfg session settings from the template ("config created from
-        // the world, so it matches"), then stage the creation fields.
-        DedicatedConfigDocument cfg = instance.Config;
-        SeedSessionSettings(cfg, template);
-        EnsureNonZeroMaxPlayers(cfg);
-
-        cfg.WorldName = name;
-        cfg.PremadeCheckpointPath = template.FolderPath;
-        cfg.LoadWorld = string.Empty;
-
-        string question = $"Stage new world '{name}' from template '{template.DisplayName}'?";
+        string question = $"Create world '{name}' from template '{template.DisplayName}'?";
         string details =
-            "cfg writes:\n" +
-            $"  • WorldName = {name}\n" +
-            $"  • PremadeCheckpointPath = {template.FolderName}\n" +
-            "  • LoadWorld = (cleared)\n" +
-            "  • SessionSettings = seeded from the template\n\n" +
-            "The DS materializes the world on the next -ignorelastsession start.";
+            "Copies the template into Saves/ (no server start):\n" +
+            $"  • Saves/{name}/  ← copy of '{template.FolderName}'\n" +
+            $"  • Sandbox_config.sbc SessionName ← {name}\n" +
+            "  • activated (LastSession.sbl) so the DS loads it next\n\n" +
+            "The world appears immediately and can be edited before first start.";
 
-        if (!Dialogs.ConfirmDetails("Create world", question, details, "Stage", "Cancel"))
+        if (!Dialogs.ConfirmDetails("Create world", question, details, "Create", "Cancel"))
             return;
 
+        string savesPath = instance.Binding.SavesPath;
+        Dialogs.RunBackground(
+            () => WorldCreator.CreateFromTemplate(template, name, savesPath),
+            _ =>
+            {
+                shell.ReloadInstance();
+                ActivateCreatedWorld(shell, name);
+                shell.ShowWorlds(); // rebuild the Worlds list so the new world is visible immediately
+                Dialogs.Info("World created",
+                    $"'{name}' was created under Saves/ and activated.\n" +
+                    "Edit it under Worlds, or start the server to run it.");
+            });
+    }
+
+    /// <summary>Points the DS at the freshly created world (LastSession.sbl), mirroring WorldsView.ActivateWorld.</summary>
+    private static void ActivateCreatedWorld(AppShell shell, string name)
+    {
         try
         {
-            cfg.Save(shell.Writer);
+            WorldInfo world = shell.Instance.Worlds.Find(name);
+            if (world == null)
+                return; // copy reported success but the folder isn't visible — leave selection untouched
+
+            LastSessionFile.ForWorld(world, shell.Instance.Binding.SavesPath)
+                .Write(shell.Writer, LastSessionFile.PathFor(shell.Instance.Binding.SavesPath));
+
+            DedicatedConfigDocument cfg = shell.Instance.Config;
+            if (cfg != null)
+            {
+                cfg.IgnoreLastSession = false;
+                cfg.LoadWorld = string.Empty;
+                cfg.PremadeCheckpointPath = string.Empty; // clear any leftover staging from an earlier attempt
+                cfg.Save(shell.Writer);
+            }
+            shell.ReloadInstance();
         }
         catch (Exception e)
         {
-            Dialogs.Error("Save failed", e.Message);
-            return;
+            Dialogs.Error("Activate failed",
+                $"The world was created but could not be activated: {e.Message}\n" +
+                "Activate it manually under Worlds (F5).");
         }
-        shell.ReloadInstance();
-
-        int choice = MessageBox.Query("Create world",
-            "\nConfig staged. Create the world now (start the server), or on the next start?\n",
-            "Create now", "On next start", "Cancel");
-
-        if (choice == 0)
-            CreateNow(shell);
-        else if (choice == 1)
-            Dialogs.Info("Staged", "The world will be created on the next tool-initiated start (which will pass -ignorelastsession).");
-    }
-
-    private static void CreateNow(AppShell shell)
-    {
-        if (shell.Monitor.Latest.State == ServerState.Running)
-        {
-            if (!Dialogs.Confirm("Server running", "The server must be stopped before creating a world. Stop it now?"))
-                return;
-            OpResult stop = shell.Process.Stop(TimeSpan.FromMinutes(2));
-            if (!stop.Ok)
-            {
-                Dialogs.Error("Stop failed", stop.Message);
-                return;
-            }
-            shell.Monitor.Poll();
-        }
-
-        Dialogs.Info("Creating",
-            "Starting the server with -ignorelastsession to create the world.\n" +
-            "Watch the status bar and Tools → Logs for 'Game ready'.");
-
-        shell.StartServer(ignoreLastSession: true, onReady: () => WatchForReady(shell));
-    }
-
-    /// <summary>Polls the game log for the readiness marker, then clears the staged PremadeCheckpointPath.</summary>
-    private static void WatchForReady(AppShell shell)
-    {
-        var catalog = new LogCatalog(shell.Binding);
-        var started = DateTime.UtcNow;
-        bool cleaned = false;
-
-        Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(3), _ =>
-        {
-            if (shell.Monitor.Latest.State != ServerState.Running)
-                return false; // process gone — stop watching
-
-            catalog.Scan();
-            LogFileInfo game = catalog.ActiveGameLog;
-            if (game != null && ReadinessDetector.IsReady(game.Path))
-            {
-                if (!cleaned)
-                {
-                    cleaned = true;
-                    ClearStaging(shell);
-                    shell.ReloadInstance();
-                    Dialogs.Info("Game ready",
-                        "The world was created and the server reports 'Game ready'.\n" +
-                        "You can now stop the server (Server → Stop) to complete the flow.");
-                }
-                return false;
-            }
-
-            // Give up watching after a generous window (creation still proceeds).
-            return DateTime.UtcNow - started < TimeSpan.FromMinutes(10);
-        });
-    }
-
-    private static void ClearStaging(AppShell shell)
-    {
-        try
-        {
-            DedicatedConfigDocument cfg = shell.Instance.Config;
-            if (!string.IsNullOrEmpty(cfg.PremadeCheckpointPath))
-            {
-                cfg.PremadeCheckpointPath = string.Empty;
-                cfg.Save(shell.Writer);
-            }
-        }
-        catch
-        {
-            // Non-fatal: a leftover PremadeCheckpointPath only matters when no
-            // world is selected, and the DS wrote LastSession.sbl on first save.
-        }
-    }
-
-    private static void SeedSessionSettings(DedicatedConfigDocument cfg, WorldTemplate template)
-    {
-        WorldConfigDocument seed = WorldTemplateCatalog.OpenSeed(template);
-        foreach (OptionDefinition def in OptionRegistry.SessionOptions)
-        {
-            if (seed.IsSet(def))
-                cfg.Set(def, seed.Get(def));
-        }
-    }
-
-    private static void EnsureNonZeroMaxPlayers(DedicatedConfigDocument cfg)
-    {
-        OptionDefinition maxPlayers = OptionRegistry.ById("Session.MaxPlayers");
-        if (maxPlayers == null)
-            return;
-        if (!ConfigDocumentBase.TryParseLong(cfg.Get(maxPlayers), out long v) || v <= 0)
-            cfg.Set(maxPlayers, "4"); // new-world branch aborts if MaxPlayers == 0
     }
 
     private static WorldTemplate PickTemplate(DsInstance instance)

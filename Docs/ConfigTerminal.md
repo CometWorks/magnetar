@@ -354,25 +354,32 @@ Verified against the decompiled DS and its WinForms configurator
   the raw `SessionName` (which `GetOrCompute` also falls back to) and the
   folder name.
 - The stock configurator does **not** copy the template itself. For a new
-  world it sets `PremadeCheckpointPath = <template path>` and clears
-  `LoadWorld` (`ConfigForm.cs:1959-1969`); the **DS materializes the world**
-  under `Saves/` on the next start via its new-world branch
-  ([§2.3](#23-saveslastsessionsbl) precedence step 4), applying the cfg's
-  `<SessionSettings>` and `WorldName`, including creation-time behaviour a
-  plain folder copy would miss (`RandomizeSeed`/`ProceduralSeed` handling,
-  asteroid generation). That branch requires `SessionSettings.MaxPlayers != 0`
-  and only runs when neither `LastSession.sbl` nor `LoadWorld` selects a
-  world — so the creation start is launched with `-ignorelastsession`.
-- After the created world first saves, the DS writes `LastSession.sbl`
-  pointing at it, and subsequent normal starts load it. A `PremadeCheckpointPath`
-  left behind is only consulted when no world is selected, but the tool
-  clears it after successful creation to avoid accidental re-creation.
+  world it sets `PremadeCheckpointPath = <template path>` and clears `LoadWorld`
+  (`ConfigForm.cs:1959-1969`); the **DS materializes the world** under `Saves/`
+  on the next start via its new-world branch
+  ([§2.3](#23-saveslastsessionsbl) precedence step 4). That start-based path is
+  fragile for a config tool — if the operator stops (kills) the server before it
+  first saves, nothing is written and no world appears.
+- **The tool instead copies the template folder directly** into `Saves/<name>`
+  and stamps the name into the copied `Sandbox_config.sbc`
+  (`WorldCreator.CreateFromTemplate`). This works because on load the DS reads
+  `Sandbox.sbc` and then **overrides Settings/Mods/SessionName from
+  `Sandbox_config.sbc`** (`MyLocalCache.LoadCheckpoint` — *"Sandbox world
+  configuration file found, overriding checkpoint settings"*), so the small
+  config file is authoritative and the large (often gzipped) checkpoint is never
+  parsed or rewritten. The world exists and is editable **before any start**, and
+  the tool activates it (writes `LastSession.sbl`) so the DS loads it next.
+- The only thing a copy skips is the DS's creation-time generation
+  (`RandomizeSeed`/`ProceduralSeed`, asteroid generation). The stock CustomWorlds
+  already ship their content, so a copy is faithful for them; a
+  `RandomizeSeed=true` scenario simply reuses the template's seed, editable
+  afterward in World Settings.
 
-The tool follows the configurator's approach (DS-faithful creation) rather
-than copying folders, and combines it with Quasar's *import* idea: the wizard
-seeds the cfg `<SessionSettings>` from the **template's own**
-`Sandbox_config.sbc`/`Sandbox.sbc` — "the config profile is created from the
-world, so it matches" — then lets the user edit before the creation start.
+The tool copies the template directly (robust, instant, editable-before-start)
+rather than driving the DS to materialize it. The world's own
+`Sandbox_config.sbc` carries its settings and mods verbatim from the template —
+"the config is created from the world, so it matches" — and the user edits it
+under Worlds like any other world, with no server start required.
 
 ### 2.8 Process model and PID file
 
@@ -784,7 +791,7 @@ sealed class WorldTemplateCatalog
 sealed class WorldTemplate
 {
     string FolderName;              // e.g. "Star System"
-    string FolderPath;              // absolute — becomes PremadeCheckpointPath
+    string FolderPath;              // absolute — copied into Saves/<name> on create
     string DisplayName;             // raw SessionName (may be a MyTexts key) or folder name
     WorldConfigDocument Seed;       // read-only import of the template's settings + mods
                                     // (Sandbox_config.sbc, fallback gzip-aware Sandbox.sbc)
@@ -809,7 +816,7 @@ sealed class ServerStatus
 sealed class LaunchSpec             // pure function of the binding + options
 {
     InstanceBinding Binding;
-    bool IgnoreLastSession;         // set for the world-creation start (§9.6)
+    bool IgnoreLastSession;         // adds -ignorelastsession (skips LastSession.sbl)
     string ExtraArgs;               // from ToolSettings (e.g. -noconsent)
     string[] BuildArgv();           // <exe> -daemon -config <dir> -path <dir> [...]
                                     // rejects user ExtraArgs that would fight the tool:
@@ -1110,7 +1117,7 @@ Windows / dialogs:
 | **World Settings** | `OptionFormView` over `SessionOptions` bound to that world's `Sandbox_config.sbc`; same categories/search; experimental badges | Worlds → Enter → Settings (F7) |
 | **World Mods** | ordered `ListView`; Ins/Del add/remove, Ctrl+↑/↓ reorder, Space toggles `IsDependency`, editable friendly name; footer shows count | Worlds → Enter → Mods (F8) |
 | **Activate World** (confirm dialog) | shows what will be written (`LastSession.sbl`, `IgnoreLastSession` flip if needed, `LoadWorld` clear offer); offers restart when running | Worlds → F5 |
-| **New World wizard** | template list (from `WorldTemplateCatalog`, disabled with hint when DS install not found) → world name (validated) → `OptionFormView` over the settings seeded from the template → summary of writes → optional "start server now to create the world" ([§9.6](#96-new-world-creation)) | `Worlds → New World…` (Ins in Worlds) |
+| **New World wizard** | template list (from `WorldTemplateCatalog`, disabled with hint when DS install not found) → world name (validated) → confirm → copies the template into `Saves/<name>` and activates it, no server start ([§9.6](#96-new-world-creation)) | `Worlds → New World…` (Ins in Worlds) |
 | **Log viewer** | file selector (game + Magnetar groups, active file marked); virtualized read-only text pane; `End` toggles follow; `/` search with n/N navigation and "search further back" offer; exception blocks highlighted (red), `x`/`X` jump next/previous; `F4` cycles active game ↔ active Magnetar log | `Tools → Logs` (F4) |
 | **Stop confirm** (dialog) | graceful stop (SIGTERM, saves world) with progress; on timeout offers force-kill behind an explicit data-loss warning | F6 / dashboard Stop |
 | **Reload prompt** (dialog, Linux) | after saving live-reloadable cfg fields with a running server detected: offer SIGHUP | after save |
@@ -1298,37 +1305,41 @@ stateDiagram-v2
 
 ### 9.6 New-world creation
 
-DS-faithful creation ([§2.7](#27-world-templates-and-new-world-creation)) —
-the wizard stages the cfg, then uses process control for the creation start:
+Creation by folder copy ([§2.7](#27-world-templates-and-new-world-creation)) —
+no server start. The DS loads a dedicated world by reading `Sandbox.sbc` and
+then overriding Settings/Mods/SessionName from `Sandbox_config.sbc`
+(`MyLocalCache.LoadCheckpoint`: *"Sandbox world configuration file found,
+overriding checkpoint settings"*), so copying the template folder and stamping
+the name into its `Sandbox_config.sbc` is a complete, immediately editable world.
 
 ```
-Wizard: template → name → settings → confirm → (optionally) create
+Wizard: template → name → confirm → create (WorldCreator.CreateFromTemplate)
   1. pick WorldTemplate                 (requires DS install; else wizard disabled)
   2. enter world name                   (no path separators; warn if a Saves/
                                          folder or SessionName already matches)
-  3. edit settings                      OptionFormView seeded from template's
-                                        Sandbox_config.sbc (fallback Sandbox.sbc)
-                                        — "config profile created from the world"
-  4. confirm summary                    exact cfg writes listed:
-                                          WorldName        ← name
-                                          PremadeCheckpointPath ← template path
-                                          LoadWorld        ← "" (cleared)
-                                          SessionSettings  ← wizard settings
-                                        note: MaxPlayers must be non-zero (validated)
-  5a. "Create now": ensure NotRunning (offer Stop) → Start with
-      IgnoreLastSession=true in the LaunchSpec → watch Saves/ for the new
-      world folder (watcher) → on appearance: clear PremadeCheckpointPath,
-      refresh WorldCatalog, mark world active (DS wrote LastSession.sbl) →
-      leave server running.
-  5b. "Create on next start": save cfg only; dashboard shows a persistent
-      "world creation pending — next start must ignore the last session"
-      notice, and the next tool-initiated Start adds -ignorelastsession
-      automatically, then performs the same post-creation cleanup.
+  3. confirm summary                    Saves/<name>/         ← copy of template
+                                        Sandbox_config.sbc SessionName ← name
+                                        (LastSaveTime refreshed so it sorts first)
+  4. create (background copy):
+       • copy template → hidden Saves/.<name>.creating staging folder
+       • stamp SessionName into the copied Sandbox_config.sbc (synthesize it
+         from the checkpoint if the template shipped none)
+       • Directory.Move staging → Saves/<name> (atomic; no half-world on failure)
+  5. activate (ActivateCreatedWorld): write LastSession.sbl for the new world,
+       set cfg IgnoreLastSession=false, clear LoadWorld and any stale
+       PremadeCheckpointPath → ReloadInstance. It appears in the Worlds list
+       and is the world the DS loads next.
 ```
 
-Failure paths: creation start dies early → StartFailed dialog with log tail,
-cfg left as staged (retry possible); world folder never appears within a
-generous timeout while the process runs → pointer to the log viewer.
+The only DS behaviour a copy skips is creation-time generation (`RandomizeSeed`
+/ procedural asteroid generation); the stock CustomWorlds already ship their
+content, so a copy is faithful for them. A `RandomizeSeed=true` scenario reuses
+the template's seed (editable afterward in World Settings). The big (often
+gzipped) `Sandbox.sbc` is copied verbatim and never parsed/rewritten.
+
+Failure paths: the copy is assembled in a staging folder and moved into place,
+so a mid-copy failure leaves no partial world (the staging folder is removed and
+the error is surfaced); a name collision is rejected before any copy.
 
 ---
 
@@ -1460,9 +1471,10 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
   chunk boundaries, follow-mode appends, CRLF/LF logs; traceback fixtures
   taken from real SE and Magnetar logs (single exception, nested/inner
   exceptions, back-to-back blocks, frame lines split across window edge).
-- **WorldTemplateCatalog / wizard staging** — template scan fixture tree;
-  wizard's cfg staging writes exactly the four §9.6 fields; post-creation
-  cleanup clears `PremadeCheckpointPath`.
+- **WorldTemplateCatalog / WorldCreator** — template scan fixture tree;
+  `CreateFromTemplate` copies the template into `Saves/<name>`, stamps
+  `SessionName`, synthesizes `Sandbox_config.sbc` when the template has only a
+  checkpoint, rejects an existing folder, and leaves no staging folder behind.
 - **Plugin / source / mod config** — profile and sources upsert round-trips
   (`GitHub`, `Mods`, `RemoteHub`/`RemotePlugin`/`LocalHub`, `ModSources`) with
   sibling and Magnetar-managed-field preservation; the `MagnetarPlugins` façade's
@@ -1561,8 +1573,8 @@ status + Start/Stop/Restart/Reload; stop-confirm and start-failure dialogs;
 save-pipeline SIGHUP offer. Linux-complete; Windows Start/status only.
 
 **Phase 5 — new worlds + log reader**
-`WorldTemplateCatalog` + New World wizard (both "create now" via process
-control and "create on next start" staging); `LogCatalog`, `LogTailReader`,
+`WorldTemplateCatalog` + New World wizard (`WorldCreator` copies the template
+into `Saves/` and activates it, no server start); `LogCatalog`, `LogTailReader`,
 `ExceptionIndexer`, `LogViewerView` with follow/search/exception navigation;
 dashboard log tail.
 

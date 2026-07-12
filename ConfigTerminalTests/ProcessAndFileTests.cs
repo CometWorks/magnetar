@@ -113,4 +113,75 @@ public class ProcessAndFileTests : IDisposable
         Assert.Equal("original", File.ReadAllText(path + ".bak")); // still the first backup
         Assert.Equal("second", File.ReadAllText(path));
     }
+
+    // Builds a minimal DS world template folder (Content/CustomWorlds/<name>).
+    private WorldTemplate MakeTemplate(string folderName, string sessionName, string extraFileName = null)
+    {
+        string tplDir = Path.Combine(dir, "Content", "CustomWorlds", folderName);
+        Directory.CreateDirectory(tplDir);
+        File.WriteAllText(Path.Combine(tplDir, "Sandbox.sbc"), "<MyObjectBuilder_Checkpoint><SessionName>" + sessionName + "</SessionName></MyObjectBuilder_Checkpoint>");
+        File.WriteAllText(Path.Combine(tplDir, "Sandbox_config.sbc"),
+            "<?xml version=\"1.0\"?>\n<MyObjectBuilder_WorldConfiguration>\n  <Settings><GameMode>Survival</GameMode></Settings>\n  <SessionName>" + sessionName + "</SessionName>\n  <LastSaveTime>2001-01-01T00:00:00.0000000</LastSaveTime>\n</MyObjectBuilder_WorldConfiguration>");
+        if (extraFileName != null)
+            File.WriteAllText(Path.Combine(tplDir, extraFileName), "payload");
+        return new WorldTemplate
+        {
+            FolderName = folderName,
+            FolderPath = tplDir,
+            DisplayName = folderName,
+            HasCheckpoint = true,
+            HasWorldConfig = true,
+        };
+    }
+
+    [Fact]
+    public void WorldCreator_copies_template_and_stamps_the_name()
+    {
+        string saves = Path.Combine(dir, "Saves");
+        WorldTemplate tpl = MakeTemplate("Empty World", "{LOCG:CustomWorld_Empty}", extraFileName: "thumb.jpg");
+
+        string created = WorldCreator.CreateFromTemplate(tpl, "My Server World", saves);
+
+        Assert.Equal(Path.Combine(saves, "My Server World"), created);
+        Assert.True(File.Exists(Path.Combine(created, "Sandbox.sbc")));   // checkpoint copied verbatim
+        Assert.True(File.Exists(Path.Combine(created, "thumb.jpg")));      // all template files copied
+
+        // SessionName is stamped into Sandbox_config.sbc; the template's Settings survive.
+        var cfg = WorldConfigDocument.Open(Path.Combine(created, "Sandbox_config.sbc"));
+        Assert.Equal("My Server World", cfg.SessionName);
+
+        // The catalog now lists it under the chosen name.
+        var catalog = new WorldCatalog(saves);
+        catalog.Scan();
+        Assert.Contains(catalog.Worlds, w => w.FolderName == "My Server World" && w.SessionName == "My Server World");
+
+        // No staging folder is left behind.
+        Assert.DoesNotContain(Directory.EnumerateDirectories(saves), d => Path.GetFileName(d).StartsWith("."));
+    }
+
+    [Fact]
+    public void WorldCreator_rejects_an_existing_world_folder()
+    {
+        string saves = Path.Combine(dir, "Saves");
+        Directory.CreateDirectory(Path.Combine(saves, "Taken"));
+        WorldTemplate tpl = MakeTemplate("Empty World", "Empty");
+
+        Assert.Throws<IOException>(() => WorldCreator.CreateFromTemplate(tpl, "Taken", saves));
+    }
+
+    [Fact]
+    public void WorldCreator_synthesizes_config_when_template_has_only_a_checkpoint()
+    {
+        string saves = Path.Combine(dir, "Saves");
+        // Template with just Sandbox.sbc (no Sandbox_config.sbc).
+        string tplDir = Path.Combine(dir, "Content", "CustomWorlds", "Bare");
+        Directory.CreateDirectory(tplDir);
+        File.WriteAllText(Path.Combine(tplDir, "Sandbox.sbc"), "<MyObjectBuilder_Checkpoint><SessionName>Bare</SessionName></MyObjectBuilder_Checkpoint>");
+        var tpl = new WorldTemplate { FolderName = "Bare", FolderPath = tplDir, DisplayName = "Bare", HasCheckpoint = true, HasWorldConfig = false };
+
+        string created = WorldCreator.CreateFromTemplate(tpl, "Fresh", saves);
+
+        var cfg = WorldConfigDocument.Open(Path.Combine(created, "Sandbox_config.sbc"));
+        Assert.Equal("Fresh", cfg.SessionName); // synthesized config carries the chosen name
+    }
 }

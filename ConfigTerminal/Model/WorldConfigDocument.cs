@@ -82,6 +82,20 @@ internal sealed class WorldConfigDocument : ConfigDocumentBase
         }
     }
 
+    /// <summary>
+    /// Updates an existing <c>&lt;LastSaveTime&gt;</c> to now so a freshly created
+    /// world sorts to the top of the list. Only touches the element when present
+    /// (avoids reordering the DS's serialized element sequence); when absent the
+    /// catalog falls back to the checkpoint file's modification time, which is also
+    /// fresh for a just-copied world.
+    /// </summary>
+    public void RefreshLastSaveTime()
+    {
+        XElement el = Root.Element("LastSaveTime");
+        if (el != null)
+            el.Value = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+    }
+
     /// <summary>Reads the current mod list from the document.</summary>
     public ModList ReadMods()
     {

@@ -88,7 +88,7 @@ internal sealed class AppShell : Toplevel
             }),
             new MenuBarItem("_Worlds", new[]
             {
-                new MenuItem("_Browse", "", ShowWorlds),
+                new MenuItem("_List (Saves)", "", ShowWorlds),
                 new MenuItem("_New World…", "", ShowNewWorldWizard),
             }),
             new MenuBarItem("_Plugins", new[]
@@ -259,12 +259,12 @@ internal sealed class AppShell : Toplevel
             StartServer(confirm: true);
     }
 
-    public void StartServer(bool ignoreLastSession = false, Action onReady = null, bool confirm = false)
+    public void StartServer(bool confirm = false)
     {
         if (confirm && !ConfirmStart())
             return;
 
-        var spec = new LaunchSpec { Binding = binding, IgnoreLastSession = ignoreLastSession };
+        var spec = new LaunchSpec { Binding = binding };
         starting = true;
         RefreshStatus();
         Dialogs.RunBackground(
@@ -274,15 +274,9 @@ internal sealed class AppShell : Toplevel
                 starting = false;
                 monitor.Poll();
                 RefreshStatus();
-                if (result.Ok)
-                {
-                    // No success popup: the status bar already shows the running state.
-                    onReady?.Invoke();
-                }
-                else
-                {
+                // No success popup: the status bar already shows the running state.
+                if (!result.Ok)
                     Dialogs.Error("Start failed", result.Message);
-                }
             });
     }
 
