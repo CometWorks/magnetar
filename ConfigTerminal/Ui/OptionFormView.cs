@@ -254,7 +254,10 @@ internal sealed class OptionFormView : Window
 
     private string StatusGlyph(OptionDefinition def)
     {
-        string g = document.IsSet(def) ? " •" : " ○";
+        // Configs are round-tripped through the game's serializer, so almost every
+        // field is present — a "set" marker would be constant noise. Flag only the
+        // rare informative case: a field absent from the file (using its default).
+        string g = document.IsSet(def) ? "" : " ○";
         if (def.Liveness == Liveness.LiveViaReload)
             g += " ⚡";
         if (def.Experimental && def.Kind == OptionKind.Bool && document.GetBool(def))

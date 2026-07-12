@@ -1129,8 +1129,10 @@ Windows / dialogs:
   manual-action message) → `TextView` in a mini-frame; `BlockTypeLimits` →
   a small key/value `TableView` with add/remove;
 - Each field row: label (fixed width), widget, and status glyph:
-  `•` value set in file, `○` absent → showing DS default, `!` invalid raw
-  value, `⚡` live-reloadable, `▲` experimental when current value triggers it.
+  `○` absent from file → showing DS default (a present value shows no marker,
+  since configs are serialized in full and nearly every field is set), `!`
+  invalid raw value, `⚡` live-reloadable, `▲` experimental when current value
+  triggers it.
 - Bottom hint bar shows the focused option's `Help`, default, and XML name.
 - `/` opens incremental search across all categories (jump on Enter).
 - A context action (Ctrl+D) resets the focused field to "default" =
