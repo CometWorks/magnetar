@@ -259,7 +259,7 @@ internal sealed class OptionFormView : Window
         // rare informative case: a field absent from the file (using its default).
         string g = document.IsSet(def) ? "" : " ○";
         if (def.Liveness == Liveness.LiveViaReload)
-            g += " ⚡";
+            g += " ↕";
         if (def.Experimental && def.Kind == OptionKind.Bool && document.GetBool(def))
             g += " ▲";
         return g;

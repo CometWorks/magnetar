@@ -1131,7 +1131,7 @@ Windows / dialogs:
 - Each field row: label (fixed width), widget, and status glyph:
   `○` absent from file → showing DS default (a present value shows no marker,
   since configs are serialized in full and nearly every field is set), `!`
-  invalid raw value, `⚡` live-reloadable, `▲` experimental when current value
+  invalid raw value, `↕` live-reloadable, `▲` experimental when current value
   triggers it.
 - Bottom hint bar shows the focused option's `Help`, default, and XML name.
 - `/` opens incremental search across all categories (jump on Enter).
