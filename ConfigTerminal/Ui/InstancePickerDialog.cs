@@ -16,7 +16,12 @@ internal static class InstancePickerDialog
     {
         seed ??= InstanceLocator.ResolveDefaults(new InstanceBinding());
 
-        var dlg = new Dialog("Open Instance", 74, 16) { ColorScheme = TurboVisionTheme.Dialog };
+        // Span the full terminal width, leaving a 2-column margin on each side.
+        var dlg = new Dialog("Open Instance", 74, 16)
+        {
+            ColorScheme = TurboVisionTheme.Dialog,
+            X = 2, Width = Dim.Fill(2),
+        };
 
         TextField data = Field(dlg, "DS data dir (-path):", 1, seed.DataDir);
         TextField config = Field(dlg, "Magnetar config (-config):", 3, seed.MagnetarConfigDir);
