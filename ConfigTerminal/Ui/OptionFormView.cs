@@ -123,11 +123,17 @@ internal sealed class OptionFormView : Window
         form.RemoveAll();
 
         int y = 0;
+        OptionDefinition prev = null;
         foreach (OptionDefinition def in options.Where(o => o.Category == currentCategory && !o.Hidden))
         {
+            // Set a multi-line field apart from its neighbours with a blank row on
+            // each side (a single blank between two adjacent multi-line fields).
+            if (prev != null && (IsMultiline(prev) || IsMultiline(def)))
+                y += 1;
             View widget = BuildRow(def, ref y);
             if (widget != null)
                 form.Add(widget);
+            prev = def;
         }
 
         form.ContentSize = new Size(80, Math.Max(y + 1, 1));
@@ -137,8 +143,9 @@ internal sealed class OptionFormView : Window
     // Vertical rows a field's editor occupies; multi-line text needs several so
     // it isn't clipped to one line and doesn't overlap the fields below it.
     private const int MultilineRows = 3;
+    private static bool IsMultiline(OptionDefinition def) => def.Kind == OptionKind.MultilineText;
     private static int RowHeight(OptionDefinition def) =>
-        def.Kind == OptionKind.MultilineText ? MultilineRows : 1;
+        IsMultiline(def) ? MultilineRows : 1;
 
     private View BuildRow(OptionDefinition def, ref int y)
     {
@@ -162,8 +169,7 @@ internal sealed class OptionFormView : Window
             container.Add(editor);
         }
 
-        // Advance past the editor, leaving a blank line after tall multi-line rows.
-        y += rows + (rows > 1 ? 1 : 0);
+        y += rows;
         return container;
     }
 
