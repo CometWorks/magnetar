@@ -224,7 +224,9 @@ internal sealed class OptionFormView : Window
             }
             case OptionKind.MultilineText:
             {
-                var tv = new TextView { X = x, Y = 0, Width = Dim.Fill(1), Height = MultilineRows, Text = document.Get(def) };
+                // AllowsTab=false lets Tab/Shift-Tab move focus between fields
+                // instead of inserting a tab character inside the editor.
+                var tv = new TextView { X = x, Y = 0, Width = Dim.Fill(1), Height = MultilineRows, Text = document.Get(def), AllowsTab = false };
                 tv.Leave += _ =>
                 {
                     document.Set(def, tv.Text.ToString().TrimEnd('\n'));
