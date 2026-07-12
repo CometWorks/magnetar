@@ -43,6 +43,12 @@ internal sealed class LogViewerView : Window
             ReadOnly = true, WordWrap = wrapEnabled, ColorScheme = TurboVisionTheme.Window,
         };
 
+        // See OnViewerKey: the follow/refresh/wrap keys are handled on the focused child so
+        // End reaches us before the pane consumes it (the list jumps to the last file, the
+        // text pane to the end of the line). A ProcessKey override on this Window would not.
+        fileList.KeyPress += OnViewerKey;
+        text.KeyPress += OnViewerKey;
+
         statusLabel = new Label
         { X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window };
 
@@ -80,27 +86,37 @@ internal sealed class LogViewerView : Window
     private void Render()
     {
         text.Text = string.Join("\n", reader.Lines);
-        // Move to the bottom.
-        text.MoveEnd();
+        // Scroll to the bottom without moving horizontally. TextView.MoveEnd() only moves the
+        // cursor, not the scroll offset (topRow) — and the Text setter above just reset topRow
+        // to 0, so on a follow poll the view would stay pinned to the top. It would also jump to
+        // the end of the last line, scrolling right. Assigning CursorPosition at column 0 of the
+        // last row runs TextView.Adjust(), which scrolls topRow down and leftColumn back to 0.
+        text.CursorPosition = new Point(0, Math.Max(text.Lines - 1, 0));
     }
 
-    public override bool ProcessKey(KeyEvent kb)
+    // Terminal.Gui dispatches a key to the focused child (via ProcessHotKey) before the
+    // containing Window's ProcessKey runs, so an End handler there never fires — the ListView
+    // consumes End (jump to last file) and the TextView consumes it (end of line). Handling the
+    // child's KeyPress event runs first, so End reliably drives follow whichever pane has focus.
+    private void OnViewerKey(KeyEventEventArgs args)
     {
-        switch (kb.Key)
+        switch (args.KeyEvent.Key)
         {
             case Key.End:
                 ToggleFollow();
-                return true;
+                args.Handled = true;
+                break;
             case (Key)'r':
             case (Key)'R':
                 LoadSelected();
-                return true;
+                args.Handled = true;
+                break;
             case (Key)'w':
             case (Key)'W':
                 ToggleWrap();
-                return true;
+                args.Handled = true;
+                break;
         }
-        return base.ProcessKey(kb);
     }
 
     private void ToggleWrap()
@@ -122,6 +138,13 @@ internal sealed class LogViewerView : Window
         UpdateStatus();
         if (following)
         {
+            // Jump to the current end immediately so End feels instant (and re-snaps to the
+            // bottom if the user had scrolled up), then keep polling for growth.
+            if (reader != null)
+            {
+                reader.Poll();
+                Render();
+            }
             followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>
             {
                 if (!following || reader == null)
