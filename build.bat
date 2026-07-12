@@ -14,9 +14,10 @@ REM   <Magnetar>\LICENSE
 REM   <Magnetar>\Libraries\MagnetarLegacy\...
 REM   <Magnetar>\Libraries\MagnetarInterim\...
 REM
-REM We additionally publish the ConfigTerminal TUI (net48, no runtime needed)
-REM into <Magnetar>\Config\ and drop a <Magnetar>\MagnetarConfig.bat shim next
-REM to the launchers so operators can configure the instance from the install:
+REM We additionally publish the ConfigTerminal TUI (net10, framework-dependent -
+REM requires the .NET 10 runtime, same as MagnetarInterim) into <Magnetar>\Config\
+REM and drop a <Magnetar>\MagnetarConfig.bat shim next to the launchers so
+REM operators can configure the instance from the install:
 REM
 REM   <Magnetar>\MagnetarConfig.bat   (launches Config\MagnetarConfig.exe)
 REM   <Magnetar>\Config\MagnetarConfig.exe + Terminal.Gui.dll + deps
@@ -34,7 +35,7 @@ REM those are Linux-only. Steamworks.NET ships next to the dedicated server.
 REM
 REM Prerequisites (see Docs\Build.md):
 REM   * .NET 10 SDK
-REM   * .NET Framework 4.8 Developer Pack (for the net48 / MagnetarLegacy target)
+REM   * .NET Framework 4.8 Developer Pack (for the MagnetarLegacy launcher target)
 REM   * Space Engineers Dedicated Server installed (DS64 auto-detected; override
 REM     with the DS64 env var or -p:DS64=... - see Directory.Build.props)
 REM   * 7z.exe on PATH
@@ -105,15 +106,16 @@ if errorlevel 1 (
 )
 
 REM ---- stage the ConfigTerminal TUI (MagnetarConfig) --------------------------
-REM Ships the terminal configuration UI next to the launchers. Windows uses the
-REM net48 build so no .NET runtime is required. Its managed deps (Terminal.Gui,
-REM NStack, ...) live alongside the exe in Config\, and a root MagnetarConfig.bat
-REM shim next to MagnetarInterim.exe launches it.
+REM Ships the terminal configuration UI next to the launchers. Published
+REM framework-dependent for net10, so it needs the .NET 10 runtime (same as
+REM MagnetarInterim). Its managed deps (Terminal.Gui, NStack, ...) live alongside
+REM the exe in Config\, and a root MagnetarConfig.bat shim next to
+REM MagnetarInterim.exe launches it.
 echo.
 echo ############################################################
-echo # publish: ConfigTerminal / MagnetarConfig (net48)
+echo # publish: ConfigTerminal / MagnetarConfig (net10.0)
 echo ############################################################
-dotnet publish "%REPO_DIR%\ConfigTerminal\ConfigTerminal.csproj" -c Release -f net48 -p:DebugType=None -p:DebugSymbols=false -o "%MAGNETAR_STAGE%\Config"
+dotnet publish "%REPO_DIR%\ConfigTerminal\ConfigTerminal.csproj" -c Release -f net10.0 -p:DebugType=None -p:DebugSymbols=false -o "%MAGNETAR_STAGE%\Config"
 if errorlevel 1 (
     echo ERROR: ConfigTerminal publish failed. 1>&2
     exit /b 1

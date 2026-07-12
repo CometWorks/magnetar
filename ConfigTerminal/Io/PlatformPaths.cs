@@ -4,9 +4,7 @@ using System.Runtime.InteropServices;
 namespace Magnetar.ConfigTerminal.Io;
 
 /// <summary>
-/// Cross-target platform helpers. <see cref="OperatingSystem"/> is unavailable
-/// on net48, so OS detection goes through <see cref="RuntimeInformation"/>,
-/// which both target frameworks support.
+/// Platform helpers: OS detection and filesystem-correct path comparison.
 /// </summary>
 internal static class PlatformPaths
 {
@@ -26,24 +24,6 @@ internal static class PlatformPaths
     public static StringComparison PathComparison { get; } =
         IsWindows ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
-    /// <summary>
-    /// Path.GetRelativePath equivalent that also compiles on net48 (whose BCL
-    /// lacks it). Returns <paramref name="path"/> unchanged if it is not under
-    /// <paramref name="relativeTo"/>.
-    /// </summary>
-    public static string GetRelativePath(string relativeTo, string path)
-    {
-#if NETFRAMEWORK
-        string base_ = System.IO.Path.GetFullPath(relativeTo)
-            .TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar)
-            + System.IO.Path.DirectorySeparatorChar;
-        string target = System.IO.Path.GetFullPath(path);
-        var baseUri = new Uri(base_);
-        var targetUri = new Uri(target);
-        string rel = Uri.UnescapeDataString(baseUri.MakeRelativeUri(targetUri).ToString());
-        return rel.Replace('/', System.IO.Path.DirectorySeparatorChar);
-#else
-        return System.IO.Path.GetRelativePath(relativeTo, path);
-#endif
-    }
+    public static string GetRelativePath(string relativeTo, string path) =>
+        System.IO.Path.GetRelativePath(relativeTo, path);
 }

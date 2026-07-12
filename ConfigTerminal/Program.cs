@@ -53,6 +53,26 @@ internal static class Program
 
             InstanceBinding binding = cli.ToBinding();
 
+            // Windows ships two launchers (Legacy = .NET Framework 4.8, Interim =
+            // .NET 10). Let the operator pick which to configure when both are
+            // installed; auto-select when only one is. Skipped when the launcher
+            // or config dir was pinned on the command line.
+            if (PlatformPaths.IsWindows && cli.MagnetarExe == null && cli.ConfigDir == null)
+            {
+                System.Collections.Generic.IReadOnlyList<MagnetarLauncher> launchers =
+                    InstanceLocator.PresentWindowsLaunchers();
+                if (launchers.Count > 0)
+                {
+                    MagnetarLauncher chosen = launchers.Count == 1
+                        ? launchers[0]
+                        : ChooseLauncher(launchers);
+                    if (chosen == null)
+                        return 0; // cancelled at the launcher picker
+                    binding.MagnetarConfigDir = chosen.ConfigDir;
+                    binding.MagnetarExePath = chosen.ExePath;
+                }
+            }
+
             // No usable data dir given and the default does not exist → picker.
             if (!cli.HasInstance && !System.IO.Directory.Exists(binding.DataDir))
             {
@@ -77,5 +97,27 @@ internal static class Program
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Startup prompt to pick which installed Windows launcher to configure.
+    /// Returns the chosen launcher, or null if the operator cancelled.
+    /// </summary>
+    private static MagnetarLauncher ChooseLauncher(
+        System.Collections.Generic.IReadOnlyList<MagnetarLauncher> launchers)
+    {
+        var buttons = new string[launchers.Count + 1];
+        for (int i = 0; i < launchers.Count; i++)
+            buttons[i] = launchers[i].Label;
+        buttons[launchers.Count] = "Cancel";
+
+        int pick = Dialogs.QueryDetails(
+            "Select Magnetar",
+            "Which Magnetar do you want to configure?",
+            "Both launchers are installed on this machine.",
+            error: false,
+            buttons);
+
+        return pick < launchers.Count ? launchers[pick] : null;
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 
 namespace Magnetar.ConfigTerminal.Model;
@@ -8,8 +7,8 @@ namespace Magnetar.ConfigTerminal.Model;
 /// <summary>
 /// The live HTTP transport for <see cref="WorkshopResolver"/>: a plain
 /// <see cref="HttpClient"/> with a short timeout and a friendly user agent.
-/// Kept tiny and dependency-free so it builds identically on net48 and net10.0.
-/// Network use is confined here; all parsing is pure and testable.
+/// Kept tiny and dependency-free. Network use is confined here; all parsing is
+/// pure and testable.
 /// </summary>
 internal sealed class DefaultHttpFetcher : IHttpFetcher
 {
@@ -17,11 +16,6 @@ internal sealed class DefaultHttpFetcher : IHttpFetcher
 
     private static HttpClient CreateClient()
     {
-#if NETFRAMEWORK
-        // Steam requires TLS 1.2; the net48 default can be older. On net10.0 this
-        // is handled by the platform, and ServicePointManager no longer applies.
-        try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch { }
-#endif
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "MagnetarConfig/1.0");
         return client;

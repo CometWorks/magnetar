@@ -39,10 +39,9 @@ internal static class PasswordHasher
 
     private static byte[] Derive(string plaintext, byte[] salt)
     {
-        // The (password, salt, iterations) ctor defaults to SHA1 on both target
-        // frameworks — matching the DS, which predates configurable HMACs. The
-        // static Pbkdf2 helper the obsoletion suggests does not exist on net48,
-        // so the ctor is kept deliberately for cross-target parity.
+        // The (password, salt, iterations) ctor defaults to SHA1 — matching the
+        // DS, which predates configurable HMACs. Kept deliberately over the
+        // static Pbkdf2 helper the obsoletion suggests.
 #pragma warning disable SYSLIB0060
         using var pbkdf2 = new Rfc2898DeriveBytes(plaintext, salt, Iterations);
 #pragma warning restore SYSLIB0060

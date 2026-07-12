@@ -13,11 +13,8 @@
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- Windows ships the .NET Framework build (no runtime requirement); Linux
-         ships the .NET 10 build. net48 needs the Windows reference assemblies so
-         it is only built on Windows, mirroring Legacy.csproj. -->
-    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net10.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFrameworks>
+    <!-- .NET 10 only, on both Windows and Linux. -->
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -48,11 +45,6 @@
     <!-- Terminal.Gui v1 (classic API). Pinned to the last v1 stable; v2 is a
          breaking beta. See Docs/ConfigTerminal.md §4.2. -->
     <PackageReference Include="Terminal.Gui" Version="1.19.0" />
-  </ItemGroup>
-  <!-- HttpClient (DefaultHttpFetcher) lives in a separate assembly on .NET
-       Framework; net10.0 has it in the shared framework. -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <Reference Include="System.Net.Http" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ConfigTerminalTests" />

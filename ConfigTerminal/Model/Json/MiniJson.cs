@@ -7,9 +7,8 @@ namespace Magnetar.ConfigTerminal.Model.Json;
 
 /// <summary>
 /// A tiny, self-contained JSON reader — enough to parse the Steam Web API
-/// responses the Workshop resolver consumes, with zero third-party dependencies
-/// and no <c>System.Text.Json</c> (which is not in the net48 framework). Produces
-/// a lenient <see cref="JsonValue"/> tree; malformed input throws
+/// responses the Workshop resolver consumes, with zero third-party dependencies.
+/// Produces a lenient <see cref="JsonValue"/> tree; malformed input throws
 /// <see cref="FormatException"/>.
 /// </summary>
 internal static class MiniJson

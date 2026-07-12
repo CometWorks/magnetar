@@ -2,7 +2,7 @@
 
 **Status: implemented (initial vertical slice).** The `ConfigTerminal` /
 `MagnetarConfig` project and its `ConfigTerminalTests` suite exist and build on
-net10.0 (net48 target guarded for Windows). The companion `magnetar.pid` writer
+net10.0. The companion `magnetar.pid` writer
 is added to the Legacy launcher. The full **configure-a-new-world → start to
 "Game ready" → stop** flow is verified end-to-end against a live DS install +
 patched launcher (see `ConfigTerminalTests/LiveEndToEndTests.cs`, gated behind
@@ -458,7 +458,7 @@ format details are tuned against real logs during implementation.
 
 ```
 ConfigTerminal/                      → executable "MagnetarConfig"
-├── ConfigTerminal.csproj            multi-target: net48 (Windows) + net10.0
+├── ConfigTerminal.csproj            net10.0 (Windows + Linux)
 ├── Program.cs                       arg parsing, driver selection, top-level error handling
 ├── Model/                           pure data layer — NO Terminal.Gui dependency
 │   ├── OptionDefinition.cs          option metadata record + OptionKind/Scope/Liveness enums
@@ -484,7 +484,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── HubCatalog.cs                parse Sources/{Hubs,Plugins}/*.bin → HubPluginInfo
 │   ├── WorkshopResolver.cs          Steam Workshop names / collections / dependencies
 │   ├── DefaultHttpFetcher.cs        the resolver's live HTTP transport (injectable)
-│   └── Json/MiniJson.cs             tiny dependency-free JSON reader (net48 + net10)
+│   └── Json/MiniJson.cs             tiny dependency-free JSON reader
 ├── Io/
 │   ├── AtomicFile.cs                temp+rename atomic writer, .bak backup
 │   ├── XmlOut.cs                    shared XmlWriterSettings / Utf8StringWriter
@@ -523,7 +523,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
     └── ToolSettings.cs              last manifest folder, Steam Web API key
 
 ConfigTerminalTests/
-└── ConfigTerminalTests.csproj       xUnit, net10.0 (+ net48 on Windows), fixture files
+└── ConfigTerminalTests.csproj       xUnit, net10.0, fixture files
 ```
 
 **Companion Magnetar-side change (same branch):** the launcher writes
@@ -531,20 +531,18 @@ ConfigTerminalTests/
 daemon detach in `Legacy/Program.cs` / `Daemon.cs`, deleted on clean exit in
 the shutdown path. Small, isolated, and useful on its own (ops scripts).
 
-Naming: assembly `MagnetarConfig` for **both** target frameworks (unlike the
-launcher, the two builds never sit in the same process space with the DS; the
-Windows bundle ships the net48 build so no .NET 10 runtime is required, the
-Linux bundle ships the net10.0 build). Follows `Legacy.csproj` conventions:
-`Platforms=x64`, `LangVersion=latest`, Windows-only net48 target guarded by
-`'$(OS)' == 'Windows_NT'`, icon + long-path manifest on Windows.
+Naming: assembly `MagnetarConfig`. Both the Windows and Linux bundles ship the
+net10.0 build (framework-dependent, requiring the .NET 10 runtime, same as
+`MagnetarInterim`). Follows `Legacy.csproj` conventions: `Platforms=x64`,
+`LangVersion=latest`, icon + long-path manifest on Windows.
 
 ### 4.2 Dependencies
 
 | Package | Version | Notes |
 | --- | --- | --- |
-| `Terminal.Gui` | **1.19.0** (latest stable v1) | Targets net472 / netstandard2.0 / net6 / net8 → compatible with net48 and net10.0. **v1 API only** — the NuGet page and repo now foreground v2 (beta); when consulting docs/samples, use the v1 branch (`develop_v1`?) and the archived v1 API reference at https://gui-cs.github.io/Terminal.Gui/. |
+| `Terminal.Gui` | **1.19.0** (latest stable v1) | Targets net472 / netstandard2.0 / net6 / net8 → compatible with net10.0. **v1 API only** — the NuGet page and repo now foreground v2 (beta); when consulting docs/samples, use the v1 branch (`develop_v1`?) and the archived v1 API reference at https://gui-cs.github.io/Terminal.Gui/. |
 | `NStack.Core` | 1.1.1 (transitive) | `ustring` used throughout the v1 API. |
-| `System.Management` | 9.0.4 (transitive) | Pulled by Terminal.Gui (WSL/console detection); verify it restores cleanly for net48 during Phase 0 spike. |
+| `System.Management` | 9.0.4 (transitive) | Pulled by Terminal.Gui (WSL/console detection). |
 
 **No references to game assemblies, `Shared`, `PluginSdk`, or `Compiler`.**
 The tool must start instantly, run without a DS install present, and never
@@ -1339,8 +1337,10 @@ MagnetarConfig [options]
                      magnetar.pid). Same semantics as Magnetar's own -config.
                      Default (Linux): ~/.config/Magnetar
   -magnetar <file>   Magnetar launcher executable to start/stop. Default:
-                     ~/.local/share/Magnetar/MagnetarInterim (Linux),
-                     %APPDATA%\Magnetar\MagnetarLegacy.exe (Windows)
+                     ~/.local/share/Magnetar/MagnetarInterim (Linux); on Windows
+                     chosen at startup between the installed MagnetarLegacy.exe
+                     (.NET Framework 4.8) and MagnetarInterim.exe (.NET 10) — see
+                     the resolution order below
   -ds64 <dir>        DedicatedServer64 folder (for world templates). Default:
                      auto-detected like Magnetar's Folder.GetDS64 (Steam
                      registry / library folders / ~/.steam default path)
@@ -1360,7 +1360,13 @@ tool never enumerates or touches other instances.
 Resolution order:
 1. explicit arguments (error + exit if a given directory does not exist —
    matching Magnetar's own refusal to silently fall back);
-2. when neither `-path` nor `-config` is given: the interactive instance
+2. on Windows, when neither `-magnetar` nor `-config` is given: a startup
+   prompt to choose which installed launcher to configure — `MagnetarLegacy.exe`
+   (.NET Framework 4.8) or `MagnetarInterim.exe` (.NET 10). Asked only when
+   **both** executables are present under `%APPDATA%\Magnetar`; auto-selected
+   when only one is. The chosen launcher's config dir mirrors the launcher's own
+   resolution (`<Name>` if that folder exists, else the shared `MagnetarLegacy`);
+3. when neither `-path` nor `-config` is given: the interactive instance
    picker — last-used pairs from `ToolSettings`, the platform default pair,
    Windows service instances found under
    `%ProgramData%\SpaceEngineersDedicated\*`, and manual path fields for
@@ -1386,15 +1392,13 @@ Developed and used on Linux now; must work on Windows unchanged later:
   `WindowsDriver` on Windows; `-netdriver` maps to
   `Application.UseSystemConsole = true`. No driver-specific code anywhere
   else. The TV palette is 16-color so all drivers render it.
-- **net48 target**: the net48 build only ever runs on Windows (guarded in the
-  csproj like `Legacy.csproj`), so signal sending (SIGTERM stop, SIGHUP
-  reload) is compiled only for the net10.0 target (`#if NETCOREAPP`, same
-  pattern as `ServerControl.cs` — sending uses `kill(2)` via a small P/Invoke,
-  as .NET has no managed "send signal" API). On Windows: Start, status
-  (PID file + `Process.GetProcessById`) and the log reader work identically;
-  graceful Stop/Reload are deferred to a later phase (planned route: DS
-  Remote API or a named-event listener in Magnetar — see §15). The Stop
-  button on Windows explains this and offers only the confirmed force-kill.
+- **Signals / OS split**: signal sending (SIGTERM stop, SIGHUP reload) uses
+  `kill(2)` via a small P/Invoke (as .NET has no managed "send signal" API) and
+  is gated at runtime on Linux (`PlatformPaths.IsLinux`). On Windows: Start,
+  status (PID file + `Process.GetProcessById`) and the log reader work
+  identically; graceful Stop/Reload are deferred to a later phase (planned
+  route: DS Remote API or a named-event listener in Magnetar — see §15). The
+  Stop button on Windows explains this and offers only the confirmed force-kill.
 - **Paths**: `Path.Combine` everywhere; never assume separator or case
   sensitivity. World folder matching for `IsActive` compares
   case-insensitively on Windows, case-sensitively on Linux (a
@@ -1499,9 +1503,9 @@ real saves, to keep the repo lean.
     bash launcher (`cd Config; exec ./MagnetarConfig`) beside `Magnetar/MagnetarInterim`.
     `install.sh` deploys both to `~/.local/share/Magnetar/`, so the tool runs as
     `~/.local/share/Magnetar/MagnetarConfig`.
-  - **Windows** (`build.bat`): a net48 publish (no runtime requirement) is staged
-    into `<Magnetar>\Config\`, with a `<Magnetar>\MagnetarConfig.bat` shim next to
-    `MagnetarInterim.exe`.
+  - **Windows** (`build.bat`): a framework-dependent net10.0 publish (requires the
+    .NET 10 runtime, same as `MagnetarInterim`) is staged into `<Magnetar>\Config\`,
+    with a `<Magnetar>\MagnetarConfig.bat` shim next to `MagnetarInterim.exe`.
   Both packagers verify the config apphost/shim is present before packing, and
   the Linux path-leak check covers the staged `Config/` tree.
 - Terminal.Gui + NStack.Core (and System.Management) DLLs land next to the
@@ -1517,8 +1521,7 @@ real saves, to keep the repo lean.
 
 ## 14. Phased implementation plan
 
-Each phase ends green (builds on both TFMs, tests pass) and is independently
-reviewable.
+Each phase ends green (builds, tests pass) and is independently reviewable.
 
 **Phase 0 — spike**
 Empty Terminal.Gui 1.19.0 app on net48 + net10.0: menu bar, status bar, blue
@@ -1566,8 +1569,7 @@ Build/publish integration and dist bundles (§13) — **done**: `MagnetarConfig`
 ships in the Linux and Windows bundles next to the launcher (own `Config/`
 folder + a root launcher/shim; the Linux path is verified end-to-end producing
 `dist/MagnetarForLinux.7z`). UI smoke tests done. Still to do: a manual test
-pass on Linux xterm/kitty/ssh, Windows Terminal and conhost, and the net48
-build/bundle on a Windows host.
+pass on Linux xterm/kitty/ssh, Windows Terminal and conhost.
 
 **Phase 8 — plugin & mod management**
 `PluginProfileDocument`/`PluginSourcesDocument` (local DLLs, dev folders, hub
