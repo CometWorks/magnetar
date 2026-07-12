@@ -20,6 +20,9 @@ internal sealed class LogViewerView : Window
     private bool following;
     private object followToken;
 
+    // Remembered for the lifetime of the configurator process (off by default).
+    private static bool wrapEnabled;
+
     public LogViewerView(InstanceBinding binding) : base("Logs")
     {
         ColorScheme = TurboVisionTheme.Window;
@@ -30,27 +33,28 @@ internal sealed class LogViewerView : Window
 
         fileList = new ListView(Array.Empty<string>())
         {
-            X = 1, Y = 1, Width = 34, Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = 1, Y = 1, Width = 20, Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
         fileList.SelectedItemChanged += _ => LoadSelected();
 
         text = new TextView
         {
-            X = 36, Y = 1, Width = Dim.Fill(1), Height = Dim.Fill(2),
-            ReadOnly = true, WordWrap = false, ColorScheme = TurboVisionTheme.Window,
+            X = 22, Y = 1, Width = Dim.Fill(1), Height = Dim.Fill(2),
+            ReadOnly = true, WordWrap = wrapEnabled, ColorScheme = TurboVisionTheme.Window,
         };
 
-        statusLabel = new Label("End: follow · R: refresh · X: next exception")
+        statusLabel = new Label
         { X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window };
 
         Add(new Label("Log files:") { X = 1, Y = 0 }, fileList, text, statusLabel);
+        UpdateStatus();
         Populate();
     }
 
     private void Populate()
     {
         var items = catalog.Files
-            .Select(f => $"{(f.IsActive ? "*" : " ")}[{f.Group.ToString()[0]}] {f.Name}")
+            .Select(f => $"{(f.IsActive ? "*" : " ")}[{f.Group.ToString()[0]}] {f.DisplayName}")
             .ToList();
         fileList.SetSource(items);
         if (catalog.Files.Count > 0)
@@ -91,14 +95,31 @@ internal sealed class LogViewerView : Window
             case (Key)'R':
                 LoadSelected();
                 return true;
+            case (Key)'w':
+            case (Key)'W':
+                ToggleWrap();
+                return true;
         }
         return base.ProcessKey(kb);
     }
 
+    private void ToggleWrap()
+    {
+        wrapEnabled = !wrapEnabled;
+        text.WordWrap = wrapEnabled;
+        text.SetNeedsDisplay();
+        UpdateStatus();
+    }
+
+    private void UpdateStatus() =>
+        statusLabel.Text = following
+            ? "FOLLOWING (End to stop)"
+            : $"End: follow · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
+
     private void ToggleFollow()
     {
         following = !following;
-        statusLabel.Text = following ? "FOLLOWING (End to stop)" : "End: follow · R: refresh";
+        UpdateStatus();
         if (following)
         {
             followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>

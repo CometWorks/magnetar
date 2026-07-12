@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Magnetar.ConfigTerminal.Model;
 
 namespace Magnetar.ConfigTerminal.Logs;
@@ -24,6 +25,20 @@ internal sealed class LogFileInfo
 
     /// <summary>Bare file name shown in the selector.</summary>
     public string Name => System.IO.Path.GetFileName(Path);
+
+    /// <summary>
+    /// Compact label for the selector: if the file name embeds a
+    /// <c>yyyyMMdd_HHmmssfff</c> timestamp, show only <c>yyyyMMdd_HHmmss</c>
+    /// (prefix, extension and milliseconds dropped). Otherwise the bare name.
+    /// </summary>
+    public string DisplayName
+    {
+        get
+        {
+            Match m = Regex.Match(Name, @"(\d{8}_\d{6})\d*");
+            return m.Success ? m.Groups[1].Value : Name;
+        }
+    }
 }
 
 /// <summary>
