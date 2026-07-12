@@ -257,6 +257,15 @@ internal sealed class MagnetarPlugins
     public IReadOnlyList<RemotePluginSource> RemotePlugins() => sources.RemotePlugins;
     public IReadOnlyList<LocalHubSource> LocalHubs() => sources.LocalHubs;
 
+    /// <summary>
+    /// The <see cref="HubPluginInfo.SourceLabel"/> of the default (first-listed) hub.
+    /// Plugins from it need no source suffix in the UI; only plugins from other hubs
+    /// are labelled. Null when no hub source is configured.
+    /// </summary>
+    public string DefaultHubLabel =>
+        sources.RemoteHubs.FirstOrDefault()?.Name
+        ?? sources.LocalHubs.FirstOrDefault()?.Name;
+
     public bool AddRemoteHub(string name, string repo, string branch)
     {
         bool added = sources.AddRemoteHub(name, repo, branch);

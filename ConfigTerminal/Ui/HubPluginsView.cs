@@ -20,6 +20,7 @@ internal sealed class HubPluginsView : Window
     private readonly ListView list;
     private readonly TextView details;
     private List<HubPluginView> items = new();
+    private string defaultHubLabel;
 
     public HubPluginsView(string magnetarConfigDir, AtomicFile writer) : base("Hub Plugins")
     {
@@ -71,6 +72,7 @@ internal sealed class HubPluginsView : Window
     private void Refresh()
     {
         plugins.Reload();
+        defaultHubLabel = plugins.DefaultHubLabel;
         items = plugins.HubCatalogPlugins().ToList();
         int keep = list.SelectedItem;
         list.SetSource(items.Select(Format).ToList());
@@ -86,11 +88,14 @@ internal sealed class HubPluginsView : Window
                 "then start the server once so it fetches the catalog.";
     }
 
-    private static string Format(HubPluginView v)
+    private string Format(HubPluginView v)
     {
         string box = v.Enabled ? "[x]" : "[ ]";
         string kind = v.Info.Kind == HubPluginKind.Mod ? " (mod)" : "";
-        string src = string.IsNullOrEmpty(v.Info.SourceLabel) ? "" : $"  — {v.Info.SourceLabel}";
+        // Only label the source when it isn't the default hub — that suffix is implied.
+        bool fromDefault = string.IsNullOrEmpty(v.Info.SourceLabel)
+            || string.Equals(v.Info.SourceLabel, defaultHubLabel, StringComparison.OrdinalIgnoreCase);
+        string src = fromDefault ? "" : $"  — {v.Info.SourceLabel}";
         return $"{box} {v.Info.FriendlyName}{kind}{src}";
     }
 

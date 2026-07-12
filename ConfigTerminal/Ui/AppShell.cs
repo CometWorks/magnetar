@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Terminal.Gui;
 using Magnetar.ConfigTerminal.Io;
 using Magnetar.ConfigTerminal.Model;
@@ -24,6 +27,7 @@ internal sealed class AppShell : Toplevel
     private View content;
     private Label statusLabel;
     private DashboardView dashboard;
+    private bool starting; // UI-only: bridges the gap before the pid file appears
 
     public AppShell(InstanceBinding binding)
     {
@@ -40,7 +44,7 @@ internal sealed class AppShell : Toplevel
         Add(statusLabel);
         Add(bar);
 
-        ShowDashboard();
+        ShowWorlds();
 
         monitor.Changed += _ => RefreshStatus();
         Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(2), _ =>
@@ -122,7 +126,7 @@ internal sealed class AppShell : Toplevel
             new StatusItem(Key.F1, "~F1~ Help", ShowAbout),
             new StatusItem(Key.F3, "~F3~ Worlds", ShowWorlds),
             new StatusItem(Key.F4, "~F4~ Logs", ShowLogs),
-            new StatusItem(Key.F6, "~F6~ Start/Stop", ToggleServer),
+            new StatusItem(Key.F5, "~F5~ Start/Stop", ToggleServer),
             new StatusItem(Key.F7, "~F7~ Settings", ShowServerSettings),
             new StatusItem(Key.F8, "~F8~ Plugins", ShowPlugins),
             new StatusItem(Key.F10, "~F10~ Quit", () => RequestQuit()),
@@ -135,7 +139,12 @@ internal sealed class AppShell : Toplevel
     private void RefreshStatus()
     {
         ServerStatus s = monitor.Latest;
-        string glyph = s.State switch
+        // The pid-file query jumps NotRunning → Running, so surface a UI-driven
+        // STARTING while our launch is in flight and the pid file hasn't appeared.
+        bool showStarting = starting && s.State != ServerState.Running;
+        ServerState state = showStarting ? ServerState.Starting : s.State;
+
+        string glyph = state switch
         {
             ServerState.Running => "●",
             ServerState.Starting => "◌",
@@ -144,9 +153,13 @@ internal sealed class AppShell : Toplevel
             ServerState.Foreign => "!",
             _ => "○",
         };
+        string label = showStarting ? "STARTING…" : s.ToString();
         string world = instance.ActiveWorld?.SessionName ?? instance.Config?.WorldName ?? "(no world selected)";
-        statusLabel.Text = $" {glyph} {s} — {world}";
-        dashboard?.UpdateStatus(s);
+        string port = s.State == ServerState.Running && instance.Config != null
+            ? $"  ·  UDP {instance.Config.ServerPort}"
+            : string.Empty;
+        statusLabel.Text = $" {glyph} {label} — {world}{port}";
+        dashboard?.UpdateStatus(showStarting ? new ServerStatus { State = ServerState.Starting } : s);
     }
 
     // --- content hosting ---
@@ -242,17 +255,22 @@ internal sealed class AppShell : Toplevel
         if (monitor.Latest.State == ServerState.Running)
             StopServer();
         else
-            StartServer();
+            StartServer(confirm: true);
     }
 
-    public void StartServer(bool ignoreLastSession = false, Action onReady = null)
+    public void StartServer(bool ignoreLastSession = false, Action onReady = null, bool confirm = false)
     {
+        if (confirm && !ConfirmStart())
+            return;
+
         var spec = new LaunchSpec { Binding = binding, IgnoreLastSession = ignoreLastSession };
+        starting = true;
         RefreshStatus();
         Dialogs.RunBackground(
             () => process.Start(spec),
             result =>
             {
+                starting = false;
                 monitor.Poll();
                 RefreshStatus();
                 if (result.Ok)
@@ -266,6 +284,77 @@ internal sealed class AppShell : Toplevel
                     Dialogs.Error("Start failed", result.Message);
                 }
             });
+    }
+
+    /// <summary>
+    /// Pre-flight confirmation for an explicit start: shows the world that will
+    /// load, the game (UDP) port, and the plugins and mods that come with it.
+    /// </summary>
+    private bool ConfirmStart()
+    {
+        string world = instance.ActiveWorld?.SessionName ?? instance.Config?.WorldName;
+        string question = string.IsNullOrEmpty(world)
+            ? "Start the server?"
+            : $"Start the server with world '{world}'?";
+
+        int port = instance.Config?.ServerPort ?? 27016;
+        var details = new StringBuilder();
+        details.AppendLine($"Port    : UDP {port}");
+        AppendList(details, "Plugins", CollectPlugins());
+        AppendList(details, "Mods", CollectMods());
+
+        return Dialogs.ConfirmDetails("Start server", question, details.ToString().TrimEnd(), "Start", "Cancel");
+    }
+
+    private List<string> CollectPlugins()
+    {
+        var names = new List<string>();
+        try
+        {
+            PluginProfileDocument profile = PluginProfileDocument.Open(binding.MagnetarConfigDir);
+            names.AddRange(profile.DevFolders.Select(d => $"{d.Id} (dev folder)"));
+            names.AddRange(profile.LocalDlls);
+
+            // Resolve enabled hub plugins to friendly names via the cached catalog;
+            // any enabled id the catalog doesn't know falls back to its raw id.
+            var plugins = new MagnetarPlugins(binding.MagnetarConfigDir, writer);
+            var byId = plugins.HubCatalogPlugins()
+                .Where(v => v.Enabled)
+                .ToDictionary(v => v.Id, v => v.Info.FriendlyName, StringComparer.OrdinalIgnoreCase);
+            foreach (string id in profile.GitHubPlugins)
+                names.Add($"{(byId.TryGetValue(id, out string friendly) ? friendly : id)} (hub)");
+        }
+        catch { /* best-effort summary */ }
+        return names;
+    }
+
+    private List<string> CollectMods()
+    {
+        WorldInfo world = instance.ActiveWorld;
+        if (world == null || !world.HasWorldConfig)
+            return new List<string>();
+        try
+        {
+            ModList mods = WorldConfigDocument.Open(world.WorldConfigPath).ReadMods();
+            return mods.Items
+                .Select(m => string.IsNullOrEmpty(m.FriendlyName) ? m.PublishedFileId.ToString() : m.FriendlyName)
+                .ToList();
+        }
+        catch { return new List<string>(); }
+    }
+
+    private static void AppendList(StringBuilder sb, string label, IReadOnlyList<string> items)
+    {
+        if (items.Count == 0)
+        {
+            sb.AppendLine($"{label,-8}: (none)");
+            return;
+        }
+        sb.AppendLine($"{label,-8}: {items.Count}");
+        foreach (string name in items.Take(12))
+            sb.AppendLine($"  • {name}");
+        if (items.Count > 12)
+            sb.AppendLine($"  … (+{items.Count - 12} more)");
     }
 
     public void StopServer()

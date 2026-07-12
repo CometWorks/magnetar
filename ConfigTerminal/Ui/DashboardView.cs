@@ -34,7 +34,7 @@ internal sealed class DashboardView : Window
         };
 
         var start = new Button("_Start") { X = 1, Y = Pos.AnchorEnd(2) };
-        start.Clicked += () => shell.StartServer();
+        start.Clicked += () => shell.StartServer(confirm: true);
         var stop = new Button("Sto_p") { X = Pos.Right(start) + 1, Y = Pos.AnchorEnd(2) };
         stop.Clicked += shell.StopServer;
         var restart = new Button("_Restart") { X = Pos.Right(stop) + 1, Y = Pos.AnchorEnd(2) };

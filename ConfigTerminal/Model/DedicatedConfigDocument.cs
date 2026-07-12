@@ -89,6 +89,10 @@ internal sealed class DedicatedConfigDocument : ConfigDocumentBase
         set => UpsertRoot("WorldName", value ?? string.Empty);
     }
 
+    /// <summary>Game (UDP) port clients connect to; falls back to the DS default (27016) when unset.</summary>
+    public int ServerPort =>
+        int.TryParse(Root.Element("ServerPort")?.Value, out int port) ? port : 27016;
+
     // --- access lists ---
 
     /// <summary>Administrators are serialized as string items (<c>&lt;unsignedLong&gt;</c>) — the DS models them as List&lt;string&gt;.</summary>

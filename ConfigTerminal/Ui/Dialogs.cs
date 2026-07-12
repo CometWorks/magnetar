@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Terminal.Gui;
 
 namespace Magnetar.ConfigTerminal.Ui;
@@ -15,6 +16,84 @@ internal static class Dialogs
     /// <summary>Yes/No confirmation; returns true on Yes (button index 0).</summary>
     public static bool Confirm(string title, string message, string yes = "Yes", string no = "No") =>
         MessageBox.Query(title, "\n" + message + "\n", yes, no) == 0;
+
+    // --- centered-question + left-aligned-details dialogs ---
+    //
+    // MessageBox centers every line, which mangles bulleted lists (each bullet
+    // floats to its own centre). These helpers keep the question centered but
+    // render the detail block — bullet lists, key tables — left-aligned. Never
+    // center a bulleted list.
+
+    /// <summary>Info dialog: centered <paramref name="question"/> over a left-aligned detail block.</summary>
+    public static void InfoDetails(string title, string question, string details) =>
+        QueryDetails(title, question, details, error: false, "OK");
+
+    /// <summary>Error dialog: centered <paramref name="question"/> over a left-aligned detail block.</summary>
+    public static void ErrorDetails(string title, string question, string details) =>
+        QueryDetails(title, question, details, error: true, "OK");
+
+    /// <summary>Yes/No confirmation with a left-aligned detail block; true on Yes (button index 0).</summary>
+    public static bool ConfirmDetails(string title, string question, string details, string yes = "Yes", string no = "No") =>
+        QueryDetails(title, question, details, error: false, yes, no) == 0;
+
+    /// <summary>
+    /// Modal with a centered <paramref name="question"/> header sitting over a
+    /// left-aligned <paramref name="details"/> block, then <paramref name="buttons"/>
+    /// along the bottom (first is the default). Returns the clicked button index,
+    /// or the last index on Esc. Pass a null/empty question or details to omit it.
+    /// </summary>
+    public static int QueryDetails(string title, string question, string details, bool error, params string[] buttons)
+    {
+        int qLines = string.IsNullOrEmpty(question) ? 0 : question.Split('\n').Length;
+        int dLines = string.IsNullOrEmpty(details) ? 0 : details.Split('\n').Length;
+        int gap = qLines > 0 && dLines > 0 ? 1 : 0;
+
+        int Longest(string s) => string.IsNullOrEmpty(s) ? 0 : s.Split('\n').Max(l => l.Length);
+        int buttonsWidth = buttons.Sum(b => b.Length + 4) + Math.Max(0, buttons.Length - 1);
+        int content = Math.Max(Math.Max(Longest(question), Longest(details)), Math.Max(buttonsWidth, title.Length));
+
+        int width = Math.Clamp(content + 6, 44, Math.Max(44, Application.Driver.Cols - 6));
+        int height = Math.Min(qLines + gap + dLines + 4, Math.Max(7, Application.Driver.Rows - 2));
+
+        var dlg = new Dialog(title, width, height)
+        {
+            ColorScheme = error ? TurboVisionTheme.Error : TurboVisionTheme.Dialog,
+        };
+
+        if (qLines > 0)
+            dlg.Add(new Label(question)
+            {
+                X = 0,
+                Y = 0,
+                Width = Dim.Fill(),
+                Height = qLines,
+                TextAlignment = TextAlignment.Centered,
+                AutoSize = false,
+            });
+
+        if (dLines > 0)
+            dlg.Add(new Label(details)
+            {
+                X = 1,
+                Y = qLines + gap,
+                Width = Dim.Fill(1),
+                Height = dLines,
+                TextAlignment = TextAlignment.Left,
+                AutoSize = false,
+            });
+
+        int result = buttons.Length - 1;
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            int idx = i;
+            var button = new Button(buttons[i], is_default: i == 0);
+            button.Clicked += () => { result = idx; Application.RequestStop(dlg); };
+            dlg.AddButton(button);
+        }
+
+        Application.Run(dlg);
+        return result;
+    }
 
     /// <summary>Three-way pending-changes prompt: 0=Save, 1=Discard, 2=Cancel.</summary>
     public static int PendingChanges(string title) =>

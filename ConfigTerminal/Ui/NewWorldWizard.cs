@@ -43,8 +43,8 @@ internal static class NewWorldWizard
         cfg.PremadeCheckpointPath = template.FolderPath;
         cfg.LoadWorld = string.Empty;
 
-        string summary =
-            $"Stage new world '{name}' from template '{template.DisplayName}'?\n\n" +
+        string question = $"Stage new world '{name}' from template '{template.DisplayName}'?";
+        string details =
             "cfg writes:\n" +
             $"  • WorldName = {name}\n" +
             $"  • PremadeCheckpointPath = {template.FolderName}\n" +
@@ -52,7 +52,7 @@ internal static class NewWorldWizard
             "  • SessionSettings = seeded from the template\n\n" +
             "The DS materializes the world on the next -ignorelastsession start.";
 
-        if (!Dialogs.Confirm("Create world", summary, "Stage", "Cancel"))
+        if (!Dialogs.ConfirmDetails("Create world", question, details, "Stage", "Cancel"))
             return;
 
         try

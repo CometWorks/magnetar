@@ -29,14 +29,14 @@ internal sealed class WorldsView : Window
         };
         list.OpenSelectedItem += _ => OpenSettings();
 
-        var header = new Label("  Name                       Last saved            Mods   Config   Active")
+        var header = new Label(Row("Name", "Last saved", "Mods", "Config", "Active"))
         { X = 1, Y = 0, ColorScheme = TurboVisionTheme.Window };
 
         var settings = new Button("_Settings") { X = 1, Y = Pos.AnchorEnd(2) };
         settings.Clicked += OpenSettings;
         var mods = new Button("_Mods") { X = Pos.Right(settings) + 1, Y = Pos.AnchorEnd(2) };
         mods.Clicked += OpenMods;
-        var activate = new Button("_Activate (F5)") { X = Pos.Right(mods) + 1, Y = Pos.AnchorEnd(2) };
+        var activate = new Button("_Activate (F6)") { X = Pos.Right(mods) + 1, Y = Pos.AnchorEnd(2) };
         activate.Clicked += ActivateWorld;
         var refresh = new Button("_Refresh") { X = Pos.Right(activate) + 1, Y = Pos.AnchorEnd(2) };
         refresh.Clicked += Reload;
@@ -49,7 +49,7 @@ internal sealed class WorldsView : Window
 
     public override bool ProcessKey(KeyEvent kb)
     {
-        if (kb.Key == Key.F5)
+        if (kb.Key == Key.F6)
         {
             ActivateWorld();
             return true;
@@ -64,13 +64,17 @@ internal sealed class WorldsView : Window
         list.SetSource(worlds.Select(Format).ToList());
     }
 
+    // Single column layout shared by the header and the data rows so they stay aligned.
+    private static string Row(string name, string saved, string mods, string cfg, string active) =>
+        $"{name,-28}{saved,-22}{mods,-7}{cfg,-9}{active}";
+
     private static string Format(WorldInfo w)
     {
         string saved = w.LastSaveTime?.ToString("yyyy-MM-dd HH:mm") ?? "—";
         string cfg = w.HasWorldConfig ? "ok" : "missing";
         string active = w.IsActive ? "◀ ACTIVE" : "";
         string name = w.SessionName.Length > 26 ? w.SessionName.Substring(0, 26) : w.SessionName;
-        return $"{name,-28}{saved,-22}{w.ModCount,-7}{cfg,-9}{active}";
+        return Row(name, saved, w.ModCount.ToString(), cfg, active);
     }
 
     private WorldInfo Selected =>
@@ -125,12 +129,13 @@ internal sealed class WorldsView : Window
         bool willClearIgnore = cfg.IgnoreLastSession;
         bool loadWorldSet = !string.IsNullOrEmpty(cfg.LoadWorld);
 
-        var msg = $"Activate '{w.SessionName}'?\n\nWrites:\n  • Saves/LastSession.sbl";
-        if (willClearIgnore) msg += "\n  • cfg IgnoreLastSession → false";
-        if (loadWorldSet) msg += "\n  • cfg LoadWorld → cleared";
-        msg += "\n\nTakes effect on the next server start.";
+        string question = $"Activate '{w.SessionName}'?";
+        var details = "Writes:\n  • Saves/LastSession.sbl";
+        if (willClearIgnore) details += "\n  • cfg IgnoreLastSession → false";
+        if (loadWorldSet) details += "\n  • cfg LoadWorld → cleared";
+        details += "\n\nTakes effect on the next server start.";
 
-        if (!Dialogs.Confirm("Activate world", msg, "Activate", "Cancel"))
+        if (!Dialogs.ConfirmDetails("Activate world", question, details, "Activate", "Cancel"))
             return;
 
         try

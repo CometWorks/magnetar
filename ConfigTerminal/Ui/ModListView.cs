@@ -97,7 +97,8 @@ internal sealed class ModListView : Window
         var issues = mods.Validate();
         if (issues.Count > 0)
         {
-            Dialogs.Error("Cannot save mods", string.Join("\n", issues.Select(s => "• " + s)));
+            Dialogs.ErrorDetails("Cannot save mods", "Fix these before saving:",
+                string.Join("\n", issues.Select(s => "• " + s)));
             return;
         }
         try

@@ -257,7 +257,8 @@ internal sealed class OptionFormView : Window
         var errors = issues.Where(i => i.IsError).ToList();
         if (errors.Count > 0)
         {
-            Dialogs.Error("Cannot save", string.Join("\n", errors.Take(10).Select(e => "• " + e.Message)));
+            Dialogs.ErrorDetails("Cannot save", "Fix these errors before saving:",
+                string.Join("\n", errors.Take(10).Select(e => "• " + e.Message)));
             return;
         }
 
@@ -266,10 +267,12 @@ internal sealed class OptionFormView : Window
             session.Save(writer);
             onSaved?.Invoke();
             var warnings = issues.Where(i => !i.IsError).ToList();
-            string msg = "Saved " + System.IO.Path.GetFileName(document.FilePath) + ".";
+            string saved = "Saved " + System.IO.Path.GetFileName(document.FilePath) + ".";
             if (warnings.Count > 0)
-                msg += "\n\nWarnings:\n" + string.Join("\n", warnings.Take(6).Select(w => "• " + w.Message));
-            Dialogs.Info("Saved", msg);
+                Dialogs.InfoDetails("Saved", saved,
+                    "Warnings:\n" + string.Join("\n", warnings.Take(6).Select(w => "• " + w.Message)));
+            else
+                Dialogs.Info("Saved", saved);
         }
         catch (Exception e)
         {
