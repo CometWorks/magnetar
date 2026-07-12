@@ -37,12 +37,32 @@ internal static class Dialogs
         QueryDetails(title, question, details, error: false, yes, no) == 0;
 
     /// <summary>
+    /// Destructive confirmation rendered in the error theme. The safe option is
+    /// listed first so it is the default (Enter), the focused button, and the Esc
+    /// fallback — only an explicit click on <paramref name="confirmLabel"/> returns
+    /// true. Use for irreversible actions (deletes) so a stray Enter/Esc is safe.
+    /// </summary>
+    public static bool ConfirmDestructive(string title, string question, string details, string confirmLabel, string cancelLabel = "No") =>
+        QueryDetailsCore(title, question, details, error: true, defaultButton: 0, escButton: 0,
+            new[] { cancelLabel, confirmLabel }) == 1;
+
+    /// <summary>
     /// Modal with a centered <paramref name="question"/> header sitting over a
     /// left-aligned <paramref name="details"/> block, then <paramref name="buttons"/>
     /// along the bottom (first is the default). Returns the clicked button index,
     /// or the last index on Esc. Pass a null/empty question or details to omit it.
     /// </summary>
-    public static int QueryDetails(string title, string question, string details, bool error, params string[] buttons)
+    public static int QueryDetails(string title, string question, string details, bool error, params string[] buttons) =>
+        QueryDetailsCore(title, question, details, error, defaultButton: 0, escButton: buttons.Length - 1, buttons);
+
+    /// <summary>
+    /// Core of <see cref="QueryDetails"/>. <paramref name="defaultButton"/> is the
+    /// Enter/focused button; <paramref name="escButton"/> is the value returned when
+    /// the dialog is dismissed without a click (Esc). They differ for a plain
+    /// confirm (Enter=Yes, Esc=No) but coincide for a destructive confirm so both
+    /// resolve to the safe option.
+    /// </summary>
+    private static int QueryDetailsCore(string title, string question, string details, bool error, int defaultButton, int escButton, string[] buttons)
     {
         int qLines = string.IsNullOrEmpty(question) ? 0 : question.Split('\n').Length;
         int dLines = string.IsNullOrEmpty(details) ? 0 : details.Split('\n').Length;
@@ -82,14 +102,18 @@ internal static class Dialogs
                 AutoSize = false,
             });
 
-        int result = buttons.Length - 1;
+        int result = escButton;
+        Button defaultBtn = null;
         for (int i = 0; i < buttons.Length; i++)
         {
             int idx = i;
-            var button = new Button(buttons[i], is_default: i == 0);
+            var button = new Button(buttons[i], is_default: i == defaultButton);
             button.Clicked += () => { result = idx; Application.RequestStop(dlg); };
             dlg.AddButton(button);
+            if (i == defaultButton)
+                defaultBtn = button;
         }
+        defaultBtn?.SetFocus();
 
         Application.Run(dlg);
         return result;

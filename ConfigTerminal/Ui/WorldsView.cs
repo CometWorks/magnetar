@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Terminal.Gui;
 using Magnetar.ConfigTerminal.Model;
@@ -42,8 +43,10 @@ internal sealed class WorldsView : Window
         refresh.Clicked += Reload;
         var newWorld = new Button("_New World") { X = Pos.Right(refresh) + 1, Y = Pos.AnchorEnd(2) };
         newWorld.Clicked += shell.ShowNewWorldWizard;
+        var delete = new Button("_Delete") { X = Pos.Right(newWorld) + 1, Y = Pos.AnchorEnd(2) };
+        delete.Clicked += DeleteWorld;
 
-        Add(header, list, settings, mods, activate, refresh, newWorld);
+        Add(header, list, settings, mods, activate, refresh, newWorld, delete);
         Reload();
     }
 
@@ -157,5 +160,87 @@ internal sealed class WorldsView : Window
         {
             Dialogs.Error("Activate failed", e.Message);
         }
+    }
+
+    private void DeleteWorld()
+    {
+        WorldInfo w = Selected;
+        if (w == null)
+        {
+            Dialogs.Info("Delete", "Select a world first.");
+            return;
+        }
+
+        string details =
+            "Permanently deletes the world folder and everything in it:\n" +
+            $"  • {w.FolderPath}\n\n" +
+            (w.IsActive ? "This is the ACTIVE world — the world selection will be cleared too.\n\n" : "") +
+            "This cannot be undone.";
+
+        // Destructive confirm: defaults to Keep (safe on stray Enter/Esc).
+        if (!Dialogs.ConfirmDestructive("Delete world", $"Delete world '{w.SessionName}'?", details, "Delete", "Keep"))
+            return;
+
+        try
+        {
+            Directory.Delete(w.FolderPath, recursive: true);
+        }
+        catch (Exception e)
+        {
+            Dialogs.Error("Delete failed", e.Message);
+            return;
+        }
+
+        ClearDanglingSelection(w);
+        Reload();
+        Dialogs.Info("Deleted", $"'{w.SessionName}' was deleted.");
+    }
+
+    /// <summary>
+    /// Removes a now-dangling LastSession.sbl / cfg LoadWorld that pointed at the
+    /// just-deleted world, so the DS does not fail to start trying to load a world
+    /// that no longer exists.
+    /// </summary>
+    private void ClearDanglingSelection(WorldInfo deleted)
+    {
+        try
+        {
+            LastSessionFile ls = shell.Instance.LastSession;
+            if (ls != null && TargetsFolder(ls, deleted.FolderName))
+            {
+                string sblPath = LastSessionFile.PathFor(shell.Instance.Binding.SavesPath);
+                if (File.Exists(sblPath))
+                    File.Delete(sblPath);
+            }
+        }
+        catch
+        {
+            // Non-fatal: a stale LastSession only breaks the next start, which the
+            // operator can fix by activating another world.
+        }
+
+        try
+        {
+            DedicatedConfigDocument cfg = shell.Instance.Config;
+            if (cfg != null && !string.IsNullOrEmpty(cfg.LoadWorld)
+                && Io.PlatformPaths.PathComparer.Equals(
+                    Path.GetFileName(cfg.LoadWorld.TrimEnd('/', '\\')), deleted.FolderName))
+            {
+                cfg.LoadWorld = string.Empty;
+                cfg.Save(shell.Writer);
+            }
+        }
+        catch
+        {
+            // Non-fatal, as above.
+        }
+    }
+
+    private static bool TargetsFolder(LastSessionFile ls, string folderName)
+    {
+        string rel = string.IsNullOrEmpty(ls.RelativePath) ? null : Path.GetFileName(ls.RelativePath.TrimEnd('/', '\\'));
+        string abs = string.IsNullOrEmpty(ls.Path) ? null : Path.GetFileName(ls.Path.TrimEnd('/', '\\'));
+        return (rel != null && Io.PlatformPaths.PathComparer.Equals(rel, folderName))
+            || (abs != null && Io.PlatformPaths.PathComparer.Equals(abs, folderName));
     }
 }
