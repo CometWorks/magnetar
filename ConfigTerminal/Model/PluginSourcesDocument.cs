@@ -48,14 +48,6 @@ internal sealed class LocalHubSource
     public bool Enabled = true;
 }
 
-/// <summary>A Magnetar mod source (sources.xml ModSources: Mod { Name, ID, Enabled }).</summary>
-internal sealed class ModSourceEntry
-{
-    public string Name;
-    public long Id;          // Steam Workshop id (element is <ID>, type long)
-    public bool Enabled = true;
-}
-
 /// <summary>
 /// XDocument wrapper for <c>Sources/sources.xml</c> (root <c>SourcesConfig</c>).
 /// Edits only the <c>LocalPluginSources</c> list (the dev-folder sources),
@@ -247,58 +239,9 @@ internal sealed class PluginSourcesDocument
     public bool SetLocalHubEnabled(string folder, bool enabled) =>
         SetChildFlag("LocalHubSources", "LocalHub", "Folder", folder, PathEq, "Enabled", enabled);
 
-    // --- mod sources (ModSources: Mod { Name, ID (long), Enabled }) ---
-
-    public IReadOnlyList<ModSourceEntry> ModSources =>
-        Root.Element("ModSources")?.Elements("Mod").Select(e => new ModSourceEntry
-        {
-            Name = e.Element("Name")?.Value?.Trim(),
-            Id = long.TryParse((e.Element("ID")?.Value ?? string.Empty).Trim(), out long v) ? v : 0,
-            Enabled = ConfigDocumentBase.ParseBool(e.Element("Enabled")?.Value),
-        }).Where(m => m.Id != 0).ToList() ?? new List<ModSourceEntry>();
-
-    /// <summary>Adds or updates a mod source (keyed by ID). Returns false when it already existed.</summary>
-    public bool AddMod(long id, string name, bool enabled = true)
-    {
-        XElement list = ListEl("ModSources");
-        XElement existing = list.Elements("Mod")
-            .FirstOrDefault(e => (e.Element("ID")?.Value ?? string.Empty).Trim() == id.ToString());
-        if (existing != null)
-        {
-            SetChild(existing, "Name", name ?? id.ToString());
-            SetChild(existing, "Enabled", enabled ? "true" : "false");
-            return false;
-        }
-        list.Add(new XElement("Mod",
-            new XElement("Name", name ?? id.ToString()),
-            new XElement("ID", id.ToString()),
-            new XElement("Enabled", enabled ? "true" : "false")));
-        return true;
-    }
-
-    public bool RemoveMod(long id)
-    {
-        XElement removed = Root.Element("ModSources")?.Elements("Mod")
-            .FirstOrDefault(e => (e.Element("ID")?.Value ?? string.Empty).Trim() == id.ToString());
-        if (removed == null)
-            return false;
-        removed.Remove();
-        return true;
-    }
-
-    public bool SetModEnabled(long id, bool enabled) =>
-        SetChildFlag("ModSources", "Mod", "ID", id.ToString(), (a, b) =>
-            (a ?? string.Empty).Trim() == (b ?? string.Empty).Trim(), "Enabled", enabled);
-
-    public bool SetModName(long id, string name)
-    {
-        XElement el = Root.Element("ModSources")?.Elements("Mod")
-            .FirstOrDefault(e => (e.Element("ID")?.Value ?? string.Empty).Trim() == id.ToString());
-        if (el == null)
-            return false;
-        SetChild(el, "Name", name ?? id.ToString());
-        return true;
-    }
+    // Mod sources (<ModSources>) are no longer edited here — the per-world mod
+    // list in Sandbox_config.sbc is authoritative. The empty element is still
+    // written by the skeleton and preserved on load for Magnetar's runtime.
 
     // --- shared helpers ---
 

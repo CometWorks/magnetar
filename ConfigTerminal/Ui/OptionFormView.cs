@@ -44,7 +44,8 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
         EditSession session,
         AtomicFile writer,
         Action onSaved,
-        string banner = null) : base(title)
+        string banner = null,
+        Action editMods = null) : base(title)
     {
         this.options = options;
         this.document = document;
@@ -61,6 +62,17 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
         {
             Add(new Label(banner) { X = 1, Y = 0, Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window });
             top = 1;
+        }
+
+        // World settings link out to that world's ordered mod list (its own editor,
+        // since the <Mods> list is not a flat registry field). Switching panels
+        // flushes this form's pending edits first (SetContent), so no changes are lost.
+        if (editMods != null)
+        {
+            var modsButton = new Button("Edit this world's _Mods…") { X = 1, Y = top };
+            modsButton.Clicked += () => editMods();
+            Add(modsButton);
+            top += 1;
         }
 
         var filterLabel = new Label("Filter: ") { X = 1, Y = top, ColorScheme = TurboVisionTheme.Window };
@@ -133,6 +145,10 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             categoryList.SelectedItem = 0;
             RebuildForm();
         }
+
+        // Land on the filter, not the first focusable child. Without this the
+        // optional "Edit Mods" button (added first) would steal initial focus.
+        filter.SetFocus();
     }
 
     private void RebuildForm()

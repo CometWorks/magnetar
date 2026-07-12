@@ -101,11 +101,10 @@ internal sealed class AppShell : Toplevel
             }),
             new MenuBarItem("_Plugins", new[]
             {
-                new MenuItem("_Hub Plugins", "", ShowHubPlugins),
+                new MenuItem("_Hub", "", ShowHubPlugins),
                 new MenuItem("_Profiles", "", ShowProfiles),
-                new MenuItem("_Local & Dev Plugins", "", ShowPlugins),
-                new MenuItem("Plugin _Sources", "", ShowPluginSources),
-                new MenuItem("_Mods", "", ShowModSources),
+                new MenuItem("_Local & Dev Folders", "", ShowPlugins),
+                new MenuItem("_Sources", "", ShowPluginSources),
             }),
             new MenuBarItem("_Tools", new[]
             {
@@ -254,8 +253,6 @@ internal sealed class AppShell : Toplevel
     public void ShowHubPlugins() => SetContent(new HubPluginsView(binding.MagnetarConfigDir, writer));
 
     public void ShowPluginSources() => SetContent(new PluginSourcesView(binding.MagnetarConfigDir, writer));
-
-    public void ShowModSources() => SetContent(new ModSourcesView(binding.MagnetarConfigDir, writer, settings));
 
     public void ShowProfiles() => SetContent(new ProfilesView(binding.MagnetarConfigDir, writer, OnConfigSaved));
 

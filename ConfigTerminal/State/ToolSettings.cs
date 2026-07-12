@@ -20,13 +20,6 @@ internal sealed class ToolSettings
     /// <summary>Directory the plugin-manifest picker should open at next (remembered across sessions).</summary>
     public string LastPluginFolder { get; set; }
 
-    /// <summary>
-    /// Optional Steam Web API key (steamcommunity.com/dev/apikey), used only for
-    /// Workshop mod dependency resolution. Name lookup and collection expansion
-    /// work without it. Stored plainly in the per-instance tool settings.
-    /// </summary>
-    public string SteamWebApiKey { get; set; }
-
     private ToolSettings(string filePath) => this.filePath = filePath;
 
     public static ToolSettings Load(string magnetarConfigDir)
@@ -39,7 +32,6 @@ internal sealed class ToolSettings
             {
                 XElement root = XDocument.Load(path).Root;
                 settings.LastPluginFolder = root?.Element("LastPluginFolder")?.Value;
-                settings.SteamWebApiKey = root?.Element("SteamWebApiKey")?.Value;
             }
         }
         catch
@@ -56,8 +48,7 @@ internal sealed class ToolSettings
             var doc = new XDocument(
                 new XDeclaration("1.0", "utf-8", null),
                 new XElement("ConfigTerminal",
-                    string.IsNullOrEmpty(LastPluginFolder) ? null : new XElement("LastPluginFolder", LastPluginFolder),
-                    string.IsNullOrEmpty(SteamWebApiKey) ? null : new XElement("SteamWebApiKey", SteamWebApiKey)));
+                    string.IsNullOrEmpty(LastPluginFolder) ? null : new XElement("LastPluginFolder", LastPluginFolder)));
             writer.WriteText(filePath, XmlOut.ToXmlString(doc));
         }
         catch

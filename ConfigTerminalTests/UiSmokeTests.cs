@@ -72,7 +72,6 @@ public class UiSmokeTests : IDisposable
             shell.ShowPlugins();
             shell.ShowHubPlugins();
             shell.ShowPluginSources();
-            shell.ShowModSources();
             shell.ShowProfiles();
             for (int i = 0; i < 2; i++)
             {

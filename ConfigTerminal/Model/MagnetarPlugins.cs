@@ -39,17 +39,6 @@ internal sealed class HubPluginView
     public string Id => Info.Id;
 }
 
-/// <summary>A Magnetar mod source, joined with its active (Profile.Mods) state.</summary>
-internal sealed class ModView
-{
-    public long Id;
-    public string Name;
-    public bool SourceEnabled;   // ModSources <Enabled>
-    public bool InProfile;       // id present in Profile.Mods
-    public bool IsDependency;    // marked as a resolved dependency (name suffix)
-    public bool Active => SourceEnabled && InProfile;
-}
-
 /// <summary>
 /// Facade over Magnetar's plugin config for one instance: the active profile
 /// (enabled set) and the dev-folder sources. Enables/disables local DLLs (from
@@ -364,61 +353,6 @@ internal sealed class MagnetarPlugins
     /// <summary>Toggles a dev-folder registration's own <c>Enabled</c> flag (sources.xml).
     /// Independent of the per-profile selection — Magnetar AND-s the two at load time.</summary>
     public void SetLocalPluginEnabled(string folder, bool on) { if (sources.SetLocalPluginEnabled(folder, on)) sources.Save(writer); }
-
-    // --- mods (ModSources joined with Profile.Mods) ---
-
-    /// <summary>The managed mod list: ModSources entries joined with Profile.Mods membership.</summary>
-    public IReadOnlyList<ModView> Mods()
-    {
-        var inProfile = new HashSet<ulong>(profile.Mods);
-        return sources.ModSources
-            .Select(m => new ModView
-            {
-                Id = m.Id,
-                Name = m.Name,
-                SourceEnabled = m.Enabled,
-                InProfile = m.Id > 0 && inProfile.Contains((ulong)m.Id),
-            })
-            .OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    /// <summary>Adds a mod to ModSources and (when active) the profile, in lockstep.</summary>
-    public void AddMod(long id, string name, bool active = true)
-    {
-        if (id <= 0)
-            return;
-        sources.AddMod(id, name, active);
-        sources.Save(writer);
-        if (active ? profile.EnableMod((ulong)id) : profile.DisableMod((ulong)id))
-            profile.Save(writer);
-    }
-
-    public void SetModName(long id, string name)
-    {
-        if (sources.SetModName(id, name))
-            sources.Save(writer);
-    }
-
-    /// <summary>Toggles a mod on/off, keeping ModSources.Enabled and Profile.Mods in sync.</summary>
-    public void SetModActive(long id, bool active)
-    {
-        if (id <= 0)
-            return;
-        if (sources.SetModEnabled(id, active))
-            sources.Save(writer);
-        if (active ? profile.EnableMod((ulong)id) : profile.DisableMod((ulong)id))
-            profile.Save(writer);
-    }
-
-    /// <summary>Removes a mod from both ModSources and Profile.Mods.</summary>
-    public void RemoveMod(long id)
-    {
-        bool changed = sources.RemoveMod(id);
-        if (changed) sources.Save(writer);
-        if (id > 0 && profile.DisableMod((ulong)id))
-            profile.Save(writer);
-    }
 
     // --- helpers ---
 

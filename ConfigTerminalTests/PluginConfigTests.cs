@@ -111,7 +111,7 @@ public class PluginConfigTests : IDisposable
     }
 
     [Fact]
-    public void Profile_github_and_mods_upsert_preserve_siblings()
+    public void Profile_github_upsert_preserves_siblings_including_mods()
     {
         string profilesDir = Path.Combine(dir, "Profiles");
         Directory.CreateDirectory(profilesDir);
@@ -125,25 +125,21 @@ public class PluginConfigTests : IDisposable
         PluginProfileDocument doc = PluginProfileDocument.Open(dir);
         Assert.True(doc.EnableGitHub("cool-plugin-guid"));
         Assert.False(doc.EnableGitHub("cool-plugin-guid"));   // idempotent
-        Assert.True(doc.EnableMod(222));
-        Assert.False(doc.EnableMod(222));
         doc.Save(new AtomicFile());
 
         string xml = File.ReadAllText(path);
         Assert.Contains("keep-hub", xml);           // existing GitHub preserved
         Assert.Contains("Keep.dll", xml);           // existing Local preserved
         Assert.Contains("<Id>cool-plugin-guid</Id>", xml);
+        // The tool no longer edits <Mods> (per-world Sandbox_config.sbc is
+        // authoritative), but an existing entry must be preserved untouched.
         Assert.Contains("<unsignedLong>111</unsignedLong>", xml);
-        Assert.Contains("<unsignedLong>222</unsignedLong>", xml);
 
         PluginProfileDocument reopened = PluginProfileDocument.Open(dir);
         Assert.Contains("cool-plugin-guid", reopened.GitHubPlugins);
-        Assert.Contains(222UL, reopened.Mods);
 
         Assert.True(reopened.DisableGitHub("cool-plugin-guid"));
-        Assert.True(reopened.DisableMod(222));
         Assert.DoesNotContain("cool-plugin-guid", reopened.GitHubPlugins);
-        Assert.DoesNotContain(222UL, reopened.Mods);
     }
 
     [Fact]
@@ -178,30 +174,6 @@ public class PluginConfigTests : IDisposable
     }
 
     [Fact]
-    public void Sources_modsources_add_toggle_rename_remove()
-    {
-        PluginSourcesDocument doc = PluginSourcesDocument.Open(dir);
-        Assert.True(doc.AddMod(500, "My Mod", true));
-        Assert.False(doc.AddMod(500, "My Mod Renamed", false)); // updates existing, returns false
-        doc.Save(new AtomicFile());
-
-        string xml = File.ReadAllText(PluginSourcesDocument.PathFor(dir));
-        Assert.Contains("<Mod>", xml);
-        Assert.Contains("<ID>500</ID>", xml);
-        Assert.Contains("<Name>My Mod Renamed</Name>", xml);
-        Assert.Contains("<Enabled>false</Enabled>", xml);
-
-        PluginSourcesDocument re = PluginSourcesDocument.Open(dir);
-        ModSourceEntry m = Assert.Single(re.ModSources);
-        Assert.Equal(500, m.Id);
-        Assert.False(m.Enabled);
-        Assert.True(re.SetModEnabled(500, true));
-        Assert.True(re.SetModName(500, "Final"));
-        Assert.True(re.RemoveMod(500));
-        Assert.Empty(re.ModSources);
-    }
-
-    [Fact]
     public void Facade_hub_catalog_reflects_profile_enabled_and_pulls_dependencies()
     {
         // A tiny hand-built catalog blob is impractical here; instead drive the
@@ -227,28 +199,6 @@ public class PluginConfigTests : IDisposable
         // Disabling removes it from the profile again.
         plugins.SetHubPluginEnabled(first.Id, false);
         Assert.False(plugins.HubCatalogPlugins().First(c => c.Id == first.Id).Enabled);
-    }
-
-    [Fact]
-    public void Facade_mods_stay_in_lockstep_with_profile()
-    {
-        var plugins = new MagnetarPlugins(dir, new AtomicFile());
-        plugins.AddMod(12345, "Test Mod", active: true);
-
-        ModView m = Assert.Single(plugins.Mods());
-        Assert.Equal(12345, m.Id);
-        Assert.True(m.Active);
-        Assert.True(m.InProfile);
-
-        // The workshop id landed in Profile.Mods.
-        Assert.Contains(12345UL, PluginProfileDocument.Open(dir).Mods);
-
-        plugins.SetModActive(12345, false);
-        Assert.False(plugins.Mods().Single().Active);
-        Assert.DoesNotContain(12345UL, PluginProfileDocument.Open(dir).Mods);
-
-        plugins.RemoveMod(12345);
-        Assert.Empty(plugins.Mods());
     }
 
     [Fact]

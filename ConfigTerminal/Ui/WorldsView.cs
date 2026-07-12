@@ -36,7 +36,7 @@ internal sealed class WorldsView : Window
         var settings = new Button("_Settings") { X = 1, Y = Pos.AnchorEnd(2) };
         settings.Clicked += OpenSettings;
         var mods = new Button("_Mods") { X = Pos.Right(settings) + 1, Y = Pos.AnchorEnd(2) };
-        mods.Clicked += OpenMods;
+        mods.Clicked += () => OpenMods(Selected);
         var activate = new Button("_Activate (F6)") { X = Pos.Right(mods) + 1, Y = Pos.AnchorEnd(2) };
         activate.Clicked += ActivateWorld;
         var refresh = new Button("_Refresh") { X = Pos.Right(activate) + 1, Y = Pos.AnchorEnd(2) };
@@ -97,14 +97,14 @@ internal sealed class WorldsView : Window
             doc,
             new EditSession(doc, OptionRegistry.SessionOptions),
             shell.Writer,
-            Reload);
+            Reload,
+            editMods: () => OpenMods(w));
         // Reuse the shell's content host.
         shell.ShowWorldContent(view);
     }
 
-    private void OpenMods()
+    private void OpenMods(WorldInfo w)
     {
-        WorldInfo w = Selected;
         if (w == null) return;
         shell.ShowWorldContent(new ModListView(w, shell.Writer));
     }

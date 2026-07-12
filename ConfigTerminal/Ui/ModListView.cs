@@ -44,9 +44,9 @@ internal sealed class ModListView : Window, IAutoSaveContent
         var del = new Button("_Del") { X = Pos.Right(add) + 1, Y = Pos.AnchorEnd(2) };
         del.Clicked += Remove;
         var up = new Button("_Up") { X = Pos.Right(del) + 1, Y = Pos.AnchorEnd(2) };
-        up.Clicked += () => { mods.MoveUp(list.SelectedItem); Refresh(); };
+        up.Clicked += () => MoveSelected(-1);
         var down = new Button("Dow_n") { X = Pos.Right(up) + 1, Y = Pos.AnchorEnd(2) };
-        down.Clicked += () => { mods.MoveDown(list.SelectedItem); Refresh(); };
+        down.Clicked += () => MoveSelected(+1);
         var dep = new Button("Toggle Dep_endency") { X = Pos.Right(down) + 1, Y = Pos.AnchorEnd(2) };
         dep.Clicked += ToggleDependency;
         var hint = new Label("Changes save automatically") { X = Pos.Right(dep) + 2, Y = Pos.AnchorEnd(2) };
@@ -59,6 +59,23 @@ internal sealed class ModListView : Window, IAutoSaveContent
     {
         list.SetSource(mods.Items.Select((m, i) =>
             $"{i + 1,3}. {m.PublishedFileId,-12} {(m.IsDependency ? "[dep] " : "      ")}{m.FriendlyName}").ToList());
+    }
+
+    // Reorder the selected mod one slot, keeping the selection on that mod so it
+    // can be moved again without re-selecting it.
+    private void MoveSelected(int delta)
+    {
+        int i = list.SelectedItem;
+        int target = i + delta;
+        if (i < 0 || target < 0 || target >= mods.Items.Count)
+            return;
+
+        if (delta < 0)
+            mods.MoveUp(i);
+        else
+            mods.MoveDown(i);
+        Refresh();
+        list.SelectedItem = target;
     }
 
     private void AddMod()

@@ -104,7 +104,7 @@ public class PluginInteropTests
     }
 
     [Fact]
-    public void Hub_and_mod_edits_round_trip_through_Magnetar_serializers()
+    public void Hub_edits_round_trip_through_Magnetar_serializers()
     {
         string sharedDll = SharedDllPath();
         if (!File.Exists(sharedDll))
@@ -114,16 +114,14 @@ public class PluginInteropTests
         Directory.CreateDirectory(dir);
         try
         {
-            // Enable a hub plugin + a mod in the profile, and add a remote hub +
-            // a mod source in sources.xml — all through the tool's own model.
+            // Enable a hub plugin in the profile and add a remote hub in
+            // sources.xml — all through the tool's own model.
             PluginProfileDocument profile = PluginProfileDocument.Open(dir);
             profile.EnableGitHub("HUB-GUID-1");
-            profile.EnableMod(2599830339);
             profile.Save(new AtomicFile());
 
             PluginSourcesDocument sources = PluginSourcesDocument.Open(dir);
             sources.AddRemoteHub("MagnetarHub", "CometWorks/magnetar-hub", "main");
-            sources.AddMod(2599830339, "Some Mod", true);
             sources.Save(new AtomicFile());
 
             string binDir = Path.GetDirectoryName(sharedDll);
@@ -138,7 +136,8 @@ public class PluginInteropTests
             {
                 Assembly shared = Assembly.LoadFrom(sharedDll);
 
-                // Profile: GitHub + Mods populate and Validate() passes.
+                // Profile: GitHub populates and Validate() passes (empty Mods is
+                // still written by the skeleton, so validation stays green).
                 Type profileType = shared.GetType("Pulsar.Shared.Data.Profile");
                 object profileObj;
                 using (FileStream fs = File.OpenRead(PluginProfileDocument.PathFor(dir)))
@@ -152,10 +151,7 @@ public class PluginInteropTests
                         foundHub = true;
                 Assert.True(foundHub, "GitHub plugin id did not round-trip");
 
-                var modsSet = (IEnumerable)profileType.GetProperty("Mods").GetValue(profileObj);
-                Assert.Contains(2599830339UL, System.Linq.Enumerable.Cast<ulong>(modsSet));
-
-                // SourcesConfig: RemoteHub + ModSources deserialize with the right values.
+                // SourcesConfig: RemoteHub deserializes with the right values.
                 Type sourcesType = shared.GetType("Pulsar.Shared.Config.SourcesConfig");
                 Assert.NotNull(sourcesType);
                 object sourcesObj;
@@ -168,16 +164,6 @@ public class PluginInteropTests
                     if ((string)h.GetType().GetProperty("Repo").GetValue(h) == "CometWorks/magnetar-hub")
                         foundRepo = true;
                 Assert.True(foundRepo, "RemoteHub repo did not round-trip");
-
-                var modSources = (IEnumerable)sourcesType.GetProperty("ModSources").GetValue(sourcesObj);
-                bool foundMod = false;
-                foreach (object md in modSources)
-                {
-                    long id = Convert.ToInt64(md.GetType().GetProperty("ID").GetValue(md));
-                    if (id == 2599830339)
-                        foundMod = true;
-                }
-                Assert.True(foundMod, "ModSource ID did not round-trip");
             }
             finally
             {

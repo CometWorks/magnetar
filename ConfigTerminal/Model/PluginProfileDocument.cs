@@ -237,33 +237,10 @@ internal sealed class PluginProfileDocument
         return true;
     }
 
-    // --- mods (Profile.Mods: HashSet<ulong> of Steam Workshop ids) ---
-
-    public IReadOnlyList<ulong> Mods =>
-        Root.Element("Mods")?.Elements("unsignedLong")
-            .Select(e => ulong.TryParse((e.Value ?? string.Empty).Trim(), out ulong v) ? v : 0UL)
-            .Where(v => v != 0).ToList() ?? new List<ulong>();
-
-    public bool EnableMod(ulong id)
-    {
-        if (id == 0)
-            return false;
-        XElement list = List("Mods");
-        if (list.Elements("unsignedLong").Any(e => (e.Value ?? string.Empty).Trim() == id.ToString()))
-            return false;
-        list.Add(new XElement("unsignedLong", id.ToString()));
-        return true;
-    }
-
-    public bool DisableMod(ulong id)
-    {
-        XElement removed = Root.Element("Mods")?.Elements("unsignedLong")
-            .FirstOrDefault(e => (e.Value ?? string.Empty).Trim() == id.ToString());
-        if (removed == null)
-            return false;
-        removed.Remove();
-        return true;
-    }
+    // Mods (Profile.Mods) are no longer edited here — the per-world mod list in
+    // Sandbox_config.sbc is authoritative. The empty <Mods> element is still
+    // written by the skeleton (and preserved on load) because Magnetar's
+    // Profile.Validate() requires all four collections to be present.
 
     public void Save(AtomicFile writer) => writer.WriteText(FilePath, XmlOut.ToXmlString(xml));
 
