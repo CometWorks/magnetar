@@ -85,7 +85,17 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             Height = Dim.Fill(2),
             ColorScheme = TurboVisionTheme.Window,
         };
-        categoryList.SelectedItemChanged += _ => RebuildForm();
+        categoryList.SelectedItemChanged += _ =>
+        {
+            // Selecting a category means "show this category in full", but a non-empty
+            // filter ignores the selection and spans all categories. Clear it so the
+            // click takes effect. Setting Text fires TextChanged -> RebuildForm; when the
+            // filter is already empty, rebuild directly so the selection still applies.
+            if (filter.Text != null && filter.Text.Length > 0)
+                filter.Text = ustring.Empty;
+            else
+                RebuildForm();
+        };
 
         formFrame = new FrameView("Options")
         {
@@ -159,7 +169,7 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             {
                 if (y > 0)
                     y += 1;
-                form.Add(new Label(group.Key) { X = 0, Y = y, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window });
+                form.Add(new Label(group.Key + " /") { X = 0, Y = y, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window });
                 y += 1;
                 AddGroup(group, ref y);
             }
