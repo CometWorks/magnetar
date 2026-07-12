@@ -22,6 +22,8 @@ internal static class FileDialogs
             CanChooseDirectories = true,
             AllowsMultipleSelection = false,
             ColorScheme = TurboVisionTheme.Dialog,
+            NameDirLabel = "Parent",
+            NameFieldLabel = "Directory",
         };
         return Run(dlg, initial);
     }
@@ -35,6 +37,8 @@ internal static class FileDialogs
             CanChooseDirectories = false,
             AllowsMultipleSelection = false,
             ColorScheme = TurboVisionTheme.Dialog,
+            NameDirLabel = "Directory",
+            NameFieldLabel = "File",
         };
         if (allowedTypes != null)
             dlg.AllowedFileTypes = allowedTypes;
