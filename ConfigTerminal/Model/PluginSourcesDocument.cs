@@ -148,6 +148,9 @@ internal sealed class PluginSourcesDocument
         return true;
     }
 
+    public bool SetLocalPluginEnabled(string folder, bool enabled) =>
+        SetChildFlag(ListName, "LocalPlugin", "Folder", folder, PathEq, "Enabled", enabled);
+
     public LocalPluginSource FindById(string id) =>
         LocalPlugins.FirstOrDefault(p => string.Equals(
             Path.GetFileName((p.Folder ?? string.Empty).TrimEnd('/', '\\')), id, StringComparison.OrdinalIgnoreCase));

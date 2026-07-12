@@ -12,7 +12,7 @@ namespace Magnetar.ConfigTerminal.Ui;
 /// (e.g. MagnetarHub), single remote plugin repos, and local hub folders that
 /// Magnetar scans for available plugins. Edits <c>Sources/sources.xml</c> in place
 /// via the same upsert approach as the rest of the tool, preserving every field
-/// Magnetar manages itself (LastCheck, Hash). Space toggles a source enabled.
+/// Magnetar manages itself (LastCheck, Hash). Press SPACE to toggle a source.
 /// </summary>
 internal sealed class PluginSourcesView : Window
 {

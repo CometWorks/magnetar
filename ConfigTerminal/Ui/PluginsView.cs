@@ -14,8 +14,9 @@ namespace Magnetar.ConfigTerminal.Ui;
 /// folder (pressing SPACE toggles enabled state), and registered dev folders added
 /// Quasar-style by picking a manifest XML (the folder + filename + folder-name id
 /// are derived, and the last-visited folder is remembered for the next add).
-/// Registering a dev folder only makes it selectable — it is enabled/disabled in
-/// the Hub Plugins list. This pane just shows what's registered and its state.
+/// The dev-folder pane's [x]/[ ] box toggles the registration's own Enabled flag
+/// (sources.xml); regardless of it the folder stays selectable, and it is picked
+/// per-profile in the Hub Plugins list. Magnetar AND-s the two at load time.
 /// </summary>
 internal sealed class PluginsView : Window
 {
@@ -46,24 +47,27 @@ internal sealed class PluginsView : Window
         localList.OpenSelectedItem += _ => ToggleLocal();
         localFrame.Add(localList);
 
-        var devFrame = new FrameView("Registered dev folders (enable under Hub Plugins)")
+        var devFrame = new FrameView("Registered dev folders — Press SPACE to toggle (select per-profile under Hub Plugins)")
         {
             X = Pos.Percent(50), Y = 0, Width = Dim.Fill(), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
         devList = new ListView(Array.Empty<string>())
         { X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        devList.OpenSelectedItem += _ => ToggleDev();
         devFrame.Add(devList);
 
         var toggle = new Button("_Toggle DLL") { X = 0, Y = Pos.AnchorEnd(1) };
         toggle.Clicked += ToggleLocal;
         var add = new Button("_Add Dev Folder…") { X = Pos.Right(toggle) + 1, Y = Pos.AnchorEnd(1) };
         add.Clicked += AddDevFolder;
-        var remove = new Button("_Remove Dev Folder") { X = Pos.Right(add) + 1, Y = Pos.AnchorEnd(1) };
+        var toggleDev = new Button("Toggle _Enabled") { X = Pos.Right(add) + 1, Y = Pos.AnchorEnd(1) };
+        toggleDev.Clicked += ToggleDev;
+        var remove = new Button("_Remove Dev Folder") { X = Pos.Right(toggleDev) + 1, Y = Pos.AnchorEnd(1) };
         remove.Clicked += RemoveDevFolder;
         var refresh = new Button("Re_fresh") { X = Pos.Right(remove) + 1, Y = Pos.AnchorEnd(1) };
         refresh.Clicked += Refresh;
 
-        Add(localFrame, devFrame, toggle, add, remove, refresh);
+        Add(localFrame, devFrame, toggle, add, toggleDev, remove, refresh);
         Refresh();
     }
 
@@ -72,6 +76,11 @@ internal sealed class PluginsView : Window
         if (kb.Key == (Key)' ' && localList.HasFocus)
         {
             ToggleLocal();
+            return true;
+        }
+        if (kb.Key == (Key)' ' && devList.HasFocus)
+        {
+            ToggleDev();
             return true;
         }
         return base.ProcessKey(kb);
@@ -95,7 +104,8 @@ internal sealed class PluginsView : Window
     }
 
     // Pad the id column to a common width so the rows line up. The [x]/[ ] box
-    // reflects whether the active profile enables it (toggled under Hub Plugins).
+    // reflects the registration's own Enabled flag (sources.xml); the per-profile
+    // selection is toggled separately under Hub Plugins.
     private static List<string> FormatDevList(List<DevFolderPlugin> devs)
     {
         if (devs.Count == 0)
@@ -105,7 +115,7 @@ internal sealed class PluginsView : Window
 
         return devs.Select(p =>
         {
-            string box = p.Enabled ? "[x]" : "[ ]";
+            string box = p.SourceEnabled ? "[x]" : "[ ]";
             string flag = p.SourceMissing ? "  ! folder missing" : "";
             string folder = p.Folder ?? "(no folder)";
             string id = (p.Id ?? string.Empty).PadRight(idWidth);
@@ -123,6 +133,20 @@ internal sealed class PluginsView : Window
         Refresh();
         if (i < localList.Source.Count)
             localList.SelectedItem = i;
+    }
+
+    private void ToggleDev()
+    {
+        int i = devList.SelectedItem;
+        if (i < 0 || i >= devs.Count)
+            return;
+        DevFolderPlugin p = devs[i];
+        if (p.Folder == null)
+            return;
+        plugins.SetLocalPluginEnabled(p.Folder, !p.SourceEnabled);
+        Refresh();
+        if (i < devList.Source.Count)
+            devList.SelectedItem = i;
     }
 
     private void AddDevFolder()

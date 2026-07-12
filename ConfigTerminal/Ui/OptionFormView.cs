@@ -331,7 +331,7 @@ internal sealed class OptionFormView : Window
         string keys = def.Kind switch
         {
             OptionKind.Enum when def.Choices.Length <= 4 => "Space / ←→ cycles choice.  ",
-            OptionKind.Bool => "Space toggles.  ",
+            OptionKind.Bool => "Press SPACE to toggle.  ",
             _ => "",
         };
         string live = def.Liveness == Liveness.LiveViaReload ? "applies live via reload" : "requires restart";

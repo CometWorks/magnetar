@@ -20,7 +20,8 @@ internal sealed class DevFolderPlugin
     public string Id;         // folder name
     public string Folder;     // absolute source folder (from sources.xml)
     public string DataFile;   // manifest filename (hint from sources.xml, may be null)
-    public bool Enabled;      // id present in Profile.DevFolder
+    public bool Enabled;      // id present in Profile.DevFolder (per-profile selection)
+    public bool SourceEnabled; // the registration's <Enabled> flag (sources.xml)
     public bool SourceMissing; // registered, but the folder is gone on disk
 }
 
@@ -146,6 +147,7 @@ internal sealed class MagnetarPlugins
                 Folder = src.Folder,
                 DataFile = src.DataFile,
                 Enabled = enabled.Contains(id),
+                SourceEnabled = src.Enabled,
                 SourceMissing = !Directory.Exists(src.Folder),
             });
         }
@@ -358,6 +360,10 @@ internal sealed class MagnetarPlugins
     public void SetRemoteHubEnabled(string repo, bool on) { if (sources.SetRemoteHubEnabled(repo, on)) sources.Save(writer); }
     public void SetRemotePluginEnabled(string repo, bool on) { if (sources.SetRemotePluginEnabled(repo, on)) sources.Save(writer); }
     public void SetLocalHubEnabled(string folder, bool on) { if (sources.SetLocalHubEnabled(folder, on)) sources.Save(writer); }
+
+    /// <summary>Toggles a dev-folder registration's own <c>Enabled</c> flag (sources.xml).
+    /// Independent of the per-profile selection — Magnetar AND-s the two at load time.</summary>
+    public void SetLocalPluginEnabled(string folder, bool on) { if (sources.SetLocalPluginEnabled(folder, on)) sources.Save(writer); }
 
     // --- mods (ModSources joined with Profile.Mods) ---
 
