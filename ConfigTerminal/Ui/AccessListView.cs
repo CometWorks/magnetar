@@ -8,7 +8,7 @@ using Magnetar.ConfigTerminal.Model;
 namespace Magnetar.ConfigTerminal.Ui;
 
 /// <summary>Editors for the Administrators / Banned / Reserved SteamID lists + GroupID.</summary>
-internal sealed class AccessListView : Window
+internal sealed class AccessListView : Window, IAutoSaveContent
 {
     private readonly DedicatedConfigDocument cfg;
     private readonly AtomicFile writer;
@@ -21,6 +21,11 @@ internal sealed class AccessListView : Window
     private readonly ListView bannedList;
     private readonly ListView reservedList;
     private readonly TextField groupId;
+
+    // Content snapshot for change-only saving, and the live-validity of GroupID
+    // (the only free-typed field; the SteamID lists are numeric-enforced at add).
+    private string snapshot;
+    private bool groupIdInvalid;
 
     public AccessListView(DedicatedConfigDocument cfg, AtomicFile writer, Action onSaved) : base("Access Lists")
     {
@@ -41,18 +46,27 @@ internal sealed class AccessListView : Window
         reservedFrame.X = Pos.Right(bannedFrame);
 
         groupId = new TextField(cfg.GroupId) { X = 11, Y = Pos.AnchorEnd(3), Width = 20 };
+        groupId.TextChanged += _ => ValidateGroupId();
         var groupLabel = new Label("GroupID:") { X = 1, Y = Pos.AnchorEnd(3) };
 
-        var save = new Button("_Save (F2)") { X = 1, Y = Pos.AnchorEnd(1) };
-        save.Clicked += Save;
+        var hint = new Label("Changes save automatically") { X = 1, Y = Pos.AnchorEnd(1) };
 
-        Add(adminFrame, bannedFrame, reservedFrame, groupLabel, groupId, save);
+        Add(adminFrame, bannedFrame, reservedFrame, groupLabel, groupId, hint);
+
+        // Normalize the baseline through the same write path used by the flush, so
+        // merely viewing the panel (no edits) never looks "changed" on the first tick.
+        CommitToDocument();
+        snapshot = cfg.ToCanonicalString();
     }
 
-    public override bool ProcessKey(KeyEvent kb)
+    // GroupID must be a numeric group id; empty is allowed and means "0". Show it
+    // red while invalid; the invalid value is not written (the original is kept).
+    private void ValidateGroupId()
     {
-        if (kb.Key == Key.F2) { Save(); return true; }
-        return base.ProcessKey(kb);
+        string t = groupId.Text.ToString().Trim();
+        groupIdInvalid = t.Length > 0 && !ulong.TryParse(t, out _);
+        groupId.ColorScheme = groupIdInvalid ? TurboVisionTheme.Error : TurboVisionTheme.Window;
+        groupId.SetNeedsDisplay();
     }
 
     private ListView MakeColumn(string title, int x, List<string> data, out View frame)
@@ -108,21 +122,40 @@ internal sealed class AccessListView : Window
         return result;
     }
 
-    private void Save()
+    // Push the working buffers into the document. The lists are always valid
+    // (numeric-enforced at add); GroupID is only applied when valid so an invalid
+    // entry keeps the original value.
+    private void CommitToDocument()
     {
-        try
+        cfg.SetAdministrators(admins);
+        cfg.SetBanned(banned);
+        cfg.SetReserved(reserved);
+        if (!groupIdInvalid)
         {
-            cfg.SetAdministrators(admins);
-            cfg.SetBanned(banned);
-            cfg.SetReserved(reserved);
-            cfg.GroupId = string.IsNullOrWhiteSpace(groupId.Text.ToString()) ? "0" : groupId.Text.ToString().Trim();
-            cfg.Save(writer);
-            onSaved?.Invoke();
-            Dialogs.Info("Saved", "Access lists saved.");
-        }
-        catch (Exception e)
-        {
-            Dialogs.Error("Save failed", e.Message);
+            string t = groupId.Text.ToString().Trim();
+            cfg.GroupId = string.IsNullOrWhiteSpace(t) ? "0" : t;
         }
     }
+
+    public void FlushPendingSave()
+    {
+        CommitToDocument();
+
+        if (cfg.ToCanonicalString() == snapshot)
+            return; // nothing changed
+
+        try
+        {
+            cfg.Save(writer);
+            onSaved?.Invoke();
+            snapshot = cfg.ToCanonicalString();
+        }
+        catch
+        {
+            // Retry on the next tick; the auto-save path must never pop a dialog.
+        }
+    }
+
+    public IReadOnlyList<string> InvalidFields =>
+        groupIdInvalid ? new[] { "GroupID" } : Array.Empty<string>();
 }

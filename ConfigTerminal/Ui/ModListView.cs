@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Terminal.Gui;
 using Magnetar.ConfigTerminal.Io;
@@ -7,12 +8,17 @@ using Magnetar.ConfigTerminal.Model;
 namespace Magnetar.ConfigTerminal.Ui;
 
 /// <summary>Ordered mod-list editor for a world's Sandbox_config.sbc.</summary>
-internal sealed class ModListView : Window
+internal sealed class ModListView : Window, IAutoSaveContent
 {
     private readonly WorldConfigDocument doc;
     private readonly AtomicFile writer;
     private readonly ModList mods;
     private readonly ListView list;
+
+    // Content snapshot for change-only saving, and the last validation problems
+    // (surfaced as the leave-warning when the list can't be saved).
+    private string snapshot;
+    private IReadOnlyList<string> currentIssues = Array.Empty<string>();
 
     public ModListView(WorldInfo world, AtomicFile writer) : base($"Mods — {world.SessionName}")
     {
@@ -22,6 +28,10 @@ internal sealed class ModListView : Window
 
         doc = WorldConfigDocument.Open(world.WorldConfigPath);
         mods = doc.ReadMods();
+        // Normalize the baseline through WriteMods so an untouched list doesn't
+        // look "changed" on the first flush.
+        doc.WriteMods(mods);
+        snapshot = doc.ToCanonicalString();
 
         list = new ListView(Array.Empty<string>())
         {
@@ -39,17 +49,10 @@ internal sealed class ModListView : Window
         down.Clicked += () => { mods.MoveDown(list.SelectedItem); Refresh(); };
         var dep = new Button("Toggle Dep_endency") { X = Pos.Right(down) + 1, Y = Pos.AnchorEnd(2) };
         dep.Clicked += ToggleDependency;
-        var save = new Button("_Save (F2)") { X = Pos.Right(dep) + 1, Y = Pos.AnchorEnd(2) };
-        save.Clicked += Save;
+        var hint = new Label("Changes save automatically") { X = Pos.Right(dep) + 2, Y = Pos.AnchorEnd(2) };
 
-        Add(list, add, del, up, down, dep, save);
+        Add(list, add, del, up, down, dep, hint);
         Refresh();
-    }
-
-    public override bool ProcessKey(KeyEvent kb)
-    {
-        if (kb.Key == Key.F2) { Save(); return true; }
-        return base.ProcessKey(kb);
     }
 
     private void Refresh()
@@ -92,26 +95,28 @@ internal sealed class ModListView : Window
         }
     }
 
-    private void Save()
+    public void FlushPendingSave()
     {
-        var issues = mods.Validate();
-        if (issues.Count > 0)
-        {
-            Dialogs.ErrorDetails("Cannot save mods", "Fix these before saving:",
-                string.Join("\n", issues.Select(s => "• " + s)));
-            return;
-        }
+        currentIssues = mods.Validate();
+        if (currentIssues.Count > 0)
+            return; // don't write an invalid list; the leave-warning surfaces these
+
+        doc.WriteMods(mods);
+        if (doc.ToCanonicalString() == snapshot)
+            return; // nothing changed
+
         try
         {
-            doc.WriteMods(mods);
             doc.Save(writer);
-            Dialogs.Info("Saved", "Mod list saved.");
+            snapshot = doc.ToCanonicalString();
         }
-        catch (Exception e)
+        catch
         {
-            Dialogs.Error("Save failed", e.Message);
+            // Retry on the next tick; the auto-save path must never pop a dialog.
         }
     }
+
+    public IReadOnlyList<string> InvalidFields => currentIssues;
 
     private static string Prompt(string title, string label)
     {

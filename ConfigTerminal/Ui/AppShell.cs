@@ -54,6 +54,14 @@ internal sealed class AppShell : Toplevel
             RefreshStatus();
             return true;
         });
+        // Auto-save tick: flushes the current panel's pending changes at most once
+        // a second, so an edit is never on screen unsaved for longer than that. A
+        // no-op when the panel is clean, so it is cheap to run every second.
+        Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(1), _ =>
+        {
+            (content as IAutoSaveContent)?.FlushPendingSave();
+            return true;
+        });
         monitor.Poll();
         RefreshStatus();
     }
@@ -167,6 +175,22 @@ internal sealed class AppShell : Toplevel
 
     private void SetContent(View view)
     {
+        // Persist the outgoing panel before it goes away. If it still holds
+        // invalid, unsaved values, warn and let the user stay to fix them.
+        if (content is IAutoSaveContent auto)
+        {
+            auto.FlushPendingSave();
+            if (auto.InvalidFields.Count > 0 &&
+                !Dialogs.Confirm("Invalid fields",
+                    "These fields are invalid and were not saved:\n" +
+                    string.Join("\n", auto.InvalidFields.Select(f => " • " + f)) +
+                    "\n\nLeave this panel anyway?", "Leave", "Stay"))
+            {
+                view.Dispose(); // discard the panel we were about to show
+                return;         // abort the switch; stay on the current panel
+            }
+        }
+
         if (content != null)
         {
             Remove(content);
@@ -447,7 +471,16 @@ internal sealed class AppShell : Toplevel
 
     private bool RequestQuit()
     {
-        if (Dialogs.Confirm("Quit", "Exit MagnetarConfig?"))
+        // Flush the current panel first so valid pending changes are persisted on
+        // the way out; fold any invalid-field warning into the single Quit dialog.
+        var auto = content as IAutoSaveContent;
+        auto?.FlushPendingSave();
+        string note = auto != null && auto.InvalidFields.Count > 0
+            ? "\n\nNote: these fields are invalid and were not saved:\n" +
+              string.Join("\n", auto.InvalidFields.Select(f => " • " + f))
+            : "";
+
+        if (Dialogs.Confirm("Quit", "Exit MagnetarConfig?" + note))
         {
             Application.RequestStop();
             return true;

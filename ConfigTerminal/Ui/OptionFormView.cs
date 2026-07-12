@@ -11,10 +11,11 @@ namespace Magnetar.ConfigTerminal.Ui;
 /// <summary>
 /// The generic, registry-driven settings form used for the DS global config,
 /// the cfg's new-world defaults, and each world's settings. Left pane: category
-/// list. Right pane: a scrollable form of field widgets. F2 saves through the
-/// edit session (validate → backup → atomic write).
+/// list. Right pane: a scrollable form of field widgets. Edits save themselves
+/// through the edit session (validate → backup → atomic write); invalid values
+/// are shown red and kept out of the document until corrected.
 /// </summary>
-internal sealed class OptionFormView : Window
+internal sealed class OptionFormView : Window, IAutoSaveContent
 {
     private readonly IReadOnlyList<OptionDefinition> options;
     private readonly ConfigDocumentBase document;
@@ -30,6 +31,11 @@ internal sealed class OptionFormView : Window
     private readonly ScrollView form;
     private readonly Label hint;
     private string currentCategory;
+
+    // Fields whose editor currently holds an invalid value; their value is not
+    // committed to the document (the original is kept) until corrected. Keyed by
+    // the registry's singleton OptionDefinition, so entries survive form rebuilds.
+    private readonly HashSet<OptionDefinition> invalid = new();
 
     public OptionFormView(
         string title,
@@ -101,7 +107,7 @@ internal sealed class OptionFormView : Window
         };
         formFrame.Add(form);
 
-        hint = new Label("F2 Save · Tab move · Filter narrows fields across categories")
+        hint = new Label("Changes save automatically · Tab move · Filter narrows fields across categories")
         {
             X = 1,
             Y = Pos.AnchorEnd(1),
@@ -119,20 +125,14 @@ internal sealed class OptionFormView : Window
         }
     }
 
-    public override bool ProcessKey(KeyEvent kb)
-    {
-        if (kb.Key == Key.F2)
-        {
-            Save();
-            return true;
-        }
-        return base.ProcessKey(kb);
-    }
-
     private void RebuildForm()
     {
         string q = (filter.Text?.ToString() ?? string.Empty).Trim();
         form.RemoveAll();
+        // Editors are rebuilt from the document's (valid) values, so any
+        // uncommitted invalid text is discarded here — the field reverts to its
+        // original value and is no longer invalid.
+        invalid.Clear();
         int y = 0;
 
         if (q.Length == 0)
@@ -300,14 +300,30 @@ internal sealed class OptionFormView : Window
             default:
             {
                 var tf = new TextField(document.Get(def) ?? string.Empty) { X = x, Y = 0, Width = 24 };
-                tf.Leave += _ =>
-                {
-                    document.Set(def, tf.Text.ToString());
-                    session.NotifyChanged();
-                };
+                tf.TextChanged += _ => OnFieldEdited(def, tf, tf.Text.ToString());
                 return tf;
             }
         }
+    }
+
+    // Live-validate a free-typed field on each change: a valid value is committed
+    // to the document immediately (so the ~1s auto-save picks it up); an invalid
+    // value is shown red and left out of the document, keeping the original value.
+    private void OnFieldEdited(OptionDefinition def, View editor, string text)
+    {
+        if (EditSession.ErrorFor(def, text) == null)
+        {
+            invalid.Remove(def);
+            editor.ColorScheme = TurboVisionTheme.Window;
+            document.Set(def, text);
+            session.NotifyChanged();
+        }
+        else
+        {
+            invalid.Add(def);
+            editor.ColorScheme = TurboVisionTheme.Error;
+        }
+        editor.SetNeedsDisplay();
     }
 
     private string StatusGlyph(OptionDefinition def)
@@ -373,32 +389,25 @@ internal sealed class OptionFormView : Window
         }
     }
 
-    private void Save()
+    public void FlushPendingSave()
     {
-        IReadOnlyList<OptionIssue> issues = session.Validate();
-        var errors = issues.Where(i => i.IsError).ToList();
-        if (errors.Count > 0)
-        {
-            Dialogs.ErrorDetails("Cannot save", "Fix these errors before saving:",
-                string.Join("\n", errors.Take(10).Select(e => "• " + e.Message)));
+        if (!session.IsDirty)
             return;
-        }
-
+        // Invalid values never reach the document, but guard anyway: never write a
+        // document that fails validation.
+        if (session.Validate().Any(i => i.IsError))
+            return;
         try
         {
             session.Save(writer);
             onSaved?.Invoke();
-            var warnings = issues.Where(i => !i.IsError).ToList();
-            string saved = "Saved " + System.IO.Path.GetFileName(document.FilePath) + ".";
-            if (warnings.Count > 0)
-                Dialogs.InfoDetails("Saved", saved,
-                    "Warnings:\n" + string.Join("\n", warnings.Take(6).Select(w => "• " + w.Message)));
-            else
-                Dialogs.Info("Saved", saved);
         }
-        catch (Exception e)
+        catch
         {
-            Dialogs.Error("Save failed", e.Message);
+            // Leave the change dirty so the next tick retries; the auto-save path
+            // must never block or pop a dialog.
         }
     }
+
+    public IReadOnlyList<string> InvalidFields => invalid.Select(o => o.Label).ToList();
 }

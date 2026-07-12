@@ -62,30 +62,18 @@ internal sealed class EditSession
                 continue;
 
             string raw = Document.Get(o);
-            switch (o.Kind)
-            {
-                case OptionKind.Int:
-                case OptionKind.UInt:
-                case OptionKind.Long:
-                    if (!ConfigDocumentBase.TryParseLong(raw, out long lv))
-                        issues.Add(new OptionIssue(o.Id, $"{o.Label}: '{raw}' is not a whole number.", true));
-                    else
-                        RangeCheck(o, lv, issues);
-                    break;
-                case OptionKind.Float:
-                case OptionKind.Double:
-                    if (!ConfigDocumentBase.TryParseDouble(raw, out double dv))
-                        issues.Add(new OptionIssue(o.Id, $"{o.Label}: '{raw}' is not a number.", true));
-                    else
-                        RangeCheck(o, dv, issues);
-                    break;
-                case OptionKind.Enum:
-                    if (o.Choices != null && !o.Choices.Any(c =>
-                            c.XmlName.Equals(raw, StringComparison.OrdinalIgnoreCase)
-                            || c.Value.ToString() == raw))
-                        issues.Add(new OptionIssue(o.Id, $"{o.Label}: '{raw}' is not a known value.", false));
-                    break;
-            }
+
+            // Blocking errors (bad number / out of range) are shared with the
+            // per-field live check so the form and the save agree on validity.
+            string error = ErrorFor(o, raw);
+            if (error != null)
+                issues.Add(new OptionIssue(o.Id, error, true));
+
+            // Non-blocking warnings do not prevent saving.
+            if (o.Kind == OptionKind.Enum && o.Choices != null && !o.Choices.Any(c =>
+                    c.XmlName.Equals(raw, StringComparison.OrdinalIgnoreCase)
+                    || c.Value.ToString() == raw))
+                issues.Add(new OptionIssue(o.Id, $"{o.Label}: '{raw}' is not a known value.", false));
 
             if (o.Experimental && o.Kind == OptionKind.Bool && ConfigDocumentBase.ParseBool(raw))
                 issues.Add(new OptionIssue(o.Id, $"{o.Label} enables experimental mode.", false));
@@ -95,12 +83,38 @@ internal sealed class EditSession
         return issues;
     }
 
-    private static void RangeCheck(OptionDefinition o, double value, List<OptionIssue> issues)
+    /// <summary>
+    /// Blocking error for a candidate raw value, or null when it is acceptable.
+    /// Only type/range problems block; unknown enums and experimental toggles are
+    /// warnings and return null. Used both by <see cref="Validate"/> and by the
+    /// form's live per-field validation.
+    /// </summary>
+    public static string ErrorFor(OptionDefinition o, string raw)
+    {
+        switch (o.Kind)
+        {
+            case OptionKind.Int:
+            case OptionKind.UInt:
+            case OptionKind.Long:
+                if (!ConfigDocumentBase.TryParseLong(raw, out long lv))
+                    return $"{o.Label}: '{raw}' is not a whole number.";
+                return RangeError(o, lv);
+            case OptionKind.Float:
+            case OptionKind.Double:
+                if (!ConfigDocumentBase.TryParseDouble(raw, out double dv))
+                    return $"{o.Label}: '{raw}' is not a number.";
+                return RangeError(o, dv);
+        }
+        return null;
+    }
+
+    private static string RangeError(OptionDefinition o, double value)
     {
         if (o.Min.HasValue && value < o.Min.Value)
-            issues.Add(new OptionIssue(o.Id, $"{o.Label}: below minimum {Fmt(o.Min.Value)}.", true));
+            return $"{o.Label}: below minimum {Fmt(o.Min.Value)}.";
         if (o.Max.HasValue && value > o.Max.Value)
-            issues.Add(new OptionIssue(o.Id, $"{o.Label}: above maximum {Fmt(o.Max.Value)}.", true));
+            return $"{o.Label}: above maximum {Fmt(o.Max.Value)}.";
+        return null;
     }
 
     private void CrossFieldChecks(List<OptionIssue> issues)
