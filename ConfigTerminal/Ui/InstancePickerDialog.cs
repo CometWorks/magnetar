@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Terminal.Gui;
 using Magnetar.ConfigTerminal.Io;
@@ -23,10 +24,14 @@ internal static class InstancePickerDialog
             X = 2, Width = Dim.Fill(2),
         };
 
-        TextField data = Field(dlg, "DS data dir (-path):", 1, seed.DataDir);
-        TextField config = Field(dlg, "Magnetar config (-config):", 3, seed.MagnetarConfigDir);
-        TextField exe = Field(dlg, "Launcher (-magnetar):", 5, seed.MagnetarExePath);
-        TextField ds64 = Field(dlg, "DS install (-ds64):", 7, seed.Ds64Dir);
+        TextField data = Field(dlg, "DS data dir (-path):", 1, seed.DataDir,
+            cur => FileDialogs.PickDirectory("DS data dir", "Select the DS data directory", cur));
+        TextField config = Field(dlg, "Magnetar config (-config):", 3, seed.MagnetarConfigDir,
+            cur => FileDialogs.PickDirectory("Magnetar config", "Select the Magnetar config directory", cur));
+        TextField exe = Field(dlg, "Launcher (-magnetar):", 5, seed.MagnetarExePath,
+            cur => FileDialogs.PickFile("Launcher", "Select the Magnetar launcher executable", cur));
+        TextField ds64 = Field(dlg, "DS install (-ds64):", 7, seed.Ds64Dir,
+            cur => FileDialogs.PickDirectory("DS install", "Select the DedicatedServer64 folder", cur));
 
         var note = new Label("The DS data dir must already exist.") { X = 1, Y = 9, Width = Dim.Fill(2) };
         dlg.Add(note);
@@ -67,11 +72,18 @@ internal static class InstancePickerDialog
         return string.IsNullOrEmpty(s) ? null : s;
     }
 
-    private static TextField Field(Dialog dlg, string label, int y, string value)
+    private static TextField Field(Dialog dlg, string label, int y, string value, Func<string, string> browse)
     {
         dlg.Add(new Label(label) { X = 1, Y = y });
-        var tf = new TextField(value ?? "") { X = 28, Y = y, Width = Dim.Fill(2) };
-        dlg.Add(tf);
+        var tf = new TextField(value ?? "") { X = 28, Y = y, Width = Dim.Fill(13) };
+        var browseButton = new Button("Browse") { X = Pos.Right(tf) + 1, Y = y };
+        browseButton.Clicked += () =>
+        {
+            string picked = browse(tf.Text.ToString().Trim());
+            if (!string.IsNullOrEmpty(picked))
+                tf.Text = NStack.ustring.Make(picked);
+        };
+        dlg.Add(tf, browseButton);
         return tf;
     }
 }
