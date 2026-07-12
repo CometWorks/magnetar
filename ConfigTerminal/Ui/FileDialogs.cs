@@ -43,7 +43,7 @@ internal static class FileDialogs
 
     private static string Run(OpenDialog dlg, string initial)
     {
-        dlg.DirectoryPath = ustring.Make(ResolveStart(initial));
+        Seed(dlg, initial);
         QuietDirectoryWatcher(dlg);
         Application.Run(dlg);
 
@@ -55,22 +55,42 @@ internal static class FileDialogs
     }
 
     /// <summary>
-    /// The folder to open the browser in: the seed value itself if it's a folder,
-    /// otherwise its parent (so a file path or a not-yet-existing target still
-    /// opens somewhere useful), falling back to the user's home directory.
+    /// Points the dialog at the seed path. When the seed exists, open its *parent*
+    /// with the seed itself pre-selected (<see cref="FileDialog.FilePath"/>) — the
+    /// Open button is then active immediately and re-opening highlights the current
+    /// value, instead of dropping the user inside the folder with nothing selected
+    /// (which leaves Open disabled). Falls back to the parent, then home.
     /// </summary>
-    private static string ResolveStart(string initial)
+    private static void Seed(OpenDialog dlg, string initial)
     {
-        if (!string.IsNullOrEmpty(initial))
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        string full = null;
+        try { if (!string.IsNullOrEmpty(initial)) full = Path.GetFullPath(initial); } catch { }
+        if (string.IsNullOrEmpty(full))
         {
-            if (Directory.Exists(initial))
-                return initial;
-            string parent = null;
-            try { parent = Path.GetDirectoryName(initial); } catch { }
-            if (!string.IsNullOrEmpty(parent) && Directory.Exists(parent))
-                return parent;
+            dlg.DirectoryPath = ustring.Make(home);
+            return;
         }
-        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        bool exists = Directory.Exists(full) || File.Exists(full);
+        string parent = null;
+        try { parent = Path.GetDirectoryName(full.TrimEnd('/', '\\')); } catch { }
+        bool hasParent = !string.IsNullOrEmpty(parent) && Directory.Exists(parent);
+
+        if (exists && hasParent)
+        {
+            dlg.DirectoryPath = ustring.Make(parent);
+            dlg.FilePath = ustring.Make(full);
+        }
+        else if (Directory.Exists(full))
+        {
+            dlg.DirectoryPath = ustring.Make(full);
+        }
+        else
+        {
+            dlg.DirectoryPath = ustring.Make(hasParent ? parent : home);
+        }
     }
 
     /// <summary>
