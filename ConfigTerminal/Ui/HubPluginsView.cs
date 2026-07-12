@@ -38,7 +38,7 @@ internal sealed class HubPluginsView : Window
 
         var listFrame = new FrameView("Available plugins — Space/Enter toggles enabled")
         {
-            X = 0, Y = 0, Width = Dim.Percent(55), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = 0, Y = 0, Width = Dim.Percent(34), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
         var filterLabel = new Label("Filter: ") { X = 0, Y = 0 };
         filter = new TextField(string.Empty)
@@ -52,7 +52,7 @@ internal sealed class HubPluginsView : Window
 
         var detailFrame = new FrameView("Details")
         {
-            X = Pos.Percent(55), Y = 0, Width = Dim.Fill(), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = Pos.Percent(34), Y = 0, Width = Dim.Fill(), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
         details = new TextView
         {
