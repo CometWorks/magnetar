@@ -180,9 +180,13 @@ internal sealed class OptionFormView : Window
                     c.XmlName.Equals(document.Get(def), StringComparison.OrdinalIgnoreCase)));
                 if (def.Choices.Length <= 4)
                 {
+                    // Lay the choices out horizontally so they all fit on the row's
+                    // single line — a vertical group is clipped to Height = 1 and
+                    // only its selected choice shows, hiding the rest.
                     var rg = new RadioGroup(labels.Select(l => ustring.Make(l)).ToArray())
                     {
                         X = x, Y = 0, SelectedItem = idx,
+                        DisplayMode = DisplayModeLayout.Horizontal, HorizontalSpace = 2,
                     };
                     rg.SelectedItemChanged += e =>
                     {
