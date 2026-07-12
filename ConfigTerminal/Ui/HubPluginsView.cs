@@ -10,9 +10,11 @@ namespace Magnetar.ConfigTerminal.Ui;
 /// <summary>
 /// Browses the plugins offered by the instance's configured hub/remote sources
 /// (read offline from Magnetar's own cached catalogs under <c>Sources/Hubs</c> and
-/// <c>Sources/Plugins</c>) and enables/disables them in the active profile. Space
-/// or Enter toggles; enabling a plugin also pulls in its declared dependencies.
-/// A details pane shows the focused plugin's author, tagline and description.
+/// <c>Sources/Plugins</c>) plus the registered dev folders (from sources.xml, shown
+/// with a "- dev folder" suffix), and enables/disables them in the active profile.
+/// Space or Enter toggles; enabling a hub plugin also pulls in its declared
+/// dependencies. A details pane shows the focused plugin's author, tagline and
+/// description. Dev folders are added/removed under Plugins, not here.
 /// </summary>
 internal sealed class HubPluginsView : Window
 {
@@ -65,7 +67,7 @@ internal sealed class HubPluginsView : Window
         toggle.Clicked += Toggle;
         var refresh = new Button("Re_fresh") { X = Pos.Right(toggle) + 1, Y = Pos.AnchorEnd(1) };
         refresh.Clicked += Refresh;
-        var srcHint = new Label("Manage sources via Plugins ▸ Plugin Sources") { X = Pos.Right(refresh) + 2, Y = Pos.AnchorEnd(1) };
+        var srcHint = new Label("Manage sources & dev folders under Plugins") { X = Pos.Right(refresh) + 2, Y = Pos.AnchorEnd(1) };
 
         Add(listFrame, detailFrame, toggle, refresh, srcHint);
         Refresh();
@@ -85,7 +87,11 @@ internal sealed class HubPluginsView : Window
     {
         plugins.Reload();
         defaultHubLabel = plugins.DefaultHubLabel;
-        allItems = plugins.HubCatalogPlugins().ToList();
+        // Hub/remote plugins plus the registered dev folders, interleaved by name.
+        allItems = plugins.HubCatalogPlugins()
+            .Concat(plugins.DevFolderCatalogViews())
+            .OrderBy(v => v.Info.FriendlyName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
         ApplyFilter();
     }
 
@@ -123,6 +129,9 @@ internal sealed class HubPluginsView : Window
     private string Format(HubPluginView v)
     {
         string box = v.Enabled ? "[x]" : "[ ]";
+        // Dev folders are registered locally, not fetched from a hub — mark them so.
+        if (v.IsDevFolder)
+            return $"{box} {v.Info.FriendlyName} - dev folder";
         string kind = v.Info.Kind == HubPluginKind.Mod ? " (mod)" : "";
         // Only label the source when it isn't the default hub — that suffix is implied.
         bool fromDefault = string.IsNullOrEmpty(v.Info.SourceLabel)
@@ -163,6 +172,14 @@ internal sealed class HubPluginsView : Window
         HubPluginView v = items[i];
         try
         {
+            if (v.IsDevFolder)
+            {
+                plugins.SetDevFolderEnabled(v.Id, v.DataFile, !v.Enabled);
+                Refresh();
+                list.SelectedItem = i;
+                return;
+            }
+
             IReadOnlyList<string> touched = plugins.SetHubPluginEnabled(v.Id, !v.Enabled);
             Refresh();
             list.SelectedItem = i;

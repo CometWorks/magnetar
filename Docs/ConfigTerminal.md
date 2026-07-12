@@ -138,17 +138,22 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
 - **Manage Magnetar plugins** — enable/disable the instance's plugins by
   editing `Profiles/Current.xml` and `Sources/sources.xml` (same XDocument
   upsert as the DS files): toggle **local DLLs** from the instance's `Local/`
-  folder, and add **dev-folder plugins** Quasar-style by picking a manifest
+  folder, and **register dev folders** Quasar-style by picking a manifest
   `.xml` (the folder, filename and folder-name id are derived), with the
   last-visited folder remembered in `ConfigTerminal.xml` for the next add.
+  Registering a dev folder writes `sources.xml` **only** — it makes the folder
+  *selectable* without enabling it; you enable it from the Hub Plugins list.
 - **Browse hub/remote plugin catalogs** — list the plugins offered by the
   instance's configured hub/remote sources, read **offline** from the protobuf
   caches Magnetar already downloads into `Sources/Hubs/*.bin` and
   `Sources/Plugins/*.bin` (parsed by a tiny built-in wire reader — no `Shared`
-  reference, no network, no game types). A details pane shows author, tagline and
-  description; enabling a plugin writes a `<GitHubPluginConfig>` into
-  `Profile.GitHub` and pulls in the plugin's catalog-declared dependencies,
-  exactly like Magnetar's own `UpdateProfile`.
+  reference, no network, no game types), **plus the registered dev folders**
+  (shown with a `- dev folder` suffix, their metadata read from each folder's
+  manifest). A details pane shows author, tagline and description; enabling a hub
+  plugin writes a `<GitHubPluginConfig>` into `Profile.GitHub` and pulls in the
+  plugin's catalog-declared dependencies (exactly like Magnetar's own
+  `UpdateProfile`), while enabling a dev folder writes a `<LocalFolderConfig>`
+  into `Profile.DevFolder`.
 - **Manage plugin catalog sources** — add / remove / enable the
   `<RemoteHubSources>` (GitHub hub catalogs like MagnetarHub),
   `<RemotePluginSources>` (single remote plugin repos) and `<LocalHubSources>`
@@ -512,7 +517,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── AccessListView.cs            admins / banned / reserved editors
 │   ├── PasswordDialog.cs
 │   ├── LogViewerView.cs             virtualized log view: follow, search, exceptions
-│   ├── PluginsView.cs               local DLLs + dev-folder plugins
+│   ├── PluginsView.cs               local DLLs + registered dev folders
 │   ├── HubPluginsView.cs            browse hub catalog + enable (with dependencies)
 │   ├── PluginSourcesView.cs         manage remote/local hub + remote plugin sources
 │   ├── ModSourcesView.cs            manage ModSources + Steam Workshop resolution
@@ -892,7 +897,9 @@ fields like `LastCheck`/`Hash` untouched):
 sealed class MagnetarPlugins        // façade over both documents + the catalog caches
 {
     IReadOnlyList<LocalDllInfo>   LocalDlls();          // Local/ folder ∪ Profile.Local
-    IReadOnlyList<DevFolderPlugin> DevFolderPlugins();  // Profile.DevFolder ⋈ LocalPluginSources
+    IReadOnlyList<DevFolderPlugin> DevFolderPlugins();  // LocalPluginSources ⋈ Profile.DevFolder (Enabled flag)
+    IReadOnlyList<HubPluginView>  DevFolderCatalogViews(); // dev folders as catalog rows (manifest ⋈ Profile.DevFolder)
+    bool                          SetDevFolderEnabled(string id, string dataFile, bool on);
     IReadOnlyList<HubPluginView>  HubCatalogPlugins();  // cached catalog ⋈ Profile.GitHub
     IReadOnlyList<string>         SetHubPluginEnabled(string id, bool on);  // + dependency pull-in
     // source management: {RemoteHubs,RemotePlugins,LocalHubs} × {Add,Remove,SetEnabled}
@@ -1107,11 +1114,11 @@ Windows / dialogs:
 | **Log viewer** | file selector (game + Magnetar groups, active file marked); virtualized read-only text pane; `End` toggles follow; `/` search with n/N navigation and "search further back" offer; exception blocks highlighted (red), `x`/`X` jump next/previous; `F4` cycles active game ↔ active Magnetar log | `Tools → Logs` (F4) |
 | **Stop confirm** (dialog) | graceful stop (SIGTERM, saves world) with progress; on timeout offers force-kill behind an explicit data-loss warning | F6 / dashboard Stop |
 | **Reload prompt** (dialog, Linux) | after saving live-reloadable cfg fields with a running server detected: offer SIGHUP | after save |
-| **Local & Dev Plugins** | two panes: local DLLs from `Local/` (Space toggles) and dev-folder plugins (Enter/Add picks a manifest `.xml`) | `Plugins → Local & Dev Plugins` |
-| **Hub Plugins** | list of the cached hub/remote catalog (Space/Enter toggles enabled; dependencies pulled in) with an author/tagline/description details pane | `Plugins → Hub Plugins` |
+| **Hub Plugins** | list of the cached hub/remote catalog **plus registered dev folders** (shown with a `- dev folder` suffix); Space/Enter toggles enabled (hub deps pulled in; dev folders write `Profile.DevFolder`) with an author/tagline/description details pane | `Plugins → Hub Plugins` |
+| **Plugin Profiles** | saved-preset list (the one matching the active set marked); Load (apply to `Current.xml`), Save As New, Update (overwrite), Rename, Delete | `Plugins → Profiles` |
+| **Local & Dev Plugins** | two panes: local DLLs from `Local/` (Space toggles) and **registered** dev folders (Add picks a manifest `.xml` and registers it in `sources.xml` only; Remove unregisters). Registering does **not** enable — the pane shows each folder's enabled state, toggled under Hub Plugins | `Plugins → Local & Dev Plugins` |
 | **Plugin Sources** | manage `RemoteHub`/`RemotePlugin`/`LocalHub` sources: Add Hub/Plugin/Local, Space toggles, Remove | `Plugins → Plugin Sources` |
 | **Mods** | `ModSources` list (Space toggles active, in lockstep with `Profile.Mods`); Add (id or Workshop/collection URLs), Rename, Remove; Resolve Names / Resolve Dependencies / Steam API Key via the Workshop resolver | `Plugins → Mods` |
-| **Plugin Profiles** | saved-preset list (the one matching the active set marked); Load (apply to `Current.xml`), Save As New, Update (overwrite), Rename, Delete | `Plugins → Profiles` |
 | **Help** | key reference + file-format primer (the §2 précis) | F1 |
 
 ### 8.3 The generic option form

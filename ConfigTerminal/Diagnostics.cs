@@ -58,9 +58,9 @@ internal static class Diagnostics
                 Console.WriteLine($"  {(d.Enabled ? "[x]" : "[ ]")} {d.FileName}");
 
             var devs = plugins.DevFolderPlugins();
-            Console.WriteLine($"Dev-folder plugins ({devs.Count}):");
+            Console.WriteLine($"Registered dev folders ({devs.Count(p => p.Enabled)} enabled of {devs.Count}):");
             foreach (DevFolderPlugin p in devs)
-                Console.WriteLine($"  {p.Id}  [{p.DataFile}]  {p.Folder ?? "(no source)"}{(p.SourceMissing ? " !missing" : "")}");
+                Console.WriteLine($"  {(p.Enabled ? "[x]" : "[ ]")} {p.Id}  {p.Folder ?? "(no folder)"}{(p.SourceMissing ? " !missing" : "")}");
 
             var hub = plugins.HubCatalogPlugins();
             Console.WriteLine($"Hub plugins ({hub.Count(h => h.Enabled)} enabled of {hub.Count} in catalog):");

@@ -13,6 +13,10 @@ internal sealed class LocalPluginSource
     public string Name;
     public string Folder;
     public bool Enabled = true;
+    // The picked manifest filename, kept as a hint for enabling the folder later.
+    // Not part of Magnetar's own LocalPlugin schema, so Magnetar strips it on its
+    // next save — the manifest is re-derived from the folder when it's gone.
+    public string DataFile;
 }
 
 /// <summary>A remote GitHub hub catalog source (sources.xml RemoteHubSources).</summary>
@@ -109,10 +113,11 @@ internal sealed class PluginSourcesDocument
             Name = e.Element("Name")?.Value?.Trim(),
             Folder = e.Element("Folder")?.Value?.Trim(),
             Enabled = ConfigDocumentBase.ParseBool(e.Element("Enabled")?.Value),
+            DataFile = e.Element("DataFile")?.Value?.Trim(),
         }).ToList() ?? new List<LocalPluginSource>();
 
     /// <summary>Adds a dev-folder source (dedup by folder path). Returns false if already present.</summary>
-    public bool AddLocalPlugin(string name, string folder, bool enabled = true)
+    public bool AddLocalPlugin(string name, string folder, string dataFile = null, bool enabled = true)
     {
         XElement list = Root.Element(ListName);
         if (list == null)
@@ -127,7 +132,8 @@ internal sealed class PluginSourcesDocument
         list.Add(new XElement("LocalPlugin",
             new XElement("Name", name),
             new XElement("Folder", folder),
-            new XElement("Enabled", enabled ? "true" : "false")));
+            new XElement("Enabled", enabled ? "true" : "false"),
+            string.IsNullOrEmpty(dataFile) ? null : new XElement("DataFile", dataFile)));
         return true;
     }
 

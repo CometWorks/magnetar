@@ -10,10 +10,12 @@ using Magnetar.ConfigTerminal.State;
 namespace Magnetar.ConfigTerminal.Ui;
 
 /// <summary>
-/// Enable/disable the Magnetar instance's plugins: local DLLs from the Local/
-/// folder (Space toggles), and dev-folder plugins added Quasar-style by picking
-/// a manifest XML (the folder + filename + folder-name id are derived, and the
-/// last-visited folder is remembered for the next add).
+/// Manages the Magnetar instance's local plugin sources: local DLLs from the Local/
+/// folder (pressing SPACE toggles enabled state), and registered dev folders added
+/// Quasar-style by picking a manifest XML (the folder + filename + folder-name id
+/// are derived, and the last-visited folder is remembered for the next add).
+/// Registering a dev folder only makes it selectable — it is enabled/disabled in
+/// the Hub Plugins list. This pane just shows what's registered and its state.
 /// </summary>
 internal sealed class PluginsView : Window
 {
@@ -35,7 +37,7 @@ internal sealed class PluginsView : Window
         ColorScheme = TurboVisionTheme.Window;
         Border.BorderStyle = BorderStyle.Double;
 
-        var localFrame = new FrameView("Local DLLs — Space toggles (from Local/ folder)")
+        var localFrame = new FrameView("Local DLLs (from Local/ folder) — Press SPACE to toggle")
         {
             X = 0, Y = 0, Width = Dim.Percent(50), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
@@ -44,7 +46,7 @@ internal sealed class PluginsView : Window
         localList.OpenSelectedItem += _ => ToggleLocal();
         localFrame.Add(localList);
 
-        var devFrame = new FrameView("Dev-folder plugins (Enter/Add picks a manifest XML)")
+        var devFrame = new FrameView("Registered dev folders (enable under Hub Plugins)")
         {
             X = Pos.Percent(50), Y = 0, Width = Dim.Fill(), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
@@ -92,22 +94,22 @@ internal sealed class PluginsView : Window
         return $"{box} {d.FileName}{missing}";
     }
 
-    // Pad the id and manifest columns to a common width so the rows line up.
+    // Pad the id column to a common width so the rows line up. The [x]/[ ] box
+    // reflects whether the active profile enables it (toggled under Hub Plugins).
     private static List<string> FormatDevList(List<DevFolderPlugin> devs)
     {
         if (devs.Count == 0)
             return new List<string>();
 
         int idWidth = devs.Max(p => (p.Id ?? string.Empty).Length);
-        int fileWidth = devs.Max(p => $"[{p.DataFile}]".Length);
 
         return devs.Select(p =>
         {
-            string flag = p.SourceMissing ? "  ! source folder missing" : "";
-            string folder = p.Folder ?? "(no source entry)";
+            string box = p.Enabled ? "[x]" : "[ ]";
+            string flag = p.SourceMissing ? "  ! folder missing" : "";
+            string folder = p.Folder ?? "(no folder)";
             string id = (p.Id ?? string.Empty).PadRight(idWidth);
-            string file = $"[{p.DataFile}]".PadRight(fileWidth);
-            return $"{id}   {file}   {folder}{flag}";
+            return $"{box} {id}   {folder}{flag}";
         }).ToList();
     }
 
@@ -137,10 +139,11 @@ internal sealed class PluginsView : Window
         {
             string id = plugins.AddDevFolderFromManifest(picked);
             Refresh();
-            Dialogs.Info("Dev folder added",
-                $"Enabled dev-folder plugin '{id}'.\n\n" +
-                "Registered the folder as a plugin source and enabled it in the\n" +
-                "current profile. It compiles and loads on the next server start.");
+            Dialogs.Info("Dev folder registered",
+                $"Registered dev folder '{id}' as a plugin source.\n\n" +
+                "It's now selectable in the Hub Plugins list (shown with a\n" +
+                "\"- dev folder\" suffix). Enable it there to load it on the\n" +
+                "next server start.");
         }
         catch (Exception e)
         {
@@ -158,9 +161,9 @@ internal sealed class PluginsView : Window
         }
         DevFolderPlugin p = devs[i];
         if (!Dialogs.Confirm("Remove dev folder",
-                $"Disable and unregister dev-folder plugin '{p.Id}'?\n\n" +
-                "This removes it from the profile and the plugin sources.\n" +
-                "Your source files on disk are not touched."))
+                $"Unregister dev folder '{p.Id}'?\n\n" +
+                "This removes it from the plugin sources (and disables it in the\n" +
+                "active profile if enabled). Your source files on disk are not touched."))
             return;
 
         try

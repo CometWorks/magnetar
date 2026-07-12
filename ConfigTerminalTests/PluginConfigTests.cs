@@ -81,8 +81,8 @@ public class PluginConfigTests : IDisposable
             "</SourcesConfig>\n");
 
         PluginSourcesDocument doc = PluginSourcesDocument.Open(dir);
-        Assert.True(doc.AddLocalPlugin("my-plugin", "/src/my-plugin", true));
-        Assert.False(doc.AddLocalPlugin("my-plugin", "/src/my-plugin", true)); // dedup by folder
+        Assert.True(doc.AddLocalPlugin("my-plugin", "/src/my-plugin"));
+        Assert.False(doc.AddLocalPlugin("my-plugin", "/src/my-plugin")); // dedup by folder
         doc.Save(new AtomicFile());
 
         string xml = File.ReadAllText(path);
@@ -252,33 +252,53 @@ public class PluginConfigTests : IDisposable
     }
 
     [Fact]
-    public void Facade_adds_dev_folder_from_manifest_with_folder_name_id()
+    public void Facade_registers_dev_folder_from_manifest_without_enabling_it()
     {
         // A dev folder with a manifest; the id must become the folder name.
         string devFolder = Path.Combine(dir, "src", "cool-plugin");
         Directory.CreateDirectory(devFolder);
         string manifest = Path.Combine(devFolder, "CoolPlugin.xml");
-        File.WriteAllText(manifest, "<?xml version=\"1.0\"?><PluginData><Id>whatever</Id></PluginData>");
+        File.WriteAllText(manifest,
+            "<?xml version=\"1.0\"?><PluginData><Id>whatever</Id><FriendlyName>Cool Plugin</FriendlyName></PluginData>");
 
         var plugins = new MagnetarPlugins(dir, new AtomicFile());
         string id = plugins.AddDevFolderFromManifest(manifest);
         Assert.Equal("cool-plugin", id); // folder name, NOT the manifest <Id>
 
+        // Registered as a source, but NOT enabled in any profile.
         var devs = plugins.DevFolderPlugins();
         DevFolderPlugin p = Assert.Single(devs);
         Assert.Equal("cool-plugin", p.Id);
         Assert.Equal("CoolPlugin.xml", p.DataFile);
         Assert.Equal(devFolder, p.Folder);
         Assert.False(p.SourceMissing);
+        Assert.False(p.Enabled);
 
-        // Round-trips through the on-disk files.
+        // Registration lands in sources.xml (with the manifest hint); the profile
+        // is left untouched — adding only makes the folder selectable.
         string sources = File.ReadAllText(PluginSourcesDocument.PathFor(dir));
         Assert.Contains("<Name>cool-plugin</Name>", sources);
+        Assert.Contains("<DataFile>CoolPlugin.xml</DataFile>", sources);
+        Assert.False(File.Exists(PluginProfileDocument.PathFor(dir)));
+
+        // It shows up as a selectable catalog row, flagged as a dev folder, using
+        // the manifest's FriendlyName.
+        HubPluginView view = Assert.Single(plugins.DevFolderCatalogViews());
+        Assert.True(view.IsDevFolder);
+        Assert.False(view.Enabled);
+        Assert.Equal("cool-plugin", view.Id);
+        Assert.Equal("Cool Plugin", view.Info.FriendlyName);
+
+        // Enabling writes the profile entry; the catalog row reflects it.
+        Assert.True(plugins.SetDevFolderEnabled("cool-plugin", "CoolPlugin.xml", true));
         string profile = File.ReadAllText(PluginProfileDocument.PathFor(dir));
         Assert.Contains("<Id>cool-plugin</Id>", profile);
+        Assert.True(plugins.DevFolderPlugins().Single().Enabled);
+        Assert.True(plugins.DevFolderCatalogViews().Single().Enabled);
 
-        // Removal cleans both files.
+        // Removal unregisters and disables in one shot.
         plugins.RemoveDevFolder(p);
         Assert.Empty(plugins.DevFolderPlugins());
+        Assert.DoesNotContain("<Id>cool-plugin</Id>", File.ReadAllText(PluginProfileDocument.PathFor(dir)));
     }
 }

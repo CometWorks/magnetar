@@ -92,11 +92,11 @@ internal sealed class AppShell : Toplevel
             }),
             new MenuBarItem("_Plugins", new[]
             {
-                new MenuItem("_Local & Dev Plugins", "", ShowPlugins),
                 new MenuItem("_Hub Plugins", "", ShowHubPlugins),
+                new MenuItem("_Profiles", "", ShowProfiles),
+                new MenuItem("_Local & Dev Plugins", "", ShowPlugins),
                 new MenuItem("Plugin _Sources", "", ShowPluginSources),
                 new MenuItem("_Mods", "", ShowModSources),
-                new MenuItem("_Profiles", "", ShowProfiles),
             }),
             new MenuBarItem("_Tools", new[]
             {

@@ -14,21 +14,27 @@ internal sealed class LocalDllInfo
     public bool Enabled;
 }
 
-/// <summary>An enabled dev-folder plugin, joined with its source folder.</summary>
+/// <summary>A registered dev-folder source (sources.xml), joined with its enabled state.</summary>
 internal sealed class DevFolderPlugin
 {
     public string Id;         // folder name
-    public string Folder;     // absolute source folder (from sources.xml), may be null if orphaned
-    public string DataFile;   // manifest filename
-    public bool DebugBuild;
-    public bool SourceMissing; // profile enables it but no sources entry (or folder gone)
+    public string Folder;     // absolute source folder (from sources.xml)
+    public string DataFile;   // manifest filename (hint from sources.xml, may be null)
+    public bool Enabled;      // id present in Profile.DevFolder
+    public bool SourceMissing; // registered, but the folder is gone on disk
 }
 
-/// <summary>A hub/remote plugin from a cached catalog, joined with its enabled state.</summary>
+/// <summary>
+/// A plugin row in the browsable catalog, joined with its enabled state. Wraps
+/// either a hub/remote plugin (from a cached catalog, named in Profile.GitHub) or
+/// a registered dev folder (from sources.xml, named in Profile.DevFolder).
+/// </summary>
 internal sealed class HubPluginView
 {
     public HubPluginInfo Info;
-    public bool Enabled;      // named in Profile.GitHub
+    public bool Enabled;      // named in Profile.GitHub, or Profile.DevFolder for dev folders
+    public bool IsDevFolder;  // a registered dev folder rather than a hub/remote plugin
+    public string DataFile;   // manifest filename for dev folders (for enabling)
     public string Id => Info.Id;
 }
 
@@ -119,34 +125,73 @@ internal sealed class MagnetarPlugins
 
     // --- dev folders ---
 
+    /// <summary>
+    /// The registered dev-folder sources (sources.xml), each joined with whether
+    /// the active profile enables it. Drives the Plugins-window registration pane.
+    /// </summary>
     public IReadOnlyList<DevFolderPlugin> DevFolderPlugins()
     {
-        var srcById = sources.LocalPlugins
-            .Where(s => s.Folder != null)
-            .GroupBy(s => Path.GetFileName(s.Folder.TrimEnd('/', '\\')), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        var enabled = new HashSet<string>(
+            profile.DevFolders.Select(d => d.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
 
         var result = new List<DevFolderPlugin>();
-        foreach (DevFolderEntry e in profile.DevFolders)
+        foreach (LocalPluginSource src in sources.LocalPlugins)
         {
-            srcById.TryGetValue(e.Id ?? string.Empty, out LocalPluginSource src);
+            if (src.Folder == null)
+                continue;
+            string id = Path.GetFileName(src.Folder.TrimEnd('/', '\\'));
             result.Add(new DevFolderPlugin
             {
-                Id = e.Id,
-                DataFile = e.DataFile,
-                DebugBuild = e.DebugBuild,
-                Folder = src?.Folder,
-                SourceMissing = src == null || !Directory.Exists(src.Folder ?? string.Empty),
+                Id = id,
+                Folder = src.Folder,
+                DataFile = src.DataFile,
+                Enabled = enabled.Contains(id),
+                SourceMissing = !Directory.Exists(src.Folder),
+            });
+        }
+        return result.OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>
+    /// The registered dev folders as catalog rows for the Hub Plugins list:
+    /// display metadata (FriendlyName/Author/Tooltip/Description) read from each
+    /// folder's manifest, joined with its enabled state (Profile.DevFolder).
+    /// </summary>
+    public IReadOnlyList<HubPluginView> DevFolderCatalogViews()
+    {
+        var result = new List<HubPluginView>();
+        foreach (DevFolderPlugin p in DevFolderPlugins())
+        {
+            string dataFile = p.DataFile ?? PluginManifest.FindInFolder(p.Folder);
+            PluginManifest m = dataFile != null
+                ? PluginManifest.Read(Path.Combine(p.Folder ?? string.Empty, dataFile))
+                : new PluginManifest();
+
+            result.Add(new HubPluginView
+            {
+                Info = new HubPluginInfo
+                {
+                    Id = p.Id,
+                    FriendlyName = string.IsNullOrEmpty(m.FriendlyName) ? p.Id : m.FriendlyName,
+                    Author = m.Author,
+                    Tooltip = m.Tooltip,
+                    Description = m.Description,
+                    Kind = HubPluginKind.GitHub,
+                },
+                Enabled = p.Enabled,
+                IsDevFolder = true,
+                DataFile = dataFile,
             });
         }
         return result;
     }
 
     /// <summary>
-    /// Adds a dev-folder plugin from a picked manifest XML: registers the folder
-    /// as a source and enables it in the profile. Folder = the manifest's
-    /// directory; Id/Name = that folder's name (matching Magnetar's
-    /// LocalFolderPlugin identity). Returns the resolved folder name (id).
+    /// Adds a dev-folder plugin from a picked manifest XML: registers the folder as
+    /// a plugin source only (it becomes selectable in the Hub Plugins list) — it is
+    /// NOT enabled in any profile. Folder = the manifest's directory; Id/Name = that
+    /// folder's name (matching Magnetar's LocalFolderPlugin identity). Returns the
+    /// resolved folder name (id).
     /// </summary>
     public string AddDevFolderFromManifest(string manifestXmlPath)
     {
@@ -157,15 +202,34 @@ internal sealed class MagnetarPlugins
         string dataFile = Path.GetFileName(manifestXmlPath);
         string id = Path.GetFileName(folder.TrimEnd('/', '\\'));
 
-        sources.AddLocalPlugin(id, folder, enabled: true);
+        sources.AddLocalPlugin(id, folder, dataFile, enabled: true);
         sources.Save(writer);
-
-        profile.EnableDevFolder(id, dataFile, debugBuild: true);
-        profile.Save(writer);
         return id;
     }
 
-    /// <summary>Disables a dev-folder plugin and removes its source entry.</summary>
+    /// <summary>
+    /// Enables or disables a registered dev folder in the active profile. Enabling
+    /// writes a LocalFolderConfig { Id, DataFile, DebugBuild } (the manifest name
+    /// re-derived from the folder when not supplied); disabling removes it.
+    /// </summary>
+    public bool SetDevFolderEnabled(string id, string dataFile, bool on)
+    {
+        bool changed;
+        if (on)
+        {
+            string manifest = dataFile ?? PluginManifest.FindInFolder(sources.FindById(id)?.Folder);
+            changed = profile.EnableDevFolder(id, manifest, debugBuild: true);
+        }
+        else
+        {
+            changed = profile.DisableDevFolder(id);
+        }
+        if (changed)
+            profile.Save(writer);
+        return changed;
+    }
+
+    /// <summary>Unregisters a dev-folder source and disables it in the profile.</summary>
     public void RemoveDevFolder(DevFolderPlugin plugin)
     {
         bool changed = profile.DisableDevFolder(plugin.Id);
