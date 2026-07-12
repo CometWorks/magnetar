@@ -24,6 +24,7 @@ internal sealed class OptionFormView : Window
     private readonly string banner;
 
     private readonly List<string> categories;
+    private readonly TextField filter;
     private readonly ListView categoryList;
     private readonly FrameView formFrame;
     private readonly ScrollView form;
@@ -56,11 +57,24 @@ internal sealed class OptionFormView : Window
             top = 1;
         }
 
+        var filterLabel = new Label("Filter: ") { X = 1, Y = top, ColorScheme = TurboVisionTheme.Window };
+        filter = new TextField(string.Empty)
+        {
+            X = Pos.Right(filterLabel),
+            Y = top,
+            Width = Dim.Fill(1),
+            ColorScheme = TurboVisionTheme.Window,
+        };
+        filter.TextChanged += _ => RebuildForm();
+
+        // The category list and form start one row below the filter box.
+        int contentTop = top + 1;
+
         categories = options.Select(o => o.Category).Distinct().ToList();
         categoryList = new ListView(categories)
         {
             X = 1,
-            Y = top,
+            Y = contentTop,
             Width = 24,
             Height = Dim.Fill(2),
             ColorScheme = TurboVisionTheme.Window,
@@ -70,7 +84,7 @@ internal sealed class OptionFormView : Window
         formFrame = new FrameView("Options")
         {
             X = 26,
-            Y = top,
+            Y = contentTop,
             Width = Dim.Fill(1),
             Height = Dim.Fill(2),
             ColorScheme = TurboVisionTheme.Window,
@@ -87,7 +101,7 @@ internal sealed class OptionFormView : Window
         };
         formFrame.Add(form);
 
-        hint = new Label("F2 Save · Tab move · categories on the left")
+        hint = new Label("F2 Save · Tab move · Filter narrows fields across categories")
         {
             X = 1,
             Y = Pos.AnchorEnd(1),
@@ -96,7 +110,7 @@ internal sealed class OptionFormView : Window
             ColorScheme = TurboVisionTheme.Window,
         };
 
-        Add(categoryList, formFrame, hint);
+        Add(filterLabel, filter, categoryList, formFrame, hint);
 
         if (categories.Count > 0)
         {
@@ -117,14 +131,51 @@ internal sealed class OptionFormView : Window
 
     private void RebuildForm()
     {
-        if (categoryList.SelectedItem < 0 || categoryList.SelectedItem >= categories.Count)
-            return;
-        currentCategory = categories[categoryList.SelectedItem];
+        string q = (filter.Text?.ToString() ?? string.Empty).Trim();
         form.RemoveAll();
-
         int y = 0;
+
+        if (q.Length == 0)
+        {
+            // No filter: show the fields of the selected category, as before.
+            if (categoryList.SelectedItem < 0 || categoryList.SelectedItem >= categories.Count)
+                return;
+            currentCategory = categories[categoryList.SelectedItem];
+            AddGroup(options.Where(o => o.Category == currentCategory && !o.Hidden), ref y);
+        }
+        else
+        {
+            // Filtering: ignore the selected category and show every matching
+            // field, grouped under its category header so results stay legible.
+            List<OptionDefinition> matches = options
+                .Where(o => !o.Hidden && MatchesFilter(o, q))
+                .ToList();
+            if (matches.Count == 0)
+            {
+                form.Add(new Label("(no settings match)") { X = 0, Y = 0, ColorScheme = TurboVisionTheme.Window });
+                y = 1;
+            }
+            foreach (IGrouping<string, OptionDefinition> group in matches.GroupBy(o => o.Category))
+            {
+                if (y > 0)
+                    y += 1;
+                form.Add(new Label(group.Key) { X = 0, Y = y, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window });
+                y += 1;
+                AddGroup(group, ref y);
+            }
+        }
+
+        form.ContentSize = new Size(80, Math.Max(y + 1, 1));
+        form.SetNeedsDisplay();
+    }
+
+    // Render a run of fields into the form, applying the blank-row spacing that
+    // sets multi-line fields apart. The spacing state resets per call, so each
+    // category group is laid out independently.
+    private void AddGroup(IEnumerable<OptionDefinition> defs, ref int y)
+    {
         OptionDefinition prev = null;
-        foreach (OptionDefinition def in options.Where(o => o.Category == currentCategory && !o.Hidden))
+        foreach (OptionDefinition def in defs)
         {
             // Set a multi-line field apart from its neighbours with a blank row on
             // each side (a single blank between two adjacent multi-line fields).
@@ -135,10 +186,15 @@ internal sealed class OptionFormView : Window
                 form.Add(widget);
             prev = def;
         }
-
-        form.ContentSize = new Size(80, Math.Max(y + 1, 1));
-        form.SetNeedsDisplay();
     }
+
+    // A field matches the filter when the query occurs (case-insensitively) in
+    // its label, XML name, or help text — the strings a user would search by.
+    private static bool MatchesFilter(OptionDefinition def, string q) =>
+        Contains(def.Label, q) || Contains(def.XmlName, q) || Contains(def.Help, q);
+
+    private static bool Contains(string s, string q) =>
+        s != null && s.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
 
     // Vertical rows a field's editor occupies; multi-line text needs several so
     // it isn't clipped to one line and doesn't overlap the fields below it.
