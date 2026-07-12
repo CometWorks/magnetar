@@ -197,7 +197,7 @@ internal sealed class OptionFormView : Window
                     // Lay the choices out horizontally so they all fit on the row's
                     // single line — a vertical group is clipped to Height = 1 and
                     // only its selected choice shows, hiding the rest.
-                    var rg = new RadioGroup(labels.Select(l => ustring.Make(l)).ToArray())
+                    var rg = new CyclingRadioGroup(labels.Select(l => ustring.Make(l)).ToArray())
                     {
                         X = x, Y = 0, SelectedItem = idx,
                         DisplayMode = DisplayModeLayout.Horizontal, HorizontalSpace = 2,
@@ -265,8 +265,48 @@ internal sealed class OptionFormView : Window
     private static string HintFor(OptionDefinition def)
     {
         string help = string.IsNullOrEmpty(def.Help) ? "" : def.Help + "  ";
+        // Spell out how to change each field type — auto-assigned letter hotkeys
+        // are ambiguous (e.g. Public/Private both bind 'P').
+        string keys = def.Kind switch
+        {
+            OptionKind.Enum when def.Choices.Length <= 4 => "Space / ←→ cycles choice.  ",
+            OptionKind.Bool => "Space toggles.  ",
+            _ => "",
+        };
         string live = def.Liveness == Liveness.LiveViaReload ? "applies live via reload" : "requires restart";
-        return $"{help}[default: {def.Default}] <{def.XmlName}> — {live}";
+        return $"{help}{keys}[default: {def.Default}] <{def.XmlName}> — {live}";
+    }
+
+    /// <summary>
+    /// A horizontal radio group whose selection advances cyclically on Space and
+    /// the arrow keys, so enum fields have one obvious, unambiguous key to change
+    /// them (the auto-assigned letter hotkeys still work, but collide when two
+    /// choices share a first letter, e.g. Public/Private).
+    /// </summary>
+    private sealed class CyclingRadioGroup : RadioGroup
+    {
+        private readonly int count;
+        public CyclingRadioGroup(ustring[] labels) : base(labels) => count = labels.Length;
+
+        public override bool ProcessKey(KeyEvent kb)
+        {
+            if (count > 0)
+            {
+                switch (kb.Key)
+                {
+                    case (Key)' ':
+                    case Key.CursorRight:
+                    case Key.CursorDown:
+                        SelectedItem = (SelectedItem + 1) % count;
+                        return true;
+                    case Key.CursorLeft:
+                    case Key.CursorUp:
+                        SelectedItem = (SelectedItem - 1 + count) % count;
+                        return true;
+                }
+            }
+            return base.ProcessKey(kb);
+        }
     }
 
     private void Save()
