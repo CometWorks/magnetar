@@ -43,7 +43,16 @@ internal sealed class AtomicFile
             }
 
             // File.Move with overwrite is atomic on the same filesystem.
+#if NETFRAMEWORK
+            // net48 lacks the overwrite overload; File.Replace is atomic on NTFS
+            // when the target exists, otherwise a plain Move.
+            if (File.Exists(path))
+                File.Replace(tempPath, path, null);
+            else
+                File.Move(tempPath, path);
+#else
             File.Move(tempPath, path, overwrite: true);
+#endif
         }
         catch
         {

@@ -52,7 +52,8 @@ internal static class Dialogs
         int buttonsWidth = buttons.Sum(b => b.Length + 4) + Math.Max(0, buttons.Length - 1);
         int content = Math.Max(Math.Max(Longest(question), Longest(details)), Math.Max(buttonsWidth, title.Length));
 
-        int width = Math.Clamp(content + 6, 44, Math.Max(44, Application.Driver.Cols - 6));
+        // Math.Clamp is unavailable on net48; Min(Max(..)) is equivalent here (min <= max).
+        int width = Math.Min(Math.Max(content + 6, 44), Math.Max(44, Application.Driver.Cols - 6));
         int height = Math.Min(qLines + gap + dLines + 4, Math.Max(7, Application.Driver.Rows - 2));
 
         var dlg = new Dialog(title, width, height)

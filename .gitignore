@@ -30,6 +30,9 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+# ConfigTerminal's log-reading source lives in a Logs/ namespace folder; keep it
+# tracked despite the log-output rule above.
+!ConfigTerminal/Logs/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

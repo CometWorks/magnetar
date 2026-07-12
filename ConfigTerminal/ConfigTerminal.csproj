@@ -49,6 +49,11 @@
          breaking beta. See Docs/ConfigTerminal.md §4.2. -->
     <PackageReference Include="Terminal.Gui" Version="1.19.0" />
   </ItemGroup>
+  <!-- HttpClient (DefaultHttpFetcher) lives in a separate assembly on .NET
+       Framework; net10.0 has it in the shared framework. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ConfigTerminalTests" />
   </ItemGroup>

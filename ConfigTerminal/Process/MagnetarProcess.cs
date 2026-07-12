@@ -78,8 +78,13 @@ internal sealed class MagnetarProcess
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(exe),
         };
+#if NETFRAMEWORK
+        // net48 has no ArgumentList; join into the escaped Arguments string.
+        psi.Arguments = ArgumentEscaping.Join(spec.BuildArgs());
+#else
         foreach (string arg in spec.BuildArgs())
             psi.ArgumentList.Add(arg);
+#endif
 
         SysProcess proc;
         try
