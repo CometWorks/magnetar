@@ -10,6 +10,374 @@
       "Compiler/PublicizedAssemblies.cs",
       "Compiler/RoslynReferences.cs"
     ],
+    "ConfigTerminal/Cli.cs": [
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Model/DsInstance.cs"
+    ],
+    "ConfigTerminal/Diagnostics.cs": [
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "ConfigTerminal/Io/AtomicFile.cs": [
+      "ConfigTerminal/Io/PlatformPaths.cs"
+    ],
+    "ConfigTerminal/Io/InstanceLocator.cs": [
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Model/DsInstance.cs"
+    ],
+    "ConfigTerminal/Logs/LogCatalog.cs": [
+      "ConfigTerminal/Model/DsInstance.cs"
+    ],
+    "ConfigTerminal/Model/ConfigDocumentBase.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/XmlOut.cs",
+      "ConfigTerminal/Model/OptionModel.cs"
+    ],
+    "ConfigTerminal/Model/DedicatedConfigDocument.cs": [
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/PasswordHasher.cs"
+    ],
+    "ConfigTerminal/Model/DefaultHttpFetcher.cs": [
+      "ConfigTerminal/Model/WorkshopResolver.cs"
+    ],
+    "ConfigTerminal/Model/DsInstance.cs": [
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs"
+    ],
+    "ConfigTerminal/Model/EditSession.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs"
+    ],
+    "ConfigTerminal/Model/HubCatalog.cs": [
+      "ConfigTerminal/Model/ProtoReader.cs"
+    ],
+    "ConfigTerminal/Model/LastSessionFile.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Io/XmlOut.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs"
+    ],
+    "ConfigTerminal/Model/MagnetarPlugins.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/HubCatalog.cs",
+      "ConfigTerminal/Model/PluginManifest.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs"
+    ],
+    "ConfigTerminal/Model/OptionRegistry.cs": [
+      "ConfigTerminal/Model/OptionModel.cs"
+    ],
+    "ConfigTerminal/Model/PluginProfileDocument.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/XmlOut.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs"
+    ],
+    "ConfigTerminal/Model/PluginSourcesDocument.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Io/XmlOut.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs"
+    ],
+    "ConfigTerminal/Model/ProfileCatalog.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs"
+    ],
+    "ConfigTerminal/Model/WorkshopResolver.cs": [
+      "ConfigTerminal/Model/DefaultHttpFetcher.cs",
+      "ConfigTerminal/Model/Json/MiniJson.cs"
+    ],
+    "ConfigTerminal/Model/WorldCatalog.cs": [
+      "ConfigTerminal/Model/CheckpointReader.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs"
+    ],
+    "ConfigTerminal/Model/WorldConfigDocument.cs": [
+      "ConfigTerminal/Model/CheckpointReader.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/ModList.cs",
+      "ConfigTerminal/Model/OptionModel.cs"
+    ],
+    "ConfigTerminal/Model/WorldCreator.cs": [
+      "ConfigTerminal/Model/CheckpointReader.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs"
+    ],
+    "ConfigTerminal/Model/WorldTemplateCatalog.cs": [
+      "ConfigTerminal/Model/CheckpointReader.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs"
+    ],
+    "ConfigTerminal/Process/LaunchSpec.cs": [
+      "ConfigTerminal/Model/DsInstance.cs"
+    ],
+    "ConfigTerminal/Process/MagnetarProcess.cs": [
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/PidFileReader.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "ConfigTerminal/Process/PidFileReader.cs": [
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "ConfigTerminal/Process/ProcessMonitor.cs": [
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "ConfigTerminal/Program.cs": [
+      "ConfigTerminal/Cli.cs",
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/State/ToolSettings.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/XmlOut.cs"
+    ],
+    "ConfigTerminal/Ui/AccessListView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/IAutoSaveContent.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/AppShell.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/ModList.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/ProcessMonitor.cs",
+      "ConfigTerminal/Process/ServerStatus.cs",
+      "ConfigTerminal/State/ToolSettings.cs",
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/DesktopBackground.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/HelpDialog.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/IAutoSaveContent.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "ConfigTerminal/Ui/DashboardView.cs": [
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Process/ServerStatus.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/DesktopBackground.cs": [
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/Dialogs.cs": [
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/FileDialogs.cs": [
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/HelpDialog.cs": [
+      "ConfigTerminal/Ui/Dialogs.cs"
+    ],
+    "ConfigTerminal/Ui/HubPluginsView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/HubCatalog.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/InstancePickerDialog.cs": [
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/FileDialogs.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/LogViewerView.cs": [
+      "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Logs/LogTailReader.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/ManifestPicker.cs": [
+      "ConfigTerminal/Ui/FileDialogs.cs"
+    ],
+    "ConfigTerminal/Ui/ModListView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/ModList.cs",
+      "ConfigTerminal/Model/WorkshopResolver.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/IAutoSaveContent.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/NewWorldWizard.cs": [
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/OptionFormView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Ui/IAutoSaveContent.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/PasswordDialog.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/PluginSourcesView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/PluginsView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/State/ToolSettings.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/ManifestPicker.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/ProfilesView.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminal/Ui/WorldsView.cs": [
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminalTests/DocumentTests.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/ModList.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs"
+    ],
+    "ConfigTerminalTests/HubCatalogTests.cs": [
+      "ConfigTerminal/Model/HubCatalog.cs"
+    ],
+    "ConfigTerminalTests/LiveEndToEndTests.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Logs/ReadinessDetector.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs",
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "ConfigTerminalTests/PluginConfigTests.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs"
+    ],
+    "ConfigTerminalTests/PluginInteropTests.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs"
+    ],
+    "ConfigTerminalTests/ProcessAndFileTests.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/PasswordHasher.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs",
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/PidFileReader.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "ConfigTerminalTests/ProfileCatalogTests.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs"
+    ],
+    "ConfigTerminalTests/RegistryTests.cs": [
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs"
+    ],
+    "ConfigTerminalTests/UiSmokeTests.cs": [
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs"
+    ],
+    "ConfigTerminalTests/WorkshopResolverTests.cs": [
+      "ConfigTerminal/Model/WorkshopResolver.cs"
+    ],
     "Legacy/Commands/CommandService.cs": [
       "Legacy/Commands/ServerCommandResponder.cs",
       "PluginSdk/Commands/CommandCaller.cs",
@@ -65,6 +433,7 @@
     ],
     "Legacy/Launcher/ServerControl.cs": [
       "Legacy/Launcher/Game.cs",
+      "Legacy/Launcher/PidFile.cs",
       "Legacy/Loader/PluginLoader.cs"
     ],
     "Legacy/Loader/MagnetarClientMod.cs": [
@@ -149,6 +518,7 @@
       "Legacy/Launcher/Daemon.cs",
       "Legacy/Launcher/Folder.cs",
       "Legacy/Launcher/Game.cs",
+      "Legacy/Launcher/PidFile.cs",
       "Legacy/Loader/NativeLibraryPreloader.cs",
       "Legacy/Loader/PluginLoader.cs",
       "Legacy/Patch/Patch_PrepareCrashReport.cs",
@@ -545,6 +915,380 @@
       "Legacy/Compiler/Interim.cs",
       "Legacy/Compiler/Legacy.cs"
     ],
+    "ConfigTerminal/Cli.cs": [
+      "ConfigTerminal/Program.cs"
+    ],
+    "ConfigTerminal/Diagnostics.cs": [
+      "ConfigTerminal/Program.cs"
+    ],
+    "ConfigTerminal/Io/AtomicFile.cs": [
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs",
+      "ConfigTerminal/State/ToolSettings.cs",
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/PluginConfigTests.cs",
+      "ConfigTerminalTests/PluginInteropTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs",
+      "ConfigTerminalTests/ProfileCatalogTests.cs"
+    ],
+    "ConfigTerminal/Io/InstanceLocator.cs": [
+      "ConfigTerminal/Cli.cs",
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs"
+    ],
+    "ConfigTerminal/Io/PlatformPaths.cs": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/PidFileReader.cs",
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Io/XmlOut.cs": [
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/State/ToolSettings.cs"
+    ],
+    "ConfigTerminal/Logs/LogCatalog.cs": [
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs"
+    ],
+    "ConfigTerminal/Logs/LogTailReader.cs": [
+      "ConfigTerminal/Ui/LogViewerView.cs"
+    ],
+    "ConfigTerminal/Logs/ReadinessDetector.cs": [
+      "ConfigTerminalTests/LiveEndToEndTests.cs"
+    ],
+    "ConfigTerminal/Model/CheckpointReader.cs": [
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs"
+    ],
+    "ConfigTerminal/Model/ConfigDocumentBase.cs": [
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs"
+    ],
+    "ConfigTerminal/Model/DedicatedConfigDocument.cs": [
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs"
+    ],
+    "ConfigTerminal/Model/DefaultHttpFetcher.cs": [
+      "ConfigTerminal/Model/WorkshopResolver.cs"
+    ],
+    "ConfigTerminal/Model/DsInstance.cs": [
+      "ConfigTerminal/Cli.cs",
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs",
+      "ConfigTerminalTests/UiSmokeTests.cs"
+    ],
+    "ConfigTerminal/Model/EditSession.cs": [
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "ConfigTerminal/Model/HubCatalog.cs": [
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminalTests/HubCatalogTests.cs"
+    ],
+    "ConfigTerminal/Model/Json/MiniJson.cs": [
+      "ConfigTerminal/Model/WorkshopResolver.cs"
+    ],
+    "ConfigTerminal/Model/LastSessionFile.cs": [
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Model/MagnetarPlugins.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminalTests/PluginConfigTests.cs"
+    ],
+    "ConfigTerminal/Model/ModList.cs": [
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminalTests/DocumentTests.cs"
+    ],
+    "ConfigTerminal/Model/OptionModel.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/RegistryTests.cs"
+    ],
+    "ConfigTerminal/Model/OptionRegistry.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/RegistryTests.cs"
+    ],
+    "ConfigTerminal/Model/PasswordHasher.cs": [
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Model/PluginManifest.cs": [
+      "ConfigTerminal/Model/MagnetarPlugins.cs"
+    ],
+    "ConfigTerminal/Model/PluginProfileDocument.cs": [
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminalTests/PluginConfigTests.cs",
+      "ConfigTerminalTests/PluginInteropTests.cs",
+      "ConfigTerminalTests/ProfileCatalogTests.cs"
+    ],
+    "ConfigTerminal/Model/PluginSourcesDocument.cs": [
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminalTests/PluginConfigTests.cs",
+      "ConfigTerminalTests/PluginInteropTests.cs"
+    ],
+    "ConfigTerminal/Model/ProfileCatalog.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminalTests/PluginInteropTests.cs",
+      "ConfigTerminalTests/ProfileCatalogTests.cs"
+    ],
+    "ConfigTerminal/Model/ProtoReader.cs": [
+      "ConfigTerminal/Model/HubCatalog.cs"
+    ],
+    "ConfigTerminal/Model/WorkshopResolver.cs": [
+      "ConfigTerminal/Model/DefaultHttpFetcher.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminalTests/WorkshopResolverTests.cs"
+    ],
+    "ConfigTerminal/Model/WorldCatalog.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Model/WorldConfigDocument.cs": [
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Model/WorldCreator.cs": [
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Model/WorldTemplateCatalog.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Process/LaunchSpec.cs": [
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Process/MagnetarProcess.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Process/ProcessMonitor.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs"
+    ],
+    "ConfigTerminal/Process/PidFileReader.cs": [
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/Process/ProcessMonitor.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Process/ServerStatus.cs": [
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/PidFileReader.cs",
+      "ConfigTerminal/Process/ProcessMonitor.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs"
+    ],
+    "ConfigTerminal/State/ToolSettings.cs": [
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/PluginsView.cs"
+    ],
+    "ConfigTerminal/Ui/AccessListView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/AppShell.cs": [
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/UiSmokeTests.cs"
+    ],
+    "ConfigTerminal/Ui/DashboardView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/DesktopBackground.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/Dialogs.cs": [
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/HelpDialog.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "ConfigTerminal/Ui/FileDialogs.cs": [
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/ManifestPicker.cs"
+    ],
+    "ConfigTerminal/Ui/HelpDialog.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/HubPluginsView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/IAutoSaveContent.cs": [
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs"
+    ],
+    "ConfigTerminal/Ui/InstancePickerDialog.cs": [
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/LogViewerView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/ManifestPicker.cs": [
+      "ConfigTerminal/Ui/PluginsView.cs"
+    ],
+    "ConfigTerminal/Ui/ModListView.cs": [
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "ConfigTerminal/Ui/NewWorldWizard.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/OptionFormView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "ConfigTerminal/Ui/PasswordDialog.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/PluginSourcesView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "ConfigTerminal/Ui/PluginsView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/ProfilesView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
+    "ConfigTerminal/Ui/TurboVisionTheme.cs": [
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/DesktopBackground.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/FileDialogs.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminal/Ui/WorldsView.cs",
+      "ConfigTerminalTests/UiSmokeTests.cs"
+    ],
+    "ConfigTerminal/Ui/WorldsView.cs": [
+      "ConfigTerminal/Ui/AppShell.cs"
+    ],
     "Legacy/Commands/CommandService.cs": [
       "Legacy/Loader/PluginLoader.cs",
       "Legacy/Patch/Patch_ServerChat.cs"
@@ -579,6 +1323,10 @@
     ],
     "Legacy/Launcher/Game.cs": [
       "Legacy/Commands/MagnetarCommands.cs",
+      "Legacy/Launcher/ServerControl.cs",
+      "Legacy/Program.cs"
+    ],
+    "Legacy/Launcher/PidFile.cs": [
       "Legacy/Launcher/ServerControl.cs",
       "Legacy/Program.cs"
     ],

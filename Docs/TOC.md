@@ -49,6 +49,13 @@ plugins, then hand off to the dedicated server.
 | **MagnetarLegacy** | .NET Framework 4.8 | Windows only | `Legacy.csproj` (net48) |
 | **MagnetarInterim** | .NET 10 | Windows + Linux | `Legacy.csproj` (net10.0) |
 
+A third executable, **MagnetarConfig** (`ConfigTerminal.csproj`, net10.0), ships
+in the same solution and bundle but is a **standalone operator tool**, not a DS
+replacement: a Terminal.Gui (Turbo Vision) TUI that configures and operates one
+instance from outside the running game, referencing no game or `Shared`
+assemblies. It has its own module group in the catalog below and a full design
+doc at [`ConfigTerminal.md`](ConfigTerminal.md).
+
 The launcher/plugin-loader code is organised into five .NET solution projects.
 Their compile-time reference direction (a strict DAG) is the backbone of the
 module layering below:
@@ -149,6 +156,28 @@ the `Workshop|Any CPU` solution configuration selects it for build; normal
 | ------ | ----- | ----- | ------------ |
 | [MagnetarMod](modules/MagnetarMod.md) | 1 | 114 | Session component that receives mission-screen payloads from the server over a secure multiplayer channel and renders them via the SE ModAPI — the client counterpart to `PluginSdk.MissionScreens` / `Legacy.Integration`'s mission-screen sender. |
 
+### `ConfigTerminal` — the configuration TUI (MagnetarConfig)
+
+A standalone Terminal.Gui (Turbo Vision) operator tool that edits and runs one
+Magnetar DS instance from the terminal — no game or `Shared` references. Layered
+`Model` / `Io` / `Process` / `Logs` below a `Ui` shell, with an `App` entry
+layer. Full design and file-format reference: [`ConfigTerminal.md`](ConfigTerminal.md).
+
+| Module | Files | Lines | What it does |
+| ------ | ----- | ----- | ------------ |
+| [ConfigTerminal.App](modules/ConfigTerminal.App.md) | 4 | 379 | Entry point, CLI parsing → `InstanceBinding`, driver/launcher/instance selection, the headless `-diag` report, and persisted tool settings (`ConfigTerminal.xml`). |
+| [ConfigTerminal.Model](modules/ConfigTerminal.Model.md) | 24 | 3862 | Pure data layer: the option registry, XDocument-upsert wrappers for the DS/world/last-session files, world/template/mod models, edit-session dirty tracking, and the plugin/profile/source/hub-catalog/Workshop-resolver models. |
+| [ConfigTerminal.Ui](modules/ConfigTerminal.Ui.md) | 21 | 3452 | Terminal.Gui presentation: app shell, the generic registry-driven settings form, worlds/mods/access-list/password/plugin/profile editors, new-world wizard, log viewer, dialogs and theme; editable panels auto-save. |
+| [ConfigTerminal.Process](modules/ConfigTerminal.Process.md) | 5 | 524 | Controls the one instance: `magnetar.pid` read/verify (stale/foreign detection), the daemon launch spec, detached spawn, SIGTERM/SIGHUP/force-kill, and status polling. |
+| [ConfigTerminal.Logs](modules/ConfigTerminal.Logs.md) | 3 | 331 | Discovery and memory-bounded tail/follow reading of the DS game logs and Magnetar `info_*.log` files. |
+| [ConfigTerminal.Io](modules/ConfigTerminal.Io.md) | 4 | 316 | Atomic `.bak` file writes, shared XML writer settings, per-platform paths, and instance/launcher/DS-install resolution. |
+
+### `ConfigTerminalTests` — configuration-tool specs
+
+| Module | Files | Lines | What it does |
+| ------ | ----- | ----- | ------------ |
+| [ConfigTerminalTests](modules/ConfigTerminalTests.md) | 10 | 1465 | xUnit specs for the config tool: registry invariants, document round-trips, process/pid/atomic-file, plugin/profile/sources upsert + Magnetar-serializer interop, hub-catalog protobuf reader, Workshop resolver, FakeDriver UI smoke, and a `MAGNETAR_LIVE` end-to-end flow. |
+
 ## Module dependency graph
 
 Precise inter-module edges (within the project-reference DAG above). Each module
@@ -192,6 +221,18 @@ graph LR
   PluginSdk_Stats --> PluginSdk_Logging
 ```
 
+**MagnetarConfig** is a separate tool with its own internal layering (it shares
+no edges with the launcher projects above):
+
+```mermaid
+graph LR
+  CT_App[App] --> CT_Ui[Ui] & CT_Model[Model] & CT_Process[Process] & CT_Io[Io]
+  CT_Ui --> CT_Model & CT_Process & CT_Logs[Logs] & CT_Io
+  CT_Process --> CT_Model & CT_Io
+  CT_Logs --> CT_Model
+  CT_Model --> CT_Io
+```
+
 ---
 
-**[Full file index ▶](Index.md)** · 18 modules · 136 source files · ~17.3k lines
+**[Full file index ▶](Index.md)** · 25 modules · 208 source files · ~27.8k lines

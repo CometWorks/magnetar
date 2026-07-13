@@ -1,6 +1,6 @@
 # Module: Shared.Network
 
-**Project:** `Shared` · **Files:** 7 · **Source lines:** 892
+**Project:** `Shared` · **Files:** 7 · **Source lines:** 902
 
 ## Purpose
 
@@ -27,13 +27,13 @@ Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub 
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`Shared/Network/GitHub.cs`](../descriptions/Shared/Network/GitHub.cs.md) | 168 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
+| [`Shared/Network/GitHub.cs`](../descriptions/Shared/Network/GitHub.cs.md) | 174 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
 | [`Shared/Network/NuGetClient.cs`](../descriptions/Shared/Network/NuGetClient.cs.md) | 248 | `NuGetClient` wraps the NuGet v3 client SDK to download and extract packages from `api.nuget.org` into a local cache inside Magnetar's data directory. |
 | [`Shared/Network/NuGetLogger.cs`](../descriptions/Shared/Network/NuGetLogger.cs.md) | 87 | `NuGetLogger` adapts the NuGet SDK's `ILogger` interface to Magnetar's `LogFile` / NLog pipeline. |
 | [`Shared/Network/NuGetPackage.cs`](../descriptions/Shared/Network/NuGetPackage.cs.md) | 124 | `NuGetPackage` represents a single NuGet package that has already been extracted to disk. |
 | [`Shared/Network/NuGetPackageId.cs`](../descriptions/Shared/Network/NuGetPackageId.cs.md) | 47 | `NuGetPackageId` is a serialisable DTO that identifies a single NuGet package by name and version string. |
 | [`Shared/Network/NuGetPackageList.cs`](../descriptions/Shared/Network/NuGetPackageList.cs.md) | 20 | `NuGetPackageList` is a compact container that carries a plugin's NuGet dependency declaration in two optional forms: a path to a `packages.config` file (`Config`) and/or an inline array of `NuGetPackageId` records (`PackageIds`). |
-| [`Shared/Network/SimpleHttpClient.cs`](../descriptions/Shared/Network/SimpleHttpClient.cs.md) | 198 | `SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. |
+| [`Shared/Network/SimpleHttpClient.cs`](../descriptions/Shared/Network/SimpleHttpClient.cs.md) | 202 | `SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. |
 
 ## Public API surface
 
