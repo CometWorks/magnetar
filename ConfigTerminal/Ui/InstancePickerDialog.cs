@@ -76,12 +76,19 @@ internal static class InstancePickerDialog
     {
         dlg.Add(new Label(label) { X = 1, Y = y });
         var tf = new TextField(value ?? "") { X = 28, Y = y, Width = Dim.Fill(13) };
+        // The TextField constructor parks the cursor at the end of the seeded text, so a path
+        // longer than the box opens scrolled all the way right with its start cropped off the
+        // left edge. Reset the cursor to column 0 so the view is anchored at the start.
+        tf.CursorPosition = 0;
         var browseButton = new Button("Browse") { X = Pos.Right(tf) + 1, Y = y };
         browseButton.Clicked += () =>
         {
             string picked = browse(tf.Text.ToString().Trim());
             if (!string.IsNullOrEmpty(picked))
+            {
                 tf.Text = NStack.ustring.Make(picked);
+                tf.CursorPosition = 0;
+            }
         };
         dlg.Add(tf, browseButton);
         return tf;
