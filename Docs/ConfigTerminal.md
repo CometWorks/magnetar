@@ -1551,10 +1551,11 @@ real saves, to keep the repo lean.
 - Docs integration: `README.md` (documentation table + a "Configuration tool"
   note), `Docs/Usage.md` ("Configuring the server (MagnetarConfig)" section) and
   `Docs/Layout.md` (`ConfigTerminal/` + `ConfigTerminalTests/` rows) now cover the
-  tool, and this file has been reconciled plan → as-built. **Still pending:** the
-  machine-generated code handbook (`Docs/TOC.md` / `Docs/Index.md` + per-file
-  module docs, via a `structured-documentation` refresh) does not yet include the
-  `ConfigTerminal/` tree.
+  tool, and this file has been reconciled plan → as-built. The machine-generated
+  code handbook (`Docs/TOC.md` / `Docs/Index.md` + per-file module docs, via the
+  `structured-documentation` refresh) now covers the `ConfigTerminal/` and
+  `ConfigTerminalTests/` trees (modules `ConfigTerminal.{App,Model,Ui,Process,Logs,Io}`
+  and `ConfigTerminalTests`).
 
 ---
 
