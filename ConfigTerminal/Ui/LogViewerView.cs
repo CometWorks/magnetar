@@ -42,6 +42,9 @@ internal sealed class LogViewerView : Window
             X = 1, Y = 1, Width = 20, Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
         };
         fileList.SelectedItemChanged += _ => LoadSelected();
+        // Enter on a file moves into the text pane so it can be scrolled — the same
+        // as the right arrow (which navigates focus to the view on the right).
+        fileList.OpenSelectedItem += _ => text.SetFocus();
 
         text = new TextView
         {
