@@ -137,6 +137,10 @@ internal sealed class LogViewerView : Window
     private void ScrollToBottom() =>
         text.CursorPosition = new Point(0, Math.Max(text.Lines - 1, 0));
 
+    // Jump to the very top of the log (first line, first column).
+    private void ScrollToTop() =>
+        text.CursorPosition = Point.Empty;
+
     // Terminal.Gui dispatches a key to the focused child (via ProcessHotKey) before the
     // containing Window's ProcessKey runs, so an End handler there never fires — the ListView
     // consumes End (jump to last file) and the TextView consumes it (end of line). Handling the
@@ -147,6 +151,13 @@ internal sealed class LogViewerView : Window
         {
             case Key.End:
                 ToggleFollow();
+                args.Handled = true;
+                break;
+            case Key.Home:
+                // Jump to the top of the log. Stop following first, otherwise the
+                // next poll would snap the view straight back to the bottom.
+                StopFollow();
+                ScrollToTop();
                 args.Handled = true;
                 break;
             case (Key)'r':
@@ -172,29 +183,40 @@ internal sealed class LogViewerView : Window
 
     private void UpdateStatus() =>
         statusLabel.Text = following
-            ? "FOLLOWING (End to stop)"
-            : $"End: follow · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
+            ? "FOLLOWING (End to stop) · Home: top"
+            : $"End: follow · Home: top · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
 
     private void ToggleFollow()
     {
-        following = !following;
-        UpdateStatus();
         if (following)
         {
-            // Refresh from disk once (like pressing R) so following re-reads the
-            // current window and snaps to the very end immediately — picking up
-            // anything written since the file was last read — then keep polling.
-            LoadSelected();
-            followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>
-            {
-                if (!following || reader == null)
-                    return false;
-                if (reader.Poll())
-                    RenderFollow();
-                return true;
-            });
+            StopFollow();
+            return;
         }
-        else if (followToken != null)
+
+        following = true;
+        UpdateStatus();
+        // Refresh from disk once (like pressing R) so following re-reads the
+        // current window and snaps to the very end immediately — picking up
+        // anything written since the file was last read — then keep polling.
+        LoadSelected();
+        followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>
+        {
+            if (!following || reader == null)
+                return false;
+            if (reader.Poll())
+                RenderFollow();
+            return true;
+        });
+    }
+
+    private void StopFollow()
+    {
+        if (!following)
+            return;
+        following = false;
+        UpdateStatus();
+        if (followToken != null)
         {
             Application.MainLoop.RemoveTimeout(followToken);
             followToken = null;
