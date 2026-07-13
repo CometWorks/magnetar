@@ -72,13 +72,20 @@ internal sealed class ModListView : Window, IAutoSaveContent
         if (i < 0 || target < 0 || target >= mods.Items.Count)
             return;
 
+        // A move only swaps two rows, so the scroll position should stay put.
+        // Refresh reloads the source, which resets TopItem to 0, so capture and
+        // restore it. EnsureSelectedItemVisible then nudges the scroll by exactly
+        // one row only if the moved item ended up just outside the visible window.
+        int top = list.TopItem;
         if (delta < 0)
             mods.MoveUp(i);
         else
             mods.MoveDown(i);
         touched = true;
         Refresh();
+        list.TopItem = top;
         list.SelectedItem = target;
+        list.EnsureSelectedItemVisible();
     }
 
     private void AddMod()
