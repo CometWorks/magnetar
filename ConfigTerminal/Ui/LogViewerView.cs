@@ -181,13 +181,10 @@ internal sealed class LogViewerView : Window
         UpdateStatus();
         if (following)
         {
-            // Jump to the current end immediately so End feels instant (and re-snaps to the
-            // bottom if the user had scrolled up), then keep polling for growth.
-            if (reader != null)
-            {
-                reader.Poll();
-                RenderFollow();
-            }
+            // Refresh from disk once (like pressing R) so following re-reads the
+            // current window and snaps to the very end immediately — picking up
+            // anything written since the file was last read — then keep polling.
+            LoadSelected();
             followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>
             {
                 if (!following || reader == null)
