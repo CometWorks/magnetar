@@ -84,3 +84,39 @@ parent terminating does not take the server down with it.
   script that `exec`s it), `setsid()` is not permitted in place, so it re-execs
   a detached child and the original exits.
 * **Windows** — it detaches from the inherited console.
+
+When Magnetar detaches, it also writes `magnetar.pid` (PID + resolved data dir)
+in its config dir so tools can find and verify the running instance; it is
+removed on clean shutdown.
+
+## Configuring the server (MagnetarConfig)
+
+**MagnetarConfig** is a terminal UI bundled next to the launcher for editing and
+operating **one** DS instance without hand-editing XML. Run it from the
+installed bundle:
+
+```sh
+# Linux
+~/.local/share/Magnetar/MagnetarConfig
+
+# Windows
+%APPDATA%\Magnetar\MagnetarConfig.bat
+```
+
+It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself
+runs with — and edits the DS files in place (atomic writes with `.bak`
+backups): the global `SpaceEngineers-Dedicated.cfg`, each world's
+`Sandbox_config.sbc` (session settings and mod list) and `LastSession.sbl`
+(which world loads next). From the same UI you can create a world by copying a
+DS template, delete a world, manage plugins/sources/profiles
+(`Profiles/`, `Sources/sources.xml`), start/stop/reload the daemonized server
+(status read from `magnetar.pid`), and read the game and Magnetar logs. All
+edits **save automatically**.
+
+Key flags: `-path <dir>` (DS data dir) · `-config <dir>` (Magnetar config dir) ·
+`-magnetar <file>` (launcher to start/stop) · `-ds64 <dir>` (for world
+templates) · `-netdriver` (portable terminal driver) · `-diag` (print a
+headless read-only instance report and exit) · `-help`. Graceful stop and config
+reload use SIGTERM/SIGHUP and are **Linux-only**; on Windows the server can only
+be force-killed (with a data-loss warning). See
+[Config tool](ConfigTerminal.md) for the full design.

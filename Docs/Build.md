@@ -155,6 +155,13 @@ The `AfterPublish` target stages `build/Libraries/*` into the publish output too
 Running the full `./build.sh` (no flags) does this publish and packs the result
 into `dist/`.
 
+The full packager also publishes the **`MagnetarConfig`** terminal UI
+(`ConfigTerminal/`, framework-dependent net10.0) into its own `Config/` folder
+and drops a root launcher/shim next to `MagnetarInterim` — `Magnetar/MagnetarConfig`
+(bash) on Linux, `<Magnetar>\MagnetarConfig.bat` on Windows — so the config tool
+ships in both bundles with its Terminal.Gui dependencies isolated from the
+launcher. See [Config tool → Build & packaging](ConfigTerminal.md#13-build-packaging-and-documentation-integration).
+
 ### Run / verify
 
 ```sh

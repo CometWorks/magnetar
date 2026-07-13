@@ -28,8 +28,9 @@ verified against Magnetar's own `XmlSerializer` for both `Profile` and
 `SourcesConfig` (`ConfigTerminalTests/PluginInteropTests.cs`) and the protobuf reader
 against a real captured hub cache (`HubCatalogTests`). Build/packaging is wired: `build.sh`/`build.bat` ship
 `MagnetarConfig` in each bundle next to the launcher (§13). Remaining polish
-(external-change watcher/conflict flow, incremental search, advanced-fields
-toggle) is tracked against §14 phase 6.
+(external-change watcher/conflict flow, advanced-fields toggle) is tracked
+against §14 phase 6; a **Filter** box on the settings form already covers
+incremental narrowing of fields.
 
 A cross-platform console (TUI) application to configure **and operate** a
 Space Engineers 1 Dedicated Server instance running under Magnetar: the DS's
@@ -51,9 +52,10 @@ tool.
 
 Built with **[Terminal.Gui v1](https://www.nuget.org/packages/Terminal.Gui)**
 (v1 API reference: https://gui-cs.github.io/Terminal.Gui/) in the classic
-**Turbo Vision** aesthetic. Developed on Linux first, but designed from day one
-to run on Windows as well (both the .NET Framework 4.8 *Legacy* and .NET 10
-*Interim* environments).
+**Turbo Vision** aesthetic. The tool itself targets **net10.0 only** and runs on
+Linux and Windows; it can *operate* either installed launcher — the .NET
+Framework 4.8 *Legacy* or the .NET 10 *Interim* build (on Windows it asks which
+one to configure when both are present).
 
 [Quasar](https://github.com/CometWorks/quasar) is the design reference: its
 config-profile mechanism solves the same problem for remotely managed servers
@@ -114,11 +116,13 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
   to a running Magnetar so it saves and calls `ConfigDedicated.Load()`
   (see `Legacy/Launcher/ServerControl.cs` `ReloadConfig`).
 - **Create new worlds** from the world templates shipped with the DS itself
-  (`<DS install>/Content/CustomWorlds/*`): a wizard that seeds the session
-  settings from the chosen template (so the config matches the world),
-  lets the user adjust them, and has the DS materialize the world under
-  `Saves/` on the next start — the same mechanism the stock WinForms
-  configurator uses ([§2.7](#27-world-templates-and-new-world-creation)).
+  (`<DS install>/Content/CustomWorlds/*`): a wizard that **copies the chosen
+  template directly into `Saves/<name>`**, stamps the world name into the copied
+  `Sandbox_config.sbc`, and activates it — no server start required, editable
+  immediately ([§2.7](#27-world-templates-and-new-world-creation)).
+- **Delete a world** — remove a world folder under `Saves/` behind a
+  Keep/Delete confirmation, clearing a now-dangling `LastSession.sbl` / cfg
+  `LoadWorld` that pointed at it.
 - **Start / stop / restart the Magnetar instance** bound to the edited
   configuration — spawn Magnetar daemonized in the background (`-daemon
   -config <cfg> -path <data>`), stop it gracefully (SIGTERM → save + quit),
@@ -127,8 +131,8 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
   ([§2.8](#28-process-model-and-pid-file)) + liveness/identity check of the
   process, with status, PID and uptime on the dashboard and in the status bar.
 - **Log reader** — browse and follow (`End`) the game log(s) in the instance dir
-  and Magnetar's timestamped `info_*.log` files, with a line-wrap toggle (`W`)
-  and manual refresh (`R`) ([§2.9](#29-log-files)).
+  and Magnetar's timestamped `info_*.log` files, with a line-wrap toggle (`W`),
+  manual refresh (`R`) and jump-to-top (`Home`) ([§2.9](#29-log-files)).
 - **Configurable folders** — both the Magnetar config folder (default
   `~/.config/Magnetar` on Linux) and the DS data folder (default
   `~/.config/SpaceEngineersDedicated` on Linux; Windows defaults per
@@ -419,9 +423,9 @@ Two log groups, both covered by the log reader:
 
 Both formats are plain text with .NET-style exception traces (an exception
 message line followed by indented `   at Namespace.Type.Method(...)` frames);
-SE additionally logs thread/timestamp prefixes. The exception indexer keys on
-consecutive ` at ...` frame lines and includes the preceding message line —
-format details are tuned against real logs during implementation.
+SE additionally logs thread/timestamp prefixes. The viewer displays the raw
+text; exception-traceback indexing/navigation is **not implemented** (see
+[§5.9](#59-log-reading)).
 
 ---
 
@@ -438,7 +442,7 @@ format details are tuned against real logs during implementation.
 | `LastSession.sbl` writing with both `Path` and `RelativePath`, plus `IgnoreLastSession=false` | `LastSessionFile` + world-activation flow |
 | Atomic writes (temp file + rename, flush, never truncate the target on failure) | `AtomicFile` ([§7](#7-file-io-layer)) |
 | Clean → Edited → PendingDecision editing state machine with Cancel/Discard/Save | `EditSession` ([§9.2](#92-document-edit-lifecycle)) |
-| Debounced file watcher that re-checks content before signalling external change | `ExternalChangeWatcher` |
+| Debounced file watcher that re-checks content before signalling external change | `ExternalChangeWatcher` *(planned — §14 phase 6)* |
 | World validation: selected save must exist and contain `Sandbox.sbc` | World activation guard |
 | UTF-8 no-BOM, `\n` newlines, indented XML with declaration | `XmlOut` writer settings |
 | `ReadConfigProfile` — import a world's `Sandbox_config.sbc` into an editable profile | New-world wizard seeds settings from the chosen template ([§2.7](#27-world-templates-and-new-world-creation)) |
@@ -464,73 +468,86 @@ format details are tuned against real logs during implementation.
 
 ```
 ConfigTerminal/                      → executable "MagnetarConfig"
-├── ConfigTerminal.csproj            net10.0 (Windows + Linux)
-├── Program.cs                       arg parsing, driver selection, top-level error handling
+├── ConfigTerminal.csproj            net10.0 (Linux + Windows)
+├── Program.cs                       driver selection, launcher/instance pickers, top-level errors
+├── Cli.cs                           argument parsing → InstanceBinding, -help/-diag text
+├── Diagnostics.cs                   headless -diag report (no Terminal.Gui)
 ├── Model/                           pure data layer — NO Terminal.Gui dependency
-│   ├── OptionDefinition.cs          option metadata record + OptionKind/Scope/Liveness enums
+│   ├── OptionModel.cs               OptionDefinition record + OptionKind/Scope/Liveness enums
 │   ├── OptionRegistry.cs            the declarative tables (dedicated + session options)
-│   ├── DedicatedConfigDocument.cs   XDocument wrapper for the .cfg
+│   ├── ConfigDocumentBase.cs        shared XDocument upsert base for both config docs
+│   ├── DedicatedConfigDocument.cs   XDocument wrapper for the .cfg (+ access lists, password)
 │   ├── WorldConfigDocument.cs       XDocument wrapper for Sandbox_config.sbc
 │   ├── CheckpointReader.cs          read-only, gzip-aware Sandbox.sbc info reader
 │   ├── LastSessionFile.cs           read/write LastSession.sbl
-│   ├── WorldInfo.cs / WorldCatalog.cs  enumerate Saves/
-│   ├── ModItem.cs / ModListCodec.cs
-│   ├── BlockTypeLimitsCodec.cs
-│   ├── PasswordHasher.cs
+│   ├── WorldCatalog.cs              enumerate Saves/ (WorldInfo)
+│   ├── ModList.cs                   ModItem + ordered mod list (load order, IsDependency)
+│   ├── PasswordHasher.cs            PBKDF2 hashing identical to the DS
 │   ├── WorldTemplateCatalog.cs      enumerate <DS install>/Content/CustomWorlds
-│   ├── DsInstance.cs                aggregate root binding all of the above
+│   ├── WorldCreator.cs              copy a template into Saves/<name> and stamp the name
+│   ├── DsInstance.cs                aggregate root (+ InstanceBinding) binding all of the above
 │   ├── EditSession.cs               snapshot / dirty-tracking / validation engine
-│   ├── PluginProfileDocument.cs     XDocument wrapper for Profiles/Current.xml
+│   ├── PluginProfileDocument.cs     XDocument wrapper for Profiles/*.xml
 │   │                                 (Local DLLs, DevFolder, GitHub hub plugins; Mods preserved, not edited)
 │   ├── PluginSourcesDocument.cs     XDocument wrapper for Sources/sources.xml
 │   │                                 (Remote/Local hub + plugin sources; ModSources preserved, not edited)
-│   ├── ProfileCatalog.cs           named-profile management (load/save/rename/delete)
+│   ├── ProfileCatalog.cs            named-profile management (load/save/update/rename/delete)
 │   ├── MagnetarPlugins.cs           facade joining catalog + profile + sources
+│   ├── PluginManifest.cs            read a dev-folder plugin manifest .xml
 │   ├── ProtoReader.cs               minimal protobuf wire reader (no protobuf-net dep)
-│   └── HubCatalog.cs                parse Sources/{Hubs,Plugins}/*.bin → HubPluginInfo
+│   ├── HubCatalog.cs                parse Sources/{Hubs,Plugins}/*.bin → HubPluginInfo
+│   ├── WorkshopResolver.cs          keyless Steam Workshop name + collection resolution
+│   ├── DefaultHttpFetcher.cs        injectable IHttpFetcher (System.Net.Http)
+│   └── Json/MiniJson.cs             dependency-free JSON reader for the resolver
 ├── Io/
 │   ├── AtomicFile.cs                temp+rename atomic writer, .bak backup
 │   ├── XmlOut.cs                    shared XmlWriterSettings / Utf8StringWriter
-│   ├── ExternalChangeWatcher.cs     debounced FileSystemWatcher
-│   └── InstanceLocator.cs           folder-pair resolution, DS install detection
+│   ├── PlatformPaths.cs             per-platform defaults + IsLinux
+│   └── InstanceLocator.cs           folder-pair resolution, DS install / launcher detection
 ├── Process/                         Magnetar instance control — no Terminal.Gui dependency
-│   ├── PidFile.cs                   read/verify magnetar.pid (stale/foreign detection)
+│   ├── ServerStatus.cs              ServerState enum + status record
+│   ├── PidFileReader.cs             read/verify magnetar.pid (stale/foreign detection)
 │   ├── LaunchSpec.cs                builds the Magnetar command line
-│   ├── MagnetarProcess.cs           spawn daemonized, SIGTERM/SIGHUP, poll state
+│   ├── MagnetarProcess.cs           spawn daemonized, SIGTERM/SIGHUP/SIGKILL, poll state
 │   └── ProcessMonitor.cs            periodic state refresh feeding the UI
 ├── Logs/                            log reading — no Terminal.Gui dependency
 │   ├── LogCatalog.cs                discover game + Magnetar log files, active markers
-│   └── LogTailReader.cs             windowed backward reads + follow (tail -f)
+│   ├── LogTailReader.cs             windowed backward reads + follow (tail -f)
+│   └── ReadinessDetector.cs         "Game ready" marker scan (present, currently unused)
 ├── Ui/
-│   ├── TurboVisionTheme.cs          ColorSchemes + border styles + desktop fill
-│   ├── AppShell.cs                  Toplevel: menu bar, status bar, desktop, navigation
-│   ├── InstancePickerDialog.cs
-│   ├── DashboardView.cs             incl. server status + start/stop/restart controls
+│   ├── TurboVisionTheme.cs          ColorSchemes + border styles
+│   ├── DesktopBackground.cs         blue ▒ desktop fill
+│   ├── AppShell.cs                  Toplevel: menu bar, status bar, desktop, navigation, auto-save
+│   ├── IAutoSaveContent.cs          auto-save contract for editable panels
+│   ├── InstancePickerDialog.cs      folder-pair / launcher / ds64 picker
+│   ├── DashboardView.cs             server status + start/stop/restart/reload controls
 │   ├── OptionFormView.cs            generic registry-driven settings form (the workhorse)
-│   ├── CategoryListView.cs
-│   ├── WorldsView.cs
-│   ├── NewWorldWizard.cs            template pick → name → settings → create (§9.6)
-│   ├── ModListView.cs
-│   ├── AccessListView.cs            admins / banned / reserved editors
-│   ├── PasswordDialog.cs
-│   ├── LogViewerView.cs             read-only log view: follow (End), wrap (W), refresh (R)
+│   ├── WorldsView.cs                worlds list: Settings/Mods/Activate/New/Delete
+│   ├── NewWorldWizard.cs            template pick → name → confirm → copy + activate (§9.6)
+│   ├── ModListView.cs               per-world mod list editor
+│   ├── AccessListView.cs            admins / banned / reserved + GroupID editors
+│   ├── PasswordDialog.cs            set / clear server password
+│   ├── LogViewerView.cs             read-only log view: follow (End), top (Home), wrap (W), refresh (R)
 │   ├── PluginsView.cs               local DLLs + registered dev folders
-│   ├── HubPluginsView.cs            browse hub catalog + enable (with dependencies)
+│   ├── HubPluginsView.cs            browse hub catalog + dev folders, enable (with dependencies)
 │   ├── PluginSourcesView.cs         manage remote/local hub + remote plugin sources
-│   ├── ProfilesView.cs             load/save/update/rename/delete named profiles
-│   ├── ManifestPicker.cs           dev-folder manifest .xml picker
-│   └── Dialogs.cs                   confirm-discard, save-error, stop-confirm, about, help, prompt
+│   ├── ProfilesView.cs              load/save/update/rename/delete named profiles
+│   ├── ManifestPicker.cs            dev-folder manifest .xml picker
+│   ├── FileDialogs.cs               open-file / open-directory helpers with Browse buttons
+│   ├── HelpDialog.cs                About/Help dialog
+│   └── Dialogs.cs                   confirm/destructive/prompt/info/error + RunBackground
 └── State/
-    └── ToolSettings.cs              last manifest folder
+    └── ToolSettings.cs              ConfigTerminal.xml: recent pairs, last manifest folder, extra args
 
 ConfigTerminalTests/
 └── ConfigTerminalTests.csproj       xUnit, net10.0, fixture files
 ```
 
 **Companion Magnetar-side change (same branch):** the launcher writes
-`magnetar.pid` per [§2.8](#28-process-model-and-pid-file) — written after the
-daemon detach in `Legacy/Program.cs` / `Daemon.cs`, deleted on clean exit in
-the shutdown path. Small, isolated, and useful on its own (ops scripts).
+`magnetar.pid` per [§2.8](#28-process-model-and-pid-file) —
+`Legacy/Launcher/PidFile.cs` writes it after the daemon detach (from
+`Program.SetupGame`) and deletes it in the clean-shutdown path
+(`ServerControl.FlushAll`). Small, isolated, and useful on its own (ops scripts).
 
 Naming: assembly `MagnetarConfig`. Both the Windows and Linux bundles ship the
 net10.0 build (framework-dependent, requiring the .NET 10 runtime, same as
@@ -567,8 +584,8 @@ graph TD
   State["State (tool settings)"]
   Model["Model (registry, documents, edit sessions)"]
   Process["Process (pid file, launch, signals)"]
-  Logs["Logs (catalog, tail, exception index)"]
-  Io["Io (atomic files, watcher, locator)"]
+  Logs["Logs (catalog, tail)"]
+  Io["Io (atomic files, locator)"]
 
   Program --> Ui
   Program --> Io
@@ -872,10 +889,11 @@ sealed class LogTailReader          // never loads the whole file
 }
 ```
 
-The viewer is deliberately minimal: `End` toggles follow, `W` toggles line wrap,
-`R` re-reads the window. Incremental search and exception-traceback
-detection/navigation are **not implemented** (a possible future addition — see
-§13); the windowed reader already bounds memory even on multi-GB logs.
+The viewer is deliberately minimal: `End` toggles follow, `Home` jumps to the
+top, `W` toggles line wrap, `R` re-reads the window. Incremental search and
+exception-traceback detection/navigation are **not implemented** (a possible
+future addition — see §13); the windowed reader already bounds memory even on
+multi-GB logs.
 
 ### 5.10 Plugin and source management
 
@@ -1020,11 +1038,13 @@ and each world's settings share one implementation.
 - **`XmlOut`** — shared `XmlWriterSettings`: UTF-8 **without BOM**, `Indent =
   true`, `NewLineChars = "\n"`, XML declaration on. Matches Quasar's proven
   output settings and keeps diffs clean across platforms.
-- **`ExternalChangeWatcher`** — one `FileSystemWatcher` per open document plus
-  one on `Saves/` for the world list; debounced (500 ms), then content
-  compared against the session snapshot before raising, so a no-op touch does
-  not nag. Events marshalled to the UI thread via
-  `Application.MainLoop.Invoke` (Terminal.Gui v1 is single-threaded).
+- **`ExternalChangeWatcher`** *(planned, not yet implemented — §14 phase 6)* —
+  a debounced `FileSystemWatcher` per open document plus one on `Saves/`, content
+  compared against the session snapshot before raising so a no-op touch does not
+  nag, events marshalled to the UI thread via `Application.MainLoop.Invoke`. Until
+  it lands, re-open a panel (or use the Worlds **Refresh** button) to pick up an
+  external change; auto-save writes are content-compared, so they never rewrite a
+  file the user did not actually change.
 - **Reads are tolerant**: missing file → skeleton/defaults; malformed XML →
   document opens read-only with the parse error surfaced in the UI and a
   "restore from .bak" offer when one exists (mirrors `ProfilesConfig`'s
@@ -1069,7 +1089,7 @@ One `Toplevel` shell with menu bar (top), status bar (bottom, F-key hints),
 and a desktop hosting one primary window at a time (TV-style):
 
 ```
-┌ File ── Server ── Worlds ── Tools ── Help ─────────────────────────────┐
+┌ File ─ Server ─ Worlds ─ Plugins ─ Tools ─ Help ───────────────────────┐
 │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│
 │▒▒╔═[■]═ Worlds — /home/se/instance ══════════════════════════════╗▒▒▒▒│
 │▒▒║ Name             Last saved         Mods  Size    Config      ║▒▒▒▒│
@@ -1078,7 +1098,7 @@ and a desktop hosting one primary window at a time (TV-style):
 │▒▒║ …                                                             ║▒▒▒▒│
 │▒▒╚═══════════════════════════════════════════════════════════════╝▒▒▒▒│
 │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│
-│ F1 Help│F2 Save│F4 Logs│F5 Activate│F6 Start/Stop│F7 Settings│F10 Quit │
+│ F1 Help│F3 Worlds│F4 Logs│F5 Start/Stop│F7 Settings│F8 Plugins│F10 Quit │
 │ ● RUNNING pid 41230 up 2:14:07 — Red Ship                              │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -1092,32 +1112,33 @@ Windows / dialogs:
 | --- | --- | --- |
 | **Instance picker** (dialog) | recent folder *pairs* (from `ToolSettings`), platform defaults, free path entry for both dirs; validates they exist | startup without args, `File → Open Instance…` |
 | **Dashboard** | server status (state/PID/uptime) with **Start / Stop / Restart / Reload** buttons; server name/ports/network type summary; active world; last lines of the active log; warnings (`Problems`, experimental, `LoadWorld` set, `IgnoreLastSession` true, stale PID file) | on open |
-| **Server Settings** | `OptionFormView` over `DedicatedOptions`: category list (left pane) + scrollable field form (right pane), incremental search (`/`), per-field hint + default + restart/live badge | `Server → Settings` (F7 from dashboard) |
+| **Server Settings** | `OptionFormView` over `DedicatedOptions`: category list (left pane) + scrollable field form (right pane), a **Filter** box narrowing fields across categories, per-field hint + default + restart/live badge | `Server → Settings` (F7) |
 | **Access Lists** | three tabs (TabView): Administrators / Banned / Reserved + GroupID field; add/remove/paste SteamIDs, input validation | `Server → Access Lists` |
 | **Password** (dialog) | set / clear; two-field confirm; shows only "password is set" state | `Server → Server Password…` |
 | **New-World Defaults** | `OptionFormView` over `SessionOptions` bound to the cfg's `<SessionSettings>`; banner: *"Template for newly created worlds — existing worlds keep their own settings"* | `Server → New World Defaults` |
-| **Worlds** | table as sketched above; Enter opens world menu | `Worlds → Browse` (F3) |
-| **World Settings** | `OptionFormView` over `SessionOptions` bound to that world's `Sandbox_config.sbc`; same categories/search; experimental badges | Worlds → Enter → Settings (F7) |
-| **World Mods** | ordered `ListView`; Ins/Del add/remove, Ctrl+↑/↓ reorder, Space toggles `IsDependency`, editable friendly name; footer shows count | Worlds → Enter → Mods (F8) |
-| **Activate World** (confirm dialog) | shows what will be written (`LastSession.sbl`, `IgnoreLastSession` flip if needed, `LoadWorld` clear offer); offers restart when running | Worlds → F5 |
-| **New World wizard** | template list (from `WorldTemplateCatalog`, disabled with hint when DS install not found) → world name (validated) → confirm → copies the template into `Saves/<name>` and activates it, no server start ([§9.6](#96-new-world-creation)) | `Worlds → New World…` (Ins in Worlds) |
-| **Log viewer** | file selector (game + Magnetar groups, active file marked); read-only text pane; `End` toggles follow (tail -f); `W` toggles line wrap; `R` re-reads the window | `Tools → Logs` (F4) |
-| **Stop confirm** (dialog) | graceful stop (SIGTERM, saves world) with progress; on timeout offers force-kill behind an explicit data-loss warning | F6 / dashboard Stop |
+| **Worlds** | table as sketched above; **Settings / Mods / Activate (F6) / Refresh / New World / Delete** buttons | `Worlds → List (Saves)` (F3) |
+| **World Settings** | `OptionFormView` over `SessionOptions` bound to that world's `Sandbox_config.sbc`; same categories/filter; experimental badges | Worlds → **Settings** button |
+| **Activate World** (confirm dialog) | shows what will be written (`LastSession.sbl`, `IgnoreLastSession` flip if set, `LoadWorld` clear if set); notes that a `-session:` on the command line overrides it | Worlds → **Activate** (F6) |
+| **Delete World** (confirm dialog) | Keep/Delete confirmation (defaults to Keep); removes the folder and clears a now-dangling `LastSession.sbl` / cfg `LoadWorld` | Worlds → **Delete** button |
+| **New World wizard** | template list (from `WorldTemplateCatalog`, error with hint when DS install not found) → world name (validated) → confirm → copies the template into `Saves/<name>` and activates it, no server start ([§9.6](#96-new-world-creation)) | `Worlds → New World…` (button / menu) |
+| **Log viewer** | file selector (game + Magnetar groups, active file marked); read-only text pane; `End` toggles follow (tail -f); `Home` jumps to top; `W` toggles line wrap; `R` re-reads the window | `Tools → Logs` (F4) |
+| **Stop confirm** (dialog) | Linux: graceful stop (SIGTERM, saves world) with a grace period, then offers force-kill behind a data-loss warning. Windows: a one-time no-safe-stop warning, then confirmed force-kill only | F5 / `Server → Stop` / dashboard Stop |
 | **Reload prompt** (dialog, Linux) | after saving live-reloadable cfg fields with a running server detected: offer SIGHUP | after save |
-| **Hub Plugins** | list of the cached hub/remote catalog **plus registered dev folders** (shown with a `- dev folder` suffix); Space/Enter toggles enabled (hub deps pulled in; dev folders write `Profile.DevFolder`) with an author/tagline/description details pane | `Plugins → Hub Plugins` |
+| **Hub Plugins** | list of the cached hub/remote catalog **plus registered dev folders** (shown with a `- dev folder` suffix); Space/Enter toggles enabled (hub deps pulled in; dev folders write `Profile.DevFolder`) with an author/tagline/description details pane and a filter box | `Plugins → Hub` |
 | **Plugin Profiles** | saved-preset list (the one matching the active set marked); Load (apply to `Current.xml`), Save As New, Update (overwrite), Rename, Delete | `Plugins → Profiles` |
-| **Local & Dev Plugins** | two panes: local DLLs from `Local/` (Space toggles) and **registered** dev folders (Add picks a manifest `.xml` and registers it in `sources.xml` only; Remove unregisters). Registering does **not** enable — the pane shows each folder's enabled state, toggled under Hub Plugins | `Plugins → Local & Dev Plugins` |
-| **Plugin Sources** | manage `RemoteHub`/`RemotePlugin`/`LocalHub` sources: Add Hub/Plugin/Local, Space toggles, Remove | `Plugins → Plugin Sources` |
-| **Mods** (per-world) | ordered mod list for the selected world (`Sandbox_config.sbc`): Add (Workshop id **or URL**, name auto-resolved), Del, Up/Down reorder, Toggle Dependency | `Worlds → Mods` |
-| **Help** | key reference + file-format primer (the §2 précis) | F1 |
+| **Local & Dev Folders** | two panes: local DLLs from `Local/` (Space toggles) and **registered** dev folders (Add picks a manifest `.xml` and registers it in `sources.xml` only; Remove unregisters). Registering does **not** enable — the pane shows each folder's enabled state, toggled under Hub | `Plugins → Local & Dev Folders` (F8) |
+| **Plugin Sources** | manage `RemoteHub`/`RemotePlugin`/`LocalHub` sources: Add Hub/Plugin/Local, Space toggles, Remove | `Plugins → Sources` |
+| **Mods** (per-world) | ordered mod list for the selected world (`Sandbox_config.sbc`): Add (Workshop id **or URL**, name auto-resolved), Del, Up/Down reorder, Toggle Dependency | `Worlds → Mods` button |
+| **Help / About** | key reference + list of files edited + new-world note | F1 / `Help → About` |
 
 ### 8.3 The generic option form
 
 `OptionFormView` is the single most important view. Given
 (`IEnumerable<OptionDefinition>`, `ConfigDocumentBase`, `EditSession`):
 
-- Two-pane layout: `CategoryListView` (left, ~24 cols) and a `ScrollView`
-  form (right) rebuilt per category.
+- A **Filter** box on top, then a two-pane layout: a category list (left) and a
+  scrollable form (right) rebuilt per category. Editing **saves automatically**
+  (see [§9.3](#93-save-pipeline)) — there is no Save key.
 - Field widgets by `OptionKind`: `Bool` → `CheckBox`; `Enum` → `RadioGroup`
   (≤4 choices) or `ComboBox`; numerics → `TextField` with validation on
   unfocus + Min/Max hint; `Text` → `TextField`; `MultilineText` (MOTD,
@@ -1125,23 +1146,27 @@ Windows / dialogs:
   a small key/value `TableView` with add/remove;
 - Each field row: label (fixed width), widget, and status glyph:
   `○` absent from file → showing DS default (a present value shows no marker,
-  since configs are serialized in full and nearly every field is set), `!`
-  invalid raw value, `↕` live-reloadable, `▲` experimental when current value
-  triggers it.
-- Bottom hint bar shows the focused option's `Help`, default, and XML name.
-- `/` opens incremental search across all categories (jump on Enter).
-- A context action (Ctrl+D) resets the focused field to "default" =
-  `Unset` (remove the element), distinct from typing the default value.
+  since configs are serialized in full and nearly every field is set), `↕`
+  live-reloadable, `▲` experimental when the current value triggers it. A raw
+  value that will not parse is shown **red** and kept out of the document rather
+  than flagged with a glyph.
+- Bottom hint bar shows the focused option's `Help`, default, XML name, and its
+  restart/live-reload disposition.
+- The **Filter** box narrows the visible fields to those whose label, XML name,
+  or help text match the query, across all categories (it ignores the selected
+  category while non-empty).
 
 ### 8.4 Global keys (status bar)
 
-`F1` help · `F2` save current document · `F3` worlds · `F4` logs ·
-`F5` activate selected world · `F6` start/stop server (context-sensitive) ·
-`F7` settings of current context · `F8` mods · `F9` menu · `F10`/`Esc` close
-window / quit (with pending-changes dialog) · `Tab`/arrows navigation. All
-functions also reachable via Alt-hotkey menus (`Server` menu carries Start /
-Stop / Restart / Reload Config / Logs) — full keyboard operation, mouse
-optional (Terminal.Gui gives mouse support for free).
+`F1` help/about · `F3` worlds · `F4` logs · `F5` start/stop server
+(context-sensitive) · `F7` server settings · `F8` plugins (Local & Dev Folders)
+· `F10` quit (with a pending-invalid-fields prompt) · `Tab`/arrows navigation.
+Within the **Worlds** view, `F6` activates the selected world. Editing **saves
+automatically** — there is no `Save` key ([§9.3](#93-save-pipeline)), and no
+`F2`/`F6`/`F9` global binding. All functions are also reachable via the
+Alt-hotkey menus (`File` / `Server` / `Worlds` / `Plugins` / `Tools` / `Help`;
+the `Server` menu carries Start / Stop / Restart / Reload Config) — full
+keyboard operation, mouse optional (Terminal.Gui gives mouse support for free).
 
 ---
 
@@ -1161,12 +1186,12 @@ stateDiagram-v2
     Dashboard --> NewWorldDefaults
     Dashboard --> Worlds
     Dashboard --> LogViewer : F4
-    Dashboard --> StartStop : F6 / buttons (§9.5)
+    Dashboard --> StartStop : F5 / buttons (§9.5)
     StartStop --> Dashboard
-    Worlds --> WorldSettings : Enter/F7
-    Worlds --> WorldMods : F8
-    Worlds --> ActivateConfirm : F5
-    Worlds --> NewWorldWizard : Ins (§9.6)
+    Worlds --> WorldSettings : Settings button
+    Worlds --> WorldMods : Mods button
+    Worlds --> ActivateConfirm : Activate (F6)
+    Worlds --> NewWorldWizard : New World (§9.6)
     NewWorldWizard --> Worlds : created/staged/cancel
     ActivateConfirm --> Worlds : done/cancel
     ServerSettings --> Dashboard : close (guarded)
@@ -1196,9 +1221,9 @@ stateDiagram-v2
     PendingDecision --> Edited : Cancel (stay)
     PendingDecision --> Clean : Discard (reload snapshot)
     PendingDecision --> Saving : Save
-    Edited --> Saving : F2
+    Edited --> Saving : auto-save (tick / panel switch / quit)
     Saving --> Clean : success (new snapshot)
-    Saving --> Edited : validation error / IO error (dialog)
+    Saving --> Edited : invalid fields held out of the doc
     Clean --> ExternalChange : watcher fires (content differs)
     Edited --> ExternalConflict : watcher fires (content differs)
     ExternalChange --> Clean : auto-reload
@@ -1207,33 +1232,47 @@ stateDiagram-v2
 ```
 
 Notes:
-- `ExternalChange` on a clean document reloads silently (status-bar notice).
-- `ExternalConflict` (dirty + disk changed underneath — e.g. the DS saved the
-  world) shows a three-way dialog; "Keep mine" rebases the snapshot so saving
-  will overwrite consciously.
+- Editing has **no explicit Save**: a dirty document is flushed automatically on
+  the ~1 s tick, on panel switch, and on quit ([§9.3](#93-save-pipeline)) — the
+  `Saving` transition is driven by those triggers, not an `F2` key.
+- The `ExternalChange` / `ExternalConflict` transitions are **planned, not yet
+  implemented** (`ExternalChangeWatcher`, §14 phase 6). Today an external write is
+  picked up on the next panel re-open / Refresh; because auto-save is
+  content-compared, it will not silently overwrite a file that changed to a value
+  the user did not touch.
 
-### 9.3 Save pipeline
+### 9.3 Save pipeline (auto-save)
+
+There is no explicit save step. Each editable panel implements
+`IAutoSaveContent`; the shell flushes any dirty panel on three triggers — a
+~1 s main-loop tick, a panel switch (before the old panel is disposed), and
+quit. A flush is a no-op when the panel is clean (a cheap `touched` flag gates
+the expensive canonical-string comparison) and it never blocks or pops a dialog.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Validate
-    Validate --> ShowIssues : errors
-    ShowIssues --> [*] : user fixes / cancels
-    Validate --> Summary : ok (warnings allowed)
-    Summary --> Backup : confirm (lists changed fields + restart/live badges)
-    Backup --> AtomicWrite
-    AtomicWrite --> Failed : IO error → dialog, target untouched
-    AtomicWrite --> Done
-    Done --> OfferReload : running server detected AND all changed fields LiveViaReload (Linux)
-    Done --> NoteRestart : any RestartRequired field changed
-    OfferReload --> [*] : SIGHUP sent / declined
-    NoteRestart --> [*] : status-bar notice
+    [*] --> Idle
+    Idle --> Flush : tick (~1 s) / panel switch / quit
+    Flush --> Idle : clean (nothing to do)
+    Flush --> Validate : dirty
+    Validate --> Idle : invalid fields kept out of the doc (shown red)
+    Validate --> AtomicWrite : all valid
+    AtomicWrite --> Idle : .bak once per session, then temp+rename
 ```
+
+- Free-typed fields that do not parse are shown **red** and held *out* of the
+  document, so a half-typed value is never written; a field commits once it
+  becomes valid.
+- On panel switch and on quit, any still-invalid fields are surfaced in a
+  confirm dialog (`InvalidFields`) rather than silently discarded.
+- Reloading a running server after a live-reloadable change is a manual action
+  (`Server → Reload Config` → SIGHUP on Linux), not an automatic post-save
+  prompt.
 
 ### 9.4 World activation
 
 ```
-F5 on world W:
+Activate (F6 in Worlds) on world W:
   guard: W.HasCheckpoint            → else error dialog ("no Sandbox.sbc")
   guard: FolderName has no path separators
   compute: Path = abs(W), RelativePath = W.FolderName, GameName = W.SessionName
@@ -1347,6 +1386,9 @@ MagnetarConfig [options]
                      registry / library folders / ~/.steam default path)
   -netdriver         force Terminal.Gui's NetDriver (portable fallback when
                      curses/terminfo is broken over e.g. exotic SSH terminals)
+  -diag              print a headless read-only diagnostics report for the
+                     resolved instance (paths, cfg summary, worlds, plugins,
+                     sources, profiles, server status, problems) and exit
   -help / -h / --help
 ```
 
@@ -1475,7 +1517,7 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
   dependencies), plus empty/missing-file cases (`HubCatalogTests`).
 - **UI smoke tests** — Terminal.Gui v1 ships `FakeDriver` (used by its own
   test suite): instantiate the shell headless, drive key events
-  (open form → edit → F2 → assert file content), and navigate every primary view
+  (open form → edit → auto-save flush → assert file content), and navigate every primary view
   including the Plugins views. Kept minimal — the logic lives below the UI on
   purpose.
 
@@ -1506,11 +1548,13 @@ real saves, to keep the repo lean.
 - Terminal.Gui + NStack.Core (and System.Management) DLLs land next to the
   executable in its own folder (normal `dotnet publish` behaviour; no native
   components, so no changes to the native-wrapper release flow).
-- Docs to update when implemented: `README.md` (feature mention),
-  `Docs/Usage.md` (new section "Configuring the server"), `Docs/Layout.md`
-  (new folders), the handbook (`Docs/TOC.md` + new module docs via the
-  `structured-documentation` refresh), and this file gets a status flip from
-  plan → as-built with any deviations recorded.
+- Docs integration: `README.md` (documentation table + a "Configuration tool"
+  note), `Docs/Usage.md` ("Configuring the server (MagnetarConfig)" section) and
+  `Docs/Layout.md` (`ConfigTerminal/` + `ConfigTerminalTests/` rows) now cover the
+  tool, and this file has been reconciled plan → as-built. **Still pending:** the
+  machine-generated code handbook (`Docs/TOC.md` / `Docs/Index.md` + per-file
+  module docs, via a `structured-documentation` refresh) does not yet include the
+  `ConfigTerminal/` tree.
 
 ---
 
@@ -1519,9 +1563,9 @@ real saves, to keep the repo lean.
 Each phase ends green (builds, tests pass) and is independently reviewable.
 
 **Phase 0 — spike**
-Empty Terminal.Gui 1.19.0 app on net48 + net10.0: menu bar, status bar, blue
+Empty Terminal.Gui 1.19.0 app on **net10.0**: menu bar, status bar, blue
 `▒` desktop, one dialog. Validates the package restore (incl.
-`System.Management` on net48), driver behaviour on Linux terminal +
+`System.Management`), driver behaviour on a Linux terminal +
 Windows conhost/Windows Terminal, and the TV color scheme. Kill risks early.
 
 **Phase 1 — model + I/O core**
@@ -1532,7 +1576,7 @@ committed. *No UI work.*
 
 **Phase 2 — UI shell + server settings**
 `TurboVisionTheme`, `AppShell`, `InstancePickerDialog`, `DashboardView`,
-`OptionFormView` + `CategoryListView`, Server Settings window, Access Lists,
+`OptionFormView` (category list + field form), Server Settings window, Access Lists,
 Password dialog. Save pipeline (§9.3) without reload offer. First usable
 build for the DS global config.
 
@@ -1556,9 +1600,9 @@ Incremental search and exception-traceback navigation were scoped here but are
 **not implemented** (§5.9).
 
 **Phase 6 — robustness + integration**
-`ExternalChangeWatcher` + conflict flow, experimental-mode badges,
-incremental search, advanced-fields toggle, help screens, `-netdriver`,
-`ToolSettings` recent pairs + per-pair overrides.
+`ExternalChangeWatcher` + conflict flow and the advanced-fields toggle remain;
+experimental-mode badges, the settings **Filter** box, help screens,
+`-netdriver`, and `ToolSettings` recent pairs + per-pair overrides are done.
 
 **Phase 7 — packaging + docs**
 Build/publish integration and dist bundles (§13) — **done**: `MagnetarConfig`
@@ -1589,9 +1633,9 @@ resolution) to back the per-world **Add mod by URL** flow.
   describe v2 (beta). Mitigation: pin 1.19.0, consult only the archived v1
   API docs, and keep the UI layer thin so a future v2 (or other library)
   migration only touches `Ui/`.
-- **`System.Management` 9.0.4 on net48** — expected to restore via
-  netstandard2.0, but verified in Phase 0; fallback is pinning an older
-  Terminal.Gui 1.x whose dependency set predates it.
+- **`System.Management` transitive dependency** — pulled in by Terminal.Gui;
+  restores cleanly on net10.0. The tool no longer multi-targets net48, so the
+  earlier netstandard2.0-restore concern is moot.
 - **Session-settings enum member names** — the four headline enums in §2.5
   are verified against the decompiled source; the remaining enum-typed
   session options must be transcribed the same way during Phase 1 (never
