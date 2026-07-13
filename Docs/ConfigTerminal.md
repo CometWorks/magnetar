@@ -177,8 +177,10 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
   starts the server once to populate is the intended flow.
 - Per-server **mod** management — a dedicated server's mods live in the world's
   `Sandbox_config.sbc`, edited per-world from the Worlds view ([§5.5](#55-mods)),
-  not in `Profile.Mods`/`ModSources` (a deliberate difference from Quasar).
-  Steam Workshop name/collection/dependency resolution went with it.
+  not in `Profile.Mods`/`ModSources` (a deliberate difference from Quasar). The
+  per-world editor keeps keyless Steam Workshop **name + collection** resolution
+  ([§5.5](#55-mods)); only the keyed transitive **dependency** resolution (which
+  needed a Steam Web API key) went with the per-server store.
 - Compiling / installing Quasar **UI** plugins (`quasar-hub`) — this tool
   configures the server-side Magnetar plugins only; the Quasar Blazor UI owns its
   own plugin lifecycle.
@@ -741,6 +743,15 @@ sealed class ModList          // order == SE load order
 }
 ```
 
+**Add** accepts either a numeric Workshop id or a Steam Workshop URL (e.g.
+`https://steamcommunity.com/sharedfiles/filedetails/?id=657749341`); several can
+be pasted at once. `WorkshopResolver` (keyless `ISteamRemoteStorage`
+endpoints — no API key) then fills in each mod's **friendly name** so it need
+not be typed, expands a pasted collection into its members in the collection's
+sort order, and skips non-mods (worlds/blueprints/scripts) with a warning. The
+lookup runs off the UI thread (`Dialogs.RunBackground`); when the Workshop is
+unreachable the ids are still added by number, just without names.
+
 ### 5.6 Edit sessions (dirty tracking + validation)
 
 ```csharp
@@ -1097,7 +1108,7 @@ Windows / dialogs:
 | **Plugin Profiles** | saved-preset list (the one matching the active set marked); Load (apply to `Current.xml`), Save As New, Update (overwrite), Rename, Delete | `Plugins → Profiles` |
 | **Local & Dev Plugins** | two panes: local DLLs from `Local/` (Space toggles) and **registered** dev folders (Add picks a manifest `.xml` and registers it in `sources.xml` only; Remove unregisters). Registering does **not** enable — the pane shows each folder's enabled state, toggled under Hub Plugins | `Plugins → Local & Dev Plugins` |
 | **Plugin Sources** | manage `RemoteHub`/`RemotePlugin`/`LocalHub` sources: Add Hub/Plugin/Local, Space toggles, Remove | `Plugins → Plugin Sources` |
-| **Mods** (per-world) | ordered mod list for the selected world (`Sandbox_config.sbc`): Add (Workshop id), Del, Up/Down reorder, Toggle Dependency | `Worlds → Mods` |
+| **Mods** (per-world) | ordered mod list for the selected world (`Sandbox_config.sbc`): Add (Workshop id **or URL**, name auto-resolved), Del, Up/Down reorder, Toggle Dependency | `Worlds → Mods` |
 | **Help** | key reference + file-format primer (the §2 précis) | F1 |
 
 ### 8.3 The generic option form
@@ -1564,8 +1575,10 @@ offline reader for the cached hub/plugin blobs; `MagnetarPlugins` façade;
 `PluginsView`, `HubPluginsView`, `PluginSourcesView` and
 `ProfilesView` UI, plus `-diag` reporting and interop/round-trip tests.
 Per-server mod management (`ModSources`/`Profile.Mods`, the `ModSourcesView`
-editor and the `WorkshopResolver`/`MiniJson` Steam lookup) was later removed —
-mods are per-world, edited in `Sandbox_config.sbc` ([§5.5](#55-mods)).
+editor) was later removed — mods are per-world, edited in `Sandbox_config.sbc`
+([§5.5](#55-mods)). The `WorkshopResolver`/`MiniJson`/`DefaultHttpFetcher` Steam
+lookup was subsequently restored (trimmed to keyless name + collection
+resolution) to back the per-world **Add mod by URL** flow.
 *Done — see the status note at the top of this document.*
 
 ---

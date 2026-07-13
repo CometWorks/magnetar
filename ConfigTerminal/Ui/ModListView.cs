@@ -90,14 +90,79 @@ internal sealed class ModListView : Window, IAutoSaveContent
 
     private void AddMod()
     {
-        string id = Dialogs.Prompt("Add mod", "Workshop id:", validate: s =>
-            ulong.TryParse(s.Trim(), out ulong p) && p != 0 ? null : "Enter a numeric Workshop id.");
-        if (string.IsNullOrWhiteSpace(id)) return;
-        ulong pid = ulong.Parse(id.Trim());
-        string name = Dialogs.Prompt("Add mod", "Friendly name (optional):") ?? string.Empty;
-        mods.Items.Add(new ModItem { PublishedFileId = pid, FriendlyName = name });
-        touched = true;
-        Refresh();
+        // Accept either a numeric Workshop id or a Steam Workshop URL (or several,
+        // pasted together) — ExtractIds pulls the ids out of whatever is entered.
+        string input = Dialogs.Prompt("Add mod", "Workshop id or URL:", width: 74, validate: s =>
+            WorkshopResolver.ExtractIds(s).Count > 0
+                ? null
+                : "Enter a numeric Workshop id or a Steam Workshop URL.");
+        if (input == null) return;
+
+        var existing = new HashSet<ulong>(mods.Items.Select(m => m.PublishedFileId));
+        var wanted = WorkshopResolver.ExtractIds(input)
+            .Where(id => !existing.Contains((ulong)id))
+            .ToList();
+        if (wanted.Count == 0)
+        {
+            Dialogs.Info("Add mod", "That mod is already in the list.");
+            return;
+        }
+
+        // Look the names up off the UI thread so the resolve doesn't freeze the
+        // window; ResolveOnline swallows transport errors into an offline result.
+        Dialogs.RunBackground(() => ResolveOnline(wanted), applied => ApplyResolved(wanted, applied));
+    }
+
+    // The friendly-name lookup, run on a background thread. Returns null when the
+    // Workshop can't be reached so ApplyResolved falls back to adding bare ids.
+    private static WorkshopResolver.ResolveResult ResolveOnline(List<long> wanted)
+    {
+        try
+        {
+            return new WorkshopResolver().Resolve(wanted);
+        }
+        catch
+        {
+            return null; // offline / API failure — add ids without names
+        }
+    }
+
+    // Back on the UI thread: append the resolved mods (skipping any that snuck in
+    // while the lookup ran) and surface warnings. `wanted` is the pre-filtered id
+    // list, used as the fallback when the lookup failed.
+    private void ApplyResolved(List<long> wanted, WorkshopResolver.ResolveResult resolved)
+    {
+        var existing = new HashSet<ulong>(mods.Items.Select(m => m.PublishedFileId));
+
+        if (resolved == null)
+        {
+            int offlineAdded = 0;
+            foreach (long id in wanted)
+                if (existing.Add((ulong)id))
+                {
+                    mods.Items.Add(new ModItem { PublishedFileId = (ulong)id });
+                    offlineAdded++;
+                }
+            if (offlineAdded > 0) { touched = true; Refresh(); }
+            Dialogs.ErrorDetails("Add mod", "Couldn't reach the Steam Workshop.",
+                $"Added {offlineAdded} mod(s) by id without a friendly name.\n" +
+                "Edit the name later once you're back online.");
+            return;
+        }
+
+        int added = 0;
+        foreach ((long id, string name) in resolved.Mods)
+            if (existing.Add((ulong)id))
+            {
+                mods.Items.Add(new ModItem { PublishedFileId = (ulong)id, FriendlyName = name ?? string.Empty });
+                added++;
+            }
+        if (added > 0) { touched = true; Refresh(); }
+
+        if (resolved.Warnings.Count > 0)
+            Dialogs.InfoDetails("Add mod", $"Added {added} mod(s).", string.Join("\n", resolved.Warnings));
+        else if (added == 0)
+            Dialogs.Info("Add mod", "Nothing to add.");
     }
 
     private void Remove()
