@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text;
 using Terminal.Gui;
 using Magnetar.ConfigTerminal.Logs;
 using Magnetar.ConfigTerminal.Model;
@@ -19,6 +20,11 @@ internal sealed class LogViewerView : Window
     private LogTailReader reader;
     private bool following;
     private object followToken;
+
+    // Mirror of what the text pane currently shows, so a follow poll appends only
+    // the newly-read lines instead of re-joining and re-parsing the whole window.
+    private readonly StringBuilder rendered = new();
+    private int renderedCount;
 
     // Remembered for the lifetime of the configurator process (off by default).
     private static bool wrapEnabled;
@@ -83,16 +89,53 @@ internal sealed class LogViewerView : Window
         Render();
     }
 
+    // Full rebuild of the text pane from the whole window. Used on file switch and
+    // whenever the window changed structurally (reload / front-trim) so an append
+    // would be wrong.
     private void Render()
     {
-        text.Text = string.Join("\n", reader.Lines);
-        // Scroll to the bottom without moving horizontally. TextView.MoveEnd() only moves the
-        // cursor, not the scroll offset (topRow) — and the Text setter above just reset topRow
-        // to 0, so on a follow poll the view would stay pinned to the top. It would also jump to
-        // the end of the last line, scrolling right. Assigning CursorPosition at column 0 of the
-        // last row runs TextView.Adjust(), which scrolls topRow down and leftColumn back to 0.
-        text.CursorPosition = new Point(0, Math.Max(text.Lines - 1, 0));
+        rendered.Clear();
+        var lines = reader.Lines;
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (i > 0) rendered.Append('\n');
+            rendered.Append(lines[i]);
+        }
+        renderedCount = lines.Count;
+        text.Text = rendered.ToString();
+        ScrollToBottom();
     }
+
+    // Follow-tick update: append only the lines read since the last render, unless
+    // the reader signals a structural change (then fall back to a full rebuild).
+    // Avoids re-joining the entire (up to 20k-line) window on every 700 ms poll.
+    private void RenderFollow()
+    {
+        var lines = reader.Lines;
+        if (reader.StructuralChange || lines.Count < renderedCount)
+        {
+            Render();
+            return;
+        }
+        if (lines.Count == renderedCount)
+            return;
+        for (int i = renderedCount; i < lines.Count; i++)
+        {
+            if (rendered.Length > 0) rendered.Append('\n');
+            rendered.Append(lines[i]);
+        }
+        renderedCount = lines.Count;
+        text.Text = rendered.ToString();
+        ScrollToBottom();
+    }
+
+    // Scroll to the bottom without moving horizontally. TextView.MoveEnd() only moves the
+    // cursor, not the scroll offset (topRow) — and the Text setter above just reset topRow
+    // to 0, so on a follow poll the view would stay pinned to the top. It would also jump to
+    // the end of the last line, scrolling right. Assigning CursorPosition at column 0 of the
+    // last row runs TextView.Adjust(), which scrolls topRow down and leftColumn back to 0.
+    private void ScrollToBottom() =>
+        text.CursorPosition = new Point(0, Math.Max(text.Lines - 1, 0));
 
     // Terminal.Gui dispatches a key to the focused child (via ProcessHotKey) before the
     // containing Window's ProcessKey runs, so an End handler there never fires — the ListView
@@ -143,14 +186,14 @@ internal sealed class LogViewerView : Window
             if (reader != null)
             {
                 reader.Poll();
-                Render();
+                RenderFollow();
             }
             followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>
             {
                 if (!following || reader == null)
                     return false;
                 if (reader.Poll())
-                    Render();
+                    RenderFollow();
                 return true;
             });
         }
@@ -159,5 +202,20 @@ internal sealed class LogViewerView : Window
             Application.MainLoop.RemoveTimeout(followToken);
             followToken = null;
         }
+    }
+
+    // The follow timer holds this view (and its LogTailReader) alive and keeps
+    // polling the file. AppShell disposes the panel on every switch, so stop the
+    // timer here or it would leak — polling disk and rendering into a dead view for
+    // the rest of the session, once per Logs visit left in follow mode.
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && followToken != null)
+        {
+            following = false;
+            Application.MainLoop.RemoveTimeout(followToken);
+            followToken = null;
+        }
+        base.Dispose(disposing);
     }
 }

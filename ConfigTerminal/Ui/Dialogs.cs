@@ -123,15 +123,28 @@ internal static class Dialogs
     public static int PendingChanges(string title) =>
         MessageBox.Query(title, "\nThis document has unsaved changes.\n", "Save", "Discard", "Cancel");
 
-    /// <summary>Single-line text prompt; returns the entered text, or null on cancel.</summary>
-    public static string Prompt(string title, string label, string initial = "", int width = 60)
+    /// <summary>
+    /// Single-line text prompt; returns the entered text, or null on cancel.
+    /// When <paramref name="validate"/> is given it is called on OK with the entered
+    /// text; returning a non-null error message shows it and keeps the dialog open,
+    /// so the caller only ever gets a value that passed validation (or null).
+    /// </summary>
+    public static string Prompt(string title, string label, string initial = "", int width = 60,
+        Func<string, string> validate = null)
     {
         var dlg = new Dialog(title, width, 9) { ColorScheme = TurboVisionTheme.Dialog };
         var lbl = new Label(label) { X = 1, Y = 1 };
         var field = new TextField(initial ?? "") { X = 1, Y = 3, Width = Dim.Fill(2) };
         string result = null;
         var ok = new Button("OK", true);
-        ok.Clicked += () => { result = field.Text.ToString(); Application.RequestStop(dlg); };
+        ok.Clicked += () =>
+        {
+            string text = field.Text.ToString();
+            string error = validate?.Invoke(text);
+            if (error != null) { Error("Invalid", error); return; }
+            result = text;
+            Application.RequestStop(dlg);
+        };
         var cancel = new Button("Cancel");
         cancel.Clicked += () => { result = null; Application.RequestStop(dlg); };
         dlg.Add(lbl, field);

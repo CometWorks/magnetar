@@ -22,6 +22,9 @@ internal sealed class LastSessionFile
     public bool IsContentWorlds;
     public bool IsOnline;
     public bool IsLobby;
+    // The DS records the port it last bound (0 before the world has run). We
+    // write 0 like a fresh DS-authored file and preserve whatever we read back.
+    public int ServerPort;
 
     public static string PathFor(string savesPath) =>
         System.IO.Path.Combine(savesPath, "LastSession.sbl");
@@ -47,6 +50,7 @@ internal sealed class LastSessionFile
                 IsContentWorlds = ConfigDocumentBase.ParseBool(r.Element("IsContentWorlds")?.Value),
                 IsOnline = ConfigDocumentBase.ParseBool(r.Element("IsOnline")?.Value),
                 IsLobby = ConfigDocumentBase.ParseBool(r.Element("IsLobby")?.Value),
+                ServerPort = int.TryParse(r.Element("ServerPort")?.Value, out int sp) ? sp : 0,
             };
         }
         catch
@@ -82,6 +86,7 @@ internal sealed class LastSessionFile
                 new XElement("IsOnline", IsOnline ? "true" : "false"),
                 new XElement("IsLobby", IsLobby ? "true" : "false"),
                 new XElement("GameName", GameName ?? string.Empty),
+                new XElement("ServerPort", ServerPort.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                 string.IsNullOrEmpty(RelativePath) ? null : new XElement("RelativePath", RelativePath)));
 
         writer.WriteText(sblPath, XmlOut.ToXmlString(doc));

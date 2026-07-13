@@ -126,10 +126,9 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
 - **Show the state of the running instance** — PID file
   ([§2.8](#28-process-model-and-pid-file)) + liveness/identity check of the
   process, with status, PID and uptime on the dashboard and in the status bar.
-- **Log reader** — browse and follow the game log(s) in the instance dir and
-  Magnetar's timestamped `info_*.log` files, with incremental search and
-  detection / highlighting / navigation of exception tracebacks
-  ([§2.9](#29-log-files)).
+- **Log reader** — browse and follow (`End`) the game log(s) in the instance dir
+  and Magnetar's timestamped `info_*.log` files, with a line-wrap toggle (`W`)
+  and manual refresh (`R`) ([§2.9](#29-log-files)).
 - **Configurable folders** — both the Magnetar config folder (default
   `~/.config/Magnetar` on Linux) and the DS data folder (default
   `~/.config/SpaceEngineersDedicated` on Linux; Windows defaults per
@@ -499,8 +498,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   └── ProcessMonitor.cs            periodic state refresh feeding the UI
 ├── Logs/                            log reading — no Terminal.Gui dependency
 │   ├── LogCatalog.cs                discover game + Magnetar log files, active markers
-│   ├── LogTailReader.cs             windowed backward reads + follow (tail -f)
-│   └── ExceptionIndexer.cs          traceback block detection over the window
+│   └── LogTailReader.cs             windowed backward reads + follow (tail -f)
 ├── Ui/
 │   ├── TurboVisionTheme.cs          ColorSchemes + border styles + desktop fill
 │   ├── AppShell.cs                  Toplevel: menu bar, status bar, desktop, navigation
@@ -513,7 +511,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── ModListView.cs
 │   ├── AccessListView.cs            admins / banned / reserved editors
 │   ├── PasswordDialog.cs
-│   ├── LogViewerView.cs             virtualized log view: follow, search, exceptions
+│   ├── LogViewerView.cs             read-only log view: follow (End), wrap (W), refresh (R)
 │   ├── PluginsView.cs               local DLLs + registered dev folders
 │   ├── HubPluginsView.cs            browse hub catalog + enable (with dependencies)
 │   ├── PluginSourcesView.cs         manage remote/local hub + remote plugin sources
@@ -856,21 +854,17 @@ sealed class LogCatalog
 sealed class LogTailReader          // never loads the whole file
 {
     // windowed access: opens at EOF, reads the last N KB (default 256),
-    // extends backward on demand (PgUp past the top), line-indexes the window
-    IReadOnlyList<string> Window;
-    bool Follow;                    // poll length + read appended bytes (500 ms)
-    event Action WindowChanged;
-}
-
-sealed class ExceptionIndexer       // over the current window, incremental
-{
-    IReadOnlyList<LineRange> Blocks;    // traceback blocks: message + " at " frames
-    LineRange? Next(int fromLine); LineRange? Previous(int fromLine);
+    // line-indexes the window (hard cap 20k lines)
+    IReadOnlyList<string> Lines;
+    void Load();                    // (re)read the tail window
+    bool Poll();                    // read appended bytes on the follow tick (700 ms)
 }
 ```
 
-Search runs over the loaded window with an offer to "search further back"
-(extends the window chunk-by-chunk) — bounded memory even on multi-GB logs.
+The viewer is deliberately minimal: `End` toggles follow, `W` toggles line wrap,
+`R` re-reads the window. Incremental search and exception-traceback
+detection/navigation are **not implemented** (a possible future addition — see
+§13); the windowed reader already bounds memory even on multi-GB logs.
 
 ### 5.10 Plugin and source management
 
@@ -1096,7 +1090,7 @@ Windows / dialogs:
 | **World Mods** | ordered `ListView`; Ins/Del add/remove, Ctrl+↑/↓ reorder, Space toggles `IsDependency`, editable friendly name; footer shows count | Worlds → Enter → Mods (F8) |
 | **Activate World** (confirm dialog) | shows what will be written (`LastSession.sbl`, `IgnoreLastSession` flip if needed, `LoadWorld` clear offer); offers restart when running | Worlds → F5 |
 | **New World wizard** | template list (from `WorldTemplateCatalog`, disabled with hint when DS install not found) → world name (validated) → confirm → copies the template into `Saves/<name>` and activates it, no server start ([§9.6](#96-new-world-creation)) | `Worlds → New World…` (Ins in Worlds) |
-| **Log viewer** | file selector (game + Magnetar groups, active file marked); virtualized read-only text pane; `End` toggles follow; `/` search with n/N navigation and "search further back" offer; exception blocks highlighted (red), `x`/`X` jump next/previous; `F4` cycles active game ↔ active Magnetar log | `Tools → Logs` (F4) |
+| **Log viewer** | file selector (game + Magnetar groups, active file marked); read-only text pane; `End` toggles follow (tail -f); `W` toggles line wrap; `R` re-reads the window | `Tools → Logs` (F4) |
 | **Stop confirm** (dialog) | graceful stop (SIGTERM, saves world) with progress; on timeout offers force-kill behind an explicit data-loss warning | F6 / dashboard Stop |
 | **Reload prompt** (dialog, Linux) | after saving live-reloadable cfg fields with a running server detected: offer SIGHUP | after save |
 | **Hub Plugins** | list of the cached hub/remote catalog **plus registered dev folders** (shown with a `- dev folder` suffix); Space/Enter toggles enabled (hub deps pulled in; dev folders write `Profile.DevFolder`) with an author/tagline/description details pane | `Plugins → Hub Plugins` |
@@ -1445,10 +1439,10 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
 - **LaunchSpec** — argv construction for both platforms; rejection of
   conflicting user extra args (`-session:`, `-ignorelastsession`, `-path`,
   `-config`, `-daemon`); `IgnoreLastSession` flag injection.
-- **LogTailReader / ExceptionIndexer** — windowed backward reads across
-  chunk boundaries, follow-mode appends, CRLF/LF logs; traceback fixtures
-  taken from real SE and Magnetar logs (single exception, nested/inner
-  exceptions, back-to-back blocks, frame lines split across window edge).
+- **LogCatalog** — game + Magnetar log discovery and active-file marking is
+  exercised by the live end-to-end test. (`LogTailReader`'s windowed reads and
+  follow-mode appends currently have no dedicated unit tests; exception-traceback
+  indexing is not implemented — see §5.9.)
 - **WorldTemplateCatalog / WorldCreator** — template scan fixture tree;
   `CreateFromTemplate` copies the template into `Saves/<name>`, stamps
   `SessionName`, synthesizes `Sandbox_config.sbc` when the template has only a
@@ -1546,8 +1540,9 @@ save-pipeline SIGHUP offer. Linux-complete; Windows Start/status only.
 **Phase 5 — new worlds + log reader**
 `WorldTemplateCatalog` + New World wizard (`WorldCreator` copies the template
 into `Saves/` and activates it, no server start); `LogCatalog`, `LogTailReader`,
-`ExceptionIndexer`, `LogViewerView` with follow/search/exception navigation;
-dashboard log tail.
+`LogViewerView` with follow (`End`), line-wrap (`W`), and refresh (`R`).
+Incremental search and exception-traceback navigation were scoped here but are
+**not implemented** (§5.9).
 
 **Phase 6 — robustness + integration**
 `ExternalChangeWatcher` + conflict flow, experimental-mode badges,

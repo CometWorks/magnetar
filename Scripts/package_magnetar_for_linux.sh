@@ -260,10 +260,16 @@ if [ ! -d "$SRC" ]; then
     exit 1
 fi
 
-if pgrep -x MagnetarInterim >/dev/null 2>&1; then
-    echo "ERROR: MagnetarInterim is running. Stop it before deploying (pkill -x MagnetarInterim)." >&2
-    exit 1
-fi
+# Refuse to overwrite the install tree while either the server (MagnetarInterim)
+# or the config TUI (MagnetarConfig) is running out of it — the .NET host would
+# fault on the next not-yet-loaded assembly, and MagnetarConfig could be mid-write
+# to a config file.
+for proc in MagnetarInterim MagnetarConfig; do
+    if pgrep -x "$proc" >/dev/null 2>&1; then
+        echo "ERROR: $proc is running. Stop it before deploying (pkill -x $proc)." >&2
+        exit 1
+    fi
+done
 
 # ---- .NET 10 detection (host requirement) ---------------------------------
 if ! command -v dotnet >/dev/null 2>&1; then
@@ -329,10 +335,13 @@ set -euo pipefail
 DATA_DST="${MAGNETAR_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/Magnetar}"
 DST="${MAGNETAR_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/Magnetar}"
 
-if pgrep -x MagnetarInterim >/dev/null 2>&1; then
-    echo "ERROR: MagnetarInterim is running. Stop it before uninstalling (pkill -x MagnetarInterim)." >&2
-    exit 1
-fi
+# Don't wipe the install tree out from under a running server or config TUI.
+for proc in MagnetarInterim MagnetarConfig; do
+    if pgrep -x "$proc" >/dev/null 2>&1; then
+        echo "ERROR: $proc is running. Stop it before uninstalling (pkill -x $proc)." >&2
+        exit 1
+    fi
+done
 
 if [ -d "$DATA_DST" ]; then
     echo "==> Removing $DATA_DST"

@@ -24,7 +24,9 @@ internal sealed class AccessListView : Window, IAutoSaveContent
 
     // Content snapshot for change-only saving, and the live-validity of GroupID
     // (the only free-typed field; the SteamID lists are numeric-enforced at add).
+    // `touched` gates the flush so idle ticks skip the serialize-and-compare.
     private string snapshot;
+    private bool touched;
     private bool groupIdInvalid;
 
     public AccessListView(DedicatedConfigDocument cfg, AtomicFile writer, Action onSaved) : base("Access Lists")
@@ -67,6 +69,7 @@ internal sealed class AccessListView : Window, IAutoSaveContent
         groupIdInvalid = t.Length > 0 && !ulong.TryParse(t, out _);
         groupId.ColorScheme = groupIdInvalid ? TurboVisionTheme.Error : TurboVisionTheme.Window;
         groupId.SetNeedsDisplay();
+        touched = true;
     }
 
     private ListView MakeColumn(string title, int x, List<string> data, out View frame)
@@ -83,8 +86,9 @@ internal sealed class AccessListView : Window, IAutoSaveContent
         var add = new Button("Add") { X = 0, Y = Pos.AnchorEnd(1) };
         add.Clicked += () =>
         {
-            string id = PromptId(title);
-            if (id != null) { data.Add(id); lv.SetSource(data); }
+            string id = Dialogs.Prompt($"Add to {title}", "SteamID (unsignedLong):", width: 44, validate: s =>
+                ulong.TryParse(s.Trim(), out _) ? null : "Enter a numeric SteamID.");
+            if (id != null) { data.Add(id.Trim()); lv.SetSource(data); touched = true; }
         };
         var del = new Button("Del") { X = Pos.Right(add) + 1, Y = Pos.AnchorEnd(1) };
         del.Clicked += () =>
@@ -93,33 +97,12 @@ internal sealed class AccessListView : Window, IAutoSaveContent
             {
                 data.RemoveAt(lv.SelectedItem);
                 lv.SetSource(data);
+                touched = true;
             }
         };
         f.Add(lv, add, del);
         frame = f;
         return lv;
-    }
-
-    private static string PromptId(string title)
-    {
-        var dlg = new Dialog($"Add to {title}", 44, 8) { ColorScheme = TurboVisionTheme.Dialog };
-        var field = new TextField("") { X = 1, Y = 2, Width = Dim.Fill(2) };
-        string result = null;
-        var ok = new Button("OK", true);
-        ok.Clicked += () =>
-        {
-            string t = field.Text.ToString().Trim();
-            if (ulong.TryParse(t, out _)) { result = t; Application.RequestStop(dlg); }
-            else Dialogs.Error("Invalid", "Enter a numeric SteamID.");
-        };
-        var cancel = new Button("Cancel");
-        cancel.Clicked += () => Application.RequestStop(dlg);
-        dlg.Add(new Label("SteamID (unsignedLong):") { X = 1, Y = 1 }, field);
-        dlg.AddButton(ok);
-        dlg.AddButton(cancel);
-        field.SetFocus();
-        Application.Run(dlg);
-        return result;
     }
 
     // Push the working buffers into the document. The lists are always valid
@@ -139,16 +122,23 @@ internal sealed class AccessListView : Window, IAutoSaveContent
 
     public void FlushPendingSave()
     {
+        if (!touched)
+            return; // nothing edited since the last flush — skip the serialize+compare
+
         CommitToDocument();
 
         if (cfg.ToCanonicalString() == snapshot)
-            return; // nothing changed
+        {
+            touched = false;
+            return; // edited back to the original — nothing to write
+        }
 
         try
         {
             cfg.Save(writer);
             onSaved?.Invoke();
             snapshot = cfg.ToCanonicalString();
+            touched = false;
         }
         catch
         {

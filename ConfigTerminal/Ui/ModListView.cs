@@ -16,8 +16,10 @@ internal sealed class ModListView : Window, IAutoSaveContent
     private readonly ListView list;
 
     // Content snapshot for change-only saving, and the last validation problems
-    // (surfaced as the leave-warning when the list can't be saved).
+    // (surfaced as the leave-warning when the list can't be saved). `touched`
+    // gates the flush so idle ticks skip the serialize-and-compare entirely.
     private string snapshot;
+    private bool touched;
     private IReadOnlyList<string> currentIssues = Array.Empty<string>();
 
     public ModListView(WorldInfo world, AtomicFile writer) : base($"Mods — {world.SessionName}")
@@ -74,21 +76,20 @@ internal sealed class ModListView : Window, IAutoSaveContent
             mods.MoveUp(i);
         else
             mods.MoveDown(i);
+        touched = true;
         Refresh();
         list.SelectedItem = target;
     }
 
     private void AddMod()
     {
-        string id = Prompt("Add mod", "Workshop id:");
+        string id = Dialogs.Prompt("Add mod", "Workshop id:", validate: s =>
+            ulong.TryParse(s.Trim(), out ulong p) && p != 0 ? null : "Enter a numeric Workshop id.");
         if (string.IsNullOrWhiteSpace(id)) return;
-        if (!ulong.TryParse(id.Trim(), out ulong pid) || pid == 0)
-        {
-            Dialogs.Error("Add mod", "Enter a numeric Workshop id.");
-            return;
-        }
-        string name = Prompt("Add mod", "Friendly name (optional):") ?? string.Empty;
+        ulong pid = ulong.Parse(id.Trim());
+        string name = Dialogs.Prompt("Add mod", "Friendly name (optional):") ?? string.Empty;
         mods.Items.Add(new ModItem { PublishedFileId = pid, FriendlyName = name });
+        touched = true;
         Refresh();
     }
 
@@ -98,6 +99,7 @@ internal sealed class ModListView : Window, IAutoSaveContent
         if (i >= 0 && i < mods.Items.Count)
         {
             mods.Items.RemoveAt(i);
+            touched = true;
             Refresh();
         }
     }
@@ -108,24 +110,32 @@ internal sealed class ModListView : Window, IAutoSaveContent
         if (i >= 0 && i < mods.Items.Count)
         {
             mods.Items[i].IsDependency = !mods.Items[i].IsDependency;
+            touched = true;
             Refresh();
         }
     }
 
     public void FlushPendingSave()
     {
+        if (!touched)
+            return; // nothing edited since the last flush — skip the serialize+compare
+
         currentIssues = mods.Validate();
         if (currentIssues.Count > 0)
             return; // don't write an invalid list; the leave-warning surfaces these
 
         doc.WriteMods(mods);
         if (doc.ToCanonicalString() == snapshot)
-            return; // nothing changed
+        {
+            touched = false;
+            return; // edited back to the original — nothing to write
+        }
 
         try
         {
             doc.Save(writer);
             snapshot = doc.ToCanonicalString();
+            touched = false;
         }
         catch
         {
@@ -134,22 +144,4 @@ internal sealed class ModListView : Window, IAutoSaveContent
     }
 
     public IReadOnlyList<string> InvalidFields => currentIssues;
-
-    private static string Prompt(string title, string label)
-    {
-        var dlg = new Dialog(title, 50, 8) { ColorScheme = TurboVisionTheme.Dialog };
-        var field = new TextField("") { X = 1, Y = 2, Width = Dim.Fill(2) };
-        var lbl = new Label(label) { X = 1, Y = 1 };
-        string result = null;
-        var ok = new Button("OK", true);
-        ok.Clicked += () => { result = field.Text.ToString(); Application.RequestStop(dlg); };
-        var cancel = new Button("Cancel");
-        cancel.Clicked += () => { result = null; Application.RequestStop(dlg); };
-        dlg.Add(lbl, field);
-        dlg.AddButton(ok);
-        dlg.AddButton(cancel);
-        field.SetFocus();
-        Application.Run(dlg);
-        return result;
-    }
 }

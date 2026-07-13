@@ -31,6 +31,11 @@ internal sealed class EditSession
 {
     private readonly IReadOnlyList<OptionDefinition> options;
     private string snapshot;
+    // Cheap gate for IsDirty: set by NotifyChanged on any edit, cleared once the
+    // content is confirmed equal to the snapshot again (or on save). Lets the ~1s
+    // auto-save tick skip the expensive full-document serialization when the panel
+    // has not been touched — which is the common idle case.
+    private bool touched;
 
     public EditSession(ConfigDocumentBase document, IReadOnlyList<OptionDefinition> options)
     {
@@ -43,10 +48,30 @@ internal sealed class EditSession
 
     public event Action DirtyChanged;
 
-    public bool IsDirty => Document.ToCanonicalString() != snapshot;
+    public bool IsDirty
+    {
+        get
+        {
+            if (!touched)
+                return false;
+            // Something was edited since the last snapshot; confirm it is a real
+            // diff (editing a value back to its original counts as clean). When it
+            // is now identical, drop the flag so subsequent idle ticks stay cheap.
+            if (Document.ToCanonicalString() == snapshot)
+            {
+                touched = false;
+                return false;
+            }
+            return true;
+        }
+    }
 
     /// <summary>Call after any mutation so listeners (title bar, status) refresh.</summary>
-    public void NotifyChanged() => DirtyChanged?.Invoke();
+    public void NotifyChanged()
+    {
+        touched = true;
+        DirtyChanged?.Invoke();
+    }
 
     /// <summary>Options whose current value differs from the registry default (for the save summary).</summary>
     public IReadOnlyList<OptionDefinition> ChangedFromDefault() =>
@@ -152,9 +177,14 @@ internal sealed class EditSession
     {
         Document.Save(writer);
         snapshot = Document.ToCanonicalString();
-        NotifyChanged();
+        touched = false;
+        DirtyChanged?.Invoke();
     }
 
     /// <summary>Rebases the snapshot to the current content (e.g. after "keep mine" on external change).</summary>
-    public void Rebase() => snapshot = Document.ToCanonicalString();
+    public void Rebase()
+    {
+        snapshot = Document.ToCanonicalString();
+        touched = false;
+    }
 }

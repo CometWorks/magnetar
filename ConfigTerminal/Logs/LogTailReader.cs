@@ -22,6 +22,7 @@ internal sealed class LogTailReader
     private readonly List<string> lines = new();
     private long position; // byte offset of the next unread byte
     private string pendingPartial = string.Empty; // last line so far, no newline yet
+    private bool structuralChange; // last Poll reloaded or dropped front lines
 
     public LogTailReader(string path, int windowBytes = DefaultWindowBytes)
     {
@@ -31,6 +32,14 @@ internal sealed class LogTailReader
 
     /// <summary>The lines currently held in the window, oldest first.</summary>
     public IReadOnlyList<string> Lines => lines;
+
+    /// <summary>
+    /// True when the most recent <see cref="Poll"/> did not simply append to the
+    /// tail — it reloaded the window (truncation/rotation) or dropped lines off the
+    /// front to stay within the cap. A follow viewer that mirrors the window
+    /// incrementally must do a full rebuild instead of an append when this is set.
+    /// </summary>
+    public bool StructuralChange => structuralChange;
 
     /// <summary>(Re)reads the tail window from the file. Never throws for IO problems.</summary>
     public void Load()
@@ -69,6 +78,7 @@ internal sealed class LogTailReader
     /// </summary>
     public bool Poll()
     {
+        structuralChange = false;
         try
         {
             using FileStream fs = Open();
@@ -77,6 +87,7 @@ internal sealed class LogTailReader
             {
                 // File was truncated or replaced — start over.
                 Load();
+                structuralChange = true;
                 return true;
             }
             if (length == position)
@@ -131,6 +142,9 @@ internal sealed class LogTailReader
         pendingPartial = text.Substring(start);
 
         if (lines.Count > MaxLines)
+        {
             lines.RemoveRange(0, lines.Count - MaxLines);
+            structuralChange = true; // front dropped — mirrors can't append-only
+        }
     }
 }
