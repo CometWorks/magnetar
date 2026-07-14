@@ -407,9 +407,10 @@ MagnetarForLinux ($BUILD_DATE.$GIT_HASH)
 ========================================
 
 Magnetar is a plugin and mod loader for the Space Engineers Dedicated
-Server on Linux. This bundle ships the MagnetarInterim apphost as a
-framework-dependent .NET 10 publish; the .NET 10 runtime is required to
-be installed system-wide on the host.
+Server on Linux. This bundle ships the MagnetarInterim apphost together
+with MagnetarConfig, a terminal UI to configure and operate the server
+(step 4 below) — both as framework-dependent .NET 10 publishes; the
+.NET 10 runtime is required to be installed system-wide on the host.
 
 Prerequisites
 -------------
