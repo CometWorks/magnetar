@@ -167,18 +167,18 @@ file-format reference: [`ConfigTerminalInternals.md`](ConfigTerminalInternals.md
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [ConfigTerminal.App](modules/ConfigTerminal.App.md) | 4 | 379 | Entry point, CLI parsing → `InstanceBinding`, driver/launcher/instance selection, the headless `-diag` report, and persisted tool settings (`ConfigTerminal.xml`). |
+| [ConfigTerminal.App](modules/ConfigTerminal.App.md) | 4 | 380 | Entry point, CLI parsing → `InstanceBinding`, driver/launcher/instance selection, the headless `-diag` report, and persisted tool settings (`ConfigTerminal.xml`). |
 | [ConfigTerminal.Model](modules/ConfigTerminal.Model.md) | 24 | 3862 | Pure data layer: the option registry, XDocument-upsert wrappers for the DS/world/last-session files, world/template/mod models, edit-session dirty tracking, and the plugin/profile/source/hub-catalog/Workshop-resolver models. |
-| [ConfigTerminal.Ui](modules/ConfigTerminal.Ui.md) | 21 | 3452 | Terminal.Gui presentation: app shell, the generic registry-driven settings form, worlds/mods/access-list/password/plugin/profile editors, new-world wizard, log viewer, dialogs and theme; editable panels auto-save. |
+| [ConfigTerminal.Ui](modules/ConfigTerminal.Ui.md) | 21 | 3797 | Terminal.Gui presentation: app shell, the generic registry-driven settings form, worlds/mods/access-list/password/plugin/profile editors, new-world wizard, log viewer (search, highlighting), dialogs and theme; editable panels auto-save. |
 | [ConfigTerminal.Process](modules/ConfigTerminal.Process.md) | 5 | 524 | Controls the one instance: `magnetar.pid` read/verify (stale/foreign detection), the daemon launch spec, detached spawn, SIGTERM/SIGHUP/force-kill, and status polling. |
-| [ConfigTerminal.Logs](modules/ConfigTerminal.Logs.md) | 3 | 331 | Discovery and memory-bounded tail/follow reading of the DS game logs and Magnetar `info_*.log` files. |
+| [ConfigTerminal.Logs](modules/ConfigTerminal.Logs.md) | 4 | 374 | Discovery and memory-bounded tail/follow reading of the DS game logs and Magnetar `info_*.log` files, plus "Game ready"/"Exception" line classification for viewer highlighting. |
 | [ConfigTerminal.Io](modules/ConfigTerminal.Io.md) | 4 | 316 | Atomic `.bak` file writes, shared XML writer settings, per-platform paths, and instance/launcher/DS-install resolution. |
 
 ### `ConfigTerminalTests` — configuration-tool specs
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [ConfigTerminalTests](modules/ConfigTerminalTests.md) | 10 | 1465 | xUnit specs for the config tool: registry invariants, document round-trips, process/pid/atomic-file, plugin/profile/sources upsert + Magnetar-serializer interop, hub-catalog protobuf reader, Workshop resolver, FakeDriver UI smoke, and a `MAGNETAR_LIVE` end-to-end flow. |
+| [ConfigTerminalTests](modules/ConfigTerminalTests.md) | 11 | 1766 | xUnit specs for the config tool: registry invariants, document round-trips, process/pid/atomic-file, plugin/profile/sources upsert + Magnetar-serializer interop, hub-catalog protobuf reader, Workshop resolver, log-line classification, FakeDriver UI smoke + log-viewer behaviour, and a `MAGNETAR_LIVE` end-to-end flow. |
 
 ## Module dependency graph
 

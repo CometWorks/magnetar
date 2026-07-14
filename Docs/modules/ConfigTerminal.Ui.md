@@ -1,6 +1,6 @@
 # Module: ConfigTerminal.Ui
 
-**Project:** `ConfigTerminal` · **Files:** 21 · **Source lines:** 3452
+**Project:** `ConfigTerminal` · **Files:** 21 · **Source lines:** 3797
 
 ## Purpose
 
@@ -18,7 +18,7 @@ This is the human-facing front end of MagnetarConfig: it renders and drives ever
 | `OptionFormView` | class | [`ConfigTerminal/Ui/OptionFormView.cs`](../descriptions/ConfigTerminal/Ui/OptionFormView.cs.md) | Generic registry-driven settings form with live validation and auto-save; used for DS config, new-world defaults, and per-world settings. |
 | `WorldsView` | class | [`ConfigTerminal/Ui/WorldsView.cs`](../descriptions/ConfigTerminal/Ui/WorldsView.cs.md) | Lists worlds under Saves/ with settings/mods editing, activation, creation, and deletion. |
 | `ModListView` | class | [`ConfigTerminal/Ui/ModListView.cs`](../descriptions/ConfigTerminal/Ui/ModListView.cs.md) | Ordered mod-list editor for a world's Sandbox_config.sbc with background Workshop name resolution. |
-| `LogViewerView` | class | [`ConfigTerminal/Ui/LogViewerView.cs`](../descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | Read-only log viewer with tail -f follow mode over a memory-bounded reader. |
+| `LogViewerView` | class | [`ConfigTerminal/Ui/LogViewerView.cs`](../descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | Read-only log viewer over a memory-bounded reader: tail -f follow, word-wrap, incremental search (case / whole-word options), 'Game ready'/'Exception' line highlighting, and [ / ] highlighted-line navigation. |
 | `PluginsView` | class | [`ConfigTerminal/Ui/PluginsView.cs`](../descriptions/ConfigTerminal/Ui/PluginsView.cs.md) | Manages local DLLs and registered dev-folder plugin sources. |
 | `HubPluginsView` | class | [`ConfigTerminal/Ui/HubPluginsView.cs`](../descriptions/ConfigTerminal/Ui/HubPluginsView.cs.md) | Browses cached hub/remote plugin catalogs and dev folders, toggling them in the active profile. |
 | `PluginSourcesView` | class | [`ConfigTerminal/Ui/PluginSourcesView.cs`](../descriptions/ConfigTerminal/Ui/PluginSourcesView.cs.md) | Edits the remote-hub, remote-plugin, and local-hub catalog sources in sources.xml. |
@@ -47,7 +47,7 @@ This is the human-facing front end of MagnetarConfig: it renders and drives ever
 | [`ConfigTerminal/Ui/HubPluginsView.cs`](../descriptions/ConfigTerminal/Ui/HubPluginsView.cs.md) | 196 | Browses the plugins offered by the instance's configured hub/remote sources — read offline from Magnetar's cached catalogs under `Sources/Hubs` and `Sources/Plugins` — plus the registered dev folders (shown with a "- dev folder" suffix), and enables/disables them in the active profile. |
 | [`ConfigTerminal/Ui/IAutoSaveContent.cs`](../descriptions/ConfigTerminal/Ui/IAutoSaveContent.cs.md) | 23 | The contract for a hosted panel that persists its edits automatically. |
 | [`ConfigTerminal/Ui/InstancePickerDialog.cs`](../descriptions/ConfigTerminal/Ui/InstancePickerDialog.cs.md) | 96 | Modal dialog that prompts for the folder pair (and launcher / DS install) identifying an instance — the DS data dir, Magnetar config dir, launcher executable, and DS install — each with a Browse button. |
-| [`ConfigTerminal/Ui/LogViewerView.cs`](../descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | 243 | Read-only log viewer over the game and Magnetar log files, with a `tail -f` follow mode and optional word-wrap. |
+| [`ConfigTerminal/Ui/LogViewerView.cs`](../descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | 588 | Read-only log viewer over the game and Magnetar log files, with a `tail -f` follow mode, optional word-wrap, incremental text search, and keyword highlighting. |
 | [`ConfigTerminal/Ui/ManifestPicker.cs`](../descriptions/ConfigTerminal/Ui/ManifestPicker.cs.md) | 17 | Quasar-style dev-folder picker: browse the filesystem and select a plugin's `.xml` manifest file, opening at the last-visited folder so adding several plugins in a row is frictionless. |
 | [`ConfigTerminal/Ui/ModListView.cs`](../descriptions/ConfigTerminal/Ui/ModListView.cs.md) | 219 | Ordered mod-list editor for a world's `Sandbox_config.sbc`: add (by Workshop id or URL, with background friendly-name resolution), delete, reorder, and toggle a mod's dependency flag. |
 | [`ConfigTerminal/Ui/NewWorldWizard.cs`](../descriptions/ConfigTerminal/Ui/NewWorldWizard.cs.md) | 158 | New-world creation by folder copy: pick a template, name the world, then copy the template into `Saves/<name>` and stamp the name into its `Sandbox_config.sbc` via `WorldCreator`. |

@@ -22,7 +22,7 @@
       "ConfigTerminal/State/ToolSettings.cs"
     ],
     "file_count": 4,
-    "total_lines": 379,
+    "total_lines": 380,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -43,11 +43,12 @@
     "project": "ConfigTerminal",
     "files": [
       "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Logs/LogHighlight.cs",
       "ConfigTerminal/Logs/LogTailReader.cs",
       "ConfigTerminal/Logs/ReadinessDetector.cs"
     ],
-    "file_count": 3,
-    "total_lines": 331,
+    "file_count": 4,
+    "total_lines": 374,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -124,7 +125,7 @@
       "ConfigTerminal/Ui/WorldsView.cs"
     ],
     "file_count": 21,
-    "total_lines": 3452,
+    "total_lines": 3797,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -134,6 +135,7 @@
       "ConfigTerminalTests/DocumentTests.cs",
       "ConfigTerminalTests/HubCatalogTests.cs",
       "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/LogHighlightTests.cs",
       "ConfigTerminalTests/PluginConfigTests.cs",
       "ConfigTerminalTests/PluginInteropTests.cs",
       "ConfigTerminalTests/ProcessAndFileTests.cs",
@@ -142,8 +144,8 @@
       "ConfigTerminalTests/UiSmokeTests.cs",
       "ConfigTerminalTests/WorkshopResolverTests.cs"
     ],
-    "file_count": 10,
-    "total_lines": 1465,
+    "file_count": 11,
+    "total_lines": 1766,
     "model": "sonnet",
     "dominant_tier": 1
   },

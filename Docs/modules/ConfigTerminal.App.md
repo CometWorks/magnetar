@@ -1,6 +1,6 @@
 # Module: ConfigTerminal.App
 
-**Project:** `ConfigTerminal` · **Files:** 4 · **Source lines:** 379
+**Project:** `ConfigTerminal` · **Files:** 4 · **Source lines:** 380
 
 ## Purpose
 
@@ -23,7 +23,7 @@ This is the outermost layer of the MagnetarConfig TUI: `Program.Main` is the pro
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`ConfigTerminal/Cli.cs`](../descriptions/ConfigTerminal/Cli.cs.md) | 91 | Parses the MagnetarConfig command line into a strongly-typed options object and converts it into an `InstanceBinding` with defaults filled in. |
+| [`ConfigTerminal/Cli.cs`](../descriptions/ConfigTerminal/Cli.cs.md) | 92 | Parses the MagnetarConfig command line into a strongly-typed options object and converts it into an `InstanceBinding` with defaults filled in. |
 | [`ConfigTerminal/Diagnostics.cs`](../descriptions/ConfigTerminal/Diagnostics.cs.md) | 106 | Produces the headless, read-only `-diag` report of an instance's resolved state without starting Terminal.Gui, exercising the same model/process layers the UI uses. |
 | [`ConfigTerminal/Program.cs`](../descriptions/ConfigTerminal/Program.cs.md) | 123 | Application entry point for the MagnetarConfig TUI: parses the command line, dispatches the special headless (`-diag`) and help modes, selects the Terminal.Gui driver, runs the launcher/instance pickers, and hosts the top-level `AppShell` under a try/catch/finally that guarantees `Application.Shutdown()`. |
 | [`ConfigTerminal/State/ToolSettings.cs`](../descriptions/ConfigTerminal/State/ToolSettings.cs.md) | 59 | The TUI tool's own per-instance settings, persisted as a small `ConfigTerminal.xml` next to Magnetar's `config.xml` in the selected config dir so per-instance state travels with the instance. |

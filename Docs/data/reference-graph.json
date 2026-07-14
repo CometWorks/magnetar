@@ -231,6 +231,7 @@
     ],
     "ConfigTerminal/Ui/LogViewerView.cs": [
       "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Logs/LogHighlight.cs",
       "ConfigTerminal/Logs/LogTailReader.cs",
       "ConfigTerminal/Model/DsInstance.cs",
       "ConfigTerminal/Ui/TurboVisionTheme.cs"
@@ -336,6 +337,9 @@
       "ConfigTerminal/Process/MagnetarProcess.cs",
       "ConfigTerminal/Process/ServerStatus.cs"
     ],
+    "ConfigTerminalTests/LogHighlightTests.cs": [
+      "ConfigTerminal/Logs/LogHighlight.cs"
+    ],
     "ConfigTerminalTests/PluginConfigTests.cs": [
       "ConfigTerminal/Io/AtomicFile.cs",
       "ConfigTerminal/Model/MagnetarPlugins.cs",
@@ -373,6 +377,7 @@
     "ConfigTerminalTests/UiSmokeTests.cs": [
       "ConfigTerminal/Model/DsInstance.cs",
       "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/LogViewerView.cs",
       "ConfigTerminal/Ui/TurboVisionTheme.cs"
     ],
     "ConfigTerminalTests/WorkshopResolverTests.cs": [
@@ -972,6 +977,10 @@
       "ConfigTerminal/Ui/LogViewerView.cs",
       "ConfigTerminalTests/LiveEndToEndTests.cs"
     ],
+    "ConfigTerminal/Logs/LogHighlight.cs": [
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminalTests/LogHighlightTests.cs"
+    ],
     "ConfigTerminal/Logs/LogTailReader.cs": [
       "ConfigTerminal/Ui/LogViewerView.cs"
     ],
@@ -1237,7 +1246,8 @@
       "ConfigTerminal/Ui/AppShell.cs"
     ],
     "ConfigTerminal/Ui/LogViewerView.cs": [
-      "ConfigTerminal/Ui/AppShell.cs"
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminalTests/UiSmokeTests.cs"
     ],
     "ConfigTerminal/Ui/ManifestPicker.cs": [
       "ConfigTerminal/Ui/PluginsView.cs"

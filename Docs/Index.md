@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 208 files across 25 modules.
+Every documented source file, grouped by module. 210 files across 25 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -18,7 +18,7 @@ Every documented source file, grouped by module. 208 files across 25 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`ConfigTerminal/Cli.cs`](descriptions/ConfigTerminal/Cli.cs.md) | 91 | 2 | Parses the MagnetarConfig command line into a strongly-typed options object and converts it into an `InstanceBinding` with defaults filled in. |
+| [`ConfigTerminal/Cli.cs`](descriptions/ConfigTerminal/Cli.cs.md) | 92 | 2 | Parses the MagnetarConfig command line into a strongly-typed options object and converts it into an `InstanceBinding` with defaults filled in. |
 | [`ConfigTerminal/Diagnostics.cs`](descriptions/ConfigTerminal/Diagnostics.cs.md) | 106 | 2 | Produces the headless, read-only `-diag` report of an instance's resolved state without starting Terminal.Gui, exercising the same model/process layers the UI uses. |
 | [`ConfigTerminal/Program.cs`](descriptions/ConfigTerminal/Program.cs.md) | 123 | 2 | Application entry point for the MagnetarConfig TUI: parses the command line, dispatches the special headless (`-diag`) and help modes, selects the Terminal.Gui driver, runs the launcher/instance pickers, and hosts the top-level `AppShell` under a try/catch/finally that guarantees `Application.Shutdown()`. |
 | [`ConfigTerminal/State/ToolSettings.cs`](descriptions/ConfigTerminal/State/ToolSettings.cs.md) | 59 | 2 | The TUI tool's own per-instance settings, persisted as a small `ConfigTerminal.xml` next to Magnetar's `config.xml` in the selected config dir so per-instance state travels with the instance. |
@@ -37,6 +37,7 @@ Every documented source file, grouped by module. 208 files across 25 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`ConfigTerminal/Logs/LogCatalog.cs`](descriptions/ConfigTerminal/Logs/LogCatalog.cs.md) | 143 | 2 | Pure-filesystem discovery of the log files for the bound instance (§2.9): the DS game logs (`SpaceEngineersDedicated*.log`) in the DS data dir and Magnetar's `info_*.log` files in the config dir. |
+| [`ConfigTerminal/Logs/LogHighlight.cs`](descriptions/ConfigTerminal/Logs/LogHighlight.cs.md) | 43 | 2 | Classifies a single log line for colour highlighting in the log viewer. |
 | [`ConfigTerminal/Logs/LogTailReader.cs`](descriptions/ConfigTerminal/Logs/LogTailReader.cs.md) | 150 | 2 | Memory-bounded tail reader over a single log file: it holds only the last window of bytes (default 256 KB) so it stays cheap even on multi-GB logs, and follows appended bytes `tail -f`-style. |
 | [`ConfigTerminal/Logs/ReadinessDetector.cs`](descriptions/ConfigTerminal/Logs/ReadinessDetector.cs.md) | 38 | 2 | Detects that the DS has finished loading a world by scanning the game log's tail for the "Game ready" readiness marker (§2.9). |
 
@@ -93,7 +94,7 @@ Every documented source file, grouped by module. 208 files across 25 modules.
 | [`ConfigTerminal/Ui/HubPluginsView.cs`](descriptions/ConfigTerminal/Ui/HubPluginsView.cs.md) | 196 | 2 | Browses the plugins offered by the instance's configured hub/remote sources — read offline from Magnetar's cached catalogs under `Sources/Hubs` and `Sources/Plugins` — plus the registered dev folders (shown with a "- dev folder" suffix), and enables/disables them in the active profile. |
 | [`ConfigTerminal/Ui/IAutoSaveContent.cs`](descriptions/ConfigTerminal/Ui/IAutoSaveContent.cs.md) | 23 | 3 | The contract for a hosted panel that persists its edits automatically. |
 | [`ConfigTerminal/Ui/InstancePickerDialog.cs`](descriptions/ConfigTerminal/Ui/InstancePickerDialog.cs.md) | 96 | 2 | Modal dialog that prompts for the folder pair (and launcher / DS install) identifying an instance — the DS data dir, Magnetar config dir, launcher executable, and DS install — each with a Browse button. |
-| [`ConfigTerminal/Ui/LogViewerView.cs`](descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | 243 | 1 | Read-only log viewer over the game and Magnetar log files, with a `tail -f` follow mode and optional word-wrap. |
+| [`ConfigTerminal/Ui/LogViewerView.cs`](descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | 588 | 1 | Read-only log viewer over the game and Magnetar log files, with a `tail -f` follow mode, optional word-wrap, incremental text search, and keyword highlighting. |
 | [`ConfigTerminal/Ui/ManifestPicker.cs`](descriptions/ConfigTerminal/Ui/ManifestPicker.cs.md) | 17 | 3 | Quasar-style dev-folder picker: browse the filesystem and select a plugin's `.xml` manifest file, opening at the last-visited folder so adding several plugins in a row is frictionless. |
 | [`ConfigTerminal/Ui/ModListView.cs`](descriptions/ConfigTerminal/Ui/ModListView.cs.md) | 219 | 1 | Ordered mod-list editor for a world's `Sandbox_config.sbc`: add (by Workshop id or URL, with background friendly-name resolution), delete, reorder, and toggle a mod's dependency flag. |
 | [`ConfigTerminal/Ui/NewWorldWizard.cs`](descriptions/ConfigTerminal/Ui/NewWorldWizard.cs.md) | 158 | 2 | New-world creation by folder copy: pick a template, name the world, then copy the template into `Saves/<name>` and stamp the name into its `Sandbox_config.sbc` via `WorldCreator`. |
@@ -112,12 +113,13 @@ Every documented source file, grouped by module. 208 files across 25 modules.
 | [`ConfigTerminalTests/DocumentTests.cs`](descriptions/ConfigTerminalTests/DocumentTests.cs.md) | 123 | 2 | xUnit tests for the config-document round-trip layer — `DedicatedConfigDocument` and `WorldConfigDocument` — proving edits are surgical and format-faithful. |
 | [`ConfigTerminalTests/HubCatalogTests.cs`](descriptions/ConfigTerminalTests/HubCatalogTests.cs.md) | 46 | 2 | xUnit tests for `HubCatalog`, the protobuf-net reader that decodes a MagnetarHub catalog cache (`PluginData[]`) into browsable `HubPluginInfo` rows. |
 | [`ConfigTerminalTests/LiveEndToEndTests.cs`](descriptions/ConfigTerminalTests/LiveEndToEndTests.cs.md) | 156 | 2 | Live end-to-end test of the real create → start → "Game ready" → stop flow against an installed dedicated server plus a patched Magnetar launcher, exercising the exact model/process code paths the New-World wizard drives. |
+| [`ConfigTerminalTests/LogHighlightTests.cs`](descriptions/ConfigTerminalTests/LogHighlightTests.cs.md) | 34 | 2 | Unit tests for `LogHighlight.Classify`, the log-viewer line classifier. |
 | [`ConfigTerminalTests/PluginConfigTests.cs`](descriptions/ConfigTerminalTests/PluginConfigTests.cs.md) | 254 | 1 | Comprehensive xUnit suite for the plugin/profile/sources model and the `MagnetarPlugins` facade, proving that enabling/disabling plugins is a surgical upsert that never clobbers unmanaged siblings. |
 | [`ConfigTerminalTests/PluginInteropTests.cs`](descriptions/ConfigTerminalTests/PluginInteropTests.cs.md) | 237 | 1 | Interop tests proving that profile/sources XML written by this tool is accepted by Magnetar's own serializers. |
 | [`ConfigTerminalTests/ProcessAndFileTests.cs`](descriptions/ConfigTerminalTests/ProcessAndFileTests.cs.md) | 187 | 2 | xUnit tests for the process/pid/atomic-file and world-creation layer. |
 | [`ConfigTerminalTests/ProfileCatalogTests.cs`](descriptions/ConfigTerminalTests/ProfileCatalogTests.cs.md) | 129 | 2 | xUnit tests for `ProfileCatalog`, which manages named plugin profiles derived from the active `Current` set. |
 | [`ConfigTerminalTests/RegistryTests.cs`](descriptions/ConfigTerminalTests/RegistryTests.cs.md) | 66 | 2 | xUnit tests asserting the structural invariants of `OptionRegistry` — the static table of dedicated/session config options the TUI edits. |
-| [`ConfigTerminalTests/UiSmokeTests.cs`](descriptions/ConfigTerminalTests/UiSmokeTests.cs.md) | 89 | 2 | Headless UI smoke test that builds the whole `AppShell` view tree against Terminal.Gui's `FakeDriver` and pumps a few main-loop iterations, catching constructor/layout exceptions without a real terminal. |
+| [`ConfigTerminalTests/UiSmokeTests.cs`](descriptions/ConfigTerminalTests/UiSmokeTests.cs.md) | 356 | 1 | Headless UI tests that build the `AppShell` view tree against Terminal.Gui's `FakeDriver` and pump a few main-loop iterations, catching constructor/layout exceptions without a real terminal — plus focused coverage of the log viewer's behaviour. |
 | [`ConfigTerminalTests/WorkshopResolverTests.cs`](descriptions/ConfigTerminalTests/WorkshopResolverTests.cs.md) | 178 | 2 | xUnit tests for `WorkshopResolver`, which turns Steam Workshop ids/URLs into mod names via the Steam Web API. |
 
 ## Legacy.Commands  ·  [module doc](modules/Legacy.Commands.md)
