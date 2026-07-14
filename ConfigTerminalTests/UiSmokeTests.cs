@@ -178,6 +178,30 @@ public class UiSmokeTests : IDisposable
     }
 
     [Fact]
+    public void Log_viewer_esc_clears_highlight_navigation_status()
+    {
+        File.WriteAllText(
+            Path.Combine(dir, "SpaceEngineersDedicated.log"),
+            "loading world\nGame ready...\nplayers may now join\n");
+
+        WithLogViewer((shell, _) =>
+        {
+            GetLogPane(shell).CursorPosition = Point.Empty;
+            CallLog(shell, "GoToHighlight", true); // leaves a transient highlight status
+            Assert.True((bool)GetLogField(shell, "transientStatus"));
+
+            // Esc with no active search must still restore the default hint line.
+            var esc = new View.KeyEventEventArgs(new KeyEvent(Key.Esc, new KeyModifiers()));
+            CallLog(shell, "OnViewerKey", esc);
+
+            Assert.True(esc.Handled);
+            Assert.False((bool)GetLogField(shell, "transientStatus"));
+            string status = ((Label)GetLogField(shell, "statusLabel")).Text.ToString();
+            Assert.Contains("R: refresh", status); // back to the default hints
+        });
+    }
+
+    [Fact]
     public void Log_viewer_search_honours_the_case_sensitivity_option()
     {
         SeedGameLog();

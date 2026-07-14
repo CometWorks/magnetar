@@ -731,9 +731,11 @@ sealed class LogTailReader          // never loads the whole file
 
 The viewer stays thin: `End` toggles follow, `Home` jumps to the top, `W`
 toggles line wrap, `R` re-reads the window, `/` opens the Find dialog, `n` / `N`
-step to the next / previous match, `Esc` cancels the search (drops the match
-selection and restores the default hint line), and `[` / `]` jump to the previous
-/ next highlighted line. Search is delegated to Terminal.Gui's own
+step to the next / previous match, `[` / `]` jump to the previous / next
+highlighted line, and `Esc` clears whichever is active — a search (dropping the
+match selection) or a highlight-navigation status — restoring the default hint
+line (a `transientStatus` flag tracks when the status line holds a search or
+highlight message rather than the hints). Search is delegated to Terminal.Gui's own
 `TextView.FindNextText` / `FindPreviousText` over the loaded window — no separate
 index. The Find dialog carries the term plus **Case sensitive** and **Whole words
 only** toggles, passed through as `matchCase` / `matchWholeWord` and remembered

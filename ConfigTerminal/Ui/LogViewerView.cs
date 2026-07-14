@@ -39,6 +39,10 @@ internal sealed class LogViewerView : Window
     private bool searchMatchCase;
     private bool searchWholeWord;
 
+    // True while the status line shows a transient message (a search result or a
+    // highlight-navigation note) instead of the default key hints. Esc clears it.
+    private bool transientStatus;
+
     // Set when a bottom-scroll was requested before the pane had a height (initial open);
     // applied on the first LayoutComplete. See ScrollToBottom / OnTextLayout.
     private bool bottomScrollPending;
@@ -243,12 +247,17 @@ internal sealed class LogViewerView : Window
                 args.Handled = true;
                 break;
             case Key.Esc:
-                // Cancel an active search so the default hint line returns. Only
-                // consume Esc when there is something to clear, so it can still bubble
-                // (e.g. to close the view) otherwise.
+                // Cancel an active search, or clear a transient status left by highlight
+                // navigation ([ ]), so the default hint line returns. Only consume Esc
+                // when there is something to clear, so it can still bubble otherwise.
                 if (searchTerm.Length > 0)
                 {
                     ClearSearch();
+                    args.Handled = true;
+                }
+                else if (transientStatus)
+                {
+                    UpdateStatus();
                     args.Handled = true;
                 }
                 break;
@@ -331,6 +340,7 @@ internal sealed class LogViewerView : Window
             statusLabel.Text = $"Wrapped · \"{searchTerm}\"{opts} · n/N: next/prev · Esc: clear";
         else
             statusLabel.Text = $"Found \"{searchTerm}\"{opts} · n/N: next/prev · Esc: clear";
+        transientStatus = true;
     }
 
     // " [case, word]" for whatever search options are on, else empty — appended to the
@@ -408,6 +418,7 @@ internal sealed class LogViewerView : Window
         if (target < 0)
         {
             statusLabel.Text = "No highlighted lines in view";
+            transientStatus = true;
             return;
         }
 
@@ -419,8 +430,9 @@ internal sealed class LogViewerView : Window
         string what = LogHighlight.Classify(lines[target]) == LogHighlightKind.Ready
             ? "Game ready" : "Exception";
         statusLabel.Text = wrapped
-            ? $"Wrapped to {what} line · [ ]: prev/next highlight"
-            : $"{what} line · [ ]: prev/next highlight";
+            ? $"Wrapped to {what} line · [ ]: prev/next · Esc: clear"
+            : $"{what} line · [ ]: prev/next · Esc: clear";
+        transientStatus = true;
     }
 
     // First highlighted line in [from, to), or -1.
@@ -449,10 +461,13 @@ internal sealed class LogViewerView : Window
         UpdateStatus();
     }
 
-    private void UpdateStatus() =>
+    private void UpdateStatus()
+    {
+        transientStatus = false;
         statusLabel.Text = following
             ? "FOLLOWING (End to stop) · Home: top · /: find · [ ]: highlight"
             : $"/: find · [ ]: highlight · End: follow · Home: top · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
+    }
 
     private void ToggleFollow()
     {

@@ -194,7 +194,7 @@ Reload Config). The mouse works too.
 | **Activate World** (confirm) | shows exactly what will be written (`LastSession.sbl`, an `IgnoreLastSession` flip if set, a `LoadWorld` clear if set); notes that a `-session:` on the command line overrides it | Worlds → **Activate** (F6) |
 | **Delete World** (confirm) | Keep/Delete (defaults to Keep); removes the folder and clears a now-dangling `LastSession.sbl` / cfg `LoadWorld` | Worlds → **Delete** |
 | **New World wizard** | template list → world name (validated) → confirm → copies the template into `Saves/<name>` and activates it, no server start | `Worlds → New World…` |
-| **Log viewer** | file selector (game + Magnetar logs, active file marked); read-only text pane with "Game ready"/"Exception" lines highlighted; `/` find (case / whole-word toggles), `n`/`N` next/prev match, `Esc` clear search, `[`/`]` prev/next highlighted line, `End` follow, `Home` top, `W` wrap, `R` re-read | `Tools → Logs` (F4) |
+| **Log viewer** | file selector (game + Magnetar logs, active file marked); read-only text pane with "Game ready"/"Exception" lines highlighted; `/` find (case / whole-word toggles), `n`/`N` next/prev match, `[`/`]` prev/next highlighted line, `Esc` clear search / highlight nav, `End` follow, `Home` top, `W` wrap, `R` re-read | `Tools → Logs` (F4) |
 | **Hub Plugins** | the cached hub/remote catalog **plus registered dev folders** (`- dev folder` suffix); Space/Enter toggles enabled (hub deps pulled in), with an author/tagline/description pane and a filter box | `Plugins → Hub` |
 | **Plugin Profiles** | saved-preset list (the one matching the active set is marked); Load, Save As New, Update, Rename, Delete | `Plugins → Profiles` |
 | **Local & Dev Folders** | local DLLs from `Local/` (Space toggles) and **registered** dev folders (Add picks a manifest `.xml`; Remove unregisters — registering does not enable, you toggle under Hub) | `Plugins → Local & Dev Folders` (F8) |
@@ -343,12 +343,13 @@ the pane on the right shows its tail.
   wrap, `R` re-reads the window.
 - `/` opens a **Find** dialog — a search term plus two toggles, **Case sensitive**
   and **Whole words only** — and jumps to the first match; `n` / `N` move to the
-  next / previous match, wrapping around the window. `Esc` cancels the search and
-  brings the default key hints back. Starting a search stops follow so it doesn't
-  snap you back to the tail.
+  next / previous match, wrapping around the window. Starting a search stops follow
+  so it doesn't snap you back to the tail.
 - `[` / `]` jump to the previous / next **highlighted** line (see below), wrapping
   around the window — a quick way to step between "Game ready" and "Exception"
   events without scrolling.
+- `Esc` clears the current search or highlighted-line navigation and brings the
+  default key hints back.
 
 Lines are colour-highlighted as they scroll by: the DS **"Game ready…"** readiness
 line (black on green) and any **"Exception"** line (yellow on red), so a world
