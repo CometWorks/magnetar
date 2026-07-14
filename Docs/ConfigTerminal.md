@@ -1,38 +1,8 @@
 # ConfigTerminal — Terminal UI Configuration Tool for Magnetar
 
-**Status: implemented (initial vertical slice).** The `ConfigTerminal` /
-`MagnetarConfig` project and its `ConfigTerminalTests` suite exist and build on
-net10.0. The companion `magnetar.pid` writer
-is added to the Legacy launcher. The full **configure-a-new-world → start to
-"Game ready" → stop** flow is verified end-to-end against a live DS install +
-patched launcher (see `ConfigTerminalTests/LiveEndToEndTests.cs`, gated behind
-`MAGNETAR_LIVE=1`). A headless `-diag` mode reports an instance's state (incl. plugins) without
-the UI. **Full Magnetar plugin management is implemented** (see below):
-separate Plugins views (1) enable/disable **local DLLs** from the instance's
-`Local/` folder, (2) add **dev-folder plugins** Quasar-style by picking a manifest
-`.xml` (folder + filename + folder-name id derived), (3) **browse hub/remote
-plugin catalogs** and enable them (with dependency pull-in), and (4) manage the
-**plugin sources** (`RemoteHubSources`/`RemotePluginSources`/`LocalHubSources`);
-a Profiles view (5) manages **named plugin profiles** (`Profiles/<Key>.xml`) — load, save-new,
-update, rename, delete — mirroring Magnetar's own in-game `ProfilesConfig` UI, with
-`Current.xml` the active set. **Mods are not managed here** — unlike Quasar (which
-carries a per-profile mod set for local play), a dedicated server's mod list
-belongs to the world, so it is edited per-world in `Sandbox_config.sbc` from the
-Worlds view ([§5.5](#55-mods)); `Profile.Mods`/`ModSources` are left untouched.
-All edits go to `Profiles/*.xml` and
-`Sources/sources.xml` via the same XDocument-upsert approach; hub catalogs are read
-offline from Magnetar's own protobuf caches under `Sources/Hubs`/`Sources/Plugins`
-with a minimal wire reader (no `Shared` reference). The last-visited manifest folder is
-persisted in `ConfigTerminal.xml` (`ToolSettings`). Round-trip compatibility is
-verified against Magnetar's own `XmlSerializer` for both `Profile` and
-`SourcesConfig` (`ConfigTerminalTests/PluginInteropTests.cs`) and the protobuf reader
-against a real captured hub cache (`HubCatalogTests`). Build/packaging is wired: `build.sh`/`build.bat` ship
-`MagnetarConfig` in each bundle next to the launcher (§13). Remaining polish
-(external-change watcher/conflict flow, advanced-fields toggle) is tracked
-against §14 phase 6; a **Filter** box on the settings form already covers
-incremental narrowing of fields.
-
-A cross-platform console (TUI) application to configure **and operate** a
+This document describes the tool as built. `MagnetarConfig` (the
+`ConfigTerminal` project, with the `ConfigTerminalTests` xUnit suite) is a
+cross-platform console (TUI) application to configure **and operate** a
 Space Engineers 1 Dedicated Server instance running under Magnetar: the DS's
 global settings (`SpaceEngineers-Dedicated.cfg`), the worlds under the
 instance's `Saves/` folder (`Sandbox_config.sbc` session settings and mod
@@ -79,8 +49,8 @@ copy its architecture (see [§3](#3-what-we-take-from-quasar--what-we-do-differe
 11. [Cross-platform notes](#11-cross-platform-notes)
 12. [Testing strategy](#12-testing-strategy)
 13. [Build, packaging and documentation integration](#13-build-packaging-and-documentation-integration)
-14. [Phased implementation plan](#14-phased-implementation-plan)
-15. [Risks and open questions](#15-risks-and-open-questions)
+14. [Implementation status](#14-implementation-status)
+15. [Known limitations and future work](#15-known-limitations-and-future-work)
 
 ---
 
@@ -404,7 +374,7 @@ quits (`ServerControl.OnTerminate`, net10.0 only); SIGHUP → save + config
 reload. On Windows there is no clean signal path to a detached process —
 graceful stop there is deferred to a later phase (planned route: the DS
 Remote API or a named-event listener added to Magnetar; see
-[§15](#15-risks-and-open-questions)). Force-kill is offered only after a
+[§15](#15-known-limitations-and-future-work)). Force-kill is offered only after a
 graceful stop times out, behind an explicit "may lose progress since last
 save" confirmation.
 
@@ -442,7 +412,7 @@ text; exception-traceback indexing/navigation is **not implemented** (see
 | `LastSession.sbl` writing with both `Path` and `RelativePath`, plus `IgnoreLastSession=false` | `LastSessionFile` + world-activation flow |
 | Atomic writes (temp file + rename, flush, never truncate the target on failure) | `AtomicFile` ([§7](#7-file-io-layer)) |
 | Clean → Edited → PendingDecision editing state machine with Cancel/Discard/Save | `EditSession` ([§9.2](#92-document-edit-lifecycle)) |
-| Debounced file watcher that re-checks content before signalling external change | `ExternalChangeWatcher` *(planned — §14 phase 6)* |
+| Debounced file watcher that re-checks content before signalling external change | `ExternalChangeWatcher` *(not implemented — see [§15](#15-known-limitations-and-future-work))* |
 | World validation: selected save must exist and contain `Sandbox.sbc` | World activation guard |
 | UTF-8 no-BOM, `\n` newlines, indented XML with declaration | `XmlOut` writer settings |
 | `ReadConfigProfile` — import a world's `Sandbox_config.sbc` into an editable profile | New-world wizard seeds settings from the chosen template ([§2.7](#27-world-templates-and-new-world-creation)) |
@@ -537,7 +507,7 @@ ConfigTerminal/                      → executable "MagnetarConfig"
 │   ├── HelpDialog.cs                About/Help dialog
 │   └── Dialogs.cs                   confirm/destructive/prompt/info/error + RunBackground
 └── State/
-    └── ToolSettings.cs              ConfigTerminal.xml: recent pairs, last manifest folder, extra args
+    └── ToolSettings.cs              ConfigTerminal.xml: last plugin-manifest folder
 
 ConfigTerminalTests/
 └── ConfigTerminalTests.csproj       xUnit, net10.0, fixture files
@@ -832,9 +802,10 @@ sealed class LaunchSpec             // pure function of the binding + options
 {
     InstanceBinding Binding;
     bool IgnoreLastSession;         // adds -ignorelastsession (skips LastSession.sbl)
-    string ExtraArgs;               // from ToolSettings (e.g. -noconsent)
+    string[] ExtraArgs;             // extra launch args, validated against conflicts;
+                                    // reserved — no UI exposes it yet, so empty in practice
     string[] BuildArgv();           // <exe> -daemon -config <dir> -path <dir> [...]
-                                    // rejects user ExtraArgs that would fight the tool:
+                                    // rejects extra args that would fight the tool:
                                     // -session:, -ignorelastsession, -path, -config, -daemon
 }
 
@@ -1006,10 +977,11 @@ sealed record OptionDefinition(
   `RemoteSecurityKey`, `ServerPasswordHash/Salt`).
 - `SessionOptions` — the ~180 `MyObjectBuilder_SessionSettings` fields,
   grouped into categories mirroring Keen's `[Category]` attributes: *Core*,
-  *Multipliers*, *Block Limits*, *Environment*, *Players*, *Combat &
-  Gameplay*, *NPCs*, *Economy*, *Trash Removal*, *Grid Storage*, *Match &
-  Team*, *Advanced* (the `[Browsable(false)]` but still-serialized ones,
-  shown only when "Show advanced" is toggled).
+  *Multipliers*, *Block Limits*, *Environment*, *Players*, *Gameplay*,
+  *NPCs*, *Economy*, *Trash Removal*, *Grid Storage*, *Match & Team* and
+  *Experimental*. Options flagged `Hidden` (the `[Browsable(false)]` but
+  still-serialized ones, e.g. `ScenarioEditMode`) are kept out of the form
+  entirely — there is no "show advanced" reveal toggle.
 - Lookup by `Id`, by `XmlName` per scope, enumeration by category.
 
 Population strategy: the tables are **hand-written C# literals**, transcribed
@@ -1038,7 +1010,7 @@ and each world's settings share one implementation.
 - **`XmlOut`** — shared `XmlWriterSettings`: UTF-8 **without BOM**, `Indent =
   true`, `NewLineChars = "\n"`, XML declaration on. Matches Quasar's proven
   output settings and keeps diffs clean across platforms.
-- **`ExternalChangeWatcher`** *(planned, not yet implemented — §14 phase 6)* —
+- **`ExternalChangeWatcher`** *(not implemented — see [§15](#15-known-limitations-and-future-work))* —
   a debounced `FileSystemWatcher` per open document plus one on `Saves/`, content
   compared against the session snapshot before raising so a no-op touch does not
   nag, events marshalled to the UI thread via `Application.MainLoop.Invoke`. Until
@@ -1110,7 +1082,7 @@ Windows / dialogs:
 
 | View | Content | Reached via |
 | --- | --- | --- |
-| **Instance picker** (dialog) | recent folder *pairs* (from `ToolSettings`), platform defaults, free path entry for both dirs; validates they exist | startup without args, `File → Open Instance…` |
+| **Instance picker** (dialog) | four path fields — DS data dir (`-path`), Magnetar config (`-config`), launcher (`-magnetar`), DS install (`-ds64`) — each with a **Browse** button and pre-filled with resolved defaults; the DS data dir must exist | startup without `-path`/`-config`, `File → Open Instance…` |
 | **Dashboard** | server status (state/PID/uptime) with **Start / Stop / Restart / Reload** buttons; server name/ports/network type summary; active world; last lines of the active log; warnings (`Problems`, experimental, `LoadWorld` set, `IgnoreLastSession` true, stale PID file) | on open |
 | **Server Settings** | `OptionFormView` over `DedicatedOptions`: category list (left pane) + scrollable field form (right pane), a **Filter** box narrowing fields across categories, per-field hint + default + restart/live badge | `Server → Settings` (F7) |
 | **Access Lists** | three tabs (TabView): Administrators / Banned / Reserved + GroupID field; add/remove/paste SteamIDs, input validation | `Server → Access Lists` |
@@ -1235,8 +1207,8 @@ Notes:
 - Editing has **no explicit Save**: a dirty document is flushed automatically on
   the ~1 s tick, on panel switch, and on quit ([§9.3](#93-save-pipeline)) — the
   `Saving` transition is driven by those triggers, not an `F2` key.
-- The `ExternalChange` / `ExternalConflict` transitions are **planned, not yet
-  implemented** (`ExternalChangeWatcher`, §14 phase 6). Today an external write is
+- The `ExternalChange` / `ExternalConflict` transitions are **not implemented**
+  (`ExternalChangeWatcher`, [§15](#15-known-limitations-and-future-work)). Today an external write is
   picked up on the next panel re-open / Refresh; because auto-save is
   content-compared, it will not silently overwrite a file that changed to a value
   the user did not touch.
@@ -1323,7 +1295,7 @@ stateDiagram-v2
   handled by the ExternalConflict path of §9.2. A running server is reflected
   in the save summary ("settings load at next start") and the SIGHUP offer.
 - Windows: Start/Query work identically; graceful Stop is deferred
-  ([§15](#15-risks-and-open-questions)).
+  ([§15](#15-known-limitations-and-future-work)).
 
 ### 9.6 New-world creation
 
@@ -1387,8 +1359,9 @@ MagnetarConfig [options]
   -netdriver         force Terminal.Gui's NetDriver (portable fallback when
                      curses/terminfo is broken over e.g. exotic SSH terminals)
   -diag              print a headless read-only diagnostics report for the
-                     resolved instance (paths, cfg summary, worlds, plugins,
-                     sources, profiles, server status, problems) and exit
+                     resolved instance (paths, cfg summary, worlds, active
+                     world, templates, plugins, sources, profiles, server
+                     status, problems) and exit
   -help / -h / --help
 ```
 
@@ -1410,20 +1383,19 @@ Resolution order:
    when only one is. The chosen launcher's config dir mirrors the launcher's own
    resolution (`<Name>` if that folder exists, else the shared `MagnetarLegacy`);
 3. when neither `-path` nor `-config` is given: the interactive instance
-   picker — last-used pairs from `ToolSettings`, the platform default pair,
-   Windows service instances found under
-   `%ProgramData%\SpaceEngineersDedicated\*`, and manual path fields for
-   both directories. `-magnetar`/`-ds64` fall back to per-pair values
-   remembered in `ToolSettings`, then platform defaults/auto-detection.
+   picker ([§8.2](#82-screen-map)) — four editable path fields (data dir,
+   config dir, launcher, DS install), each with a **Browse** button and
+   pre-filled with the resolved platform defaults / auto-detection. The DS
+   data dir must exist for the instance to open.
 
-`ToolSettings` (recent pairs with their exe/ds64 overrides, extra launch
-args, advanced-fields toggle) persists as a small XML —
-`ConfigTerminal.xml` in the **selected Magnetar config dir** next to
-Magnetar's `config.xml`, so per-instance tool state travels with the
-instance. The recent-pairs list is additionally mirrored in the *default*
-config dir so the picker can offer them before a pair is chosen. The tool
-works fine when the dir does not exist yet (first run creates it, same as
-the launcher).
+`ToolSettings` persists as a small XML — `ConfigTerminal.xml` in the
+**selected Magnetar config dir** next to Magnetar's `config.xml`, so
+per-instance tool state travels with the instance. It currently records a
+single field, the folder the plugin-manifest picker should reopen at
+(`LastPluginFolder`); both load and save are fully tolerant — a missing or
+corrupt file falls back to defaults and never aborts the operation that
+triggered the save. The tool works fine when the dir does not exist yet
+(first run creates it, same as the launcher).
 
 ---
 
@@ -1528,9 +1500,9 @@ real saves, to keep the repo lean.
 
 ## 13. Build, packaging and documentation integration
 
-- `Magnetar.sln`: `ConfigTerminal` + `ConfigTerminalTests` projects added. **Done.**
-- `build.sh` / `build.bat`: **`MagnetarConfig` now ships in each bundle next to
-  the launcher.** Rather than co-mingling it with the launcher's own
+- `Magnetar.sln` carries the `ConfigTerminal` + `ConfigTerminalTests` projects.
+- `build.sh` / `build.bat` ship `MagnetarConfig` in each bundle next to
+  the launcher. Rather than co-mingling it with the launcher's own
   assemblies, it gets its own folder + a root launcher, mirroring how the
   MagnetarInterim apphost sits under `Bin/` with a root shim — so its
   Terminal.Gui/NStack/System.Management deps stay isolated and can never clash
@@ -1550,85 +1522,57 @@ real saves, to keep the repo lean.
   components, so no changes to the native-wrapper release flow).
 - Docs integration: `README.md` (documentation table + a "Configuration tool"
   note), `Docs/Usage.md` ("Configuring the server (MagnetarConfig)" section) and
-  `Docs/Layout.md` (`ConfigTerminal/` + `ConfigTerminalTests/` rows) now cover the
-  tool, and this file has been reconciled plan → as-built. The machine-generated
-  code handbook (`Docs/TOC.md` / `Docs/Index.md` + per-file module docs, via the
-  `structured-documentation` refresh) now covers the `ConfigTerminal/` and
+  `Docs/Layout.md` (`ConfigTerminal/` + `ConfigTerminalTests/` rows) cover the
+  tool. The machine-generated code handbook (`Docs/TOC.md` / `Docs/Index.md` +
+  per-file module docs, via the `structured-documentation` refresh) covers the
+  `ConfigTerminal/` and
   `ConfigTerminalTests/` trees (modules `ConfigTerminal.{App,Model,Ui,Process,Logs,Io}`
   and `ConfigTerminalTests`).
 
 ---
 
-## 14. Phased implementation plan
+## 14. Implementation status
 
-Each phase ends green (builds, tests pass) and is independently reviewable.
+The tool is built and in daily use on Linux; every layer in the source map
+([§4.1](#41-new-solution-projects)) exists and is exercised by
+`ConfigTerminalTests`. What that covers, and the few gaps:
 
-**Phase 0 — spike**
-Empty Terminal.Gui 1.19.0 app on **net10.0**: menu bar, status bar, blue
-`▒` desktop, one dialog. Validates the package restore (incl.
-`System.Management`), driver behaviour on a Linux terminal +
-Windows conhost/Windows Terminal, and the TV color scheme. Kill risks early.
-
-**Phase 1 — model + I/O core**
-`OptionDefinition`/`OptionRegistry` (dedicated options + first two session
-categories), `DedicatedConfigDocument`, `AtomicFile`, `XmlOut`,
-`PasswordHasher`, `EditSession`. Full unit-test coverage; golden fixtures
-committed. *No UI work.*
-
-**Phase 2 — UI shell + server settings**
-`TurboVisionTheme`, `AppShell`, `InstancePickerDialog`, `DashboardView`,
-`OptionFormView` (category list + field form), Server Settings window, Access Lists,
-Password dialog. Save pipeline (§9.3) without reload offer. First usable
-build for the DS global config.
-
-**Phase 3 — worlds**
-Complete `SessionOptions` registry (all categories), `WorldCatalog` /
-`CheckpointReader` (gzip), `WorldConfigDocument`, Worlds window, World
-Settings, Mod list editor, world activation flow (`LastSessionFile`).
-This completes the config-editing core.
-
-**Phase 4 — process control**
-Magnetar-side `magnetar.pid` writer (small `Legacy` change, own tests);
-`PidFile`, `LaunchSpec`, `MagnetarProcess`, `ProcessMonitor`; dashboard
-status + Start/Stop/Restart/Reload; stop-confirm and start-failure dialogs;
-save-pipeline SIGHUP offer. Linux-complete; Windows Start/status only.
-
-**Phase 5 — new worlds + log reader**
-`WorldTemplateCatalog` + New World wizard (`WorldCreator` copies the template
-into `Saves/` and activates it, no server start); `LogCatalog`, `LogTailReader`,
-`LogViewerView` with follow (`End`), line-wrap (`W`), and refresh (`R`).
-Incremental search and exception-traceback navigation were scoped here but are
-**not implemented** (§5.9).
-
-**Phase 6 — robustness + integration**
-`ExternalChangeWatcher` + conflict flow and the advanced-fields toggle remain;
-experimental-mode badges, the settings **Filter** box, help screens,
-`-netdriver`, and `ToolSettings` recent pairs + per-pair overrides are done.
-
-**Phase 7 — packaging + docs**
-Build/publish integration and dist bundles (§13) — **done**: `MagnetarConfig`
-ships in the Linux and Windows bundles next to the launcher (own `Config/`
-folder + a root launcher/shim; the Linux path is verified end-to-end producing
-`dist/MagnetarForLinux.7z`). UI smoke tests done. Still to do: a manual test
-pass on Linux xterm/kitty/ssh, Windows Terminal and conhost.
-
-**Phase 8 — plugin management**
-`PluginProfileDocument`/`PluginSourcesDocument` (local DLLs, dev folders, hub
-`GitHub` plugins, and all source lists); `ProtoReader`/`HubCatalog`
-offline reader for the cached hub/plugin blobs; `MagnetarPlugins` façade;
-`ProfileCatalog` for named-profile load/save/update/rename/delete; the
-`PluginsView`, `HubPluginsView`, `PluginSourcesView` and
-`ProfilesView` UI, plus `-diag` reporting and interop/round-trip tests.
-Per-server mod management (`ModSources`/`Profile.Mods`, the `ModSourcesView`
-editor) was later removed — mods are per-world, edited in `Sandbox_config.sbc`
-([§5.5](#55-mods)). The `WorkshopResolver`/`MiniJson`/`DefaultHttpFetcher` Steam
-lookup was subsequently restored (trimmed to keyless name + collection
-resolution) to back the per-world **Add mod by URL** flow.
-*Done — see the status note at the top of this document.*
+- **Config editing** — the full `OptionRegistry` (dedicated + all session
+  categories), the `DedicatedConfigDocument`/`WorldConfigDocument` upserts, the
+  access-list and password editors, `EditSession` auto-save, `WorldCatalog` /
+  `CheckpointReader` (gzip-aware), the mod-list editor and the world-activation
+  flow (`LastSessionFile`) are all in place.
+- **Process control** — the Magnetar-side `magnetar.pid` writer plus
+  `PidFileReader`, `LaunchSpec`, `MagnetarProcess` and `ProcessMonitor` drive the
+  dashboard's Start / Stop / Restart / Reload. Graceful stop (SIGTERM) and reload
+  (SIGHUP) are **Linux-only**; on Windows only Start, status and force-kill work
+  ([§15](#15-known-limitations-and-future-work)).
+- **New worlds + logs** — the New World wizard copies a template into `Saves/`
+  and activates it with no server start (`WorldCreator`); the log viewer follows
+  (`End`), wraps (`W`), re-reads (`R`) and jumps to top (`Home`). Incremental
+  search and exception-traceback navigation are **not implemented**
+  ([§5.9](#59-log-reading)).
+- **Plugin management** — local DLLs, dev folders, offline hub-catalog browsing
+  (`ProtoReader`/`HubCatalog`), source management and named profiles
+  (`ProfileCatalog`) are all present, surfaced in the four Plugins views and by
+  `-diag`, and covered by round-trip + interop tests. Per-server mod management
+  (`Profile.Mods`/`ModSources`) is deliberately absent — mods are per-world
+  ([§5.5](#55-mods)); the keyless `WorkshopResolver` (name + collection) backs
+  the per-world **Add mod by URL** flow.
+- **Not implemented** — the `ExternalChangeWatcher` external-change / conflict
+  flow ([§9.2](#92-document-edit-lifecycle)), a "show advanced" reveal toggle for
+  `Hidden` options, and Windows graceful stop/reload. `ToolSettings` persists
+  only the last plugin-manifest folder
+  ([§10](#10-command-line-and-instance-resolution)) — not recent instance pairs,
+  per-pair overrides or extra launch args; the instance picker pre-fills resolved
+  defaults rather than offering a recent-pairs list.
+- **Verification** — the Linux bundle is produced end-to-end by `build.sh` as
+  `dist/MagnetarForLinux.7z`. The main open item is a manual driver pass on
+  Linux xterm/kitty/ssh and Windows Terminal/conhost.
 
 ---
 
-## 15. Risks and open questions
+## 15. Known limitations and future work
 
 - **Terminal.Gui v1 doc drift** — the NuGet page and repo README now
   describe v2 (beta). Mitigation: pin 1.19.0, consult only the archived v1
