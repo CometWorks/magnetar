@@ -67,15 +67,8 @@ public class UiSmokeTests : IDisposable
     public void Log_viewer_renders_highlight_colours_into_the_cell_buffer()
     {
         SeedGameLog();
-
-        var driver = InitHeadless();
-        try
+        WithLogViewer((shell, driver) =>
         {
-            var shell = new AppShell(NewBinding());
-            Application.RunState rs = Application.Begin(shell);
-            shell.ShowLogs();
-            Pump(ref rs, 3);
-
             // The whole short log fits the pane, so opening it draws every line.
             // These fg/bg pairs are unique to the two highlighted line kinds — no other
             // widget in this view uses them — so their presence in the cell buffer
@@ -88,13 +81,7 @@ public class UiSmokeTests : IDisposable
                 "The 'Game ready' line was not rendered with its highlight colour.");
             Assert.True(BufferHasAttribute(driver, exceptionAttr),
                 "The 'Exception' line was not rendered with its highlight colour.");
-
-            Application.End(rs);
-        }
-        finally
-        {
-            Application.Shutdown();
-        }
+        });
     }
 
     [Fact]
@@ -107,14 +94,8 @@ public class UiSmokeTests : IDisposable
             log.Append($"2026-07-14 12:00:00.000 - log line {i:000}\n");
         File.WriteAllText(Path.Combine(dir, "SpaceEngineersDedicated.log"), log.ToString());
 
-        InitHeadless();
-        try
+        WithLogViewer((shell, _) =>
         {
-            var shell = new AppShell(NewBinding());
-            Application.RunState rs = Application.Begin(shell);
-            shell.ShowLogs();
-            Pump(ref rs, 3);
-
             // Regression: the initial scroll-to-bottom runs from the ctor before layout
             // gives the pane a height, which used to pin only the last line to the top.
             // After the deferred re-scroll on LayoutComplete, the last line sits at the
@@ -125,34 +106,20 @@ public class UiSmokeTests : IDisposable
             Assert.InRange(pane.Lines - 1, pane.TopRow, pane.TopRow + height - 1); // last line visible
             Assert.True(pane.TopRow <= pane.Lines - 2,
                 $"only the last line is visible (TopRow={pane.TopRow}, Lines={pane.Lines})");
-
-            Application.End(rs);
-        }
-        finally
-        {
-            Application.Shutdown();
-        }
+        });
     }
 
     [Fact]
     public void Log_viewer_search_selects_the_matching_line()
     {
         SeedGameLog();
-
-        InitHeadless();
-        try
+        WithLogViewer((shell, _) =>
         {
-            var shell = new AppShell(NewBinding());
-            Application.RunState rs = Application.Begin(shell);
-            shell.ShowLogs();
-            Pump(ref rs, 3);
-
             // Drive the viewer's own search wrapper (no public entry point — it is
             // key-triggered through a modal prompt) with a preset term, as pressing
             // '/'<term><Enter> then 'n' would.
-            object logView = GetContent(shell);
-            logView.GetType().GetField("searchTerm", Private).SetValue(logView, "Game ready");
-            logView.GetType().GetMethod("FindNext", Private).Invoke(logView, new object[] { true });
+            SetLogField(shell, "searchTerm", "Game ready");
+            CallLog(shell, "FindNext", true);
             Application.Refresh();
 
             // The match is selected and scrolled into view — the viewer opens at the
@@ -160,13 +127,96 @@ public class UiSmokeTests : IDisposable
             TextView pane = GetLogPane(shell);
             Assert.Equal("Game ready", pane.SelectedText?.ToString());
             Assert.Equal(1, pane.CurrentRow); // second line of the seeded log
+        });
+    }
 
-            Application.End(rs);
-        }
-        finally
+    [Fact]
+    public void Log_viewer_clear_search_drops_selection_and_restores_hint()
+    {
+        SeedGameLog();
+        WithLogViewer((shell, _) =>
         {
-            Application.Shutdown();
-        }
+            SetLogField(shell, "searchTerm", "Game ready");
+            CallLog(shell, "FindNext", true);
+
+            TextView pane = GetLogPane(shell);
+            Assert.True(pane.Selecting); // a match is selected
+
+            CallLog(shell, "ClearSearch");
+
+            Assert.False(pane.Selecting); // selection dropped
+            Assert.Equal("", (string)GetLogField(shell, "searchTerm")); // term forgotten
+        });
+    }
+
+    [Fact]
+    public void Log_viewer_navigates_between_highlighted_lines()
+    {
+        // Lines 1 (Game ready) and 3 (Exception) are the only highlighted ones.
+        File.WriteAllText(
+            Path.Combine(dir, "SpaceEngineersDedicated.log"),
+            "loading world\n" +
+            "Game ready...\n" +
+            "players may now join\n" +
+            "System.NullReferenceException: boom\n" +
+            "shutting down\n");
+
+        WithLogViewer((shell, _) =>
+        {
+            TextView pane = GetLogPane(shell);
+            pane.CursorPosition = Point.Empty; // start at the top
+
+            CallLog(shell, "GoToHighlight", true);
+            Assert.Equal(1, pane.CurrentRow); // Game ready
+            CallLog(shell, "GoToHighlight", true);
+            Assert.Equal(3, pane.CurrentRow); // Exception
+            CallLog(shell, "GoToHighlight", true);
+            Assert.Equal(1, pane.CurrentRow); // wraps back to Game ready
+            CallLog(shell, "GoToHighlight", false);
+            Assert.Equal(3, pane.CurrentRow); // previous wraps to the last highlight
+        });
+    }
+
+    [Fact]
+    public void Log_viewer_search_honours_the_case_sensitivity_option()
+    {
+        SeedGameLog();
+        WithLogViewer((shell, _) =>
+        {
+            TextView pane = GetLogPane(shell);
+            SetLogField(shell, "searchTerm", "game ready"); // lower-case
+
+            SetLogField(shell, "searchMatchCase", true);
+            CallLog(shell, "FindNext", true);
+            Assert.False(pane.Selecting); // case-sensitive: no match for the lower-case term
+
+            SetLogField(shell, "searchMatchCase", false);
+            CallLog(shell, "FindNext", true);
+            Assert.Equal("Game ready", pane.SelectedText?.ToString()); // case-insensitive: matches
+        });
+    }
+
+    [Fact]
+    public void Log_viewer_search_honours_the_whole_word_option()
+    {
+        File.WriteAllText(
+            Path.Combine(dir, "SpaceEngineersDedicated.log"),
+            "an Exceptional event\n" +
+            "a plain Exception here\n");
+
+        WithLogViewer((shell, _) =>
+        {
+            TextView pane = GetLogPane(shell);
+            pane.CursorPosition = Point.Empty;
+            SetLogField(shell, "searchTerm", "Exception");
+            SetLogField(shell, "searchWholeWord", true);
+
+            CallLog(shell, "FindNext", true);
+
+            // Whole-word skips "Exceptional" (line 0) and lands on the standalone word.
+            Assert.Equal("Exception", pane.SelectedText?.ToString());
+            Assert.Equal(1, pane.CurrentRow);
+        });
     }
 
     // --- helpers ---
@@ -188,6 +238,48 @@ public class UiSmokeTests : IDisposable
             "2026-07-14 12:01:01.000 - players may now join\n" +
             "System.NullReferenceException: boom\n" +
             "   at Foo.Bar()\n");
+
+    // Boots the shell, opens the log viewer, pumps a few iterations so it lays out and
+    // draws, then runs the test body with the shell and driver; always tears down.
+    private void WithLogViewer(Action<AppShell, FakeDriver> body)
+    {
+        var driver = InitHeadless();
+        try
+        {
+            var shell = new AppShell(NewBinding());
+            Application.RunState rs = Application.Begin(shell);
+            shell.ShowLogs();
+            Pump(ref rs, 3);
+            body(shell, driver);
+            Application.End(rs);
+        }
+        finally
+        {
+            Application.Shutdown();
+        }
+    }
+
+    // --- reflection into the log viewer's private members (our own code; these
+    // behaviours are key-triggered through a modal prompt, so there is no public entry
+    // point the headless test can drive) ---
+
+    private static object GetLogField(AppShell shell, string field)
+    {
+        object lv = GetContent(shell);
+        return lv.GetType().GetField(field, Private).GetValue(lv);
+    }
+
+    private static void SetLogField(AppShell shell, string field, object value)
+    {
+        object lv = GetContent(shell);
+        lv.GetType().GetField(field, Private).SetValue(lv, value);
+    }
+
+    private static void CallLog(AppShell shell, string method, params object[] args)
+    {
+        object lv = GetContent(shell);
+        lv.GetType().GetMethod(method, Private).Invoke(lv, args);
+    }
 
     // Boots Terminal.Gui against the FakeDriver with a headless main loop.
     // FakeMainLoop is internal to Terminal.Gui, so it is constructed via reflection.

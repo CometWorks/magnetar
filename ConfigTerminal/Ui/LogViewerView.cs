@@ -33,8 +33,11 @@ internal sealed class LogViewerView : Window
     // Remembered for the lifetime of the configurator process (off by default).
     private static bool wrapEnabled;
 
-    // Last search term, remembered across file switches so n/N keep working.
+    // Last search term and its options, remembered across file switches so n/N keep
+    // working and the Find dialog reopens with the previous choices.
     private string searchTerm = string.Empty;
+    private bool searchMatchCase;
+    private bool searchWholeWord;
 
     // Set when a bottom-scroll was requested before the pane had a height (initial open);
     // applied on the first LayoutComplete. See ScrollToBottom / OnTextLayout.
@@ -231,22 +234,60 @@ internal sealed class LogViewerView : Window
                 FindNext(forward: false);
                 args.Handled = true;
                 break;
+            case (Key)']':
+                GoToHighlight(forward: true);
+                args.Handled = true;
+                break;
+            case (Key)'[':
+                GoToHighlight(forward: false);
+                args.Handled = true;
+                break;
+            case Key.Esc:
+                // Cancel an active search so the default hint line returns. Only
+                // consume Esc when there is something to clear, so it can still bubble
+                // (e.g. to close the view) otherwise.
+                if (searchTerm.Length > 0)
+                {
+                    ClearSearch();
+                    args.Handled = true;
+                }
+                break;
         }
     }
 
-    // Ask for a search term, then jump to the first match. A blank term clears the
-    // search. Following is stopped first so the next poll doesn't yank the view off
-    // the match and back to the tail.
+    // Ask for a search term and its options, then jump to the first match. A blank
+    // term clears the search. Following is stopped first so the next poll doesn't yank
+    // the view off the match and back to the tail.
     private void PromptSearch()
     {
         StopFollow();
-        string term = Dialogs.Prompt("Find", "Search text (case-insensitive):", searchTerm);
-        if (term == null)
-            return; // cancelled — keep the previous term
-        searchTerm = term;
+
+        var dlg = new Dialog("Find", 60, 11) { ColorScheme = TurboVisionTheme.Dialog };
+        var field = new TextField(searchTerm) { X = 1, Y = 2, Width = Dim.Fill(2) };
+        var caseBox = new CheckBox("Case sensitive") { X = 1, Y = 4, Checked = searchMatchCase };
+        var wordBox = new CheckBox("Whole words only") { X = 1, Y = 5, Checked = searchWholeWord };
+
+        bool accepted = false;
+        var ok = new Button("OK", is_default: true);
+        ok.Clicked += () => { accepted = true; Application.RequestStop(dlg); };
+        var cancel = new Button("Cancel");
+        cancel.Clicked += () => Application.RequestStop(dlg);
+
+        dlg.Add(new Label("Search text:") { X = 1, Y = 1 }, field, caseBox, wordBox);
+        dlg.AddButton(ok);
+        dlg.AddButton(cancel);
+        field.SetFocus();
+        Application.Run(dlg);
+
+        if (!accepted)
+            return; // cancelled — keep the previous term and options
+
+        searchMatchCase = caseBox.Checked;
+        searchWholeWord = wordBox.Checked;
+        searchTerm = field.Text.ToString();
         if (searchTerm.Length == 0)
         {
-            UpdateStatus();
+            ClearSearch();
             return;
         }
         // A new term searches the whole window from the top: anchor the cursor there
@@ -255,6 +296,16 @@ internal sealed class LogViewerView : Window
         text.CursorPosition = Point.Empty;
         text.FindTextChanged();
         FindNext(forward: true);
+    }
+
+    // Cancel the active search: drop the match selection and restore the default hint
+    // line so the base key reference is visible again.
+    private void ClearSearch()
+    {
+        searchTerm = string.Empty;
+        text.Selecting = false;
+        text.SetNeedsDisplay();
+        UpdateStatus();
     }
 
     // Move to the next (or previous) match of the current term, selecting and
@@ -272,13 +323,24 @@ internal sealed class LogViewerView : Window
 
         ustring needle = ustring.Make(searchTerm);
         bool found = Find(needle, forward, out bool wrapped);
+        string opts = SearchOptionSuffix();
 
         if (!found)
-            statusLabel.Text = $"Not found: \"{searchTerm}\"";
+            statusLabel.Text = $"Not found: \"{searchTerm}\"{opts}";
         else if (wrapped)
-            statusLabel.Text = $"Wrapped · \"{searchTerm}\" · n/N: next/prev";
+            statusLabel.Text = $"Wrapped · \"{searchTerm}\"{opts} · n/N: next/prev · Esc: clear";
         else
-            statusLabel.Text = $"Found \"{searchTerm}\" · n/N: next/prev";
+            statusLabel.Text = $"Found \"{searchTerm}\"{opts} · n/N: next/prev · Esc: clear";
+    }
+
+    // " [case, word]" for whatever search options are on, else empty — appended to the
+    // find status so the active matching mode is visible.
+    private string SearchOptionSuffix()
+    {
+        var on = new List<string>();
+        if (searchMatchCase) on.Add("case");
+        if (searchWholeWord) on.Add("word");
+        return on.Count > 0 ? $" [{string.Join(", ", on)}]" : string.Empty;
     }
 
     // Search once from the current position, then — on a miss — wrap by re-anchoring
@@ -289,8 +351,8 @@ internal sealed class LogViewerView : Window
     private bool Find(ustring needle, bool forward, out bool wrapped)
     {
         bool found = forward
-            ? text.FindNextText(needle, out _)
-            : text.FindPreviousText(needle, out _);
+            ? text.FindNextText(needle, out _, searchMatchCase, searchWholeWord)
+            : text.FindPreviousText(needle, out _, searchMatchCase, searchWholeWord);
         if (found)
         {
             wrapped = false;
@@ -302,10 +364,81 @@ internal sealed class LogViewerView : Window
             : new Point(0, Math.Max(text.Lines - 1, 0));
         text.FindTextChanged();
         found = forward
-            ? text.FindNextText(needle, out _)
-            : text.FindPreviousText(needle, out _);
+            ? text.FindNextText(needle, out _, searchMatchCase, searchWholeWord)
+            : text.FindPreviousText(needle, out _, searchMatchCase, searchWholeWord);
         wrapped = found;
         return found;
+    }
+
+    // Jump to the next/previous line the viewer highlights (a "Game ready" or
+    // "Exception" line), wrapping around the loaded window; a short status names the
+    // kind. Navigation is over the reader's logical lines, which map 1:1 to the text
+    // pane's rows while word-wrap is off (the default); with wrap on the jump is
+    // approximate. Independent of the text search, so it never disturbs the term.
+    private void GoToHighlight(bool forward)
+    {
+        if (reader == null)
+            return;
+
+        var lines = reader.Lines;
+        int count = lines.Count;
+        int current = Math.Min(text.CurrentRow, count - 1);
+
+        int target = -1;
+        bool wrapped = false;
+        if (forward)
+        {
+            target = NextHighlight(lines, current + 1, count);
+            if (target < 0 && current >= 0)
+            {
+                target = NextHighlight(lines, 0, current + 1);
+                wrapped = target >= 0;
+            }
+        }
+        else
+        {
+            target = PrevHighlight(lines, current - 1);
+            if (target < 0)
+            {
+                target = PrevHighlight(lines, count - 1);
+                wrapped = target >= 0;
+            }
+        }
+
+        if (target < 0)
+        {
+            statusLabel.Text = "No highlighted lines in view";
+            return;
+        }
+
+        StopFollow();
+        text.SetFocus();
+        text.Selecting = false;
+        text.CursorPosition = new Point(0, target);
+
+        string what = LogHighlight.Classify(lines[target]) == LogHighlightKind.Ready
+            ? "Game ready" : "Exception";
+        statusLabel.Text = wrapped
+            ? $"Wrapped to {what} line · [ ]: prev/next highlight"
+            : $"{what} line · [ ]: prev/next highlight";
+    }
+
+    // First highlighted line in [from, to), or -1.
+    private static int NextHighlight(IReadOnlyList<string> lines, int from, int to)
+    {
+        for (int i = Math.Max(from, 0); i < to; i++)
+            if (LogHighlight.Classify(lines[i]) != LogHighlightKind.None)
+                return i;
+        return -1;
+    }
+
+    // Nearest highlighted line at or below index `from`, scanning upward, or -1.
+    private static int PrevHighlight(IReadOnlyList<string> lines, int from)
+    {
+        for (int i = Math.Min(from, lines.Count - 1); i >= 0; i--)
+            if (LogHighlight.Classify(lines[i]) != LogHighlightKind.None)
+                return i;
+        return -1;
     }
 
     private void ToggleWrap()
@@ -318,8 +451,8 @@ internal sealed class LogViewerView : Window
 
     private void UpdateStatus() =>
         statusLabel.Text = following
-            ? "FOLLOWING (End to stop) · Home: top · /: find"
-            : $"End: follow · Home: top · /: find · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
+            ? "FOLLOWING (End to stop) · Home: top · /: find · [ ]: highlight"
+            : $"/: find · [ ]: highlight · End: follow · Home: top · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
 
     private void ToggleFollow()
     {

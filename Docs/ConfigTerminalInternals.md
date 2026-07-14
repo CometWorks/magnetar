@@ -730,15 +730,23 @@ sealed class LogTailReader          // never loads the whole file
 ```
 
 The viewer stays thin: `End` toggles follow, `Home` jumps to the top, `W`
-toggles line wrap, `R` re-reads the window, `/` prompts for a search term and
-`n` / `N` step to the next / previous match. Search is delegated to
-Terminal.Gui's own `TextView.FindNextText` / `FindPreviousText` over the loaded
-window (case-insensitive) — no separate index. A fresh term anchors the search at
-the top of the window so the first match is the topmost one, not merely the first
-below the tail the viewer opened at; wrap-around is done explicitly (Terminal.Gui
-only wraps once its find anchor has advanced past the start, so a first search
-from the tail would otherwise miss everything above it — the viewer re-anchors to
-the far end and retries on a miss). Lines matching the
+toggles line wrap, `R` re-reads the window, `/` opens the Find dialog, `n` / `N`
+step to the next / previous match, `Esc` cancels the search (drops the match
+selection and restores the default hint line), and `[` / `]` jump to the previous
+/ next highlighted line. Search is delegated to Terminal.Gui's own
+`TextView.FindNextText` / `FindPreviousText` over the loaded window — no separate
+index. The Find dialog carries the term plus **Case sensitive** and **Whole words
+only** toggles, passed through as `matchCase` / `matchWholeWord` and remembered
+across invocations. A fresh term anchors the search at the top of the window so
+the first match is the topmost one, not merely the first below the tail the viewer
+opened at; wrap-around is done explicitly (Terminal.Gui only wraps once its find
+anchor has advanced past the start, so a first search from the tail would
+otherwise miss everything above it — the viewer re-anchors to the far end and
+retries on a miss). `[` / `]` navigation is separate from the text search (it
+never disturbs the term): it scans the reader's logical lines with
+`LogHighlight.Classify` for the previous / next highlighted line and wraps around;
+line indices map 1:1 to the pane's rows while word-wrap is off (the default), so
+with wrap on the jump is approximate. Lines matching the
 `LogHighlight` markers ("Game ready", "Exception") are colour-tinted via a
 `TextView` subclass that overrides the per-rune `SetReadOnlyColor` /
 `SetNormalColor` hooks; because the pane is read-only the redraw resolves
@@ -1209,8 +1217,10 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
   indexing is not implemented — see §5.9.)
 - **LogHighlight** — the "Game ready" / "Exception" line classifier behind the
   viewer's colour highlighting is unit-tested (`LogHighlightTests`); the UI smoke
-  test opens the log viewer over a seeded log and pumps a redraw so the colour
-  overrides run on real content.
+  tests open the log viewer over a seeded log and cover that the colour overrides
+  reach the cell buffer, that the tail shows a full screen on open, and that
+  search (with case / whole-word options), clearing the search, and
+  highlighted-line navigation behave.
 - **WorldTemplateCatalog / WorldCreator** — template scan fixture tree;
   `CreateFromTemplate` copies the template into `Saves/<name>`, stamps
   `SessionName`, synthesizes `Sandbox_config.sbc` when the template has only a
@@ -1292,9 +1302,10 @@ The tool is built and in daily use on Linux; every layer in the source map
   ([§15](#15-known-limitations-and-future-work)).
 - **New worlds + logs** — the New World wizard copies a template into `Saves/`
   and activates it with no server start (`WorldCreator`); the log viewer follows
-  (`End`), wraps (`W`), re-reads (`R`), jumps to top (`Home`), searches (`/`,
-  `n`/`N`) and highlights "Game ready" / "Exception" lines. Exception-traceback
-  navigation is **not implemented** ([§5.9](#59-log-reading)).
+  (`End`), wraps (`W`), re-reads (`R`), jumps to top (`Home`), searches (`/` with
+  case / whole-word toggles, `n`/`N`, `Esc` to clear), steps between highlighted
+  lines (`[`/`]`) and highlights "Game ready" / "Exception" lines.
+  Exception-traceback navigation is **not implemented** ([§5.9](#59-log-reading)).
 - **Plugin management** — local DLLs, dev folders, offline hub-catalog browsing
   (`ProtoReader`/`HubCatalog`), source management and named profiles
   (`ProfileCatalog`) are all present, surfaced in the four Plugins views and by
