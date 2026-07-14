@@ -3,7 +3,7 @@
 | Path                         | Purpose                                                           |
 | ---------------------------- | ----------------------------------------------------------------- |
 | `Legacy/`                    | Launcher (`MagnetarLegacy` / `MagnetarInterim`) — entry point, preloader, patches |
-| `ConfigTerminal/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance (see [ConfigTerminal.md](ConfigTerminal.md)) |
+| `ConfigTerminal/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](ConfigTerminal.md) · [internals](ConfigTerminalInternals.md)) |
 | `ConfigTerminalTests/`       | xUnit tests for `ConfigTerminal` (registry, documents, process/pid, plugins, workshop resolver) |
 | `Shared/`                    | Cross-project plugin loader / config / network code               |
 | `Compiler/`                  | Roslyn-based on-disk source plugin compiler                       |

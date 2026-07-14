@@ -160,7 +160,7 @@ The full packager also publishes the **`MagnetarConfig`** terminal UI
 and drops a root launcher/shim next to `MagnetarInterim` — `Magnetar/MagnetarConfig`
 (bash) on Linux, `<Magnetar>\MagnetarConfig.bat` on Windows — so the config tool
 ships in both bundles with its Terminal.Gui dependencies isolated from the
-launcher. See [Config tool → Build & packaging](ConfigTerminal.md#13-build-packaging-and-documentation-integration).
+launcher. See [Config tool internals → Build & packaging](ConfigTerminalInternals.md#13-build-packaging-and-documentation-integration).
 
 ### Run / verify
 

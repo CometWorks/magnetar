@@ -118,5 +118,6 @@ Key flags: `-path <dir>` (DS data dir) · `-config <dir>` (Magnetar config dir) 
 templates) · `-netdriver` (portable terminal driver) · `-diag` (print a
 headless read-only instance report and exit) · `-help`. Graceful stop and config
 reload use SIGTERM/SIGHUP and are **Linux-only**; on Windows the server can only
-be force-killed (with a data-loss warning). See
-[Config tool](ConfigTerminal.md) for the full design.
+be force-killed (with a data-loss warning). See the
+[Config tool user manual](ConfigTerminal.md) for full usage, and the
+[design and implementation notes](ConfigTerminalInternals.md) for internals.

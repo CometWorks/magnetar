@@ -53,8 +53,9 @@ A third executable, **MagnetarConfig** (`ConfigTerminal.csproj`, net10.0), ships
 in the same solution and bundle but is a **standalone operator tool**, not a DS
 replacement: a Terminal.Gui (Turbo Vision) TUI that configures and operates one
 instance from outside the running game, referencing no game or `Shared`
-assemblies. It has its own module group in the catalog below and a full design
-doc at [`ConfigTerminal.md`](ConfigTerminal.md).
+assemblies. It has its own module group in the catalog below, a user manual at
+[`ConfigTerminal.md`](ConfigTerminal.md) and a design/implementation reference at
+[`ConfigTerminalInternals.md`](ConfigTerminalInternals.md).
 
 The launcher/plugin-loader code is organised into five .NET solution projects.
 Their compile-time reference direction (a strict DAG) is the backbone of the
@@ -161,7 +162,8 @@ the `Workshop|Any CPU` solution configuration selects it for build; normal
 A standalone Terminal.Gui (Turbo Vision) operator tool that edits and runs one
 Magnetar DS instance from the terminal — no game or `Shared` references. Layered
 `Model` / `Io` / `Process` / `Logs` below a `Ui` shell, with an `App` entry
-layer. Full design and file-format reference: [`ConfigTerminal.md`](ConfigTerminal.md).
+layer. User manual: [`ConfigTerminal.md`](ConfigTerminal.md); design and
+file-format reference: [`ConfigTerminalInternals.md`](ConfigTerminalInternals.md).
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
