@@ -31,7 +31,7 @@ Lifecycle coordinator. Captures launch state at the top of `Main`, installs sign
   - `RestartWithoutSaving()` — single-shot; raises `Terminating(Restart)`, disposes, flushes, restarts (no save).
   - `BeginTerminate()` — locked test-and-set of `terminating`; returns false if a termination is already underway, making all the lifecycle terminators idempotent.
   - `DisposePlugins()` — disposes `PluginLoader.Instance` on a background task bounded by `DisposeTimeout` so a hung plugin can't block shutdown.
-  - `FlushAll()` — best-effort flush of `Console.Out`/`Console.Error`, `MyLog.Default`, and `LogFile`.
+  - `FlushAll()` — first removes the pid file (`PidFile.Delete()`, so a reader polling during shutdown sees it disappear promptly; a crash skips this path and leaves a stale file the reader detects by probing the now-dead pid), then best-effort flushes `Console.Out`/`Console.Error`, `MyLog.Default`, and `LogFile`. Every step is wrapped in its own try/catch.
   - `ExitProcess(code)` — on Linux calls `LibcExit` first (exact code, no finalizer hang), then `Environment.Exit`.
   - `RestartProcess()` — reproduces the launch. On Linux restores `originalCwd` and `execve`s the original image with null-terminated argv/envp (logs `GetLastWin32Error` only if `execve` returns). On Windows builds a `ProcessStartInfo` from the captured argv/cwd/env (using `ArgumentList` on Core, the legacy `Arguments` string with `PasteArguments` quoting on Framework), starts it, and exits 0. Errors if launch state wasn't captured.
   - `OnUpdateThread()` — true if the current managed thread id equals `MyPrecalcComponent.UpdateThreadManagedId` (and that id is initialized).
@@ -39,5 +39,5 @@ Lifecycle coordinator. Captures launch state at the top of `Main`, installs sign
   - `PasteArguments(argv)` / `AppendArgument(sb, arg)` (`#if !NETCOREAPP`) — Windows command-line quoting reproduction for .NET Framework (which lacks `ProcessStartInfo.ArgumentList`), skipping argv[0]; mirrors CoreFX's backslash/quote escaping rules.
 
 ## Cross-references
-- **Uses:** SE DS — `MySandboxGame`/`MySession`/`MyAsyncSaving`/`MyGameService`/`MyPrecalcComponent` (`Sandbox`, `Sandbox.Engine.Networking`, `Sandbox.Game.World`), `ParallelTasks.Parallel`, `VRage.Utils.MyLog`; `Pulsar.Legacy.Loader.PluginLoader` (`Legacy/Loader/`); `Pulsar.Shared` (`LogFile`); `Pulsar.Legacy.Launcher.Game` (`Game.RunOnGameThread`, this folder); `PluginSdk.ServerControl` / `ServerTerminationKind` (`PluginSdk/`); `libc` via P/Invoke; `System.Runtime.InteropServices.PosixSignalRegistration`.
+- **Uses:** SE DS — `MySandboxGame`/`MySession`/`MyAsyncSaving`/`MyGameService`/`MyPrecalcComponent` (`Sandbox`, `Sandbox.Engine.Networking`, `Sandbox.Game.World`), `ParallelTasks.Parallel`, `VRage.Utils.MyLog`; `Pulsar.Legacy.Loader.PluginLoader` (`Legacy/Loader/`); `Pulsar.Shared` (`LogFile`); `Pulsar.Legacy.Launcher.Game` (`Game.RunOnGameThread`, this folder); `PidFile` (this folder); `PluginSdk.ServerControl` / `ServerTerminationKind` (`PluginSdk/`); `libc` via P/Invoke; `System.Runtime.InteropServices.PosixSignalRegistration`.
 - **Used by:** _none within the repository_

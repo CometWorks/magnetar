@@ -16,9 +16,9 @@
 # ~/.config/Magnetar/ for user-editable state, following XDG conventions):
 #
 #   MagnetarForLinux/
-#   ├── install.sh              Copies Magnetar/{MagnetarInterim, Bin/, *.dll, *.so}
-#   │                           into ~/.local/share/Magnetar/. Warns if
-#   │                           .NET 10 runtime is not installed.
+#   ├── install.sh              Copies Magnetar/{MagnetarInterim, MagnetarConfig,
+#   │                           Bin/, Config/} into ~/.local/share/Magnetar/.
+#   │                           Warns if .NET 10 runtime is not installed.
 #   ├── uninstall.sh            Removes ~/.local/share/Magnetar/ entirely
 #   │                           and removes ~/.config/Magnetar/ contents
 #   │                           EXCEPT user state:
@@ -28,10 +28,18 @@
 #       ├── MagnetarInterim        Convenience bash launcher (cd + exec
 #       │                          Bin/MagnetarInterim). Deploys to
 #       │                          ~/.local/share/Magnetar/MagnetarInterim
-#       └── Bin/                   Framework-dependent publish output
-#                                  (MagnetarInterim apphost + managed deps +
-#                                  Steamworks.NET.dll + libsteam_api.so).
-#                                  Deploys to ~/.local/share/Magnetar/Bin/
+#       ├── MagnetarConfig         Convenience bash launcher (cd + exec
+#       │                          Config/MagnetarConfig) for the terminal
+#       │                          configuration UI. Deploys next to
+#       │                          MagnetarInterim.
+#       ├── Bin/                   Framework-dependent publish output
+#       │                          (MagnetarInterim apphost + managed deps +
+#       │                          Steamworks.NET.dll + libsteam_api.so).
+#       │                          Deploys to ~/.local/share/Magnetar/Bin/
+#       └── Config/                Framework-dependent publish output for
+#                                  MagnetarConfig (apphost + Terminal.Gui +
+#                                  deps). Deploys to
+#                                  ~/.local/share/Magnetar/Config/
 #
 # Usage:
 #   ./package_magnetar_for_linux.sh [output_dir]
@@ -54,6 +62,8 @@ OUTPUT_DIR="${1:-${OUTPUT_DIR:-$MAGNETAR_REPO_DIR/dist}}"
 
 MAGNETAR_CSPROJ="$MAGNETAR_REPO_DIR/Legacy/Legacy.csproj"
 MAGNETAR_PUBLISH_DIR="$MAGNETAR_REPO_DIR/Legacy/bin/Release/net10.0/publish"
+CONFIG_CSPROJ="$MAGNETAR_REPO_DIR/ConfigTerminal/ConfigTerminal.csproj"
+CONFIG_PUBLISH_DIR="$MAGNETAR_REPO_DIR/ConfigTerminal/bin/Release/net10.0/publish"
 LIBRARIES_DIR="$BUILD_DIR/Libraries"
 
 # ---- preflight --------------------------------------------------------------
@@ -117,6 +127,30 @@ for required in MagnetarInterim MagnetarInterim.dll MagnetarInterim.deps.json Ma
     fi
 done
 
+# ---- publish: ConfigTerminal (MagnetarConfig TUI, framework-dependent) ------
+# Ships next to MagnetarInterim so operators can configure the instance from
+# the same install. Same framework-dependent net10.0 publish as the launcher;
+# its apphost is MagnetarConfig, launched via the Magnetar/MagnetarConfig shim.
+
+echo
+echo "############################################################"
+echo "# publish: ConfigTerminal / MagnetarConfig (framework-dependent)"
+echo "############################################################"
+rm -rf "$CONFIG_PUBLISH_DIR"
+dotnet publish "$CONFIG_CSPROJ" \
+    -c Release \
+    -f net10.0 \
+    --no-self-contained \
+    -p:DebugType=None \
+    -p:DebugSymbols=false
+
+for required in MagnetarConfig MagnetarConfig.dll MagnetarConfig.deps.json MagnetarConfig.runtimeconfig.json Terminal.Gui.dll NStack.dll; do
+    if [ ! -e "$CONFIG_PUBLISH_DIR/$required" ]; then
+        echo "ERROR: missing $required in $CONFIG_PUBLISH_DIR" >&2
+        exit 1
+    fi
+done
+
 # ---- stage ------------------------------------------------------------------
 # Wipe the previous staging tree wholesale so leftover files can never
 # end up in the .7z.
@@ -129,6 +163,10 @@ mkdir -p "$MAGNETAR_ROOT/Bin"
 echo
 echo "==> Staging publish output -> Magnetar/Bin/"
 cp -a "$MAGNETAR_PUBLISH_DIR/." "$MAGNETAR_ROOT/Bin/"
+
+echo "==> Staging ConfigTerminal output -> Magnetar/Config/"
+mkdir -p "$MAGNETAR_ROOT/Config"
+cp -a "$CONFIG_PUBLISH_DIR/." "$MAGNETAR_ROOT/Config/"
 
 # ---- generate Magnetar/MagnetarInterim launcher ----------------------------
 # Lives at ~/.local/share/Magnetar/MagnetarInterim. Sets the working
@@ -167,6 +205,37 @@ exec "$INTERIM" "$@"
 EOF
 chmod +x "$MAGNETAR_ROOT/MagnetarInterim"
 
+# ---- generate Magnetar/MagnetarConfig launcher -----------------------------
+# Sits next to MagnetarInterim (~/.local/share/Magnetar/MagnetarConfig). Runs
+# the ConfigTerminal TUI from Config/ so its managed deps resolve locally.
+
+cat > "$MAGNETAR_ROOT/MagnetarConfig" <<'EOF'
+#!/usr/bin/env bash
+# MagnetarConfig - terminal UI to configure and operate the Magnetar-managed
+# Space Engineers Dedicated Server instance (DS config, worlds, plugins, mods,
+# profiles, start/stop, logs). Same instance folders as MagnetarInterim.
+#
+# Usage: ~/.local/share/Magnetar/MagnetarConfig [args]
+#   e.g. MagnetarConfig -path <DS data dir> -config <Magnetar config dir>
+#        MagnetarConfig -diag        headless read-only status report
+#        MagnetarConfig -help
+
+set -euo pipefail
+
+PKG_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG="$PKG_DIR/Config/MagnetarConfig"
+
+if [ ! -x "$CONFIG" ]; then
+    echo "ERROR: MagnetarConfig binary not found at $CONFIG" >&2
+    echo "Hint: run install.sh from the extracted MagnetarForLinux archive first." >&2
+    exit 1
+fi
+
+cd "$PKG_DIR/Config"
+exec "$CONFIG" "$@"
+EOF
+chmod +x "$MAGNETAR_ROOT/MagnetarConfig"
+
 # ---- generate install.sh ----------------------------------------------------
 
 cat > "$PKG_ROOT/install.sh" <<'EOF'
@@ -191,10 +260,16 @@ if [ ! -d "$SRC" ]; then
     exit 1
 fi
 
-if pgrep -x MagnetarInterim >/dev/null 2>&1; then
-    echo "ERROR: MagnetarInterim is running. Stop it before deploying (pkill -x MagnetarInterim)." >&2
-    exit 1
-fi
+# Refuse to overwrite the install tree while either the server (MagnetarInterim)
+# or the config TUI (MagnetarConfig) is running out of it — the .NET host would
+# fault on the next not-yet-loaded assembly, and MagnetarConfig could be mid-write
+# to a config file.
+for proc in MagnetarInterim MagnetarConfig; do
+    if pgrep -x "$proc" >/dev/null 2>&1; then
+        echo "ERROR: $proc is running. Stop it before deploying (pkill -x $proc)." >&2
+        exit 1
+    fi
+done
 
 # ---- .NET 10 detection (host requirement) ---------------------------------
 if ! command -v dotnet >/dev/null 2>&1; then
@@ -215,13 +290,27 @@ if [ -d "$SRC/Bin" ]; then
     echo "  Replaced $DATA_DST/Bin"
 fi
 
+if [ -d "$SRC/Config" ]; then
+    rm -rf "$DATA_DST/Config"
+    cp -a "$SRC/Config" "$DATA_DST/Config"
+    echo "  Replaced $DATA_DST/Config"
+fi
+
 cp -f "$SRC/MagnetarInterim" "$DATA_DST/MagnetarInterim"
 chmod +x "$DATA_DST/MagnetarInterim"
 echo "  Updated  $DATA_DST/MagnetarInterim"
 
+if [ -f "$SRC/MagnetarConfig" ]; then
+    cp -f "$SRC/MagnetarConfig" "$DATA_DST/MagnetarConfig"
+    chmod +x "$DATA_DST/MagnetarConfig"
+    echo "  Updated  $DATA_DST/MagnetarConfig"
+fi
+
 echo
 echo "Done. Launch the dedicated server through MagnetarInterim with:"
 echo "    $DATA_DST/MagnetarInterim"
+echo "Configure it any time with the terminal UI:"
+echo "    $DATA_DST/MagnetarConfig"
 EOF
 chmod +x "$PKG_ROOT/install.sh"
 
@@ -246,10 +335,13 @@ set -euo pipefail
 DATA_DST="${MAGNETAR_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/Magnetar}"
 DST="${MAGNETAR_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/Magnetar}"
 
-if pgrep -x MagnetarInterim >/dev/null 2>&1; then
-    echo "ERROR: MagnetarInterim is running. Stop it before uninstalling (pkill -x MagnetarInterim)." >&2
-    exit 1
-fi
+# Don't wipe the install tree out from under a running server or config TUI.
+for proc in MagnetarInterim MagnetarConfig; do
+    if pgrep -x "$proc" >/dev/null 2>&1; then
+        echo "ERROR: $proc is running. Stop it before uninstalling (pkill -x $proc)." >&2
+        exit 1
+    fi
+done
 
 if [ -d "$DATA_DST" ]; then
     echo "==> Removing $DATA_DST"
@@ -315,9 +407,10 @@ MagnetarForLinux ($BUILD_DATE.$GIT_HASH)
 ========================================
 
 Magnetar is a plugin and mod loader for the Space Engineers Dedicated
-Server on Linux. This bundle ships the MagnetarInterim apphost as a
-framework-dependent .NET 10 publish; the .NET 10 runtime is required to
-be installed system-wide on the host.
+Server on Linux. This bundle ships the MagnetarInterim apphost together
+with MagnetarConfig, a terminal UI to configure and operate the server
+(step 4 below) — both as framework-dependent .NET 10 publishes; the
+.NET 10 runtime is required to be installed system-wide on the host.
 
 Prerequisites
 -------------
@@ -336,6 +429,10 @@ Quick start
 3. Launch the dedicated server through Magnetar in place of
    SpaceEngineersDedicated:
        ~/.local/share/Magnetar/MagnetarInterim -console
+4. Configure and operate the instance from the terminal UI:
+       ~/.local/share/Magnetar/MagnetarConfig
+   (edit DS/world settings, plugins, mods, profiles; start/stop; read logs.
+    Add -diag for a headless status report, or -help for options.)
 
 Magnetar auto-detects the DS install (DS64 env var override, Steam
 client launch args, or Steam library scan). User state lives under
@@ -354,10 +451,16 @@ Files
   Magnetar/         Staging source tree:
     MagnetarInterim    Bash launcher (cd + exec Bin/MagnetarInterim).
                        Deploys to ~/.local/share/Magnetar/MagnetarInterim.
+    MagnetarConfig     Bash launcher (cd + exec Config/MagnetarConfig) for the
+                       terminal configuration UI. Deploys next to
+                       MagnetarInterim as ~/.local/share/Magnetar/MagnetarConfig.
     Bin/               Framework-dependent publish output (MagnetarInterim
                        apphost, managed deps, Steamworks.NET.dll,
                        libsteam_api.so).
                        Deploys to ~/.local/share/Magnetar/Bin/.
+    Config/            Framework-dependent publish output for MagnetarConfig
+                       (apphost + Terminal.Gui + managed deps).
+                       Deploys to ~/.local/share/Magnetar/Config/.
 EOF
 
 # ---- pack -------------------------------------------------------------------

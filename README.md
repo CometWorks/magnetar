@@ -27,6 +27,17 @@ control plane with a Web UI that can manage and control **multiple Magnetar
 instances** from one place. Each Magnetar reports structured status and logs;
 Quasar orchestrates them.
 
+## Configuration tool — MagnetarConfig
+
+**MagnetarConfig** is a cross-platform terminal UI (Terminal.Gui, Turbo Vision
+look) that configures **and operates one** Magnetar-managed Dedicated Server
+instance: edit the global `SpaceEngineers-Dedicated.cfg`, per-world session
+settings and mod lists, create/delete/activate worlds, manage plugins and
+profiles, start/stop/reload the daemonized server (PID-file status), and read
+the game and Magnetar logs. It ships in both bundles next to the launcher and
+runs as `~/.local/share/Magnetar/MagnetarConfig` (Linux) or
+`MagnetarConfig.bat` (Windows). See the **[Config tool user manual](Docs/ConfigTerminal.md)**.
+
 ## Documentation
 
 | Page | What's in it |
@@ -34,6 +45,8 @@ Quasar orchestrates them.
 | [Install & Releases](Docs/Install.md) | Prebuilt bundles, what to download, installing. |
 | [Usage](Docs/Usage.md) | Running the launcher, daemon mode, handoff to the DS. |
 | [Configuration](Docs/Configuration.md) | Config/install dirs, DS detection, environment variables. |
+| [Config tool](Docs/ConfigTerminal.md) | `MagnetarConfig` user manual: edit config/worlds/mods/plugins, start/stop, logs. |
+| [Config tool internals](Docs/ConfigTerminalInternals.md) | Design and implementation of `MagnetarConfig`: file formats, architecture, state machines, testing. |
 | [Plugins](Docs/Plugins.md) | Plugin hubs and the trust boundary. |
 | [Building](Docs/Build.md) | Per-platform build, dependency staging, packaging, releases. |
 | [Repository layout](Docs/Layout.md) | What lives where in the source tree. |

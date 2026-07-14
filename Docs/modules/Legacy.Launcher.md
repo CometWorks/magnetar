@@ -1,10 +1,10 @@
 # Module: Legacy.Launcher
 
-**Project:** `Legacy` · **Files:** 5 · **Source lines:** 1455
+**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1560
 
 ## Purpose
 
-The launcher bootstrap for Magnetar's Space Engineers Dedicated Server loader. It is the process entry point: it locates and validates the DS install, sets up config/logging, wires Steam and assembly resolvers, loads and preload-patches plugins, owns the server lifecycle (save/reload/quit/restart with POSIX signals), and finally hands off to the real SE dedicated server.
+The launcher bootstrap for Magnetar's Space Engineers Dedicated Server loader. It is the process entry point: it locates and validates the DS install, sets up config/logging, wires Steam and assembly resolvers, loads and preload-patches plugins, owns the server lifecycle (save/reload/quit/restart with POSIX signals), and finally hands off to the real SE dedicated server, and publishes a magnetar.pid file (pid + resolved data dir) after daemon detach so an external tool (MagnetarConfig) can discover and verify the instance.
 
 ## Role in Magnetar
 
@@ -20,6 +20,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 | `ServerControl` | static class | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; waits for Keen save-idle state and is idempotent. |
 | `Program` | static class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | Process entry point orchestrating the full startup pipeline (incl. -help and telemetry-consent resolution) for both the Legacy (net48) and Interim (net10) builds. |
 | `ExternalTools` | class | [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | IExternalTools adapter that marshals shared-code actions onto the SE game thread via Game.RunOnGameThread. |
+| `PidFile` | static class | [`Legacy/Launcher/PidFile.cs`](../descriptions/Legacy/Launcher/PidFile.cs.md) | Writes/removes magnetar.pid (pid + resolved DS data dir) in the Magnetar config dir so MagnetarConfig can discover and verify this server instance. |
 
 ## Files
 
@@ -28,8 +29,9 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 | [`Legacy/Launcher/Daemon.cs`](../descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | 161 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | 141 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
-| [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 525 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
-| [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 464 | Entry point for the Magnetar launcher. |
+| [`Legacy/Launcher/PidFile.cs`](../descriptions/Legacy/Launcher/PidFile.cs.md) | 79 | Writes and removes `magnetar.pid` in the Magnetar config directory so an external tool (MagnetarConfig) can discover this dedicated-server instance and verify the running process belongs to it. |
+| [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 529 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
+| [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 486 | Entry point for the Magnetar launcher. |
 
 ## Public API surface
 

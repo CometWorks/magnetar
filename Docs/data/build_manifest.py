@@ -111,6 +111,15 @@ def module_of(rel):
         return "PluginSdkTests", "PluginSdkTests"
     if top == "MagnetarMod":
         return "MagnetarMod", "MagnetarMod"  # companion in-game world mod
+    if top == "ConfigTerminal":
+        # MagnetarConfig TUI: mirror the source subfolders as modules. Root
+        # files (Program.cs, Cli.cs, Diagnostics.cs) and State/ form the App
+        # module; Model/Json/ folds into Model.
+        if len(parts) > 1 and parts[1] in ("Model", "Io", "Process", "Logs", "Ui"):
+            return "ConfigTerminal." + parts[1], "ConfigTerminal"
+        return "ConfigTerminal.App", "ConfigTerminal"  # Program/Cli/Diagnostics, State/
+    if top == "ConfigTerminalTests":
+        return "ConfigTerminalTests", "ConfigTerminalTests"
     return "Other", top
 
 
@@ -190,7 +199,8 @@ def main():
         mods[r["module"]].append(r)
     # Strong-model modules: those containing any tier-1 file or large total.
     strong = {"Legacy.Launcher", "Legacy.Loader", "Shared.Core", "Shared.Data",
-              "Compiler", "PluginSdk.Config"}
+              "Compiler", "PluginSdk.Config",
+              "ConfigTerminal.Model", "ConfigTerminal.Ui", "ConfigTerminal.Process"}
     modules = {}
     for m, items in sorted(mods.items()):
         tiers = [i["tier"] for i in items]

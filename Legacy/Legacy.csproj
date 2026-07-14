@@ -23,6 +23,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <AssemblyName>MagnetarLegacy</AssemblyName>
+    <!-- Binding redirects are deliberately off (above): Magnetar is the host
+         process itself — it loads the Space Engineers DS assemblies and runs the
+         server inside its own process, so this app's config governs assembly
+         resolution for the game. Auto-generated redirects to newer transitive
+         versions (Roslyn, System.*) would then shadow the versions the game
+         expects and could break it. The resulting MSB3276 conflict warning is
+         therefore expected noise here. -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3276</MSBuildWarningsAsMessages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' != 'net48'">
     <AssemblyName>MagnetarInterim</AssemblyName>

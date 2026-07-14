@@ -1,4 +1,37 @@
 {
+  "ConfigTerminal.App": [
+    "ConfigTerminal.Io",
+    "ConfigTerminal.Model",
+    "ConfigTerminal.Process",
+    "ConfigTerminal.Ui"
+  ],
+  "ConfigTerminal.Io": [
+    "ConfigTerminal.Model"
+  ],
+  "ConfigTerminal.Logs": [
+    "ConfigTerminal.Model"
+  ],
+  "ConfigTerminal.Model": [
+    "ConfigTerminal.Io"
+  ],
+  "ConfigTerminal.Process": [
+    "ConfigTerminal.Io",
+    "ConfigTerminal.Model"
+  ],
+  "ConfigTerminal.Ui": [
+    "ConfigTerminal.App",
+    "ConfigTerminal.Io",
+    "ConfigTerminal.Logs",
+    "ConfigTerminal.Model",
+    "ConfigTerminal.Process"
+  ],
+  "ConfigTerminalTests": [
+    "ConfigTerminal.Io",
+    "ConfigTerminal.Logs",
+    "ConfigTerminal.Model",
+    "ConfigTerminal.Process",
+    "ConfigTerminal.Ui"
+  ],
   "Legacy.Commands": [
     "Legacy.Launcher",
     "PluginSdk.Commands"

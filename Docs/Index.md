@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 136 files across 18 modules.
+Every documented source file, grouped by module. 210 files across 25 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -13,6 +13,114 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | [`Compiler/Publicizer.cs`](descriptions/Compiler/Publicizer.cs.md) | 151 | 1 | Performs the actual IL-level publicizing of an SE DS assembly using Mono.Cecil: it reads the assembly from disk, forces every non-public type, field, method, and property to public, and re-emits it to an in-memory `MetadataReference` for Roslyn. |
 | [`Compiler/RoslynCompiler.cs`](descriptions/Compiler/RoslynCompiler.cs.md) | 171 | 1 | The core in-process C# compiler used to build local/Workshop plugins from source at server startup. |
 | [`Compiler/RoslynReferences.cs`](descriptions/Compiler/RoslynReferences.cs.md) | 84 | 2 | Builds and caches the global set of Roslyn `MetadataReference`s that plugins are compiled against — essentially the SE Dedicated Server / VRage / framework assembly closure. |
+
+## ConfigTerminal.App  ·  [module doc](modules/ConfigTerminal.App.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminal/Cli.cs`](descriptions/ConfigTerminal/Cli.cs.md) | 92 | 2 | Parses the MagnetarConfig command line into a strongly-typed options object and converts it into an `InstanceBinding` with defaults filled in. |
+| [`ConfigTerminal/Diagnostics.cs`](descriptions/ConfigTerminal/Diagnostics.cs.md) | 106 | 2 | Produces the headless, read-only `-diag` report of an instance's resolved state without starting Terminal.Gui, exercising the same model/process layers the UI uses. |
+| [`ConfigTerminal/Program.cs`](descriptions/ConfigTerminal/Program.cs.md) | 123 | 2 | Application entry point for the MagnetarConfig TUI: parses the command line, dispatches the special headless (`-diag`) and help modes, selects the Terminal.Gui driver, runs the launcher/instance pickers, and hosts the top-level `AppShell` under a try/catch/finally that guarantees `Application.Shutdown()`. |
+| [`ConfigTerminal/State/ToolSettings.cs`](descriptions/ConfigTerminal/State/ToolSettings.cs.md) | 59 | 2 | The TUI tool's own per-instance settings, persisted as a small `ConfigTerminal.xml` next to Magnetar's `config.xml` in the selected config dir so per-instance state travels with the instance. |
+
+## ConfigTerminal.Io  ·  [module doc](modules/ConfigTerminal.Io.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminal/Io/AtomicFile.cs`](descriptions/ConfigTerminal/Io/AtomicFile.cs.md) | 83 | 2 | Crash-safe text file writer: content is written to a temp file in the same directory, flushed to disk, then atomically renamed over the target, so the destination is never observed half-written or truncated. |
+| [`ConfigTerminal/Io/InstanceLocator.cs`](descriptions/ConfigTerminal/Io/InstanceLocator.cs.md) | 161 | 2 | Resolves the default DS data dir, Magnetar config dir, Magnetar launcher executable, and DS install (`DedicatedServer64`) locations using the same per-platform semantics Magnetar itself uses, so a non-standard deployment resolves end to end. |
+| [`ConfigTerminal/Io/PlatformPaths.cs`](descriptions/ConfigTerminal/Io/PlatformPaths.cs.md) | 29 | 2 | Platform helpers used throughout the Io module: OS detection (`IsWindows`/`IsLinux`) and filesystem-correct path comparison (case-insensitive on Windows, case-sensitive on Linux) for world-folder identity checks. |
+| [`ConfigTerminal/Io/XmlOut.cs`](descriptions/ConfigTerminal/Io/XmlOut.cs.md) | 43 | 2 | Shared XML output settings matching what the DS and Quasar write — UTF-8 without BOM, indented, LF (`\n`) newlines, XML declaration present — plus a helper that serializes an `XDocument` to a string with those settings. |
+
+## ConfigTerminal.Logs  ·  [module doc](modules/ConfigTerminal.Logs.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminal/Logs/LogCatalog.cs`](descriptions/ConfigTerminal/Logs/LogCatalog.cs.md) | 143 | 2 | Pure-filesystem discovery of the log files for the bound instance (§2.9): the DS game logs (`SpaceEngineersDedicated*.log`) in the DS data dir and Magnetar's `info_*.log` files in the config dir. |
+| [`ConfigTerminal/Logs/LogHighlight.cs`](descriptions/ConfigTerminal/Logs/LogHighlight.cs.md) | 43 | 2 | Classifies a single log line for colour highlighting in the log viewer. |
+| [`ConfigTerminal/Logs/LogTailReader.cs`](descriptions/ConfigTerminal/Logs/LogTailReader.cs.md) | 150 | 2 | Memory-bounded tail reader over a single log file: it holds only the last window of bytes (default 256 KB) so it stays cheap even on multi-GB logs, and follows appended bytes `tail -f`-style. |
+| [`ConfigTerminal/Logs/ReadinessDetector.cs`](descriptions/ConfigTerminal/Logs/ReadinessDetector.cs.md) | 38 | 2 | Detects that the DS has finished loading a world by scanning the game log's tail for the "Game ready" readiness marker (§2.9). |
+
+## ConfigTerminal.Model  ·  [module doc](modules/ConfigTerminal.Model.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminal/Model/CheckpointReader.cs`](descriptions/ConfigTerminal/Model/CheckpointReader.cs.md) | 76 | 2 | Reads only the handful of header fields needed for display from a `Sandbox.sbc` checkpoint, which may be GZip-compressed. |
+| [`ConfigTerminal/Model/ConfigDocumentBase.cs`](descriptions/ConfigTerminal/Model/ConfigDocumentBase.cs.md) | 99 | 2 | Base for the `XDocument`-backed DS config wrappers, implementing per-element upsert editing: unknown elements, comments and the ordering of untouched elements are preserved so the tool coexists with hand edits, the DS's own saves and newer game versions. |
+| [`ConfigTerminal/Model/DedicatedConfigDocument.cs`](descriptions/ConfigTerminal/Model/DedicatedConfigDocument.cs.md) | 176 | 2 | `XDocument` wrapper for `SpaceEngineers-Dedicated.cfg` (root `MyConfigDedicated`). |
+| [`ConfigTerminal/Model/DefaultHttpFetcher.cs`](descriptions/ConfigTerminal/Model/DefaultHttpFetcher.cs.md) | 40 | 2 | The live HTTP transport for `WorkshopResolver`: a plain `HttpClient` with a short (15s) timeout and a friendly user agent. |
+| [`ConfigTerminal/Model/DsInstance.cs`](descriptions/ConfigTerminal/Model/DsInstance.cs.md) | 121 | 2 | The aggregate root that binds a DS instance's cfg, worlds, templates and last-session together for the session. |
+| [`ConfigTerminal/Model/EditSession.cs`](descriptions/ConfigTerminal/Model/EditSession.cs.md) | 190 | 2 | Dirty-tracking plus validation for one open config document. |
+| [`ConfigTerminal/Model/HubCatalog.cs`](descriptions/ConfigTerminal/Model/HubCatalog.cs.md) | 179 | 2 | Reads Magnetar's cached plugin catalogs — the protobuf-net blobs Magnetar downloads into `Sources/Hubs/*.bin` (a `PluginData[]`) and `Sources/Plugins/*.bin` (a single-element `PluginData[]`). |
+| [`ConfigTerminal/Model/Json/MiniJson.cs`](descriptions/ConfigTerminal/Model/Json/MiniJson.cs.md) | 223 | 1 | A tiny, self-contained JSON reader — enough to parse the Steam Web API responses the Workshop resolver consumes, with zero third-party dependencies. |
+| [`ConfigTerminal/Model/LastSessionFile.cs`](descriptions/ConfigTerminal/Model/LastSessionFile.cs.md) | 111 | 2 | Read/write model for `Saves/LastSession.sbl` (`MyObjectBuilder_LastSession`), which selects the world the DS loads next. |
+| [`ConfigTerminal/Model/MagnetarPlugins.cs`](descriptions/ConfigTerminal/Model/MagnetarPlugins.cs.md) | 399 | 1 | Facade over Magnetar's plugin config for one instance: the active profile (the enabled set) and the dev-folder sources, joined into UI-ready view rows. |
+| [`ConfigTerminal/Model/ModList.cs`](descriptions/ConfigTerminal/Model/ModList.cs.md) | 50 | 2 | The per-world mod list model: a `ModItem` value type for one workshop mod and an ordered `ModList` with reorder and validation. |
+| [`ConfigTerminal/Model/OptionModel.cs`](descriptions/ConfigTerminal/Model/OptionModel.cs.md) | 82 | 2 | Declares the small value types that describe one editable config option: the scope/kind/liveness enums, an `EnumChoice` record for one enum member, and the `OptionDefinition` record that is the declarative metadata driving the editor UI, serialization, validation and liveness hints. |
+| [`ConfigTerminal/Model/OptionRegistry.cs`](descriptions/ConfigTerminal/Model/OptionRegistry.cs.md) | 431 | 1 | The single declarative source of truth for every editable DS config option, hand-transcribed from the decompiled `MyConfigDedicatedData` and `MyObjectBuilder_SessionSettings` (build 1.209.024) and cross-checked against Quasar's metadata. |
+| [`ConfigTerminal/Model/PasswordHasher.cs`](descriptions/ConfigTerminal/Model/PasswordHasher.cs.md) | 50 | 2 | Reproduces the DS server-password hashing exactly, so a password set by this tool actually admits players: PBKDF2 (SHA1), 16-byte random salt, 10000 iterations, 20-byte derived key, both stored base64 as `ServerPasswordHash` / `ServerPasswordSalt`. |
+| [`ConfigTerminal/Model/PluginManifest.cs`](descriptions/ConfigTerminal/Model/PluginManifest.cs.md) | 92 | 2 | Reads the display metadata a dev-folder plugin declares in its manifest XML — a `GitHubPlugin` serialized as `PluginData` (namespace `Pulsar.Shared.Data`). |
+| [`ConfigTerminal/Model/PluginProfileDocument.cs`](descriptions/ConfigTerminal/Model/PluginProfileDocument.cs.md) | 249 | 1 | `XDocument` wrapper for a Magnetar plugin profile (`Profiles/<key>.xml`, root `Profile`), with `Current.xml` the active set the server loads. |
+| [`ConfigTerminal/Model/PluginSourcesDocument.cs`](descriptions/ConfigTerminal/Model/PluginSourcesDocument.cs.md) | 299 | 1 | `XDocument` wrapper for `Sources/sources.xml` (root `SourcesConfig`), the registry of plugin catalog sources. |
+| [`ConfigTerminal/Model/ProfileCatalog.cs`](descriptions/ConfigTerminal/Model/ProfileCatalog.cs.md) | 147 | 2 | Manages the instance's plugin *profiles* — named presets of enabled plugins stored as `Profiles/<Key>.xml`, with `Current.xml` the active set the server loads. |
+| [`ConfigTerminal/Model/ProtoReader.cs`](descriptions/ConfigTerminal/Model/ProtoReader.cs.md) | 117 | 2 | A tiny, forward-only reader for the Protocol Buffers wire format — just enough to walk Magnetar's protobuf-net hub-catalog cache (`Sources/Hubs/*.bin`, `Sources/Plugins/*.bin`) by field number, without referencing `Shared`/protobuf-net or loading any Magnetar type. |
+| [`ConfigTerminal/Model/WorkshopResolver.cs`](descriptions/ConfigTerminal/Model/WorkshopResolver.cs.md) | 259 | 1 | Looks up Steam Workshop mod metadata (friendly names, collection members) so the per-world mod-list editor can accept a Workshop URL or id and fill the name in automatically. |
+| [`ConfigTerminal/Model/WorldCatalog.cs`](descriptions/ConfigTerminal/Model/WorldCatalog.cs.md) | 104 | 2 | Enumerates the worlds under a `Saves/` directory, building `WorldInfo` display metadata for each folder that holds a checkpoint and/or world config, sorted by last-save time descending. |
+| [`ConfigTerminal/Model/WorldConfigDocument.cs`](descriptions/ConfigTerminal/Model/WorldConfigDocument.cs.md) | 166 | 2 | `XDocument` wrapper for a world's `Sandbox_config.sbc` (`MyObjectBuilder_WorldConfiguration`). |
+| [`ConfigTerminal/Model/WorldCreator.cs`](descriptions/ConfigTerminal/Model/WorldCreator.cs.md) | 88 | 2 | Creates a new world by copying a DS world template (`Content/CustomWorlds/…`) into `Saves/` and stamping the chosen name into its `Sandbox_config.sbc` — no server start required. |
+| [`ConfigTerminal/Model/WorldTemplateCatalog.cs`](descriptions/ConfigTerminal/Model/WorldTemplateCatalog.cs.md) | 114 | 2 | Enumerates the world templates the DS ships under `<ContentPath>/CustomWorlds/`, where ContentPath is the `Content/` folder sibling to `DedicatedServer64/`. |
+
+## ConfigTerminal.Process  ·  [module doc](modules/ConfigTerminal.Process.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminal/Process/LaunchSpec.cs`](descriptions/ConfigTerminal/Process/LaunchSpec.cs.md) | 71 | 2 | Builds the Magnetar daemon launch command line from an `InstanceBinding` and validates user-supplied extra arguments. |
+| [`ConfigTerminal/Process/MagnetarProcess.cs`](descriptions/ConfigTerminal/Process/MagnetarProcess.cs.md) | 218 | 1 | Controls the single managed Magnetar DS instance: starts it daemonized, gracefully stops it (SIGTERM → save+quit), reloads live config (SIGHUP), force-kills it, and queries its status via the pid file. |
+| [`ConfigTerminal/Process/PidFileReader.cs`](descriptions/ConfigTerminal/Process/PidFileReader.cs.md) | 152 | 2 | Reads and verifies the `magnetar.pid` file written by the launcher (spec §2.8), producing a `ServerStatus` snapshot. |
+| [`ConfigTerminal/Process/ProcessMonitor.cs`](descriptions/ConfigTerminal/Process/ProcessMonitor.cs.md) | 39 | 2 | Polls the managed instance's status and raises `Changed` when it moves, so the UI can react to start/stop/foreign transitions. |
+| [`ConfigTerminal/Process/ServerStatus.cs`](descriptions/ConfigTerminal/Process/ServerStatus.cs.md) | 44 | 2 | Defines the `ServerState` enum and the `ServerStatus` snapshot that carries the managed instance's process state across the module. |
+
+## ConfigTerminal.Ui  ·  [module doc](modules/ConfigTerminal.Ui.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminal/Ui/AccessListView.cs`](descriptions/ConfigTerminal/Ui/AccessListView.cs.md) | 151 | 2 | Editors for the dedicated config's Administrators / Banned / Reserved SteamID lists plus the GroupID field, laid out as three add/delete columns and one text field. |
+| [`ConfigTerminal/Ui/AppShell.cs`](descriptions/ConfigTerminal/Ui/AppShell.cs.md) | 487 | 1 | The application shell for MagnetarConfig: a Terminal.Gui v1 `Toplevel` hosting a Turbo Vision desktop with a menu bar, an F-key status bar carrying the live server state, and a single swappable content panel. |
+| [`ConfigTerminal/Ui/DashboardView.cs`](descriptions/ConfigTerminal/Ui/DashboardView.cs.md) | 110 | 2 | The home window: a live server-status line, a read-only text summary of the instance (paths, server name/ports/network/password, active world, world/template counts, and any warnings or problems), and the Start/Stop/Restart/Reload/Worlds/New-World controls that delegate to the shell. |
+| [`ConfigTerminal/Ui/DesktopBackground.cs`](descriptions/ConfigTerminal/Ui/DesktopBackground.cs.md) | 31 | 2 | The classic Turbo Vision blue desktop backdrop: a non-focusable `View` that fills its bounds with the `▒` shade glyph and sits behind all content windows. |
+| [`ConfigTerminal/Ui/Dialogs.cs`](descriptions/ConfigTerminal/Ui/Dialogs.cs.md) | 181 | 2 | Shared modal dialog helpers in the Turbo Vision look used across every view: info/error/confirm boxes, "details" dialogs that keep a centered question over a left-aligned detail block (so bullet lists aren't mangled by `MessageBox`'s per-line centering), a destructive confirm defaulting to the safe option, a text prompt with optional validation, and a background-work runner that keeps the UI live. |
+| [`ConfigTerminal/Ui/FileDialogs.cs`](descriptions/ConfigTerminal/Ui/FileDialogs.cs.md) | 166 | 2 | Filesystem browse dialogs shared by the instance picker (path fields) and the dev-folder manifest picker. |
+| [`ConfigTerminal/Ui/HelpDialog.cs`](descriptions/ConfigTerminal/Ui/HelpDialog.cs.md) | 25 | 3 | The About/help modal. |
+| [`ConfigTerminal/Ui/HubPluginsView.cs`](descriptions/ConfigTerminal/Ui/HubPluginsView.cs.md) | 196 | 2 | Browses the plugins offered by the instance's configured hub/remote sources — read offline from Magnetar's cached catalogs under `Sources/Hubs` and `Sources/Plugins` — plus the registered dev folders (shown with a "- dev folder" suffix), and enables/disables them in the active profile. |
+| [`ConfigTerminal/Ui/IAutoSaveContent.cs`](descriptions/ConfigTerminal/Ui/IAutoSaveContent.cs.md) | 23 | 3 | The contract for a hosted panel that persists its edits automatically. |
+| [`ConfigTerminal/Ui/InstancePickerDialog.cs`](descriptions/ConfigTerminal/Ui/InstancePickerDialog.cs.md) | 96 | 2 | Modal dialog that prompts for the folder pair (and launcher / DS install) identifying an instance — the DS data dir, Magnetar config dir, launcher executable, and DS install — each with a Browse button. |
+| [`ConfigTerminal/Ui/LogViewerView.cs`](descriptions/ConfigTerminal/Ui/LogViewerView.cs.md) | 588 | 1 | Read-only log viewer over the game and Magnetar log files, with a `tail -f` follow mode, optional word-wrap, incremental text search, and keyword highlighting. |
+| [`ConfigTerminal/Ui/ManifestPicker.cs`](descriptions/ConfigTerminal/Ui/ManifestPicker.cs.md) | 17 | 3 | Quasar-style dev-folder picker: browse the filesystem and select a plugin's `.xml` manifest file, opening at the last-visited folder so adding several plugins in a row is frictionless. |
+| [`ConfigTerminal/Ui/ModListView.cs`](descriptions/ConfigTerminal/Ui/ModListView.cs.md) | 219 | 1 | Ordered mod-list editor for a world's `Sandbox_config.sbc`: add (by Workshop id or URL, with background friendly-name resolution), delete, reorder, and toggle a mod's dependency flag. |
+| [`ConfigTerminal/Ui/NewWorldWizard.cs`](descriptions/ConfigTerminal/Ui/NewWorldWizard.cs.md) | 158 | 2 | New-world creation by folder copy: pick a template, name the world, then copy the template into `Saves/<name>` and stamp the name into its `Sandbox_config.sbc` via `WorldCreator`. |
+| [`ConfigTerminal/Ui/OptionFormView.cs`](descriptions/ConfigTerminal/Ui/OptionFormView.cs.md) | 439 | 1 | The generic, registry-driven settings form used for the DS global config, the new-world defaults, and each world's settings. |
+| [`ConfigTerminal/Ui/PasswordDialog.cs`](descriptions/ConfigTerminal/Ui/PasswordDialog.cs.md) | 57 | 2 | Modal dialog to set or clear the server password. |
+| [`ConfigTerminal/Ui/PluginSourcesView.cs`](descriptions/ConfigTerminal/Ui/PluginSourcesView.cs.md) | 158 | 2 | Manages the instance's plugin catalog *sources* — remote GitHub hubs (e.g. |
+| [`ConfigTerminal/Ui/PluginsView.cs`](descriptions/ConfigTerminal/Ui/PluginsView.cs.md) | 203 | 1 | Manages the Magnetar instance's local plugin sources: a left pane of local DLLs from the `Local/` folder (Space toggles enabled) and a right pane of registered dev folders added Quasar-style by picking a manifest XML. |
+| [`ConfigTerminal/Ui/ProfilesView.cs`](descriptions/ConfigTerminal/Ui/ProfilesView.cs.md) | 173 | 2 | Manages plugin *profiles* — named presets of the enabled-plugin set stored as `Profiles/<Key>.xml`, with `Current.xml` the active set the server loads. |
+| [`ConfigTerminal/Ui/TurboVisionTheme.cs`](descriptions/ConfigTerminal/Ui/TurboVisionTheme.cs.md) | 73 | 2 | The classic 16-color Turbo Vision / Turbo Pascal 7 IDE palette expressed as Terminal.Gui v1 `ColorScheme`s. |
+| [`ConfigTerminal/Ui/WorldsView.cs`](descriptions/ConfigTerminal/Ui/WorldsView.cs.md) | 246 | 1 | Lists the worlds found under `Saves/` and offers per-world settings and mod editing, activation, creation, and deletion. |
+
+## ConfigTerminalTests  ·  [module doc](modules/ConfigTerminalTests.md)
+
+| File | Lines | Tier | Description |
+| ---- | ----- | ---- | ----------- |
+| [`ConfigTerminalTests/DocumentTests.cs`](descriptions/ConfigTerminalTests/DocumentTests.cs.md) | 123 | 2 | xUnit tests for the config-document round-trip layer — `DedicatedConfigDocument` and `WorldConfigDocument` — proving edits are surgical and format-faithful. |
+| [`ConfigTerminalTests/HubCatalogTests.cs`](descriptions/ConfigTerminalTests/HubCatalogTests.cs.md) | 46 | 2 | xUnit tests for `HubCatalog`, the protobuf-net reader that decodes a MagnetarHub catalog cache (`PluginData[]`) into browsable `HubPluginInfo` rows. |
+| [`ConfigTerminalTests/LiveEndToEndTests.cs`](descriptions/ConfigTerminalTests/LiveEndToEndTests.cs.md) | 156 | 2 | Live end-to-end test of the real create → start → "Game ready" → stop flow against an installed dedicated server plus a patched Magnetar launcher, exercising the exact model/process code paths the New-World wizard drives. |
+| [`ConfigTerminalTests/LogHighlightTests.cs`](descriptions/ConfigTerminalTests/LogHighlightTests.cs.md) | 34 | 2 | Unit tests for `LogHighlight.Classify`, the log-viewer line classifier. |
+| [`ConfigTerminalTests/PluginConfigTests.cs`](descriptions/ConfigTerminalTests/PluginConfigTests.cs.md) | 254 | 1 | Comprehensive xUnit suite for the plugin/profile/sources model and the `MagnetarPlugins` facade, proving that enabling/disabling plugins is a surgical upsert that never clobbers unmanaged siblings. |
+| [`ConfigTerminalTests/PluginInteropTests.cs`](descriptions/ConfigTerminalTests/PluginInteropTests.cs.md) | 237 | 1 | Interop tests proving that profile/sources XML written by this tool is accepted by Magnetar's own serializers. |
+| [`ConfigTerminalTests/ProcessAndFileTests.cs`](descriptions/ConfigTerminalTests/ProcessAndFileTests.cs.md) | 187 | 2 | xUnit tests for the process/pid/atomic-file and world-creation layer. |
+| [`ConfigTerminalTests/ProfileCatalogTests.cs`](descriptions/ConfigTerminalTests/ProfileCatalogTests.cs.md) | 129 | 2 | xUnit tests for `ProfileCatalog`, which manages named plugin profiles derived from the active `Current` set. |
+| [`ConfigTerminalTests/RegistryTests.cs`](descriptions/ConfigTerminalTests/RegistryTests.cs.md) | 66 | 2 | xUnit tests asserting the structural invariants of `OptionRegistry` — the static table of dedicated/session config options the TUI edits. |
+| [`ConfigTerminalTests/UiSmokeTests.cs`](descriptions/ConfigTerminalTests/UiSmokeTests.cs.md) | 356 | 1 | Headless UI tests that build the `AppShell` view tree against Terminal.Gui's `FakeDriver` and pump a few main-loop iterations, catching constructor/layout exceptions without a real terminal — plus focused coverage of the log viewer's behaviour. |
+| [`ConfigTerminalTests/WorkshopResolverTests.cs`](descriptions/ConfigTerminalTests/WorkshopResolverTests.cs.md) | 178 | 2 | xUnit tests for `WorkshopResolver`, which turns Steam Workshop ids/URLs into mod names via the Steam Web API. |
 
 ## Legacy.Commands  ·  [module doc](modules/Legacy.Commands.md)
 
@@ -41,8 +149,9 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 | [`Legacy/Launcher/Daemon.cs`](descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | 2 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
 | [`Legacy/Launcher/Folder.cs`](descriptions/Legacy/Launcher/Folder.cs.md) | 161 | 2 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
 | [`Legacy/Launcher/Game.cs`](descriptions/Legacy/Launcher/Game.cs.md) | 141 | 2 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
-| [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 525 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
-| [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 464 | 1 | Entry point for the Magnetar launcher. |
+| [`Legacy/Launcher/PidFile.cs`](descriptions/Legacy/Launcher/PidFile.cs.md) | 79 | 2 | Writes and removes `magnetar.pid` in the Magnetar config directory so an external tool (MagnetarConfig) can discover this dedicated-server instance and verify the running process belongs to it. |
+| [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 529 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
+| [`Legacy/Program.cs`](descriptions/Legacy/Program.cs.md) | 486 | 1 | Entry point for the Magnetar launcher. |
 
 ## Legacy.Loader  ·  [module doc](modules/Legacy.Loader.md)
 
@@ -210,13 +319,13 @@ Every documented source file, grouped by module. 136 files across 18 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`Shared/Network/GitHub.cs`](descriptions/Shared/Network/GitHub.cs.md) | 168 | 2 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
+| [`Shared/Network/GitHub.cs`](descriptions/Shared/Network/GitHub.cs.md) | 174 | 2 | `GitHub` is a thin static HTTP façade over the GitHub REST API and raw-content CDN. |
 | [`Shared/Network/NuGetClient.cs`](descriptions/Shared/Network/NuGetClient.cs.md) | 248 | 1 | `NuGetClient` wraps the NuGet v3 client SDK to download and extract packages from `api.nuget.org` into a local cache inside Magnetar's data directory. |
 | [`Shared/Network/NuGetLogger.cs`](descriptions/Shared/Network/NuGetLogger.cs.md) | 87 | 2 | `NuGetLogger` adapts the NuGet SDK's `ILogger` interface to Magnetar's `LogFile` / NLog pipeline. |
 | [`Shared/Network/NuGetPackage.cs`](descriptions/Shared/Network/NuGetPackage.cs.md) | 124 | 2 | `NuGetPackage` represents a single NuGet package that has already been extracted to disk. |
 | [`Shared/Network/NuGetPackageId.cs`](descriptions/Shared/Network/NuGetPackageId.cs.md) | 47 | 2 | `NuGetPackageId` is a serialisable DTO that identifies a single NuGet package by name and version string. |
 | [`Shared/Network/NuGetPackageList.cs`](descriptions/Shared/Network/NuGetPackageList.cs.md) | 20 | 3 | `NuGetPackageList` is a compact container that carries a plugin's NuGet dependency declaration in two optional forms: a path to a `packages.config` file (`Config`) and/or an inline array of `NuGetPackageId` records (`PackageIds`). |
-| [`Shared/Network/SimpleHttpClient.cs`](descriptions/Shared/Network/SimpleHttpClient.cs.md) | 198 | 2 | `SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. |
+| [`Shared/Network/SimpleHttpClient.cs`](descriptions/Shared/Network/SimpleHttpClient.cs.md) | 202 | 1 | `SimpleHttpClient` is a thin, synchronous REST façade built on `HttpWebRequest`. |
 
 ## Shared.Votes  ·  [module doc](modules/Shared.Votes.md)
 

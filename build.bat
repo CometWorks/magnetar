@@ -14,6 +14,16 @@ REM   <Magnetar>\LICENSE
 REM   <Magnetar>\Libraries\MagnetarLegacy\...
 REM   <Magnetar>\Libraries\MagnetarInterim\...
 REM
+REM We additionally publish the ConfigTerminal TUI (net10, framework-dependent -
+REM requires the .NET 10 runtime, same as MagnetarInterim) into <Magnetar>\Config\
+REM and drop a <Magnetar>\MagnetarConfig.bat shim next to the launchers so
+REM operators can configure the instance from the install:
+REM
+REM   <Magnetar>\MagnetarConfig.bat   (launches Config\MagnetarConfig.exe)
+REM   <Magnetar>\Config\MagnetarConfig.exe + Terminal.Gui.dll + deps
+REM   <Magnetar>\README.txt           (short Windows usage note naming both
+REM                                    launchers and MagnetarConfig)
+REM
 REM We point `Magnetar` at a staging tree under build\ (so the real
 REM %APPDATA%\Magnetar install is left untouched), then 7-Zip the staged
 REM Magnetar\ folder into dist\MagnetarForWindows.<date>.<hash>.7z.
@@ -27,7 +37,7 @@ REM those are Linux-only. Steamworks.NET ships next to the dedicated server.
 REM
 REM Prerequisites (see Docs\Build.md):
 REM   * .NET 10 SDK
-REM   * .NET Framework 4.8 Developer Pack (for the net48 / MagnetarLegacy target)
+REM   * .NET Framework 4.8 Developer Pack (for the MagnetarLegacy launcher target)
 REM   * Space Engineers Dedicated Server installed (DS64 auto-detected; override
 REM     with the DS64 env var or -p:DS64=... - see Directory.Build.props)
 REM   * 7z.exe on PATH
@@ -97,6 +107,68 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM ---- stage the ConfigTerminal TUI (MagnetarConfig) --------------------------
+REM Ships the terminal configuration UI next to the launchers. Published
+REM framework-dependent for net10, so it needs the .NET 10 runtime (same as
+REM MagnetarInterim). Its managed deps (Terminal.Gui, NStack, ...) live alongside
+REM the exe in Config\, and a root MagnetarConfig.bat shim next to
+REM MagnetarInterim.exe launches it.
+echo.
+echo ############################################################
+echo # publish: ConfigTerminal / MagnetarConfig (net10.0)
+echo ############################################################
+dotnet publish "%REPO_DIR%\ConfigTerminal\ConfigTerminal.csproj" -c Release -f net10.0 -p:DebugType=None -p:DebugSymbols=false -o "%MAGNETAR_STAGE%\Config"
+if errorlevel 1 (
+    echo ERROR: ConfigTerminal publish failed. 1>&2
+    exit /b 1
+)
+
+REM Root shim so MagnetarConfig launches from beside MagnetarInterim.exe.
+> "%MAGNETAR_STAGE%\MagnetarConfig.bat" echo @echo off
+>>"%MAGNETAR_STAGE%\MagnetarConfig.bat" echo "%%~dp0Config\MagnetarConfig.exe" %%*
+
+REM ---- generate Magnetar\README.txt ------------------------------------------
+REM Ships a short usage note inside the archive (extracts to
+REM %APPDATA%\Magnetar\README.txt). Windows counterpart of the Linux bundle's
+REM README; names both launchers and MagnetarConfig so operators find the
+REM config tool. %%APPDATA%% is written as a literal (not expanded at build time).
+set "README=%MAGNETAR_STAGE%\README.txt"
+> "%README%" echo MagnetarForWindows
+>>"%README%" echo ==================
+>>"%README%" echo.
+>>"%README%" echo Magnetar is a plugin and mod loader for the Space Engineers Dedicated
+>>"%README%" echo Server on Windows. This archive ships two launchers - MagnetarLegacy.exe
+>>"%README%" echo (.NET Framework 4.8) and MagnetarInterim.exe (.NET 10) - together with
+>>"%README%" echo MagnetarConfig, a terminal UI to configure and operate the server.
+>>"%README%" echo.
+>>"%README%" echo Prerequisites
+>>"%README%" echo -------------
+>>"%README%" echo - Space Engineers Dedicated Server installed (via Steam or steamcmd).
+>>"%README%" echo - MagnetarInterim.exe and MagnetarConfig need the .NET 10 runtime
+>>"%README%" echo   (Microsoft.NETCore.App 10.x); MagnetarLegacy.exe uses .NET Framework 4.8.
+>>"%README%" echo.
+>>"%README%" echo Quick start
+>>"%README%" echo -----------
+>>"%README%" echo 1. Extract this archive into %%APPDATA%% (Roaming) so its top-level
+>>"%README%" echo    Magnetar\ folder lands as %%APPDATA%%\Magnetar.
+>>"%README%" echo 2. Launch the dedicated server through Magnetar in place of
+>>"%README%" echo    SpaceEngineersDedicated.exe:
+>>"%README%" echo        %%APPDATA%%\Magnetar\MagnetarInterim.exe
+>>"%README%" echo    (or MagnetarLegacy.exe for the .NET Framework 4.8 build).
+>>"%README%" echo 3. Configure and operate the instance from the terminal UI:
+>>"%README%" echo        %%APPDATA%%\Magnetar\MagnetarConfig.bat
+>>"%README%" echo    (edit DS/world settings, plugins, mods, profiles; start/stop; read
+>>"%README%" echo     logs. Add -diag for a headless status report, or -help for options.)
+>>"%README%" echo.
+>>"%README%" echo Files
+>>"%README%" echo -----
+>>"%README%" echo   MagnetarLegacy.exe    Server launcher (.NET Framework 4.8).
+>>"%README%" echo   MagnetarInterim.exe   Server launcher (.NET 10).
+>>"%README%" echo   MagnetarConfig.bat    Launches Config\MagnetarConfig.exe (terminal UI).
+>>"%README%" echo   Config\               MagnetarConfig.exe + Terminal.Gui + managed deps.
+>>"%README%" echo   Libraries\            Per-launcher managed dependencies.
+>>"%README%" echo   LICENSE               License text.
+
 REM ---- verify the staged tree ------------------------------------------------
 set "MISSING=0"
 for %%F in (MagnetarLegacy.exe MagnetarInterim.exe MagnetarInterim.dll LICENSE) do (
@@ -112,6 +184,12 @@ if not exist "%MAGNETAR_STAGE%\Libraries\MagnetarLegacy\" (
 if not exist "%MAGNETAR_STAGE%\Libraries\MagnetarInterim\" (
     echo MISSING: %MAGNETAR_STAGE%\Libraries\MagnetarInterim 1>&2
     set "MISSING=1"
+)
+for %%F in ("Config\MagnetarConfig.exe" "Config\Terminal.Gui.dll" "MagnetarConfig.bat") do (
+    if not exist "%MAGNETAR_STAGE%\%%~F" (
+        echo MISSING: %MAGNETAR_STAGE%\%%~F 1>&2
+        set "MISSING=1"
+    )
 )
 if "%MISSING%"=="1" (
     echo ERROR: staged tree is incomplete - did deploy.bat run? 1>&2

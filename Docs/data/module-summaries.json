@@ -118,10 +118,10 @@
       }
     ],
     "public_api": [
-      "CommandService.Register(Assembly) \u2014 scan an assembly for CommandModule types and attribute them to it",
-      "CommandService.Register(Assembly, params Type[]) \u2014 register explicit CommandModule types",
-      "CommandService.HandleChat(ulong steamId, string text) \u2192 bool \u2014 called by Patch_ServerChat; returns true when the message was a handled command",
-      "ServerCommandResponder.Instance \u2014 shared ICommandResponder singleton passed to CommandDispatcher.Handle"
+      "CommandService.Register(Assembly) — scan an assembly for CommandModule types and attribute them to it",
+      "CommandService.Register(Assembly, params Type[]) — register explicit CommandModule types",
+      "CommandService.HandleChat(ulong steamId, string text) → bool — called by Patch_ServerChat; returns true when the message was a handled command",
+      "ServerCommandResponder.Instance — shared ICommandResponder singleton passed to CommandDispatcher.Handle"
     ],
     "depends_on": [
       "PluginSdk.Commands",
@@ -198,12 +198,12 @@
       }
     ],
     "public_api": [
-      "PathResolverBinder.Bind() \u2014 called once at launcher startup to wire Linux case-insensitive path resolution",
-      "ModPluginExtensions.GetModItem(ModPlugin) \u2014 converts a Magnetar mod descriptor to MyObjectBuilder_Checkpoint.ModItem for SE DS registration",
-      "ModPluginExtensions.GetModContext(ModPlugin) \u2014 converts a Magnetar mod descriptor to MyModContext for SE DS registration",
-      "References.GetReferences(exeLocation) \u2014 enumerates all Roslyn compiler assembly references for a given game directory",
-      "CompilerFactory.Create(debugBuild) \u2014 creates a ready-to-use ICompiler instance with appropriate preprocessor flags",
-      "MissionScreenSender.ShowToPlayer/ShowToSteam/ShowToAll(MissionScreenContent) \u2014 internal host backends bound to the PluginSdk MissionScreens facade that send mission-screen popups to clients over the SE multiplayer channel"
+      "PathResolverBinder.Bind() — called once at launcher startup to wire Linux case-insensitive path resolution",
+      "ModPluginExtensions.GetModItem(ModPlugin) — converts a Magnetar mod descriptor to MyObjectBuilder_Checkpoint.ModItem for SE DS registration",
+      "ModPluginExtensions.GetModContext(ModPlugin) — converts a Magnetar mod descriptor to MyModContext for SE DS registration",
+      "References.GetReferences(exeLocation) — enumerates all Roslyn compiler assembly references for a given game directory",
+      "CompilerFactory.Create(debugBuild) — creates a ready-to-use ICompiler instance with appropriate preprocessor flags",
+      "MissionScreenSender.ShowToPlayer/ShowToSteam/ShowToAll(MissionScreenContent) — internal host backends bound to the PluginSdk MissionScreens facade that send mission-screen popups to clients over the SE multiplayer channel"
     ],
     "depends_on": [
       "Compiler",
@@ -229,8 +229,8 @@
   {
     "module": "Legacy.Launcher",
     "project": "Legacy",
-    "purpose": "The launcher bootstrap for Magnetar's Space Engineers Dedicated Server loader. It is the process entry point: it locates and validates the DS install, sets up config/logging, wires Steam and assembly resolvers, loads and preload-patches plugins, owns the server lifecycle (save/reload/quit/restart with POSIX signals), and finally hands off to the real SE dedicated server.",
-    "role": "This is the outermost layer of the Legacy launcher \u2014 it runs before any SE game code and is conditionally compiled for the Windows/.NET 4.8 \"Legacy\" build and the Linux/.NET 10 \"Interim\" build. It bridges Magnetar's own subsystems (Shared core/config, Compiler, Loader, Patch, PluginSdk) into the SE engine via reflection and Harmony, then invokes SpaceEngineersDedicated.exe's hidden Main. It is the home of the cross-environment startup sequencing and the single source of truth for server lifecycle/shutdown.",
+    "purpose": "The launcher bootstrap for Magnetar's Space Engineers Dedicated Server loader. It is the process entry point: it locates and validates the DS install, sets up config/logging, wires Steam and assembly resolvers, loads and preload-patches plugins, owns the server lifecycle (save/reload/quit/restart with POSIX signals), and finally hands off to the real SE dedicated server, and publishes a magnetar.pid file (pid + resolved data dir) after daemon detach so an external tool (MagnetarConfig) can discover and verify the instance.",
+    "role": "This is the outermost layer of the Legacy launcher — it runs before any SE game code and is conditionally compiled for the Windows/.NET 4.8 \"Legacy\" build and the Linux/.NET 10 \"Interim\" build. It bridges Magnetar's own subsystems (Shared core/config, Compiler, Loader, Patch, PluginSdk) into the SE engine via reflection and Harmony, then invokes SpaceEngineersDedicated.exe's hidden Main. It is the home of the cross-environment startup sequencing and the single source of truth for server lifecycle/shutdown.",
     "key_types": [
       {
         "name": "Folder",
@@ -267,13 +267,19 @@
         "kind": "class",
         "file": "Legacy/Program.cs",
         "summary": "IExternalTools adapter that marshals shared-code actions onto the SE game thread via Game.RunOnGameThread."
+      },
+      {
+        "name": "PidFile",
+        "kind": "static class",
+        "file": "Legacy/Launcher/PidFile.cs",
+        "summary": "Writes/removes magnetar.pid (pid + resolved DS data dir) in the Magnetar config dir so MagnetarConfig can discover and verify this server instance."
       }
     ],
     "public_api": [
-      "Program.Main(string[] args) \u2014 process entry point (handles -help and -consent/-noconsent/-withdraw-consent before server start)",
-      "Folder.GetDS64() \u2014 resolve the DS64 install directory",
-      "Game.RegisterPlugin / SetMainAssembly / GetGameVersion / StartDedicatedServer / RunOnGameThread \u2014 SE engine bridge",
-      "ServerControl.CaptureLaunchState / InstallSignalHandlers / SaveWorld / ReloadConfig / SaveAndQuit / QuitWithoutSaving / SaveAndRestart / RestartWithoutSaving \u2014 lifecycle control"
+      "Program.Main(string[] args) — process entry point (handles -help and -consent/-noconsent/-withdraw-consent before server start)",
+      "Folder.GetDS64() — resolve the DS64 install directory",
+      "Game.RegisterPlugin / SetMainAssembly / GetGameVersion / StartDedicatedServer / RunOnGameThread — SE engine bridge",
+      "ServerControl.CaptureLaunchState / InstallSignalHandlers / SaveWorld / ReloadConfig / SaveAndQuit / QuitWithoutSaving / SaveAndRestart / RestartWithoutSaving — lifecycle control"
     ],
     "depends_on": [
       "Shared.Core",
@@ -290,8 +296,10 @@
       "NuGet"
     ],
     "files_documented": [
+      "Legacy/Launcher/Daemon.cs",
       "Legacy/Launcher/Folder.cs",
       "Legacy/Launcher/Game.cs",
+      "Legacy/Launcher/PidFile.cs",
       "Legacy/Launcher/ServerControl.cs",
       "Legacy/Program.cs"
     ]
@@ -453,10 +461,10 @@
       }
     ],
     "public_api": [
-      "Patch_Compile.PulsarLog \u2014 toggled by Patch_MyDefinitionErrors.RedirectModLogging to enable diagnostic capture",
-      "Patch_Compile.Diagnostics \u2014 HashSet<string> of Roslyn diagnostic strings read by Patch_MyDefinitionErrors",
-      "Patch_MyDefinitionErrors.RedirectModLogging(bool) \u2014 coordinates logging state across Patch_MyDefinitionErrors and Patch_Compile",
-      "Patch_PrepareCrashReport.SpaceEngineersPath \u2014 must be set by the launcher before any crash occurs"
+      "Patch_Compile.PulsarLog — toggled by Patch_MyDefinitionErrors.RedirectModLogging to enable diagnostic capture",
+      "Patch_Compile.Diagnostics — HashSet<string> of Roslyn diagnostic strings read by Patch_MyDefinitionErrors",
+      "Patch_MyDefinitionErrors.RedirectModLogging(bool) — coordinates logging state across Patch_MyDefinitionErrors and Patch_Compile",
+      "Patch_PrepareCrashReport.SpaceEngineersPath — must be set by the launcher before any crash occurs"
     ],
     "depends_on": [
       "Legacy.Launcher",
@@ -702,7 +710,7 @@
   {
     "module": "PluginSdk.Logging",
     "project": "PluginSdk",
-    "purpose": "Provides a unified, environment-agnostic logging API for Magnetar plugins. Plugins obtain a `Logger` (stamped with their name) via `Logger.Create` and call severity methods without knowing how or where messages are stored. The correct sink \u2014 `MagnetarLogSink` (forwarding to the SE DS `MyLog.Default`) or `QuasarLogSink` (emitting one-line JSON to stdout and raising `LogEnvironment.LineEmitted` for the in-process Quasar Agent to ship over its network channel) \u2014 is resolved automatically from the `QUASAR_AGENT` environment variable at startup.",
+    "purpose": "Provides a unified, environment-agnostic logging API for Magnetar plugins. Plugins obtain a `Logger` (stamped with their name) via `Logger.Create` and call severity methods without knowing how or where messages are stored. The correct sink — `MagnetarLogSink` (forwarding to the SE DS `MyLog.Default`) or `QuasarLogSink` (emitting one-line JSON to stdout and raising `LogEnvironment.LineEmitted` for the in-process Quasar Agent to ship over its network channel) — is resolved automatically from the `QUASAR_AGENT` environment variable at startup.",
     "role": "Sits between plugin code and the two deployment back-ends (standalone Magnetar and Quasar-managed). It is the only layer plugin authors directly reference; all environment detection and rendering is encapsulated here so plugins need zero conditional logging code.",
     "key_types": [
       {
@@ -755,15 +763,15 @@
       }
     ],
     "public_api": [
-      "Logger.Create(string pluginName) \u2014 factory for plugin code; auto-selects the sink",
-      "Logger.Log(LogLevel, string, Exception, object) \u2014 generic log method",
-      "Logger.Debug/Info/Warning/Error/Critical \u2014 convenience severity methods",
-      "ILogSink.Write(in LogEntry) \u2014 sink contract called by Logger",
-      "LogEnvironment.CreateDefaultSink() \u2014 selects and constructs the appropriate ILogSink",
-      "LogEnvironment.IsManagedByQuasar() \u2014 checks QUASAR_AGENT env var",
-      "LogEnvironment.LineEmitted \u2014 process-wide event of formatted JSON lines, raised by QuasarLogSink for the agent relay",
-      "MagnetarLogSink.Format(in LogEntry) \u2014 formats a line for MyLog (public for reuse)",
-      "QuasarLogSink.Format(in LogEntry) \u2014 formats a JSON line (public for testing)"
+      "Logger.Create(string pluginName) — factory for plugin code; auto-selects the sink",
+      "Logger.Log(LogLevel, string, Exception, object) — generic log method",
+      "Logger.Debug/Info/Warning/Error/Critical — convenience severity methods",
+      "ILogSink.Write(in LogEntry) — sink contract called by Logger",
+      "LogEnvironment.CreateDefaultSink() — selects and constructs the appropriate ILogSink",
+      "LogEnvironment.IsManagedByQuasar() — checks QUASAR_AGENT env var",
+      "LogEnvironment.LineEmitted — process-wide event of formatted JSON lines, raised by QuasarLogSink for the agent relay",
+      "MagnetarLogSink.Format(in LogEntry) — formats a line for MyLog (public for reuse)",
+      "QuasarLogSink.Format(in LogEntry) — formats a JSON line (public for testing)"
     ],
     "depends_on": [
       "SE DS assemblies (VRage.Library: VRage.Utils.MyLog, VRage.Utils.MyLogSeverity)"
@@ -782,7 +790,7 @@
   {
     "module": "PluginSdk.Runtime",
     "project": "PluginSdk",
-    "purpose": "Provides plugins with a stable, host-agnostic API surface for cross-cutting runtime concerns: (1) cross-platform case-insensitive path resolution that works identically on Windows and Linux by swapping a backend at startup, (2) dedicated-server lifecycle control (save, reload config, quit, restart) and a pre-teardown notification event, and (3) sending Space Engineers mission-screen popups to clients (per-player, per-Steam-id, or broadcast) for rendering by the bundled MagnetarMod client receiver \u2014 all backed by host-bound delegates that default to safe no-ops until the launcher installs real implementations.",
+    "purpose": "Provides plugins with a stable, host-agnostic API surface for cross-cutting runtime concerns: (1) cross-platform case-insensitive path resolution that works identically on Windows and Linux by swapping a backend at startup, (2) dedicated-server lifecycle control (save, reload config, quit, restart) and a pre-teardown notification event, and (3) sending Space Engineers mission-screen popups to clients (per-player, per-Steam-id, or broadcast) for rendering by the bundled MagnetarMod client receiver — all backed by host-bound delegates that default to safe no-ops until the launcher installs real implementations.",
     "role": "Acts as the plugin-facing contract layer between plugin code and the underlying host launchers (MagnetarInterim on Linux/.NET 10, MagnetarLegacy on Windows/.NET 4.8). Plugins call PathResolver, ServerControl, and MissionScreens unconditionally; the host injects real backends at startup. This decoupling means the same plugin binary runs on both platforms without conditional compilation.",
     "key_types": [
       {
@@ -835,18 +843,18 @@
       }
     ],
     "public_api": [
-      "PathResolver.Install(IPathResolver backend) \u2014 host installs the Linux case-insensitive backend once at startup",
-      "PathResolver.Normalize / ToWindowsPath / GetFileName / GetFileNameWithoutExtension / ResolveContentFilePath / ResolveAbsolute \u2014 plugin-facing path utilities",
-      "PathResolver.IsCaseInsensitiveResolverActive \u2014 lets plugins detect whether a real Linux resolver is active",
-      "ServerControl.SaveWorld() / ReloadConfig() / SaveAndQuit() / SaveAndRestart() / QuitWithoutSaving() / RestartWithoutSaving() \u2014 server lifecycle actions for plugins",
-      "ServerControl.Terminating (event Action<ServerTerminationKind>) \u2014 fires before teardown when an admin drives shutdown or restart from in-game",
-      "ServerControl.Bind(...) \u2014 internal; host installs real delegate implementations at launcher startup",
-      "ServerControl.RaiseTerminating(ServerTerminationKind) \u2014 internal; host fires the Terminating event with per-subscriber fault isolation",
-      "SerializableDictionary<TKey,TValue> \u2014 XML-serializable dictionary for use in PluginConfig-derived classes",
-      "MissionScreens.ShowToPlayer / ShowToSteam / ShowToAll(...) \u2014 send a mission-screen popup to one player (identity or Steam id) or all clients; string-parameter and MissionScreenContent overloads; return false when unbound or content is empty",
-      "MissionScreens.IsHostSenderAvailable \u2014 true once the host has installed a server-side sender (does not guarantee the client receiver is enabled)",
-      "MissionScreens.ChannelId / ProtocolVersion / ShowMissionScreenPacket \u2014 network channel/protocol constants shared with the MagnetarMod client receiver",
-      "MissionScreens.Bind(...) \u2014 internal; host installs the real sender delegates at launcher startup"
+      "PathResolver.Install(IPathResolver backend) — host installs the Linux case-insensitive backend once at startup",
+      "PathResolver.Normalize / ToWindowsPath / GetFileName / GetFileNameWithoutExtension / ResolveContentFilePath / ResolveAbsolute — plugin-facing path utilities",
+      "PathResolver.IsCaseInsensitiveResolverActive — lets plugins detect whether a real Linux resolver is active",
+      "ServerControl.SaveWorld() / ReloadConfig() / SaveAndQuit() / SaveAndRestart() / QuitWithoutSaving() / RestartWithoutSaving() — server lifecycle actions for plugins",
+      "ServerControl.Terminating (event Action<ServerTerminationKind>) — fires before teardown when an admin drives shutdown or restart from in-game",
+      "ServerControl.Bind(...) — internal; host installs real delegate implementations at launcher startup",
+      "ServerControl.RaiseTerminating(ServerTerminationKind) — internal; host fires the Terminating event with per-subscriber fault isolation",
+      "SerializableDictionary<TKey,TValue> — XML-serializable dictionary for use in PluginConfig-derived classes",
+      "MissionScreens.ShowToPlayer / ShowToSteam / ShowToAll(...) — send a mission-screen popup to one player (identity or Steam id) or all clients; string-parameter and MissionScreenContent overloads; return false when unbound or content is empty",
+      "MissionScreens.IsHostSenderAvailable — true once the host has installed a server-side sender (does not guarantee the client receiver is enabled)",
+      "MissionScreens.ChannelId / ProtocolVersion / ShowMissionScreenPacket — network channel/protocol constants shared with the MagnetarMod client receiver",
+      "MissionScreens.Bind(...) — internal; host installs the real sender delegates at launcher startup"
     ],
     "depends_on": [
       "PluginSdk.Config",
@@ -964,7 +972,7 @@
   {
     "module": "PluginSdkTests",
     "project": "PluginSdkTests",
-    "purpose": "Xunit test project that specifies and regression-guards every public API in PluginSdk: the PluginConfig change-notification contract, the chat-command pipeline (registry, dispatch, argument binding, permissions, help), the logging subsystem (Logger, LogEntry, QuasarLogSink, MagnetarLogSink, LogEnvironment), the PathResolver fa\u00e7ade and its Linux-compat backend hook, the ConfigSchema builder and JSON-envelope format, the ConfigStorage XML/JSON round-trips and sparse-save behaviour, and the ServerControl lifecycle fa\u00e7ade. No production code lives here; the project exists purely to define the library's behavioural contract.",
+    "purpose": "Xunit test project that specifies and regression-guards every public API in PluginSdk: the PluginConfig change-notification contract, the chat-command pipeline (registry, dispatch, argument binding, permissions, help), the logging subsystem (Logger, LogEntry, QuasarLogSink, MagnetarLogSink, LogEnvironment), the PathResolver façade and its Linux-compat backend hook, the ConfigSchema builder and JSON-envelope format, the ConfigStorage XML/JSON round-trips and sparse-save behaviour, and the ServerControl lifecycle façade. No production code lives here; the project exists purely to define the library's behavioural contract.",
     "role": "Specification and regression suite for PluginSdk. Sits at the leaf of the build graph (depends on PluginSdk but nothing depends on it) and is the authoritative source of truth for what the SDK must produce. CI failures here block any PluginSdk change from merging.",
     "key_types": [
       {
@@ -989,7 +997,7 @@
         "name": "PathResolverTests",
         "kind": "class",
         "file": "PluginSdkTests/PathResolverTests.cs",
-        "summary": "Specifies the PathResolver static fa\u00e7ade: default pass-through shim behaviour and IPathResolver backend installation for Linux case-insensitive path resolution."
+        "summary": "Specifies the PathResolver static façade: default pass-through shim behaviour and IPathResolver backend installation for Linux case-insensitive path resolution."
       },
       {
         "name": "SchemaTests",
@@ -1090,7 +1098,7 @@
   {
     "module": "Shared.Config",
     "project": "Shared",
-    "purpose": "Shared.Config owns all persistent configuration for a Magnetar/Pulsar installation. It provides a two-phase singleton initialisation (EarlyInit \u2192 Init) that gates heavier config loading behind game-environment discovery, and defines the full XML-serialised object model for core settings, plugin/hub/mod sources, and named plugin-enable profiles.",
+    "purpose": "Shared.Config owns all persistent configuration for a Magnetar/Pulsar installation. It provides a two-phase singleton initialisation (EarlyInit → Init) that gates heavier config loading behind game-environment discovery, and defines the full XML-serialised object model for core settings, plugin/hub/mod sources, and named plugin-enable profiles.",
     "role": "Acts as the configuration backbone shared by both the Legacy (Windows/.NET 4.8) and Interim (Linux/.NET 10) launchers and loaders. ConfigManager is the single entry point other modules query for directory paths, the active profile, and the resolved plugin list. All source and profile types feed directly into PluginList construction.",
     "key_types": [
       {
@@ -1170,9 +1178,9 @@
       "ConfigManager.EarlyInit(string pulsarDir)",
       "ConfigManager.Init(string gameDir, string modDir, Version gameVersion, RemoteHubConfig[] defaultHubs)",
       "ConfigManager.Instance",
-      "ConfigManager.HasInstanceId() \u2192 bool",
-      "ConfigManager.ReadInstanceId() \u2192 string",
-      "ConfigManager.CreateInstanceId() \u2192 string",
+      "ConfigManager.HasInstanceId() → bool",
+      "ConfigManager.ReadInstanceId() → string",
+      "ConfigManager.CreateInstanceId() → string",
       "ConfigManager.DeleteInstanceId()",
       "ConfigManager.UpdatePlayerVotes()",
       "CoreConfig.Load(string mainDirectory)",
@@ -1462,7 +1470,7 @@
   {
     "module": "Shared.Network",
     "project": "Shared",
-    "purpose": "Provides all outbound network I/O for Magnetar: GitHub REST/CDN access for plugin downloads and update checks, full NuGet v3 client integration (dependency resolution, download, extraction) for plugin assembly dependencies, and a lightweight synchronous REST fa\u00e7ade used by stats and other callers. The module abstracts the two target runtimes (net48 Legacy and net10.0 Interim) behind a single compile-time framework selection so the rest of the codebase stays platform-agnostic.",
+    "purpose": "Provides all outbound network I/O for Magnetar: GitHub REST/CDN access for plugin downloads and update checks, full NuGet v3 client integration (dependency resolution, download, extraction) for plugin assembly dependencies, and a lightweight synchronous REST façade used by stats and other callers. The module abstracts the two target runtimes (net48 Legacy and net10.0 Interim) behind a single compile-time framework selection so the rest of the codebase stays platform-agnostic.",
     "role": "Consumed by the plugin loader pipeline (Shared.Data plugin types trigger GitHub downloads; plugin manifests declare NuGet dependencies that NuGetClient fulfils) and by Shared.Votes (SimpleHttpClient). It sits below Shared.Data and Shared.Config, which supply plugin metadata and runtime configuration respectively, and above no other Magnetar module.",
     "key_types": [
       {
@@ -1511,26 +1519,26 @@
         "name": "SimpleHttpClient",
         "kind": "static class",
         "file": "Shared/Network/SimpleHttpClient.cs",
-        "summary": "Synchronous REST fa\u00e7ade with generic JSON GET/POST helpers and a 3-second timeout, used by stats reporting and similar short-lived API calls."
+        "summary": "Synchronous REST façade with generic JSON GET/POST helpers and a 3-second timeout, used by stats reporting and similar short-lived API calls."
       }
     ],
     "public_api": [
-      "GitHub.Init() \u2014 must be called at startup to enable TLS 1.2",
-      "GitHub.GetStream(Uri) \u2014 core authenticated HTTP fetch returning a buffered MemoryStream",
-      "GitHub.GetRepoArchive(string repo, string reference) \u2014 download a repo ZIP",
-      "GitHub.GetRepoFile(string repo, string reference, string file) \u2014 download a single raw file",
-      "GitHub.GetRepoHash(string repo, string reference, out string hash) \u2014 resolve a git ref to its commit SHA",
-      "GitHub.GetReleaseVersion(string repo, out Version version, bool beta) \u2014 get latest release version",
-      "GitHub.GetReleaseJson(string repo, string tag) \u2014 get full release JSON by tag",
-      "NuGetClient.DownloadFromConfig(Stream) \u2014 download packages declared in a packages.config stream",
-      "NuGetClient.DownloadPackages(IEnumerable<NuGetPackageId>, bool) \u2014 download explicit package list with optional dependency resolution",
-      "NuGetClient.DownloadPackage(SourceCacheContext, PackageIdentity, NuGetFramework) \u2014 download and extract one package",
-      "NuGetPackageId.TryGetIdentity(out PackageIdentity) \u2014 convert DTO to NuGet SDK identity",
-      "NuGetPackageList.HasPackages \u2014 guard property before invoking NuGetClient",
-      "NuGetPackageList.PackagesConfigNormalized \u2014 cross-platform config path",
-      "SimpleHttpClient.Get<TV>(string) \u2014 typed JSON GET",
-      "SimpleHttpClient.Post<TV,TR>(string, TR) \u2014 typed JSON POST with response",
-      "SimpleHttpClient.Post<TR>(string, TR) \u2014 fire-and-forget JSON POST returning bool"
+      "GitHub.Init() — must be called at startup to enable TLS 1.2",
+      "GitHub.GetStream(Uri) — core authenticated HTTP fetch returning a buffered MemoryStream",
+      "GitHub.GetRepoArchive(string repo, string reference) — download a repo ZIP",
+      "GitHub.GetRepoFile(string repo, string reference, string file) — download a single raw file",
+      "GitHub.GetRepoHash(string repo, string reference, out string hash) — resolve a git ref to its commit SHA",
+      "GitHub.GetReleaseVersion(string repo, out Version version, bool beta) — get latest release version",
+      "GitHub.GetReleaseJson(string repo, string tag) — get full release JSON by tag",
+      "NuGetClient.DownloadFromConfig(Stream) — download packages declared in a packages.config stream",
+      "NuGetClient.DownloadPackages(IEnumerable<NuGetPackageId>, bool) — download explicit package list with optional dependency resolution",
+      "NuGetClient.DownloadPackage(SourceCacheContext, PackageIdentity, NuGetFramework) — download and extract one package",
+      "NuGetPackageId.TryGetIdentity(out PackageIdentity) — convert DTO to NuGet SDK identity",
+      "NuGetPackageList.HasPackages — guard property before invoking NuGetClient",
+      "NuGetPackageList.PackagesConfigNormalized — cross-platform config path",
+      "SimpleHttpClient.Get<TV>(string) — typed JSON GET",
+      "SimpleHttpClient.Post<TV,TR>(string, TR) — typed JSON POST with response",
+      "SimpleHttpClient.Post<TR>(string, TR) — fire-and-forget JSON POST returning bool"
     ],
     "depends_on": [
       "Shared.Config",
@@ -1601,11 +1609,11 @@
       "ConsentManager.Resolve()",
       "ConsentManager.Withdraw(string votesServer)",
       "VotesClient.BaseUrl (set by host at startup)",
-      "VotesClient.Consent(bool, string playerHash = null) \u2192 bool",
-      "VotesClient.DownloadVotes() \u2192 PluginVotes",
-      "VotesClient.Track(string[]) \u2192 bool",
-      "VotesClient.Vote(string, int) \u2192 PluginVote",
-      "PluginVotes.GetVotesForPlugin(PluginData) \u2192 PluginVote"
+      "VotesClient.Consent(bool, string playerHash = null) → bool",
+      "VotesClient.DownloadVotes() → PluginVotes",
+      "VotesClient.Track(string[]) → bool",
+      "VotesClient.Vote(string, int) → PluginVote",
+      "PluginVotes.GetVotesForPlugin(PluginData) → PluginVote"
     ],
     "depends_on": [
       "Shared.Network (SimpleHttpClient)",
@@ -1655,6 +1663,710 @@
     ],
     "files_documented": [
       "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminal.App",
+    "project": "ConfigTerminal",
+    "purpose": "Application entry and process-wide plumbing for the MagnetarConfig TUI. Parses the command line into an InstanceBinding, selects the Terminal.Gui driver, runs the launcher and instance pickers, and hosts the top-level AppShell with unified error handling. Also provides the headless `-diag` state report (no Terminal.Gui) and persists the tool's own per-instance settings as `ConfigTerminal.xml`.",
+    "role": "This is the outermost layer of the MagnetarConfig TUI: `Program.Main` is the process entry point that bootstraps everything below it and guarantees clean Terminal.Gui shutdown. It bridges the raw args to the Model layer's `InstanceBinding`/`InstanceLocator`, dispatches to the Ui layer (`AppShell`, pickers, dialogs, theme) for the interactive path, and to the read-only Diagnostics path for scripts/CI. ToolSettings gives the UI a small persisted store that lives alongside Magnetar's own config so per-instance preferences travel with the instance.",
+    "key_types": [
+      {
+        "name": "Program",
+        "kind": "static class",
+        "file": "ConfigTerminal/Program.cs",
+        "summary": "Process entry point: parses args, picks driver/launcher/instance, hosts AppShell with top-level error handling."
+      },
+      {
+        "name": "Cli",
+        "kind": "class",
+        "file": "ConfigTerminal/Cli.cs",
+        "summary": "Parses the command line into typed options and converts them to a default-resolved InstanceBinding."
+      },
+      {
+        "name": "Diagnostics",
+        "kind": "static class",
+        "file": "ConfigTerminal/Diagnostics.cs",
+        "summary": "Headless, read-only `-diag` report of an instance's resolved config, worlds, plugins, profiles, and server status."
+      },
+      {
+        "name": "ToolSettings",
+        "kind": "class",
+        "file": "ConfigTerminal/State/ToolSettings.cs",
+        "summary": "Fault-tolerant per-instance tool settings persisted as ConfigTerminal.xml next to Magnetar's config.xml."
+      }
+    ],
+    "public_api": [
+      "Program.Main(string[] args)",
+      "Cli.Parse(string[] args)",
+      "Cli.ToBinding()",
+      "Cli.HasInstance",
+      "Cli.PrintHelp()",
+      "Diagnostics.Run(InstanceBinding binding)",
+      "ToolSettings.Load(string magnetarConfigDir)",
+      "ToolSettings.Save(AtomicFile writer)",
+      "ToolSettings.LastPluginFolder",
+      "CLI flags: -path, -config, -magnetar, -ds64, -netdriver, -diag, -help/-h/--help"
+    ],
+    "depends_on": [
+      "Terminal.Gui",
+      "System.Xml.Linq",
+      "ConfigTerminal.Model",
+      "ConfigTerminal.Ui",
+      "ConfigTerminal.Io",
+      "ConfigTerminal.Process"
+    ],
+    "files_documented": [
+      "ConfigTerminal/Cli.cs",
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/State/ToolSettings.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminal.Io",
+    "project": "ConfigTerminal",
+    "purpose": "Low-level file and path plumbing for the MagnetarConfig TUI. Provides crash-safe atomic text writes with once-per-session .bak backups, shared XML writer settings that match what the DS and Quasar emit (UTF-8 no BOM, indented, LF newlines, declaration present), per-platform OS detection and filesystem-correct path comparison, and resolution of the default DS/Magnetar/launcher/DS-install locations. It has no Terminal.Gui dependency.",
+    "role": "The foundational I/O layer beneath the ConfigTerminal editing and UI code. Model and higher layers use InstanceLocator to resolve where DS data, Magnetar config, launcher executables, and the DedicatedServer64 install live (honoring explicit CLI overrides), AtomicFile to persist config safely, XmlOut to serialize DS-format XML with clean cross-platform diffs, and PlatformPaths for OS branching and world-folder identity comparisons.",
+    "key_types": [
+      {
+        "name": "InstanceLocator",
+        "kind": "static class",
+        "file": "ConfigTerminal/Io/InstanceLocator.cs",
+        "summary": "Resolves default DS data dir, Magnetar config dir, launcher exe, and DS64 install per platform, filling only unset binding fields."
+      },
+      {
+        "name": "MagnetarLauncher",
+        "kind": "class",
+        "file": "ConfigTerminal/Io/InstanceLocator.cs",
+        "summary": "A Windows Magnetar launcher variant (name, label, config dir, exe path) the tool can configure."
+      },
+      {
+        "name": "AtomicFile",
+        "kind": "class",
+        "file": "ConfigTerminal/Io/AtomicFile.cs",
+        "summary": "Crash-safe text writer: temp file + atomic rename, with a once-per-session .bak backup of the target."
+      },
+      {
+        "name": "XmlOut",
+        "kind": "static class",
+        "file": "ConfigTerminal/Io/XmlOut.cs",
+        "summary": "Shared XmlWriterSettings (UTF-8 no BOM, indented, LF) and XDocument-to-string serialization."
+      },
+      {
+        "name": "PlatformPaths",
+        "kind": "static class",
+        "file": "ConfigTerminal/Io/PlatformPaths.cs",
+        "summary": "OS detection (IsWindows/IsLinux) and filesystem-correct path comparer/comparison."
+      }
+    ],
+    "public_api": [
+      "InstanceLocator.DefaultDataDir()",
+      "InstanceLocator.DefaultMagnetarConfigDir()",
+      "InstanceLocator.DefaultMagnetarExe()",
+      "InstanceLocator.PresentWindowsLaunchers()",
+      "InstanceLocator.DetectDs64()",
+      "InstanceLocator.ResolveDefaults(InstanceBinding)",
+      "AtomicFile.WriteText(string path, string content)",
+      "XmlOut.Settings()",
+      "XmlOut.ToXmlString(XDocument document)",
+      "PlatformPaths.IsWindows / IsLinux",
+      "PlatformPaths.PathComparer / PathComparison"
+    ],
+    "depends_on": [
+      "System.IO",
+      "System.Xml",
+      "System.Xml.Linq",
+      "System.Runtime.InteropServices",
+      "System.Text",
+      "ConfigTerminal.Model"
+    ],
+    "files_documented": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Io/XmlOut.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminal.Logs",
+    "project": "ConfigTerminal",
+    "purpose": "Discovers and tail-reads the log files behind the ConfigTerminal TUI log viewer, and classifies lines for highlighting. It enumerates the DS game logs (SpaceEngineersDedicated*.log) and Magnetar's info_*.log files for the bound instance, provides a memory-bounded windowed reader that follows appended bytes tail -f-style while surviving truncation and rotation, and flags 'Game ready' / 'Exception' lines for the viewer to colour and navigate. All IO is failure-tolerant (missing or locked files degrade gracefully) and there is no Terminal.Gui dependency.",
+    "role": "This is the file-discovery, streaming, and line-classification layer under the ConfigTerminal log-viewing UI. LogCatalog resolves paths from an InstanceBinding (ConfigTerminal.Model) and marks the active log of each group; LogTailReader feeds the viewer with a bounded, incrementally-updated window plus a structural-change signal so the UI knows when to rebuild versus append; LogHighlight classifies a line as a 'Game ready' readiness marker or an 'Exception' fault, driving both the colour highlighting and the [ / ] highlighted-line navigation in the viewer. ReadinessDetector scans for the same 'Game ready' marker for staged world-creation but is currently unused, retained with no callers.",
+    "key_types": [
+      {
+        "name": "LogTailReader",
+        "kind": "class",
+        "file": "ConfigTerminal/Logs/LogTailReader.cs",
+        "summary": "Memory-bounded (256 KB window) tail reader that follows appended bytes and reloads on truncation/rotation."
+      },
+      {
+        "name": "LogCatalog",
+        "kind": "class",
+        "file": "ConfigTerminal/Logs/LogCatalog.cs",
+        "summary": "Filesystem discovery of game and Magnetar log files for the bound instance, marking each group's active file."
+      },
+      {
+        "name": "LogFileInfo",
+        "kind": "class",
+        "file": "ConfigTerminal/Logs/LogCatalog.cs",
+        "summary": "One discovered log file with path, group, last-write time, size, active flag, and a compact timestamped display name."
+      },
+      {
+        "name": "LogGroup",
+        "kind": "enum",
+        "file": "ConfigTerminal/Logs/LogCatalog.cs",
+        "summary": "Which log stream a file belongs to: Game or Magnetar."
+      },
+      {
+        "name": "ReadinessDetector",
+        "kind": "static class",
+        "file": "ConfigTerminal/Logs/ReadinessDetector.cs",
+        "summary": "Tail-scans the game log for the 'Game ready' marker; currently unused vestige of a prior plan."
+      },
+      {
+        "name": "LogHighlight",
+        "kind": "static class",
+        "file": "ConfigTerminal/Logs/LogHighlight.cs",
+        "summary": "Case-sensitive classifier that flags a log line as a 'Game ready' readiness marker or an 'Exception' fault (Exception wins); used for highlighting and [ / ] navigation."
+      },
+      {
+        "name": "LogHighlightKind",
+        "kind": "enum",
+        "file": "ConfigTerminal/Logs/LogHighlight.cs",
+        "summary": "How a line should be highlighted: None, Ready, or Exception."
+      }
+    ],
+    "public_api": [
+      "LogTailReader.Load()",
+      "LogTailReader.Poll()",
+      "LogTailReader.Lines",
+      "LogTailReader.StructuralChange",
+      "LogCatalog(InstanceBinding binding)",
+      "LogCatalog.Scan()",
+      "LogCatalog.Files",
+      "LogCatalog.ActiveGameLog",
+      "LogFileInfo.DisplayName",
+      "ReadinessDetector.IsReady(string path)",
+      "LogHighlight.Classify(string line)",
+      "LogHighlight.ReadyMarker",
+      "LogHighlight.ExceptionMarker"
+    ],
+    "depends_on": [
+      "System.IO",
+      "System.Text",
+      "System.Text.RegularExpressions",
+      "ConfigTerminal.Model"
+    ],
+    "files_documented": [
+      "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Logs/LogHighlight.cs",
+      "ConfigTerminal/Logs/LogTailReader.cs",
+      "ConfigTerminal/Logs/ReadinessDetector.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminal.Model",
+    "project": "ConfigTerminal",
+    "purpose": "The pure data layer of the MagnetarConfig TUI, with no Terminal.Gui dependency. It holds the declarative option registry (hand-transcribed from the decompiled DS config types), XDocument upsert wrappers for the DS config files (SpaceEngineers-Dedicated.cfg, world Sandbox_config.sbc, LastSession.sbl), world/template/mod models with a template-copy world creator, edit-session dirty tracking and validation, and the plugin profile/source/hub-catalog/workshop-resolver models. Every file writer preserves unknown elements and hand edits so the tool coexists with the DS's own saves and newer game versions.",
+    "role": "This module is consumed by the ConfigTerminal UI layer (Terminal.Gui windows) to read, validate and save an instance's dedicated-server, world and Magnetar plugin configuration entirely from outside the running game. It mirrors the on-disk formats and semantics of the Space Engineers DS and of Magnetar (Pulsar.Shared) — password hashing, LastSession precedence, profile/source schemas, protobuf-net hub caches — without referencing those runtime assemblies, and delegates atomic/backup file writes to the ConfigTerminal.Io layer (AtomicFile, XmlOut, PlatformPaths).",
+    "key_types": [
+      {
+        "name": "OptionDefinition",
+        "kind": "record",
+        "file": "ConfigTerminal/Model/OptionModel.cs",
+        "summary": "Declarative metadata for one config option driving the editor, serialization, validation and liveness."
+      },
+      {
+        "name": "OptionRegistry",
+        "kind": "static class",
+        "file": "ConfigTerminal/Model/OptionRegistry.cs",
+        "summary": "Single source of truth for every editable dedicated-root and session-settings option."
+      },
+      {
+        "name": "ConfigDocumentBase",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/ConfigDocumentBase.cs",
+        "summary": "Abstract XDocument base with per-element upsert get/set/unset and tolerant scalar parsing."
+      },
+      {
+        "name": "DedicatedConfigDocument",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+        "summary": "Wrapper for SpaceEngineers-Dedicated.cfg with typed accessors for access lists, password and world selection."
+      },
+      {
+        "name": "WorldConfigDocument",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/WorldConfigDocument.cs",
+        "summary": "Wrapper for a world's Sandbox_config.sbc: session settings and the per-world mod list."
+      },
+      {
+        "name": "EditSession",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/EditSession.cs",
+        "summary": "Content-snapshot dirty tracking plus validation and atomic save for one open document."
+      },
+      {
+        "name": "DsInstance",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/DsInstance.cs",
+        "summary": "Aggregate root binding cfg, worlds, templates and last-session, resolving the active world non-throwingly."
+      },
+      {
+        "name": "WorldCatalog",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/WorldCatalog.cs",
+        "summary": "Enumerates worlds under Saves/ into WorldInfo display metadata."
+      },
+      {
+        "name": "WorldCreator",
+        "kind": "static class",
+        "file": "ConfigTerminal/Model/WorldCreator.cs",
+        "summary": "Creates a world by staging a copy of a DS template and stamping its Sandbox_config.sbc."
+      },
+      {
+        "name": "MagnetarPlugins",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/MagnetarPlugins.cs",
+        "summary": "Facade over Magnetar's plugin profile and sources: local DLLs, dev folders, hub catalog and sources."
+      },
+      {
+        "name": "PluginProfileDocument",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/PluginProfileDocument.cs",
+        "summary": "Wrapper for a Magnetar plugin profile editing the enabled-set collections."
+      },
+      {
+        "name": "PluginSourcesDocument",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/PluginSourcesDocument.cs",
+        "summary": "Wrapper for Sources/sources.xml editing dev-folder, remote-hub, remote-plugin and local-hub sources."
+      },
+      {
+        "name": "ProfileCatalog",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/ProfileCatalog.cs",
+        "summary": "Manages named plugin profile presets against the active Current.xml."
+      },
+      {
+        "name": "HubCatalog",
+        "kind": "static class",
+        "file": "ConfigTerminal/Model/HubCatalog.cs",
+        "summary": "Parses Magnetar's cached protobuf-net plugin-catalog .bin blobs offline via ProtoReader."
+      },
+      {
+        "name": "WorkshopResolver",
+        "kind": "class",
+        "file": "ConfigTerminal/Model/WorkshopResolver.cs",
+        "summary": "Resolves Steam Workshop mod names and expands collections via keyless ISteamRemoteStorage endpoints."
+      },
+      {
+        "name": "MiniJson",
+        "kind": "static class",
+        "file": "ConfigTerminal/Model/Json/MiniJson.cs",
+        "summary": "Dependency-free JSON reader producing a lenient JsonValue tree for the workshop resolver."
+      },
+      {
+        "name": "PasswordHasher",
+        "kind": "static class",
+        "file": "ConfigTerminal/Model/PasswordHasher.cs",
+        "summary": "DS-identical PBKDF2-SHA1 server-password hashing."
+      }
+    ],
+    "public_api": [
+      "OptionRegistry.DedicatedOptions / SessionOptions / All / ById(id) / Categories(scope)",
+      "DedicatedConfigDocument.Open(filePath) / SetPassword(plaintext) / SetAdministrators/SetBanned/SetReserved",
+      "WorldConfigDocument.Open(filePath) / ReadMods() / WriteMods(list) / RefreshLastSaveTime()",
+      "ConfigDocumentBase.Get/Set/Unset/IsSet(def) / Save(writer)",
+      "EditSession.IsDirty / Validate() / Save(writer) / Rebase()",
+      "DsInstance.Open(binding) / Reload() / ActiveWorld",
+      "WorldCatalog.Scan() / WorldCreator.CreateFromTemplate(template, name, savesPath)",
+      "LastSessionFile.Read(path) / ForWorld(world, savesPath) / Write(writer, path)",
+      "MagnetarPlugins.LocalDlls() / HubCatalogPlugins() / SetHubPluginEnabled(id, on) / AddDevFolderFromManifest(path)",
+      "ProfileCatalog.NamedProfiles() / SaveCurrentAs(name) / Load(key) / Rename(key, name) / Delete(key)",
+      "WorkshopResolver.ExtractIds(text) / Resolve(ids)",
+      "HubCatalog.ReadFile(binPath, label)"
+    ],
+    "depends_on": [
+      "System.Xml.Linq",
+      "System.Net.Http",
+      "System.Security.Cryptography",
+      "System.IO.Compression",
+      "Steam ISteamRemoteStorage Web API",
+      "protobuf-net wire format (read-only, no library)",
+      "ConfigTerminal.Io"
+    ],
+    "files_documented": [
+      "ConfigTerminal/Model/CheckpointReader.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/DefaultHttpFetcher.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/HubCatalog.cs",
+      "ConfigTerminal/Model/Json/MiniJson.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/ModList.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/PasswordHasher.cs",
+      "ConfigTerminal/Model/PluginManifest.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs",
+      "ConfigTerminal/Model/ProtoReader.cs",
+      "ConfigTerminal/Model/WorkshopResolver.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminal.Process",
+    "project": "ConfigTerminal",
+    "purpose": "Controls the single managed Magnetar DS instance for the config terminal: it reads and verifies the launcher's magnetar.pid file (distinguishing running, stale, and foreign states), builds the daemon launch command line from the instance binding, spawns the launcher detached with discarded output, delivers lifecycle signals, and exposes a change-detecting status poller for the UI. It classifies process state into a ServerStatus snapshot rather than ever trusting the pid file's presence alone.",
+    "role": "This is the process-control layer of the ConfigTerminal (MagnetarConfig) tool, sitting between the Model/Io layers and the Terminal.Gui views. It carries no Terminal.Gui dependency: MagnetarProcess and PidFileReader do the imperative and read-only work, while ProcessMonitor is driven by the view's main-loop timer so all callbacks stay on the single UI thread. It consumes InstanceBinding (ConfigTerminal.Model) and PlatformPaths (ConfigTerminal.Io) and drives the launcher process whose in-process ServerControl handles the actual save/quit inside Magnetar.",
+    "key_types": [
+      {
+        "name": "MagnetarProcess",
+        "kind": "class",
+        "file": "ConfigTerminal/Process/MagnetarProcess.cs",
+        "summary": "Starts/stops/reloads/force-kills the one instance and queries its status; graceful Stop (SIGTERM) and Reload (SIGHUP) are Linux-only, Windows offers only force-kill."
+      },
+      {
+        "name": "PidFileReader",
+        "kind": "class",
+        "file": "ConfigTerminal/Process/PidFileReader.cs",
+        "summary": "Reads and verifies magnetar.pid, classifying state as NotRunning/Running/StalePidFile/Foreign via live-pid and layered identity checks."
+      },
+      {
+        "name": "LaunchSpec",
+        "kind": "class",
+        "file": "ConfigTerminal/Process/LaunchSpec.cs",
+        "summary": "Builds the daemon launch argument list from the binding and rejects user extra args that collide with tool-managed switches."
+      },
+      {
+        "name": "ServerStatus",
+        "kind": "class",
+        "file": "ConfigTerminal/Process/ServerStatus.cs",
+        "summary": "Snapshot of process state (pid, start time, detail) with uptime and status-line formatting."
+      },
+      {
+        "name": "ServerState",
+        "kind": "enum",
+        "file": "ConfigTerminal/Process/ServerStatus.cs",
+        "summary": "NotRunning, Starting, Running, Stopping, StalePidFile, Foreign."
+      },
+      {
+        "name": "ProcessMonitor",
+        "kind": "class",
+        "file": "ConfigTerminal/Process/ProcessMonitor.cs",
+        "summary": "Polls status and raises Changed on a state/pid transition, driven by the UI main-loop timer."
+      }
+    ],
+    "public_api": [
+      "MagnetarProcess(InstanceBinding)",
+      "MagnetarProcess.Query()",
+      "MagnetarProcess.Start(LaunchSpec, TimeSpan?)",
+      "MagnetarProcess.Stop(TimeSpan) [Linux-only, SIGTERM]",
+      "MagnetarProcess.Reload() [Linux-only, SIGHUP]",
+      "MagnetarProcess.ForceKill(TimeSpan)",
+      "PidFileReader.Query()",
+      "LaunchSpec.RejectionReason()",
+      "LaunchSpec.BuildArgs()",
+      "ProcessMonitor.Poll()",
+      "ProcessMonitor.Changed (event)"
+    ],
+    "depends_on": [
+      "ConfigTerminal.Model",
+      "ConfigTerminal.Io",
+      "System.Diagnostics.Process",
+      "libc kill (P/Invoke, Linux signals)",
+      "Linux /proc/<pid>/cmdline"
+    ],
+    "files_documented": [
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/PidFileReader.cs",
+      "ConfigTerminal/Process/ProcessMonitor.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminal.Ui",
+    "project": "ConfigTerminal",
+    "purpose": "The Terminal.Gui v1 (classic Turbo Vision) presentation layer of the MagnetarConfig TUI. It provides the application shell (menu bar, F-key status bar, Turbo Vision desktop, panel navigation, and process-status/auto-save timers), a generic registry-driven settings form, and dedicated editors for worlds, mods, access lists, passwords, plugins, hub plugins, plugin sources, and profiles, plus the new-world wizard, log viewer, instance picker, shared dialogs, and the color theme. Editable panels implement IAutoSaveContent so edits persist automatically on a ~1s tick, on panel switch, and on quit with no explicit Save step.",
+    "role": "This is the human-facing front end of MagnetarConfig: it renders and drives every screen and delegates all data and process work to the other ConfigTerminal modules. Views read and mutate configuration through ConfigTerminal.Model (documents, edit sessions, option registry, plugin/profile catalogs, world/template info), write atomically via ConfigTerminal.Io (AtomicFile, PlatformPaths), operate the server through ConfigTerminal.Process (MagnetarProcess, ProcessMonitor, ServerStatus), tail logs via ConfigTerminal.Logs, and persist tool preferences via ConfigTerminal.State/App. AppShell is the composition root that wires these collaborators together and hosts one content panel at a time.",
+    "key_types": [
+      {
+        "name": "AppShell",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/AppShell.cs",
+        "summary": "Toplevel app shell: menu/status bar, panel host, status-poll and auto-save timers, and all process actions."
+      },
+      {
+        "name": "OptionFormView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/OptionFormView.cs",
+        "summary": "Generic registry-driven settings form with live validation and auto-save; used for DS config, new-world defaults, and per-world settings."
+      },
+      {
+        "name": "WorldsView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/WorldsView.cs",
+        "summary": "Lists worlds under Saves/ with settings/mods editing, activation, creation, and deletion."
+      },
+      {
+        "name": "ModListView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/ModListView.cs",
+        "summary": "Ordered mod-list editor for a world's Sandbox_config.sbc with background Workshop name resolution."
+      },
+      {
+        "name": "LogViewerView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/LogViewerView.cs",
+        "summary": "Read-only log viewer over a memory-bounded reader: tail -f follow, word-wrap, incremental search (case / whole-word options), 'Game ready'/'Exception' line highlighting, and [ / ] highlighted-line navigation."
+      },
+      {
+        "name": "PluginsView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/PluginsView.cs",
+        "summary": "Manages local DLLs and registered dev-folder plugin sources."
+      },
+      {
+        "name": "HubPluginsView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/HubPluginsView.cs",
+        "summary": "Browses cached hub/remote plugin catalogs and dev folders, toggling them in the active profile."
+      },
+      {
+        "name": "PluginSourcesView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/PluginSourcesView.cs",
+        "summary": "Edits the remote-hub, remote-plugin, and local-hub catalog sources in sources.xml."
+      },
+      {
+        "name": "ProfilesView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/ProfilesView.cs",
+        "summary": "Manages named plugin profiles (load/save/update/rename/delete) against the active Current.xml set."
+      },
+      {
+        "name": "AccessListView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/AccessListView.cs",
+        "summary": "Editors for the Administrators/Banned/Reserved SteamID lists and GroupID."
+      },
+      {
+        "name": "DashboardView",
+        "kind": "class",
+        "file": "ConfigTerminal/Ui/DashboardView.cs",
+        "summary": "Home window with live status, an instance summary, and process-control buttons."
+      },
+      {
+        "name": "NewWorldWizard",
+        "kind": "static class",
+        "file": "ConfigTerminal/Ui/NewWorldWizard.cs",
+        "summary": "Creates a world by copying a DS template and activating it, no server start required."
+      },
+      {
+        "name": "Dialogs",
+        "kind": "static class",
+        "file": "ConfigTerminal/Ui/Dialogs.cs",
+        "summary": "Shared modal helpers (info/error/confirm/details/prompt) and a UI-thread-safe background runner."
+      },
+      {
+        "name": "FileDialogs",
+        "kind": "static class",
+        "file": "ConfigTerminal/Ui/FileDialogs.cs",
+        "summary": "Directory/file browse dialogs that quiet Terminal.Gui's noisy folder watcher via reflection."
+      },
+      {
+        "name": "InstancePickerDialog",
+        "kind": "static class",
+        "file": "ConfigTerminal/Ui/InstancePickerDialog.cs",
+        "summary": "Modal prompt for the data/config/launcher/DS-install paths identifying an instance."
+      },
+      {
+        "name": "PasswordDialog",
+        "kind": "static class",
+        "file": "ConfigTerminal/Ui/PasswordDialog.cs",
+        "summary": "Sets or clears the server password, storing only the PBKDF2 hash+salt."
+      },
+      {
+        "name": "TurboVisionTheme",
+        "kind": "static class",
+        "file": "ConfigTerminal/Ui/TurboVisionTheme.cs",
+        "summary": "Classic 16-color Turbo Vision palette as Terminal.Gui ColorSchemes, installed as global defaults."
+      },
+      {
+        "name": "IAutoSaveContent",
+        "kind": "interface",
+        "file": "ConfigTerminal/Ui/IAutoSaveContent.cs",
+        "summary": "Contract for auto-saving panels: FlushPendingSave plus InvalidFields."
+      }
+    ],
+    "public_api": [
+      "AppShell(InstanceBinding)",
+      "AppShell.StartServer(bool confirm) / StopServer() / RestartServer() / ReloadServer()",
+      "AppShell.ShowServerSettings() / ShowWorlds() / ShowLogs() / ShowHubPlugins() / ShowProfiles() / ShowPlugins()",
+      "OptionFormView(title, options, document, session, writer, onSaved, banner, editMods)",
+      "IAutoSaveContent.FlushPendingSave() / InvalidFields",
+      "NewWorldWizard.Run(AppShell)",
+      "InstancePickerDialog.Show(...)",
+      "PasswordDialog.Show(...)",
+      "Dialogs.Confirm/ConfirmDetails/ConfirmDestructive/Prompt/RunBackground(...)",
+      "TurboVisionTheme.Apply()"
+    ],
+    "depends_on": [
+      "Terminal.Gui",
+      "NStack",
+      "ConfigTerminal.Model",
+      "ConfigTerminal.Io",
+      "ConfigTerminal.Process",
+      "ConfigTerminal.Logs",
+      "ConfigTerminal.App",
+      "System.Reflection"
+    ],
+    "files_documented": [
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/DesktopBackground.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/FileDialogs.cs",
+      "ConfigTerminal/Ui/HelpDialog.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/IAutoSaveContent.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminal/Ui/ManifestPicker.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ]
+  },
+  {
+    "module": "ConfigTerminalTests",
+    "project": "ConfigTerminalTests",
+    "purpose": "xUnit test suite for the MagnetarConfig TUI (ConfigTerminal). It specifies and guards the invariants of the option registry, the surgical round-trip behavior of the config/profile/sources documents, the process/pid/atomic-file and world-creation layer, the protobuf hub-catalog reader, the Steam Workshop resolver, and a headless Terminal.Gui view-tree smoke test. Interop tests prove the tool's XML is accepted by Magnetar's own serializers, and a live end-to-end test drives the real create/start/ready/stop flow against an installed dedicated server.",
+    "role": "This is the verification harness for the ConfigTerminal (MagnetarConfig) tool. Unit tests exercise ConfigTerminal.Model/Io/Process/Logs/Ui in isolation with temp directories and fakes; interop tests reflect against the deployed Magnetar.Shared.dll to confirm cross-compatibility with Pulsar.Shared's Profile/SourcesConfig/ProfilesConfig serializers; and live tests (gated by MAGNETAR_LIVE=1) plus Magnetar-install-gated interop tests validate the tool against a real Magnetar/DS deployment. It ships fixtures (a captured MagnetarHub protobuf catalog) and runs UI tests single-threaded via Terminal.Gui's FakeDriver.",
+    "key_types": [
+      {
+        "name": "RegistryTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/RegistryTests.cs",
+        "summary": "Guards OptionRegistry invariants: unique ids/xml-names, enum choices, preserved Keen typos, exact enum orderings."
+      },
+      {
+        "name": "DocumentTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/DocumentTests.cs",
+        "summary": "Config-document round-trips: unknown-element preservation, enum normalization, unset-to-default, admins/password/mods serialization."
+      },
+      {
+        "name": "PluginConfigTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/PluginConfigTests.cs",
+        "summary": "Plugin/profile/sources upsert and MagnetarPlugins facade: idempotent enable/disable, sibling preservation, hub/dev-folder registration."
+      },
+      {
+        "name": "PluginInteropTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/PluginInteropTests.cs",
+        "summary": "Reflection interop proving tool-written profiles/sources deserialize and Validate() through the deployed Magnetar.Shared.dll."
+      },
+      {
+        "name": "ProcessAndFileTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/ProcessAndFileTests.cs",
+        "summary": "Process/pid/atomic-file and world-creation behavior: PBKDF2 hash, LastSession, LaunchSpec args, PidFileReader states, WorldCreator."
+      },
+      {
+        "name": "WorkshopResolverTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/WorkshopResolverTests.cs",
+        "summary": "WorkshopResolver id extraction, JSON parsing, single-mod/collection resolution, warnings, via a canned IHttpFetcher fake."
+      },
+      {
+        "name": "ProfileCatalogTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/ProfileCatalogTests.cs",
+        "summary": "Named-profile management: key sanitization, save/load/update/rename/delete, active-match tracking, reserved Current handling."
+      },
+      {
+        "name": "HubCatalogTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/HubCatalogTests.cs",
+        "summary": "HubCatalog protobuf reader decoding a real MagnetarHub catalog fixture and empty/missing-input handling."
+      },
+      {
+        "name": "UiSmokeTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/UiSmokeTests.cs",
+        "summary": "Headless Terminal.Gui FakeDriver tests: the AppShell view-tree smoke test plus log-viewer coverage of highlighting, tail-on-open, search (with options), clear, and highlighted-line navigation."
+      },
+      {
+        "name": "LiveEndToEndTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/LiveEndToEndTests.cs",
+        "summary": "MAGNETAR_LIVE-gated real create/start/Game-ready/stop flow against an installed DS + patched launcher, restoring state after."
+      },
+      {
+        "name": "LogHighlightTests",
+        "kind": "class",
+        "file": "ConfigTerminalTests/LogHighlightTests.cs",
+        "summary": "Unit tests for LogHighlight.Classify: the two markers, None/null cases, Exception precedence, and case-sensitivity."
+      }
+    ],
+    "public_api": [
+      "RegistryTests (option-registry invariants)",
+      "DocumentTests (config-document round-trips)",
+      "PluginConfigTests (profile/sources upsert + facade)",
+      "PluginInteropTests (Magnetar.Shared serializer interop)",
+      "ProcessAndFileTests (pid/atomic-file/world-creation)",
+      "WorkshopResolverTests (Steam resolver via fake fetcher)",
+      "ProfileCatalogTests (named-profile management)",
+      "HubCatalogTests (protobuf catalog reader)",
+      "UiSmokeTests (FakeDriver view-tree smoke)",
+      "LiveEndToEndTests (MAGNETAR_LIVE end-to-end)"
+    ],
+    "depends_on": [
+      "xUnit",
+      "Terminal.Gui (FakeDriver)",
+      "System.Xml.Serialization",
+      "System.Security.Cryptography",
+      "deployed Magnetar.Shared.dll (Pulsar.Shared)",
+      "Steam Web API (live)",
+      "live SE Dedicated Server + patched Magnetar launcher (live)",
+      "ConfigTerminal.Model",
+      "ConfigTerminal.Ui",
+      "ConfigTerminal.Process",
+      "ConfigTerminal.Io",
+      "ConfigTerminal.Logs"
+    ],
+    "files_documented": [
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/HubCatalogTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/LogHighlightTests.cs",
+      "ConfigTerminalTests/PluginConfigTests.cs",
+      "ConfigTerminalTests/PluginInteropTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs",
+      "ConfigTerminalTests/ProfileCatalogTests.cs",
+      "ConfigTerminalTests/RegistryTests.cs",
+      "ConfigTerminalTests/UiSmokeTests.cs",
+      "ConfigTerminalTests/WorkshopResolverTests.cs"
     ]
   }
 ]

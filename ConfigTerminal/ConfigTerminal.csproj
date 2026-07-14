@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Product>Magnetar</Product>
+    <Copyright>© 2025 SpaceGT</Copyright>
+    <AssemblyTitle>MagnetarConfig</AssemblyTitle>
+    <Description>Terminal UI configuration tool for a Magnetar-managed Space Engineers 1 Dedicated Server</Description>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Magnetar.ConfigTerminal</RootNamespace>
+    <AssemblyName>MagnetarConfig</AssemblyName>
+    <PackageId>MagnetarConfig</PackageId>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- .NET 10 only, on both Windows and Linux. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <!-- Windows-only launcher polish: icon + long-path manifest, mirroring Legacy. -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <ApplicationIcon>..\Shared\Splash\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Terminal.Gui v1 (classic API). Pinned to the last v1 stable; v2 is a
+         breaking beta. See Docs/ConfigTerminal.md §4.2. -->
+    <PackageReference Include="Terminal.Gui" Version="1.19.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ConfigTerminalTests" />
+  </ItemGroup>
+</Project>

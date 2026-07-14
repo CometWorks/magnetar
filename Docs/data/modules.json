@@ -13,6 +13,142 @@
     "model": "opus",
     "dominant_tier": 1
   },
+  "ConfigTerminal.App": {
+    "project": "ConfigTerminal",
+    "files": [
+      "ConfigTerminal/Cli.cs",
+      "ConfigTerminal/Diagnostics.cs",
+      "ConfigTerminal/Program.cs",
+      "ConfigTerminal/State/ToolSettings.cs"
+    ],
+    "file_count": 4,
+    "total_lines": 380,
+    "model": "sonnet",
+    "dominant_tier": 2
+  },
+  "ConfigTerminal.Io": {
+    "project": "ConfigTerminal",
+    "files": [
+      "ConfigTerminal/Io/AtomicFile.cs",
+      "ConfigTerminal/Io/InstanceLocator.cs",
+      "ConfigTerminal/Io/PlatformPaths.cs",
+      "ConfigTerminal/Io/XmlOut.cs"
+    ],
+    "file_count": 4,
+    "total_lines": 316,
+    "model": "sonnet",
+    "dominant_tier": 2
+  },
+  "ConfigTerminal.Logs": {
+    "project": "ConfigTerminal",
+    "files": [
+      "ConfigTerminal/Logs/LogCatalog.cs",
+      "ConfigTerminal/Logs/LogHighlight.cs",
+      "ConfigTerminal/Logs/LogTailReader.cs",
+      "ConfigTerminal/Logs/ReadinessDetector.cs"
+    ],
+    "file_count": 4,
+    "total_lines": 374,
+    "model": "sonnet",
+    "dominant_tier": 2
+  },
+  "ConfigTerminal.Model": {
+    "project": "ConfigTerminal",
+    "files": [
+      "ConfigTerminal/Model/CheckpointReader.cs",
+      "ConfigTerminal/Model/ConfigDocumentBase.cs",
+      "ConfigTerminal/Model/DedicatedConfigDocument.cs",
+      "ConfigTerminal/Model/DefaultHttpFetcher.cs",
+      "ConfigTerminal/Model/DsInstance.cs",
+      "ConfigTerminal/Model/EditSession.cs",
+      "ConfigTerminal/Model/HubCatalog.cs",
+      "ConfigTerminal/Model/Json/MiniJson.cs",
+      "ConfigTerminal/Model/LastSessionFile.cs",
+      "ConfigTerminal/Model/MagnetarPlugins.cs",
+      "ConfigTerminal/Model/ModList.cs",
+      "ConfigTerminal/Model/OptionModel.cs",
+      "ConfigTerminal/Model/OptionRegistry.cs",
+      "ConfigTerminal/Model/PasswordHasher.cs",
+      "ConfigTerminal/Model/PluginManifest.cs",
+      "ConfigTerminal/Model/PluginProfileDocument.cs",
+      "ConfigTerminal/Model/PluginSourcesDocument.cs",
+      "ConfigTerminal/Model/ProfileCatalog.cs",
+      "ConfigTerminal/Model/ProtoReader.cs",
+      "ConfigTerminal/Model/WorkshopResolver.cs",
+      "ConfigTerminal/Model/WorldCatalog.cs",
+      "ConfigTerminal/Model/WorldConfigDocument.cs",
+      "ConfigTerminal/Model/WorldCreator.cs",
+      "ConfigTerminal/Model/WorldTemplateCatalog.cs"
+    ],
+    "file_count": 24,
+    "total_lines": 3862,
+    "model": "opus",
+    "dominant_tier": 1
+  },
+  "ConfigTerminal.Process": {
+    "project": "ConfigTerminal",
+    "files": [
+      "ConfigTerminal/Process/LaunchSpec.cs",
+      "ConfigTerminal/Process/MagnetarProcess.cs",
+      "ConfigTerminal/Process/PidFileReader.cs",
+      "ConfigTerminal/Process/ProcessMonitor.cs",
+      "ConfigTerminal/Process/ServerStatus.cs"
+    ],
+    "file_count": 5,
+    "total_lines": 524,
+    "model": "opus",
+    "dominant_tier": 1
+  },
+  "ConfigTerminal.Ui": {
+    "project": "ConfigTerminal",
+    "files": [
+      "ConfigTerminal/Ui/AccessListView.cs",
+      "ConfigTerminal/Ui/AppShell.cs",
+      "ConfigTerminal/Ui/DashboardView.cs",
+      "ConfigTerminal/Ui/DesktopBackground.cs",
+      "ConfigTerminal/Ui/Dialogs.cs",
+      "ConfigTerminal/Ui/FileDialogs.cs",
+      "ConfigTerminal/Ui/HelpDialog.cs",
+      "ConfigTerminal/Ui/HubPluginsView.cs",
+      "ConfigTerminal/Ui/IAutoSaveContent.cs",
+      "ConfigTerminal/Ui/InstancePickerDialog.cs",
+      "ConfigTerminal/Ui/LogViewerView.cs",
+      "ConfigTerminal/Ui/ManifestPicker.cs",
+      "ConfigTerminal/Ui/ModListView.cs",
+      "ConfigTerminal/Ui/NewWorldWizard.cs",
+      "ConfigTerminal/Ui/OptionFormView.cs",
+      "ConfigTerminal/Ui/PasswordDialog.cs",
+      "ConfigTerminal/Ui/PluginSourcesView.cs",
+      "ConfigTerminal/Ui/PluginsView.cs",
+      "ConfigTerminal/Ui/ProfilesView.cs",
+      "ConfigTerminal/Ui/TurboVisionTheme.cs",
+      "ConfigTerminal/Ui/WorldsView.cs"
+    ],
+    "file_count": 21,
+    "total_lines": 3797,
+    "model": "opus",
+    "dominant_tier": 1
+  },
+  "ConfigTerminalTests": {
+    "project": "ConfigTerminalTests",
+    "files": [
+      "ConfigTerminalTests/DocumentTests.cs",
+      "ConfigTerminalTests/HubCatalogTests.cs",
+      "ConfigTerminalTests/LiveEndToEndTests.cs",
+      "ConfigTerminalTests/LogHighlightTests.cs",
+      "ConfigTerminalTests/PluginConfigTests.cs",
+      "ConfigTerminalTests/PluginInteropTests.cs",
+      "ConfigTerminalTests/ProcessAndFileTests.cs",
+      "ConfigTerminalTests/ProfileCatalogTests.cs",
+      "ConfigTerminalTests/RegistryTests.cs",
+      "ConfigTerminalTests/UiSmokeTests.cs",
+      "ConfigTerminalTests/WorkshopResolverTests.cs"
+    ],
+    "file_count": 11,
+    "total_lines": 1766,
+    "model": "sonnet",
+    "dominant_tier": 1
+  },
   "Legacy.Commands": {
     "project": "Legacy",
     "files": [
@@ -47,11 +183,12 @@
       "Legacy/Launcher/Daemon.cs",
       "Legacy/Launcher/Folder.cs",
       "Legacy/Launcher/Game.cs",
+      "Legacy/Launcher/PidFile.cs",
       "Legacy/Launcher/ServerControl.cs",
       "Legacy/Program.cs"
     ],
-    "file_count": 5,
-    "total_lines": 1455,
+    "file_count": 6,
+    "total_lines": 1560,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -277,7 +414,7 @@
       "Shared/Network/SimpleHttpClient.cs"
     ],
     "file_count": 7,
-    "total_lines": 892,
+    "total_lines": 902,
     "model": "sonnet",
     "dominant_tier": 1
   },

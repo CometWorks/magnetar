@@ -410,7 +410,29 @@ static class Program
         // the server starts. Safe this early — handlers tolerate a null session.
         ServerControl.InstallSignalHandlers();
 
+        // Publish this instance's pid so an external tool (MagnetarConfig) can
+        // discover and verify it. Written after the daemon detach (the pid is
+        // final) and removed by ServerControl.FlushAll on every clean exit.
+        PidFile.Write(ConfigManager.Instance.PulsarDir, ResolveDataDir(args, ds64Dir));
+
         Game.StartDedicatedServer(EnsureDataPathApplied(args, ds64Dir));
+    }
+
+    // Resolves the DS data directory (the "-path" value) the same way the DS's
+    // ProcessArgs does — combined against the DS binaries' folder so an absolute
+    // path passes through unchanged. Returns null when "-path" is absent (the DS
+    // then uses its default instance).
+    private static string ResolveDataDir(string[] args, string ds64Dir)
+    {
+        int index = Array.FindIndex(
+            args,
+            arg => arg.Equals("-path", StringComparison.OrdinalIgnoreCase)
+        );
+
+        if (index < 0 || index + 1 >= args.Length)
+            return null;
+
+        return Path.GetFullPath(Path.Combine(ds64Dir, args[index + 1].Trim('"')));
     }
 
     // The dedicated server's own "-path <dir>" argument (the instance/data

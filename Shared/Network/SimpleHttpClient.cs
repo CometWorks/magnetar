@@ -6,6 +6,10 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
 
+// Shared with the net48 build, where WebRequest/HttpWebRequest are the current
+// API; suppress the net10.0-only SYSLIB0014 obsoletion for this legacy transport.
+#pragma warning disable SYSLIB0014
+
 namespace Pulsar.Shared.Network;
 
 public static class SimpleHttpClient

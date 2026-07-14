@@ -47,6 +47,8 @@ ALLOWED_PROJ = {
     "Legacy": {"Legacy", "Shared", "PluginSdk", "Compiler"},
     "PluginSdkTests": {"PluginSdkTests", "PluginSdk"},
     "MagnetarMod": {"MagnetarMod"},  # in-game mod; references SE ModAPI only
+    "ConfigTerminal": {"ConfigTerminal"},  # standalone TUI; no repo project refs
+    "ConfigTerminalTests": {"ConfigTerminalTests", "ConfigTerminal"},
 }
 
 

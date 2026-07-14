@@ -1,0 +1,439 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using NStack;
+using Terminal.Gui;
+using Magnetar.ConfigTerminal.Io;
+using Magnetar.ConfigTerminal.Model;
+
+namespace Magnetar.ConfigTerminal.Ui;
+
+/// <summary>
+/// The generic, registry-driven settings form used for the DS global config,
+/// the cfg's new-world defaults, and each world's settings. Left pane: category
+/// list. Right pane: a scrollable form of field widgets. Edits save themselves
+/// through the edit session (validate → backup → atomic write); invalid values
+/// are shown red and kept out of the document until corrected.
+/// </summary>
+internal sealed class OptionFormView : Window, IAutoSaveContent
+{
+    private readonly IReadOnlyList<OptionDefinition> options;
+    private readonly ConfigDocumentBase document;
+    private readonly EditSession session;
+    private readonly AtomicFile writer;
+    private readonly Action onSaved;
+    private readonly string banner;
+
+    private readonly List<string> categories;
+    private readonly TextField filter;
+    private readonly ListView categoryList;
+    private readonly FrameView formFrame;
+    private readonly ScrollView form;
+    private readonly Label hint;
+    private string currentCategory;
+
+    // Fields whose editor currently holds an invalid value; their value is not
+    // committed to the document (the original is kept) until corrected. Keyed by
+    // the registry's singleton OptionDefinition, so entries survive form rebuilds.
+    private readonly HashSet<OptionDefinition> invalid = new();
+
+    public OptionFormView(
+        string title,
+        IReadOnlyList<OptionDefinition> options,
+        ConfigDocumentBase document,
+        EditSession session,
+        AtomicFile writer,
+        Action onSaved,
+        string banner = null,
+        Action editMods = null) : base(title)
+    {
+        this.options = options;
+        this.document = document;
+        this.session = session;
+        this.writer = writer;
+        this.onSaved = onSaved;
+        this.banner = banner;
+
+        ColorScheme = TurboVisionTheme.Window;
+        Border.BorderStyle = BorderStyle.Double;
+
+        int top = 0;
+        if (!string.IsNullOrEmpty(banner))
+        {
+            Add(new Label(banner) { X = 1, Y = 0, Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window });
+            top = 1;
+        }
+
+        // World settings link out to that world's ordered mod list (its own editor,
+        // since the <Mods> list is not a flat registry field). Switching panels
+        // flushes this form's pending edits first (SetContent), so no changes are lost.
+        if (editMods != null)
+        {
+            var modsButton = new Button("Edit this world's _Mods…") { X = 1, Y = top };
+            modsButton.Clicked += () => editMods();
+            Add(modsButton);
+            top += 1;
+        }
+
+        var filterLabel = new Label("Filter: ") { X = 1, Y = top, ColorScheme = TurboVisionTheme.Window };
+        filter = new TextField(string.Empty)
+        {
+            X = Pos.Right(filterLabel),
+            Y = top,
+            Width = Dim.Fill(1),
+            ColorScheme = TurboVisionTheme.Window,
+        };
+        filter.TextChanged += _ => RebuildForm();
+
+        // The category list and form start one row below the filter box.
+        int contentTop = top + 1;
+
+        categories = options.Select(o => o.Category).Distinct().ToList();
+        categoryList = new ListView(categories)
+        {
+            X = 1,
+            Y = contentTop,
+            Width = 24,
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
+        };
+        categoryList.SelectedItemChanged += _ =>
+        {
+            // Selecting a category means "show this category in full", but a non-empty
+            // filter ignores the selection and spans all categories. Clear it so the
+            // click takes effect. Setting Text fires TextChanged -> RebuildForm; when the
+            // filter is already empty, rebuild directly so the selection still applies.
+            if (filter.Text != null && filter.Text.Length > 0)
+                filter.Text = ustring.Empty;
+            else
+                RebuildForm();
+        };
+
+        formFrame = new FrameView("Options")
+        {
+            X = 26,
+            Y = contentTop,
+            Width = Dim.Fill(1),
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
+        };
+        form = new ScrollView
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            ShowVerticalScrollIndicator = true,
+            ShowHorizontalScrollIndicator = false,
+            ColorScheme = TurboVisionTheme.Window,
+        };
+        formFrame.Add(form);
+
+        hint = new Label("Changes save automatically · Tab move · Filter narrows fields across categories")
+        {
+            X = 1,
+            Y = Pos.AnchorEnd(1),
+            Width = Dim.Fill(1),
+            Height = 1,
+            ColorScheme = TurboVisionTheme.Window,
+        };
+
+        Add(filterLabel, filter, categoryList, formFrame, hint);
+
+        if (categories.Count > 0)
+        {
+            categoryList.SelectedItem = 0;
+            RebuildForm();
+        }
+
+        // Land on the filter, not the first focusable child. Without this the
+        // optional "Edit Mods" button (added first) would steal initial focus.
+        filter.SetFocus();
+    }
+
+    private void RebuildForm()
+    {
+        string q = (filter.Text?.ToString() ?? string.Empty).Trim();
+        form.RemoveAll();
+        // Editors are rebuilt from the document's (valid) values, so any
+        // uncommitted invalid text is discarded here — the field reverts to its
+        // original value and is no longer invalid.
+        invalid.Clear();
+        int y = 0;
+
+        if (q.Length == 0)
+        {
+            // No filter: show the fields of the selected category, as before.
+            if (categoryList.SelectedItem < 0 || categoryList.SelectedItem >= categories.Count)
+                return;
+            currentCategory = categories[categoryList.SelectedItem];
+            AddGroup(options.Where(o => o.Category == currentCategory && !o.Hidden), ref y);
+        }
+        else
+        {
+            // Filtering: ignore the selected category and show every matching
+            // field, grouped under its category header so results stay legible.
+            List<OptionDefinition> matches = options
+                .Where(o => !o.Hidden && MatchesFilter(o, q))
+                .ToList();
+            if (matches.Count == 0)
+            {
+                form.Add(new Label("(no settings match)") { X = 0, Y = 0, ColorScheme = TurboVisionTheme.Window });
+                y = 1;
+            }
+            foreach (IGrouping<string, OptionDefinition> group in matches.GroupBy(o => o.Category))
+            {
+                if (y > 0)
+                    y += 1;
+                form.Add(new Label(group.Key + " /") { X = 0, Y = y, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window });
+                y += 1;
+                AddGroup(group, ref y);
+            }
+        }
+
+        form.ContentSize = new Size(80, Math.Max(y + 1, 1));
+        form.SetNeedsDisplay();
+    }
+
+    // Render a run of fields into the form, applying the blank-row spacing that
+    // sets multi-line fields apart. The spacing state resets per call, so each
+    // category group is laid out independently.
+    private void AddGroup(IEnumerable<OptionDefinition> defs, ref int y)
+    {
+        OptionDefinition prev = null;
+        foreach (OptionDefinition def in defs)
+        {
+            // Set a multi-line field apart from its neighbours with a blank row on
+            // each side (a single blank between two adjacent multi-line fields).
+            if (prev != null && (IsMultiline(prev) || IsMultiline(def)))
+                y += 1;
+            View widget = BuildRow(def, ref y);
+            if (widget != null)
+                form.Add(widget);
+            prev = def;
+        }
+    }
+
+    // A field matches the filter when the query occurs (case-insensitively) in
+    // its label, XML name, or help text — the strings a user would search by.
+    private static bool MatchesFilter(OptionDefinition def, string q) =>
+        Contains(def.Label, q) || Contains(def.XmlName, q) || Contains(def.Help, q);
+
+    private static bool Contains(string s, string q) =>
+        s != null && s.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
+
+    // Vertical rows a field's editor occupies; multi-line text needs several so
+    // it isn't clipped to one line and doesn't overlap the fields below it.
+    private const int MultilineRows = 3;
+    private static bool IsMultiline(OptionDefinition def) => def.Kind == OptionKind.MultilineText;
+    private static int RowHeight(OptionDefinition def) =>
+        IsMultiline(def) ? MultilineRows : 1;
+
+    private View BuildRow(OptionDefinition def, ref int y)
+    {
+        const int labelWidth = 34;
+        int rows = RowHeight(def);
+        var container = new View { X = 0, Y = y, Width = Dim.Fill(), Height = rows };
+
+        var label = new Label(def.Label + StatusGlyph(def))
+        {
+            X = 0,
+            Y = 0,
+            Width = labelWidth,
+            ColorScheme = TurboVisionTheme.Window,
+        };
+        container.Add(label);
+
+        View editor = BuildEditor(def, labelWidth);
+        if (editor != null)
+        {
+            editor.Enter += _ => hint.Text = HintFor(def);
+            container.Add(editor);
+        }
+
+        y += rows;
+        return container;
+    }
+
+    private View BuildEditor(OptionDefinition def, int x)
+    {
+        switch (def.Kind)
+        {
+            case OptionKind.Bool:
+            {
+                var cb = new CheckBox(string.Empty) { X = x, Y = 0, Checked = document.GetBool(def) };
+                cb.Toggled += _ =>
+                {
+                    document.Set(def, cb.Checked ? "true" : "false");
+                    session.NotifyChanged();
+                };
+                return cb;
+            }
+            case OptionKind.Enum:
+            {
+                string[] labels = def.Choices.Select(c => c.Label).ToArray();
+                int idx = Math.Max(0, Array.FindIndex(def.Choices, c =>
+                    c.XmlName.Equals(document.Get(def), StringComparison.OrdinalIgnoreCase)));
+                if (def.Choices.Length <= 4)
+                {
+                    // Lay the choices out horizontally so they all fit on the row's
+                    // single line — a vertical group is clipped to Height = 1 and
+                    // only its selected choice shows, hiding the rest.
+                    var rg = new CyclingRadioGroup(labels.Select(l => ustring.Make(l)).ToArray())
+                    {
+                        X = x, Y = 0, SelectedItem = idx,
+                        DisplayMode = DisplayModeLayout.Horizontal, HorizontalSpace = 2,
+                    };
+                    rg.SelectedItemChanged += e =>
+                    {
+                        document.Set(def, def.Choices[e.SelectedItem].XmlName);
+                        session.NotifyChanged();
+                    };
+                    return rg;
+                }
+                var combo = new ComboBox { X = x, Y = 0, Width = 24, Height = 5 };
+                combo.SetSource(labels);
+                combo.SelectedItem = idx;
+                combo.SelectedItemChanged += e =>
+                {
+                    if (e.Item >= 0 && e.Item < def.Choices.Length)
+                    {
+                        document.Set(def, def.Choices[e.Item].XmlName);
+                        session.NotifyChanged();
+                    }
+                };
+                return combo;
+            }
+            case OptionKind.MultilineText:
+            {
+                // AllowsTab=false lets Tab/Shift-Tab move focus between fields
+                // instead of inserting a tab character inside the editor.
+                var tv = new TextView { X = x, Y = 0, Width = Dim.Fill(1), Height = MultilineRows, Text = document.Get(def), AllowsTab = false };
+                tv.Leave += _ =>
+                {
+                    document.Set(def, tv.Text.ToString().TrimEnd('\n'));
+                    session.NotifyChanged();
+                };
+                return tv;
+            }
+            case OptionKind.BlockTypeLimits:
+            case OptionKind.StringList:
+            {
+                // Complex structured editors are out of scope for this form; show
+                // the raw current state read-only so nothing is silently dropped.
+                return new Label("(edited elsewhere)") { X = x, Y = 0, ColorScheme = TurboVisionTheme.Window };
+            }
+            default:
+            {
+                var tf = new TextField(document.Get(def) ?? string.Empty) { X = x, Y = 0, Width = 24 };
+                tf.TextChanged += _ => OnFieldEdited(def, tf, tf.Text.ToString());
+                return tf;
+            }
+        }
+    }
+
+    // Live-validate a free-typed field on each change: a valid value is committed
+    // to the document immediately (so the ~1s auto-save picks it up); an invalid
+    // value is shown red and left out of the document, keeping the original value.
+    private void OnFieldEdited(OptionDefinition def, View editor, string text)
+    {
+        if (EditSession.ErrorFor(def, text) == null)
+        {
+            invalid.Remove(def);
+            editor.ColorScheme = TurboVisionTheme.Window;
+            document.Set(def, text);
+            session.NotifyChanged();
+        }
+        else
+        {
+            invalid.Add(def);
+            editor.ColorScheme = TurboVisionTheme.Error;
+        }
+        editor.SetNeedsDisplay();
+    }
+
+    private string StatusGlyph(OptionDefinition def)
+    {
+        // Configs are round-tripped through the game's serializer, so almost every
+        // field is present — a "set" marker would be constant noise. Flag only the
+        // rare informative case: a field absent from the file (using its default).
+        string g = document.IsSet(def) ? "" : " ○";
+        if (def.Liveness == Liveness.LiveViaReload)
+            g += " ↕";
+        if (def.Experimental && def.Kind == OptionKind.Bool && document.GetBool(def))
+            g += " ▲";
+        return g;
+    }
+
+    private static string HintFor(OptionDefinition def)
+    {
+        string help = string.IsNullOrEmpty(def.Help) ? "" : def.Help + "  ";
+        // Spell out how to change each field type — auto-assigned letter hotkeys
+        // are ambiguous (e.g. Public/Private both bind 'P').
+        string keys = def.Kind switch
+        {
+            OptionKind.Enum when def.Choices.Length <= 4 => "Space / ←→ cycles choice.  ",
+            OptionKind.Bool => "Press SPACE to toggle.  ",
+            _ => "",
+        };
+        string live = def.Liveness == Liveness.LiveViaReload ? "applies live via reload" : "requires restart";
+        return $"{help}{keys}[default: {def.Default}] <{def.XmlName}> — {live}";
+    }
+
+    /// <summary>
+    /// A horizontal radio group whose selection advances cyclically on Space and
+    /// the arrow keys, so enum fields have one obvious, unambiguous key to change
+    /// them (the auto-assigned letter hotkeys still work, but collide when two
+    /// choices share a first letter, e.g. Public/Private).
+    /// </summary>
+    private sealed class CyclingRadioGroup : RadioGroup
+    {
+        private readonly int count;
+        public CyclingRadioGroup(ustring[] labels) : base(labels) => count = labels.Length;
+
+        public override bool ProcessKey(KeyEvent kb)
+        {
+            if (count > 0)
+            {
+                switch (kb.Key)
+                {
+                    case (Key)' ':
+                    case Key.CursorRight:
+                        SelectedItem = (SelectedItem + 1) % count;
+                        return true;
+                    case Key.CursorLeft:
+                        SelectedItem = (SelectedItem - 1 + count) % count;
+                        return true;
+                    // Leave Up/Down to the form so they move focus between fields
+                    // rather than being swallowed as radio-cursor movement.
+                    case Key.CursorUp:
+                    case Key.CursorDown:
+                        return false;
+                }
+            }
+            return base.ProcessKey(kb);
+        }
+    }
+
+    public void FlushPendingSave()
+    {
+        if (!session.IsDirty)
+            return;
+        // Invalid values never reach the document, but guard anyway: never write a
+        // document that fails validation.
+        if (session.Validate().Any(i => i.IsError))
+            return;
+        try
+        {
+            session.Save(writer);
+            onSaved?.Invoke();
+        }
+        catch
+        {
+            // Leave the change dirty so the next tick retries; the auto-save path
+            // must never block or pop a dialog.
+        }
+    }
+
+    public IReadOnlyList<string> InvalidFields => invalid.Select(o => o.Label).ToList();
+}
