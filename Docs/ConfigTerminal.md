@@ -64,7 +64,7 @@ architecture, data model, internal state machines, testing and packaging — see
 **It does not:**
 
 - Manage more than one instance (no fleet management) — one `(config, data)`
-  pair per invocation.
+  pair per invocation. (Use Quasar if you need to manage multiple servers.)
 - Fetch or refresh hub catalogs over the network — it **reads** what Magnetar
   has already cached; add a source, then start the server once so Magnetar
   populates it ([§6](#6-plugins-sources-and-profiles)).
@@ -152,17 +152,17 @@ One window at a time sits on the Turbo-Vision desktop, with a menu bar on top
 and a status bar (F-key hints + live server status) at the bottom:
 
 ```
-┌ File ─ Server ─ Worlds ─ Plugins ─ Tools ─ Help ───────────────────────┐
-│▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│
-│▒▒╔═[■]═ Worlds — /home/se/instance ══════════════════════════════╗▒▒▒▒│
-│▒▒║ Name             Last saved         Mods  Size    Config      ║▒▒▒▒│
-│▒▒║▶Red Ship         2026-07-10 22:14   12    1.2 GB  ok      ◀ACTIVE║▒▒│
-│▒▒║ Creative Test    2026-06-01 10:03    0    250 MB  missing     ║▒▒▒▒│
-│▒▒║ …                                                             ║▒▒▒▒│
-│▒▒╚═══════════════════════════════════════════════════════════════╝▒▒▒▒│
-│▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│
+┌ File ─ Server ─ Worlds ─ Plugins ─ Tools ─ Help ────────────────────────┐
+│▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│
+│▒▒╔═[■]═ Worlds — /home/se/instance ═══════════════════════════════╗▒▒▒▒▒│
+│▒▒║ Name             Last saved         Mods  Size    Config       ║▒▒▒▒▒│
+│▒▒║▶Red Ship         2026-07-10 22:14   12    1.2 GB  ok    ◀ACTIVE║▒▒▒▒▒│
+│▒▒║ Creative Test    2026-06-01 10:03    0    250 MB  missing      ║▒▒▒▒▒│
+│▒▒║ …                                                              ║▒▒▒▒▒│
+│▒▒╚════════════════════════════════════════════════════════════════╝▒▒▒▒▒│
+│▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│
 │ F1 Help│F3 Worlds│F4 Logs│F5 Start/Stop│F7 Settings│F8 Plugins│F10 Quit │
-│ ● RUNNING pid 41230 up 2:14:07 — Red Ship                              │
+│ ● RUNNING pid 41230 up 2:14:07 — Red Ship                               │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -194,7 +194,7 @@ Reload Config). The mouse works too.
 | **Activate World** (confirm) | shows exactly what will be written (`LastSession.sbl`, an `IgnoreLastSession` flip if set, a `LoadWorld` clear if set); notes that a `-session:` on the command line overrides it | Worlds → **Activate** (F6) |
 | **Delete World** (confirm) | Keep/Delete (defaults to Keep); removes the folder and clears a now-dangling `LastSession.sbl` / cfg `LoadWorld` | Worlds → **Delete** |
 | **New World wizard** | template list → world name (validated) → confirm → copies the template into `Saves/<name>` and activates it, no server start | `Worlds → New World…` |
-| **Log viewer** | file selector (game + Magnetar logs, active file marked); read-only text pane; `End` follow, `Home` top, `W` wrap, `R` re-read | `Tools → Logs` (F4) |
+| **Log viewer** | file selector (game + Magnetar logs, active file marked); read-only text pane with "Game ready"/"Exception" lines highlighted; `/` find, `n`/`N` next/prev, `End` follow, `Home` top, `W` wrap, `R` re-read | `Tools → Logs` (F4) |
 | **Hub Plugins** | the cached hub/remote catalog **plus registered dev folders** (`- dev folder` suffix); Space/Enter toggles enabled (hub deps pulled in), with an author/tagline/description pane and a filter box | `Plugins → Hub` |
 | **Plugin Profiles** | saved-preset list (the one matching the active set is marked); Load, Save As New, Update, Rename, Delete | `Plugins → Profiles` |
 | **Local & Dev Folders** | local DLLs from `Local/` (Space toggles) and **registered** dev folders (Add picks a manifest `.xml`; Remove unregisters — registering does not enable, you toggle under Hub) | `Plugins → Local & Dev Folders` (F8) |
@@ -341,9 +341,16 @@ the pane on the right shows its tail.
 
 - `End` toggles follow (tail -f), `Home` jumps to the top, `W` toggles line
   wrap, `R` re-reads the window.
+- `/` prompts for a search term (case-insensitive) and jumps to the first match;
+  `n` / `N` move to the next / previous match, wrapping around the window. Starting
+  a search stops follow so it doesn't snap you back to the tail.
 
-The reader is windowed, so it stays responsive even on multi-gigabyte logs.
-Incremental search and exception-trace navigation are not implemented.
+Lines are colour-highlighted as they scroll by: the DS **"Game ready…"** readiness
+line (black on green) and any **"Exception"** line (yellow on red), so a world
+coming up or a fault stands out without reading every line.
+
+The reader is windowed, so it stays responsive even on multi-gigabyte logs — search
+runs over the loaded window, not the entire file on disk.
 
 ---
 
@@ -400,7 +407,9 @@ fallback.
 - **PID-file status needs a current launcher** — an older Magnetar started
   outside the tool writes no `magnetar.pid`; status then falls back to a
   best-effort process scan. The tool ships alongside the launcher that writes it.
-- **Log viewer** has no incremental search or exception-trace navigation.
+- **Log viewer** search and highlighting operate over the loaded tail window
+  (not the whole file on disk), and there is no exception-trace (stack-frame)
+  navigation — only plain next/previous match.
 
 For the full list of known limitations, design trade-offs and planned future
 work, see the

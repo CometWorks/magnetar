@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NStack;
 using Terminal.Gui;
 using Magnetar.ConfigTerminal.Logs;
 using Magnetar.ConfigTerminal.Model;
+// Terminal.Gui v1's redraw hooks take the legacy System.Rune, not System.Text.Rune.
+using Rune = System.Rune;
 
 namespace Magnetar.ConfigTerminal.Ui;
 
@@ -15,7 +19,7 @@ internal sealed class LogViewerView : Window
 {
     private readonly LogCatalog catalog;
     private readonly ListView fileList;
-    private readonly TextView text;
+    private readonly LogTextView text;
     private readonly Label statusLabel;
     private LogTailReader reader;
     private bool following;
@@ -28,6 +32,9 @@ internal sealed class LogViewerView : Window
 
     // Remembered for the lifetime of the configurator process (off by default).
     private static bool wrapEnabled;
+
+    // Last search term, remembered across file switches so n/N keep working.
+    private string searchTerm = string.Empty;
 
     public LogViewerView(InstanceBinding binding) : base("Logs")
     {
@@ -46,7 +53,7 @@ internal sealed class LogViewerView : Window
         // as the right arrow (which navigates focus to the view on the right).
         fileList.OpenSelectedItem += _ => text.SetFocus();
 
-        text = new TextView
+        text = new LogTextView
         {
             X = 22, Y = 1, Width = Dim.Fill(1), Height = Dim.Fill(2),
             ReadOnly = true, WordWrap = wrapEnabled, ColorScheme = TurboVisionTheme.Window,
@@ -106,6 +113,9 @@ internal sealed class LogViewerView : Window
         }
         renderedCount = lines.Count;
         text.Text = rendered.ToString();
+        // The model was replaced, so any in-progress incremental find is anchored to
+        // a stale position — reset it so the next search re-anchors to the cursor.
+        text.FindTextChanged();
         ScrollToBottom();
     }
 
@@ -173,7 +183,95 @@ internal sealed class LogViewerView : Window
                 ToggleWrap();
                 args.Handled = true;
                 break;
+            case (Key)'/':
+                PromptSearch();
+                args.Handled = true;
+                break;
+            case (Key)'n':
+            case Key.F3:
+                FindNext(forward: true);
+                args.Handled = true;
+                break;
+            case (Key)'N':
+            case Key.F3 | Key.ShiftMask:
+                FindNext(forward: false);
+                args.Handled = true;
+                break;
         }
+    }
+
+    // Ask for a search term, then jump to the first match. A blank term clears the
+    // search. Following is stopped first so the next poll doesn't yank the view off
+    // the match and back to the tail.
+    private void PromptSearch()
+    {
+        StopFollow();
+        string term = Dialogs.Prompt("Find", "Search text (case-insensitive):", searchTerm);
+        if (term == null)
+            return; // cancelled — keep the previous term
+        searchTerm = term;
+        if (searchTerm.Length == 0)
+        {
+            UpdateStatus();
+            return;
+        }
+        // A new term searches the whole window from the top: anchor the cursor there
+        // and reset the incremental-find state, so the first match is the topmost one
+        // rather than only whatever happens to be below the tail we opened at.
+        text.CursorPosition = Point.Empty;
+        text.FindTextChanged();
+        FindNext(forward: true);
+    }
+
+    // Move to the next (or previous) match of the current term, selecting and
+    // scrolling to it. With no term yet, prompt for one first.
+    private void FindNext(bool forward)
+    {
+        if (searchTerm.Length == 0)
+        {
+            PromptSearch();
+            return;
+        }
+
+        StopFollow();
+        text.SetFocus();
+
+        ustring needle = ustring.Make(searchTerm);
+        bool found = Find(needle, forward, out bool wrapped);
+
+        if (!found)
+            statusLabel.Text = $"Not found: \"{searchTerm}\"";
+        else if (wrapped)
+            statusLabel.Text = $"Wrapped · \"{searchTerm}\" · n/N: next/prev";
+        else
+            statusLabel.Text = $"Found \"{searchTerm}\" · n/N: next/prev";
+    }
+
+    // Search once from the current position, then — on a miss — wrap by re-anchoring
+    // to the far end and searching again. Terminal.Gui's TextView only wraps once its
+    // find anchor has advanced past the start point, so a first search from the tail
+    // never sees matches above it; the explicit retry gives reliable wrap-around from
+    // anywhere. Returns whether a match was found, and whether it came from the wrap.
+    private bool Find(ustring needle, bool forward, out bool wrapped)
+    {
+        bool found = forward
+            ? text.FindNextText(needle, out _)
+            : text.FindPreviousText(needle, out _);
+        if (found)
+        {
+            wrapped = false;
+            return true;
+        }
+
+        text.CursorPosition = forward
+            ? Point.Empty
+            : new Point(0, Math.Max(text.Lines - 1, 0));
+        text.FindTextChanged();
+        found = forward
+            ? text.FindNextText(needle, out _)
+            : text.FindPreviousText(needle, out _);
+        wrapped = found;
+        return found;
     }
 
     private void ToggleWrap()
@@ -186,8 +284,8 @@ internal sealed class LogViewerView : Window
 
     private void UpdateStatus() =>
         statusLabel.Text = following
-            ? "FOLLOWING (End to stop) · Home: top"
-            : $"End: follow · Home: top · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
+            ? "FOLLOWING (End to stop) · Home: top · /: find"
+            : $"End: follow · Home: top · /: find · R: refresh · W: wrap [{(wrapEnabled ? "on" : "off")}]";
 
     private void ToggleFollow()
     {
@@ -239,5 +337,70 @@ internal sealed class LogViewerView : Window
             followToken = null;
         }
         base.Dispose(disposing);
+    }
+
+    /// <summary>
+    /// Read-only <see cref="TextView"/> that tints whole lines matching the
+    /// <see cref="LogHighlight"/> markers — "Game ready" (a world came up) and
+    /// "Exception" (a fault) — so they stand out while scanning. The v1 redraw loop
+    /// asks per rune which colour to use; because the pane is read-only that path is
+    /// <see cref="SetReadOnlyColor"/> (search matches keep their selection colour,
+    /// which the loop resolves before either of these). <see cref="SetNormalColor"/>
+    /// is overridden too so highlighting survives if the pane ever becomes editable.
+    /// </summary>
+    private sealed class LogTextView : TextView
+    {
+        // Vivid, high-contrast within the CGA-16 palette so a matched line reads as a
+        // deliberate marker rather than an accident of the theme.
+        private static readonly Terminal.Gui.Attribute ReadyColor =
+            Terminal.Gui.Attribute.Make(Color.Black, Color.Green);
+        private static readonly Terminal.Gui.Attribute ExceptionColor =
+            Terminal.Gui.Attribute.Make(Color.BrightYellow, Color.Red);
+
+        // The redraw loop reuses one List<Rune> for every rune of a row, so classify
+        // once per row and cache by reference — turning O(runes) work into O(rows).
+        private List<Rune> cachedLine;
+        private LogHighlightKind cachedKind;
+
+        protected override void SetReadOnlyColor(List<Rune> line, int idx)
+        {
+            if (!TrySetHighlightColor(line))
+                base.SetReadOnlyColor(line, idx);
+        }
+
+        protected override void SetNormalColor(List<Rune> line, int idx)
+        {
+            if (!TrySetHighlightColor(line))
+                base.SetNormalColor(line, idx);
+        }
+
+        private bool TrySetHighlightColor(List<Rune> line)
+        {
+            switch (Classify(line))
+            {
+                case LogHighlightKind.Ready:
+                    Application.Driver.SetAttribute(ReadyColor);
+                    return true;
+                case LogHighlightKind.Exception:
+                    Application.Driver.SetAttribute(ExceptionColor);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private LogHighlightKind Classify(List<Rune> line)
+        {
+            if (ReferenceEquals(line, cachedLine))
+                return cachedKind;
+            cachedLine = line;
+
+            // Markers are ASCII, so a lossy rune->char fold is enough to match them.
+            var sb = new StringBuilder(line.Count);
+            foreach (Rune r in line)
+                sb.Append((char)(uint)r);
+            cachedKind = LogHighlight.Classify(sb.ToString());
+            return cachedKind;
+        }
     }
 }
