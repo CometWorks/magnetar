@@ -743,7 +743,12 @@ the far end and retries on a miss). Lines matching the
 `TextView` subclass that overrides the per-rune `SetReadOnlyColor` /
 `SetNormalColor` hooks; because the pane is read-only the redraw resolves
 selection (search matches) before the highlight, so a match stays visible on a
-highlighted line. Full exception-traceback detection/navigation (grouping and
+highlighted line. On open the pane scrolls to the tail, but the first `Render`
+runs from the constructor — before the view is added to the tree and laid out,
+when the pane height is still 0 and `Adjust` would pin only the last line to the
+top; the scroll is therefore deferred and re-applied on the first `LayoutComplete`
+once the pane has a real height (a later layout, e.g. a resize after the user
+scrolled up, does not re-pin). Full exception-traceback detection/navigation (grouping and
 stepping whole stack traces) is **not implemented** (a possible future addition —
 see §13); the windowed reader already bounds memory even on multi-GB logs.
 

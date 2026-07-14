@@ -36,6 +36,10 @@ internal sealed class LogViewerView : Window
     // Last search term, remembered across file switches so n/N keep working.
     private string searchTerm = string.Empty;
 
+    // Set when a bottom-scroll was requested before the pane had a height (initial open);
+    // applied on the first LayoutComplete. See ScrollToBottom / OnTextLayout.
+    private bool bottomScrollPending;
+
     public LogViewerView(InstanceBinding binding) : base("Logs")
     {
         ColorScheme = TurboVisionTheme.Window;
@@ -64,6 +68,9 @@ internal sealed class LogViewerView : Window
         // text pane to the end of the line). A ProcessKey override on this Window would not.
         fileList.KeyPress += OnViewerKey;
         text.KeyPress += OnViewerKey;
+        // The first Render (from this ctor) scrolls to the tail before the pane is laid
+        // out, so re-apply it once the pane has a real height (see ScrollToBottom).
+        text.LayoutComplete += OnTextLayout;
 
         statusLabel = new Label
         { X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window };
@@ -147,12 +154,39 @@ internal sealed class LogViewerView : Window
     // to 0, so on a follow poll the view would stay pinned to the top. It would also jump to
     // the end of the last line, scrolling right. Assigning CursorPosition at column 0 of the
     // last row runs TextView.Adjust(), which scrolls topRow down and leftColumn back to 0.
-    private void ScrollToBottom() =>
+    //
+    // Adjust() needs the pane's real height to place the last line at the bottom of the
+    // viewport. The first Render runs from the constructor — before the view is added to
+    // the tree and laid out — when that height is still 0, which would pin only the last
+    // line to the top. Defer to the first LayoutComplete in that case (see OnTextLayout).
+    private void ScrollToBottom()
+    {
+        if (text.Frame.Height <= 0)
+        {
+            bottomScrollPending = true;
+            return;
+        }
         text.CursorPosition = new Point(0, Math.Max(text.Lines - 1, 0));
+    }
+
+    // Flush a bottom-scroll deferred from before the pane had a height. Only the initial
+    // (pending) scroll is honoured — later layouts (e.g. a terminal resize after the user
+    // scrolled up) must not yank the view back to the tail.
+    private void OnTextLayout(View.LayoutEventArgs _)
+    {
+        if (bottomScrollPending && text.Frame.Height > 0)
+        {
+            bottomScrollPending = false;
+            ScrollToBottom();
+        }
+    }
 
     // Jump to the very top of the log (first line, first column).
-    private void ScrollToTop() =>
+    private void ScrollToTop()
+    {
+        bottomScrollPending = false; // an explicit Home cancels a not-yet-applied bottom scroll
         text.CursorPosition = Point.Empty;
+    }
 
     // Terminal.Gui dispatches a key to the focused child (via ProcessHotKey) before the
     // containing Window's ProcessKey runs, so an End handler there never fires — the ListView

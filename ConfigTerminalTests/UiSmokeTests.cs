@@ -76,15 +76,7 @@ public class UiSmokeTests : IDisposable
             shell.ShowLogs();
             Pump(ref rs, 3);
 
-            // The viewer scrolls to the tail on open, which — before layout gives the
-            // pane its real height — can leave only the last line on screen. Jump the
-            // text pane to the top (as the Home key does) now that it is laid out, so
-            // the whole short log is drawn, then force a redraw.
-            TextView pane = GetLogPane(shell);
-            pane.CursorPosition = Point.Empty;
-            pane.SetNeedsDisplay();
-            Application.Refresh();
-
+            // The whole short log fits the pane, so opening it draws every line.
             // These fg/bg pairs are unique to the two highlighted line kinds — no other
             // widget in this view uses them — so their presence in the cell buffer
             // proves the per-line colour overrides actually reached the screen. (The
@@ -96,6 +88,43 @@ public class UiSmokeTests : IDisposable
                 "The 'Game ready' line was not rendered with its highlight colour.");
             Assert.True(BufferHasAttribute(driver, exceptionAttr),
                 "The 'Exception' line was not rendered with its highlight colour.");
+
+            Application.End(rs);
+        }
+        finally
+        {
+            Application.Shutdown();
+        }
+    }
+
+    [Fact]
+    public void Log_viewer_shows_a_full_screen_of_the_tail_on_open()
+    {
+        // A log longer than the pane, so "scrolled to the tail" means a screenful of
+        // lines ending at the last, not just the last line on its own.
+        var log = new System.Text.StringBuilder();
+        for (int i = 0; i < 200; i++)
+            log.Append($"2026-07-14 12:00:00.000 - log line {i:000}\n");
+        File.WriteAllText(Path.Combine(dir, "SpaceEngineersDedicated.log"), log.ToString());
+
+        InitHeadless();
+        try
+        {
+            var shell = new AppShell(NewBinding());
+            Application.RunState rs = Application.Begin(shell);
+            shell.ShowLogs();
+            Pump(ref rs, 3);
+
+            // Regression: the initial scroll-to-bottom runs from the ctor before layout
+            // gives the pane a height, which used to pin only the last line to the top.
+            // After the deferred re-scroll on LayoutComplete, the last line sits at the
+            // bottom of a full viewport.
+            TextView pane = GetLogPane(shell);
+            int height = pane.Frame.Height;
+            Assert.True(height > 1, $"pane not laid out (height={height})");
+            Assert.InRange(pane.Lines - 1, pane.TopRow, pane.TopRow + height - 1); // last line visible
+            Assert.True(pane.TopRow <= pane.Lines - 2,
+                $"only the last line is visible (TopRow={pane.TopRow}, Lines={pane.Lines})");
 
             Application.End(rs);
         }
