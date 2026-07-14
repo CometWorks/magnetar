@@ -24,6 +24,12 @@ attempts are preserved instead of being overwritten. The compiler AppDomain and
 Quasar.Agent's PluginSdk log mirror both use the active file named by
 `info.current`.
 
+While a Magnetar-launched server is running it also writes a `magnetar.pid`
+file here — the process id on the first line, the resolved DS data dir
+(`-path`) on the second — and removes it on clean shutdown. `MagnetarConfig`
+uses it to discover the instance and report server status; see the
+[Config tool](ConfigTerminal.md#28-process-model-and-pid-file).
+
 * **Install dir (default, where the launcher lives)**
   * Windows — the extracted `Magnetar\` tree next to the dedicated-server
     installation.

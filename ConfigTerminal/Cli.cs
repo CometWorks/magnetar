@@ -84,6 +84,7 @@ Usage: MagnetarConfig [options]
   -magnetar <file> Magnetar launcher executable to start/stop.
   -ds64 <dir>      DedicatedServer64 folder (for world templates).
   -netdriver       Force Terminal.Gui's NetDriver (portable fallback).
+  -diag            Print a headless read-only instance report and exit.
   -help, -h        Show this help.
 
 With no -path/-config the tool opens an interactive instance picker.");
