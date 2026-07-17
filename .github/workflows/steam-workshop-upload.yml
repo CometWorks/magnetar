@@ -36,17 +36,17 @@ jobs:
           rm -rf "$STAGING"
           mkdir -p "$STAGING"
 
-          rsync -a --delete \
-            --exclude 'README.md' \
-            --exclude 'MagnetarMod.csproj' \
-            --exclude '*.mdk.local.ini' \
-            --exclude 'bin/' \
-            --exclude 'obj/' \
-            MagnetarMod/ "$STAGING/"
+          rsync -a --delete MagnetarMod/src/ "$STAGING/"
 
-          SBMI_FILE="MagnetarMod/modinfo.sbmi"
+          SBMI_FILE="$STAGING/modinfo.sbmi"
           if [ ! -f "$SBMI_FILE" ]; then
             echo "Expected metadata file not found: $SBMI_FILE"
+            exit 1
+          fi
+
+          THUMBNAIL_FILE="$STAGING/thumb.png"
+          if [ ! -f "$THUMBNAIL_FILE" ]; then
+            echo "Expected Workshop thumbnail not found: $THUMBNAIL_FILE"
             exit 1
           fi
 
@@ -59,6 +59,7 @@ jobs:
 
           echo "WORKSHOP_ID=$WORKSHOP_ID" >> "$GITHUB_ENV"
           echo "STAGING_DIR=$STAGING" >> "$GITHUB_ENV"
+          echo "PREVIEW_FILE=$THUMBNAIL_FILE" >> "$GITHUB_ENV"
           echo "Prepared MagnetarMod upload staging at $STAGING with Workshop ID $WORKSHOP_ID"
 
       - name: Setup SteamCMD
@@ -79,6 +80,7 @@ jobs:
             echo '  "appid" "244850"'
             echo "  \"publishedfileid\" \"${WORKSHOP_ID}\""
             echo "  \"contentfolder\" \"${STAGING_DIR}\""
+            echo "  \"previewfile\" \"${PREVIEW_FILE}\""
             echo "  \"changenote\" \"${SAFE_CHANGE_NOTE}\""
             echo '}'
           } > "$RUNNER_TEMP/workshop_item.vdf"

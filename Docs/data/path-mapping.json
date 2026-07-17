@@ -111,7 +111,7 @@
   "Legacy/Paths/PathResolverBinder.cs": "Docs/descriptions/Legacy/Paths/PathResolverBinder.cs.md",
   "Legacy/Paths/ReflectionPathResolver.cs": "Docs/descriptions/Legacy/Paths/ReflectionPathResolver.cs.md",
   "Legacy/Program.cs": "Docs/descriptions/Legacy/Program.cs.md",
-  "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs": "Docs/descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md",
+  "MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs": "Docs/descriptions/MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md",
   "PluginSdk/Commands/ArgumentBinder.cs": "Docs/descriptions/PluginSdk/Commands/ArgumentBinder.cs.md",
   "PluginSdk/Commands/CommandAttribute.cs": "Docs/descriptions/PluginSdk/Commands/CommandAttribute.cs.md",
   "PluginSdk/Commands/CommandCaller.cs": "Docs/descriptions/PluginSdk/Commands/CommandCaller.cs.md",

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Build the documentation manifest for Magnetar.
 
-Programmatically enumerates tracked C# source files, records size / line-count /
-SHA256, and assigns each file a module and a processing tier using path + size
-heuristics (no AI inference). Re-runnable: the SHA256 is the cache key, so a
-later run can diff against a prior manifest and only re-process changed files.
+Programmatically enumerates current working-tree C# source files, records size /
+line-count / SHA256, and assigns each file a module and a processing tier using
+path + size heuristics (no AI inference). Re-runnable: the SHA256 is the cache
+key, so a later run can diff against a prior manifest and only re-process
+changed files.
 
 All inputs are C# source (text), so every file is normalized to LF before
 measuring size and hashing: the size and SHA256 become independent of newline
@@ -158,12 +159,18 @@ def tier_of(rel, lines):
 
 def main():
     rels = subprocess.check_output(
-        ["git", "-C", ROOT, "ls-files", "*.cs"], text=True
+        [
+            "git", "-C", ROOT, "ls-files", "--cached", "--others",
+            "--exclude-standard", "--", "*.cs",
+        ],
+        text=True,
     ).split()
     records = []
     path_map = {}
     for rel in sorted(rels):
         ap = os.path.join(ROOT, rel)
+        if not os.path.exists(ap):
+            continue
         with open(ap, "rb") as f:
             data = normalize_newlines(f.read())
         lines = data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
