@@ -185,7 +185,7 @@ Every documented source file, grouped by module. 210 files across 25 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 114 | 2 | Client-side Space Engineers world-mod session component that receives server-pushed mission-screen popups and renders them through the SE ModAPI. |
+| [`MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](descriptions/MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 114 | 2 | Client-side Space Engineers world-mod session component that receives server-pushed mission-screen popups and renders them through the SE ModAPI. |
 
 ## PluginSdk.Commands  ·  [module doc](modules/PluginSdk.Commands.md)
 

@@ -1,4 +1,4 @@
-# MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs
+# MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs
 
 **Project:** MagnetarMod · **Namespace:** `MagnetarMod` · **Kind:** sealed class (SE session component) · **Lines:** 114
 

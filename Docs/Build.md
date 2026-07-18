@@ -197,7 +197,9 @@ overrides — are documented in [Configuration.md](Configuration.md).
 ## MagnetarMod MDK2 project
 
 The companion world mod under [MagnetarMod/](../MagnetarMod/) has its own MDK2
-project:
+project. The actual Space Engineers/Workshop content root is
+[`MagnetarMod/src/`](../MagnetarMod/src/); the `.csproj` and local MDK config
+stay one level above it:
 
 ```sh
 dotnet build MagnetarMod/MagnetarMod.csproj

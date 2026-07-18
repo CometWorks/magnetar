@@ -14,14 +14,14 @@ Client-side counterpart to the server-side mission-screen path: PluginSdk.Missio
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
-| `MagnetarModSession` | sealed class (MySessionComponentBase, NoUpdate session component) | [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Registers a secure message handler on channel 48731, deserializes versioned show-mission-screen frames from the server, and renders them via MyAPIGateway.Utilities.ShowMissionScreen on the game thread. |
-| `MagnetarModSession.MissionScreenPacket` | sealed class (private nested data holder) | [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Mutable holder for the five deserialized payload strings (title, objective prefix, objective, description, OK-button caption), mirroring PluginSdk.MissionScreenContent. |
+| `MagnetarModSession` | sealed class (MySessionComponentBase, NoUpdate session component) | [`MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Registers a secure message handler on channel 48731, deserializes versioned show-mission-screen frames from the server, and renders them via MyAPIGateway.Utilities.ShowMissionScreen on the game thread. |
+| `MagnetarModSession.MissionScreenPacket` | sealed class (private nested data holder) | [`MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | Mutable holder for the five deserialized payload strings (title, objective prefix, objective, description, OK-button caption), mirroring PluginSdk.MissionScreenContent. |
 
 ## Files
 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
-| [`MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 114 | Client-side Space Engineers world-mod session component that receives server-pushed mission-screen popups and renders them through the SE ModAPI. |
+| [`MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs`](../descriptions/MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs.md) | 114 | Client-side Space Engineers world-mod session component that receives server-pushed mission-screen popups and renders them through the SE ModAPI. |
 
 ## Public API surface
 

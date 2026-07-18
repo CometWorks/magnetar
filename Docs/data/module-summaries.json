@@ -1641,13 +1641,13 @@
       {
         "name": "MagnetarModSession",
         "kind": "sealed class (MySessionComponentBase, NoUpdate session component)",
-        "file": "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs",
+        "file": "MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs",
         "summary": "Registers a secure message handler on channel 48731, deserializes versioned show-mission-screen frames from the server, and renders them via MyAPIGateway.Utilities.ShowMissionScreen on the game thread."
       },
       {
         "name": "MagnetarModSession.MissionScreenPacket",
         "kind": "sealed class (private nested data holder)",
-        "file": "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs",
+        "file": "MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs",
         "summary": "Mutable holder for the five deserialized payload strings (title, objective prefix, objective, description, OK-button caption), mirroring PluginSdk.MissionScreenContent."
       }
     ],
@@ -1662,7 +1662,7 @@
       "Legacy.Integration (server sender)"
     ],
     "files_documented": [
-      "MagnetarMod/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
+      "MagnetarMod/src/Data/Scripts/MagnetarMod/MagnetarModSession.cs"
     ]
   },
   {

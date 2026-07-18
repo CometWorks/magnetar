@@ -148,10 +148,11 @@ Grouped by project. Click a module for its full doc.
 An SE1 `Data/Scripts` mod compiled in-game, shipped alongside the launcher and
 auto-loaded as an implicit client mod (unless disabled with `-noimplicitmod` or
 running crossplay). It is the client-side receiver for server-pushed content.
-`MagnetarMod/MagnetarMod.csproj` is an MDK2 project for IDE support, local
-builds, and ModAPI analyzer coverage. It is present in `Magnetar.sln`, but only
-the `Workshop|Any CPU` solution configuration selects it for build; normal
-`Debug`/`Release` solution builds skip it.
+`MagnetarMod/src/` is the actual Workshop content root; `MagnetarMod/MagnetarMod.csproj`
+is an MDK2 project for IDE support, local builds, and ModAPI analyzer coverage.
+It is present in `Magnetar.sln`, but only the `Workshop|Any CPU` solution
+configuration selects it for build; normal `Debug`/`Release` solution builds
+skip it.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |

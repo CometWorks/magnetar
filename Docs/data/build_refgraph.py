@@ -13,7 +13,6 @@ description file under Docs/descriptions/.
 import json
 import os
 import re
-import subprocess
 from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -56,7 +55,7 @@ def edge_allowed(a, b):
     pa, pb = file_project.get(a), file_project.get(b)
     return pb in ALLOWED_PROJ.get(pa, {pa})
 
-rels = subprocess.check_output(["git", "-C", ROOT, "ls-files", "*.cs"], text=True).split()
+rels = sorted(file_module)
 text = {}
 defined = defaultdict(set)   # type name -> set(files that declare it)
 for rel in rels:
