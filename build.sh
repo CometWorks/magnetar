@@ -177,8 +177,14 @@ stage_file libVRageNative.so 0755 LIBVRAGENATIVE_SO \
 # The licence texts ship inside the linux-dependencies archive, next to the
 # binaries they cover, so they arrive with the fetch rather than being
 # committed here. Redistributing the bundle without them is a licence
-# violation, so this is a hard error rather than a skip -- and the two that
-# cover what Magnetar actually ships are asserted below.
+# violation, so a missing LICENSES/ is a hard error rather than a skip.
+#
+# Only the notices covering what Magnetar actually stages are copied. The
+# archive is shared with Pulsar and also carries FFmpeg, DXVK and OpenAL
+# texts; copying those wholesale would ship attribution for libraries that
+# are not in the bundle, and LICENSES/README.txt (the archive's own index)
+# would list files that are not there. STAGED_LICENSES is therefore derived
+# from the staging list above, and a generated README explains the subset.
 
 if [ ! -d "$LINUX_DEPS_DIR/LICENSES" ]; then
     echo "ERROR: $LINUX_DEPS_DIR/LICENSES is missing." >&2
@@ -187,16 +193,68 @@ if [ ! -d "$LINUX_DEPS_DIR/LICENSES" ]; then
     exit 1
 fi
 
+# Steamworks.NET.dll -> MIT text; libsteam_api.so -> Valve notice;
+# libEOSSDK-Linux-Shipping.so -> Epic notice. The three native wrappers are
+# MIT and carry their own text in the linux-native-wrappers release.
+STAGED_LICENSES=(
+    Steamworks.NET-LICENSE.txt
+    Steam-NOTICE.txt
+    EOS-NOTICE.txt
+)
+
 echo
 echo "############################################################"
 echo "# build: licenses (linux-deps/LICENSES/ -> Libraries/LICENSES/)"
 echo "############################################################"
+for name in "${STAGED_LICENSES[@]}"; do
+    src="$LINUX_DEPS_DIR/LICENSES/$name"
+    if [ ! -f "$src" ]; then
+        echo "ERROR: $src is missing from the linux-dependencies archive." >&2
+        echo "       Magnetar ships the library this notice covers, so the" >&2
+        echo "       bundle cannot be built without it." >&2
+        exit 1
+    fi
+    install -m 0644 "$src" "$LIBRARIES_DIR/LICENSES/$name"
+    echo "  copied $name"
+done
+
+# Drop any notice a previous build staged that is no longer in the list, so
+# trimming the set does not leave stale attribution behind.
 shopt -s nullglob
-for f in "$LINUX_DEPS_DIR/LICENSES"/*.txt; do
-    install -m 0644 "$f" "$LIBRARIES_DIR/LICENSES/$(basename "$f")"
-    echo "  copied $(basename "$f")"
+for f in "$LIBRARIES_DIR/LICENSES"/*.txt; do
+    keep=0
+    for name in "${STAGED_LICENSES[@]}" README.txt; do
+        [ "$(basename "$f")" = "$name" ] && keep=1
+    done
+    if [ "$keep" = "0" ]; then
+        rm -f "$f"
+        echo "  removed $(basename "$f") (covers a library Magnetar does not ship)"
+    fi
 done
 shopt -u nullglob
+
+cat > "$LIBRARIES_DIR/LICENSES/README.txt" <<'LICENSES_README'
+Third-party licences for the binaries shipped in ../
+====================================================
+
+Magnetar is MIT-licensed. The libraries bundled alongside it are each
+governed by their own licence, collected here.
+
+    Steamworks.NET-LICENSE.txt MIT licence covering Steamworks.NET.dll
+    Steam-NOTICE.txt           Attribution for libsteam_api.so
+                               (proprietary, Valve Corporation)
+    EOS-NOTICE.txt             Attribution for libEOSSDK-Linux-Shipping.so
+                               (proprietary, Epic Games)
+
+The native wrapper libraries (libHavok.so, libRecastDetour.so,
+libVRageNative.so) are MIT-licensed and published by the
+CometWorks/linux-native-wrappers repository.
+
+Magnetar is the headless dedicated server and does not bundle the FFmpeg,
+DXVK or OpenAL libraries that the shared CometWorks/linux-dependencies
+release also carries, so their licence texts are deliberately absent.
+LICENSES_README
+echo "  wrote README.txt"
 
 # ---- 4. final assertion ----------------------------------------------------
 
@@ -208,8 +266,10 @@ EXPECTED_FILES=(
     libRecastDetour.so
     libVRageNative.so
     # Attribution for the proprietary runtimes and the managed binding.
+    LICENSES/EOS-NOTICE.txt
     LICENSES/Steam-NOTICE.txt
     LICENSES/Steamworks.NET-LICENSE.txt
+    LICENSES/README.txt
 )
 
 MISSING=0
