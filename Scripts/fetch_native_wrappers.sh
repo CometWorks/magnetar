@@ -70,7 +70,7 @@ CLEAN=0
 for arg in "$@"; do
     case "$arg" in
         --clean)   CLEAN=1 ;;
-        -h|--help) sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "ERROR: unknown arg: $arg" >&2; exit 2 ;;
     esac
 done
@@ -95,7 +95,7 @@ gh_api() {
     local -a auth=()
     local tok="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
     [ -n "$tok" ] && auth=(-H "Authorization: Bearer $tok")
-    curl -fsSL "${auth[@]}" -H "Accept: application/vnd.github+json" "$url"
+    curl -fsSL "${auth[@]+"${auth[@]}"}" -H "Accept: application/vnd.github+json" "$url"
 }
 
 TAG="$NATIVE_WRAPPERS_TAG"

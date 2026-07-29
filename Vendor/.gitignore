@@ -1,3 +1,0 @@
-# Proprietary Steamworks SDK blob - never commit.
-# See ../build.sh for where to drop libsteam_api.so before building.
-libsteam_api.so

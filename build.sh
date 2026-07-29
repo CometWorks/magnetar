@@ -5,21 +5,32 @@
 # managed and native dependencies that Legacy.csproj's AfterBuild and
 # AfterPublish targets copy next to the MagnetarInterim apphost.
 #
+# Nothing is compiled here. Every artefact is downloaded from a GitHub release
+# of the repo that builds it, so the binaries are byte-for-byte the same ones
+# Pulsar for Linux ships.
+#
 # Magnetar targets the Space Engineers Dedicated Server (headless), so it
 # bundles:
-#   * Steamworks.NET.dll              - built from rlabrecque/Steamworks.NET
+#   * Steamworks.NET.dll              - managed Steamworks binding
 #   * libsteam_api.so                 - Linux Steamworks SDK shared library
-#                                       (proprietary blob; supply via Vendor/
-#                                       or the $DS64 folder)
 #   * libEOSSDK-Linux-Shipping.so     - Epic Online Services SDK; needed
 #                                       because MySteamService.UpdateNetwork-
 #                                       Thread drives MyEOSNetworking even
 #                                       under Steam-only networking
+#                                     all three from the
+#                                     CometWorks/linux-dependencies release
 #   * libHavok.so / libRecastDetour.so / libVRageNative.so
 #                                     - PE-loader replacements for the
 #                                       Windows native DLLs Keen ships;
 #                                       downloaded from the
 #                                       CometWorks/linux-native-wrappers release
+#
+# The linux-dependencies release also carries FFmpeg and DXVK for the game
+# client; the dedicated server is headless and simply ignores them.
+#
+# Every library keeps a per-file environment override (see the staging section
+# below), so a developer can still point the build at a locally supplied .so
+# without touching either release.
 #
 # After this script runs, build:
 #   dotnet build  -c Release Magnetar.sln
@@ -38,7 +49,16 @@
 #   BUILD_DIR         = $MAGNETAR_REPO_DIR/build
 #   LIBRARIES_DIR     = $BUILD_DIR/Libraries
 #   OUTPUT_DIR        = $MAGNETAR_REPO_DIR/dist
+#   LINUX_DEPS_DIR    = $BUILD_DIR/linux-deps  (extracted linux-dependencies)
+#   LINUXCOMPAT_NATIVE = $BUILD_DIR/native     (extracted native wrappers)
 #   DS64              = $HOME/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64
+#
+# Per-library overrides (full path to a .so / .dll; wins over the fetched
+# release): STEAMWORKS_NET_DLL, LIBSTEAM_API_SO, LIBEOSSDK_SO, LIBHAVOK_SO,
+# LIBRECASTDETOUR_SO, LIBVRAGENATIVE_SO
+#
+# To pin exact upstream releases (recommended for reproducible CI), set
+# LINUX_DEPENDENCIES_TAG and NATIVE_WRAPPERS_TAG; see the fetch scripts.
 
 set -euo pipefail
 
@@ -50,7 +70,6 @@ BUILD_DIR="${BUILD_DIR:-$MAGNETAR_REPO_DIR/build}"
 LIBRARIES_DIR="${LIBRARIES_DIR:-$BUILD_DIR/Libraries}"
 OUTPUT_DIR="${OUTPUT_DIR:-$MAGNETAR_REPO_DIR/dist}"
 DS64="${DS64:-$HOME/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64}"
-LICENSES_SRC="$SCRIPTS_DIR/Licenses"
 
 export MAGNETAR_REPO_DIR BUILD_DIR LIBRARIES_DIR OUTPUT_DIR
 
@@ -62,7 +81,7 @@ for arg in "$@"; do
         --clean)      CLEAN_ARGS+=("--clean") ;;
         --deps-only)  DO_PACKAGE=0 ;;
         --skip-deps)  DO_DEPS=0 ;;
-        -h|--help)    sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help)    sed -n '2,61p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "ERROR: unknown arg: $arg" >&2; exit 2 ;;
     esac
 done
@@ -71,134 +90,113 @@ if [ "$DO_DEPS" = "1" ]; then
 
 mkdir -p "$LIBRARIES_DIR/LICENSES"
 
-# ---- 1. Steamworks.NET.dll --------------------------------------------------
+# ---- 1. fetch the prebuilt dependencies ------------------------------------
+#
+# Two GitHub releases supply everything Magnetar bundles. Neither is compiled
+# here; see the header comment for what each carries.
 
 echo
 echo "############################################################"
-echo "# build: Steamworks.NET"
+echo "# build: fetch linux-dependencies release"
 echo "############################################################"
-bash "$SCRIPTS_DIR/build_steamworks_net.sh" "${CLEAN_ARGS[@]}"
-
-# ---- 2. libsteam_api.so (Linux Steamworks SDK shared library) --------------
-#
-# Search order:
-#   1. $LIBSTEAM_API_SO        (explicit user override; full path)
-#   2. <repo>/Vendor/libsteam_api.so
-#   3. $DS64/libsteam_api.so   (will exist once Keen ships a native Linux DS)
-#
-# The shared library is part of the proprietary Steamworks SDK and cannot
-# be committed to the public repo. Drop it under Vendor/ from your own
-# Steamworks SDK download (sdk/redistributable_bin/linux64/libsteam_api.so)
-# or supply LIBSTEAM_API_SO=/path/to/libsteam_api.so on the command line.
+bash "$SCRIPTS_DIR/fetch_linux_dependencies.sh" "${CLEAN_ARGS[@]+"${CLEAN_ARGS[@]}"}"
 
 echo
 echo "############################################################"
-echo "# build: libsteam_api.so"
+echo "# build: fetch linux-native-wrappers release"
 echo "############################################################"
+bash "$SCRIPTS_DIR/fetch_native_wrappers.sh" "${CLEAN_ARGS[@]+"${CLEAN_ARGS[@]}"}"
 
-STEAM_SO_SRC=""
-for candidate in \
-    "${LIBSTEAM_API_SO:-}" \
-    "$MAGNETAR_REPO_DIR/Vendor/libsteam_api.so" \
-    "$DS64/libsteam_api.so"; do
-    if [ -n "$candidate" ] && [ -f "$candidate" ]; then
-        STEAM_SO_SRC="$candidate"
-        break
-    fi
-done
-
-if [ -z "$STEAM_SO_SRC" ]; then
-    echo "ERROR: libsteam_api.so not found." >&2
-    echo "       Tried:" >&2
-    echo "         \$LIBSTEAM_API_SO                                   = ${LIBSTEAM_API_SO:-(unset)}" >&2
-    echo "         $MAGNETAR_REPO_DIR/Vendor/libsteam_api.so" >&2
-    echo "         $DS64/libsteam_api.so" >&2
-    echo "       Drop the Linux Steamworks SDK shared library at one of" >&2
-    echo "       the above paths (e.g. into Vendor/) and re-run." >&2
-    exit 1
-fi
-
-install -m 0755 "$STEAM_SO_SRC" "$LIBRARIES_DIR/libsteam_api.so"
-echo "  copied libsteam_api.so from $STEAM_SO_SRC"
-
-# ---- 2b. Linux compat native libraries --------------------------------------
-#
-# The dedicated server reaches into native code that on Windows lives in
-# Havok.dll / RecastDetour.dll / VRage.Native.dll (PE-loaded by Keen) and
-# EOSSDK-Shipping.dll (Epic SDK, called from MySteamService.UpdateNetworkThread
-# even with Steam-only networking). Linux replacements have to be bundled
-# next to the apphost so NativeLibraryPreloader.cs can dlopen them.
-#
-# Sources:
-#   * EOSSDK:               Vendor/libEOSSDK-Linux-Shipping.so
-#                          (the Epic SDK redistributable; drop it in Vendor/)
-#   * Havok/RecastDetour/
-#     VRageNative:         downloaded from the CometWorks/linux-native-wrappers
-#                          GitHub release by fetch_native_wrappers.sh into
-#                          build/native/ (see that script; the prebuilt asset
-#                          replaces the old se-linux-compat Docker/source build)
-#
-# Per-library env overrides: $LIBEOSSDK_SO, $LIBHAVOK_SO, $LIBRECASTDETOUR_SO,
-# $LIBVRAGENATIVE_SO. Otherwise probed under Vendor/ then the fetched
-# build/native/ folder.
-
-echo
-echo "############################################################"
-echo "# build: Linux-compat native libraries"
-echo "############################################################"
-
-# Download the prebuilt wrappers into build/native/ (cached by release tag).
-bash "$SCRIPTS_DIR/fetch_native_wrappers.sh" "${CLEAN_ARGS[@]}"
-
+LINUX_DEPS_DIR="${LINUX_DEPS_DIR:-$BUILD_DIR/linux-deps}"
 LINUXCOMPAT_NATIVE="${LINUXCOMPAT_NATIVE:-$BUILD_DIR/native}"
 
-stage_native() {
-    local soname="$1"
-    local env_override="$2"
-    shift 2
+# ---- 2. stage the libraries next to the apphost ----------------------------
+#
+# Every file is probed in the same order, most specific first:
+#
+#   1. its own env override        explicit path, wins over everything
+#   2. <repo>/Vendor/<name>        a locally dropped file; Vendor/ is not
+#                                  committed any more but the probe stays so a
+#                                  developer can override without env vars
+#   3. the fetched release cache   the normal path
+#   4. any extra fallbacks passed by the caller (e.g. $DS64 for libsteam_api)
+#
+# The proprietary Steamworks and EOS runtimes used to be committed under
+# Vendor/ and Steamworks.NET.dll used to be built by build_steamworks_net.sh.
+# All three now arrive in the linux-dependencies release.
+
+echo
+echo "############################################################"
+echo "# build: staging libraries -> $LIBRARIES_DIR"
+echo "############################################################"
+
+stage_file() {
+    # stage_file <name> <mode> <override var name> [extra fallbacks...]
+    local name="$1" mode="$2" env_name="$3"
+    shift 3
+    local env_override="${!env_name:-}"
     local src=""
-    for candidate in "$env_override" "$MAGNETAR_REPO_DIR/Vendor/$soname" "$@"; do
+    for candidate in "$env_override" "$MAGNETAR_REPO_DIR/Vendor/$name" "$@"; do
         if [ -n "$candidate" ] && [ -f "$candidate" ]; then
             src="$candidate"
             break
         fi
     done
     if [ -z "$src" ]; then
-        echo "ERROR: $soname not found." >&2
-        echo "       Set the override env var or drop the file at one of:" >&2
-        echo "         $MAGNETAR_REPO_DIR/Vendor/$soname" >&2
+        echo "ERROR: $name not found." >&2
+        echo "       Set $env_name=/path/to/$name, or drop the file at one of:" >&2
+        echo "         $MAGNETAR_REPO_DIR/Vendor/$name" >&2
         for c in "$@"; do echo "         $c" >&2; done
         exit 1
     fi
-    install -m 0755 "$src" "$LIBRARIES_DIR/$soname"
-    echo "  copied $soname from $src"
+    install -m "$mode" "$src" "$LIBRARIES_DIR/$name"
+    echo "  copied $name from $src"
 }
 
-stage_native libEOSSDK-Linux-Shipping.so "${LIBEOSSDK_SO:-}"
+stage_file Steamworks.NET.dll 0644 STEAMWORKS_NET_DLL \
+    "$LINUX_DEPS_DIR/Steamworks.NET.dll"
 
-stage_native libHavok.so "${LIBHAVOK_SO:-}" \
+stage_file libsteam_api.so 0755 LIBSTEAM_API_SO \
+    "$LINUX_DEPS_DIR/libsteam_api.so" \
+    "$DS64/libsteam_api.so"
+
+stage_file libEOSSDK-Linux-Shipping.so 0755 LIBEOSSDK_SO \
+    "$LINUX_DEPS_DIR/libEOSSDK-Linux-Shipping.so"
+
+stage_file libHavok.so 0755 LIBHAVOK_SO \
     "$LINUXCOMPAT_NATIVE/libHavok.so"
 
-stage_native libRecastDetour.so "${LIBRECASTDETOUR_SO:-}" \
+stage_file libRecastDetour.so 0755 LIBRECASTDETOUR_SO \
     "$LINUXCOMPAT_NATIVE/libRecastDetour.so"
 
-stage_native libVRageNative.so "${LIBVRAGENATIVE_SO:-}" \
+stage_file libVRageNative.so 0755 LIBVRAGENATIVE_SO \
     "$LINUXCOMPAT_NATIVE/libVRageNative.so"
 
 # ---- 3. Licenses ------------------------------------------------------------
+#
+# The licence texts ship inside the linux-dependencies archive, next to the
+# binaries they cover, so they arrive with the fetch rather than being
+# committed here. Redistributing the bundle without them is a licence
+# violation, so this is a hard error rather than a skip -- and the two that
+# cover what Magnetar actually ships are asserted below.
 
-if [ -d "$LICENSES_SRC" ]; then
-    echo
-    echo "############################################################"
-    echo "# build: licenses (Scripts/Licenses/ -> Libraries/LICENSES/)"
-    echo "############################################################"
-    shopt -s nullglob
-    for f in "$LICENSES_SRC"/*.txt; do
-        install -m 0644 "$f" "$LIBRARIES_DIR/LICENSES/$(basename "$f")"
-        echo "  copied $(basename "$f")"
-    done
-    shopt -u nullglob
+if [ ! -d "$LINUX_DEPS_DIR/LICENSES" ]; then
+    echo "ERROR: $LINUX_DEPS_DIR/LICENSES is missing." >&2
+    echo "       The linux-dependencies archive should carry the third-party" >&2
+    echo "       licence texts; re-run with --clean to re-fetch it." >&2
+    exit 1
 fi
+
+echo
+echo "############################################################"
+echo "# build: licenses (linux-deps/LICENSES/ -> Libraries/LICENSES/)"
+echo "############################################################"
+shopt -s nullglob
+for f in "$LINUX_DEPS_DIR/LICENSES"/*.txt; do
+    install -m 0644 "$f" "$LIBRARIES_DIR/LICENSES/$(basename "$f")"
+    echo "  copied $(basename "$f")"
+done
+shopt -u nullglob
 
 # ---- 4. final assertion ----------------------------------------------------
 
@@ -209,6 +207,9 @@ EXPECTED_FILES=(
     libHavok.so
     libRecastDetour.so
     libVRageNative.so
+    # Attribution for the proprietary runtimes and the managed binding.
+    LICENSES/Steam-NOTICE.txt
+    LICENSES/Steamworks.NET-LICENSE.txt
 )
 
 MISSING=0
