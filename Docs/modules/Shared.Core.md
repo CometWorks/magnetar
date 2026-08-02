@@ -1,10 +1,10 @@
 # Module: Shared.Core
 
-**Project:** `Shared` · **Files:** 11 · **Source lines:** 2240
+**Project:** `Shared` · **Files:** 11 · **Source lines:** 2230
 
 ## Purpose
 
-The core bootstrap layer of the Magnetar plugin/mod loader. It discovers and caches plugin metadata from GitHub hubs, single repos, Steam Workshop mods and local folders; compiles/loads enabled plugins per the active profile; performs pre-launch sanity checks; patches SE DS assemblies on disk (preloader mechanism); self-updates against GitHub; and provides cross-cutting services (logging, hashing, Steam path/UGC, assembly resolution, console progress).
+The core bootstrap layer of the Magnetar plugin/mod loader. It discovers and caches plugin metadata from GitHub hubs, single repos, Steam Workshop mods and local folders; compiles/loads enabled plugins per the active profile; performs pre-launch sanity checks; patches SE DS assemblies on disk; self-updates; and provides logging, hashing, Steam path/runtime assembly resolution, and console progress.
 
 ## Role in Magnetar
 
@@ -21,7 +21,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | `AssemblyResolver` | class | [`Shared/AssemblyResolver.cs`](../descriptions/Shared/AssemblyResolver.cs.md) | Scoped AssemblyResolve handler serving allow-listed requesters from registered source folders. |
 | `Tools` | static class | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | Cross-cutting utilities: hashing, message reporting, deep copy, interactive-terminal detection, native crash handler, injected service holders. |
 | `IExternalTools` | interface | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | Bridge to run an Action on the SE main thread. |
-| `Steam` | static class | [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | Cross-platform Steam path resolution, Steamworks.NET resolver, and game-server UGC install checks. |
+| `Steam` | static class | [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | Cross-platform Steam path resolution and optional runtime Steamworks.NET assembly resolver, with no direct Steamworks.NET compile-time dependency. |
 | `LogFile` | static class | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | NLog-backed central logging facade writing per-start info_*.log files, fail-soft. |
 | `IGameLog` | interface | [`Shared/LogFile.cs`](../descriptions/Shared/LogFile.cs.md) | Abstraction over the SE DS native log. |
 | `Flags` | static class | [`Shared/Flags.cs`](../descriptions/Shared/Flags.cs.md) | Parses Magnetar command-line switches once into read-only flags (incl. -noimplicitmod, consent and -help) and renders the usage screen. |
@@ -42,7 +42,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 | [`Shared/PluginList.cs`](../descriptions/Shared/PluginList.cs.md) | 868 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](../descriptions/Shared/PluginProgress.cs.md) | 45 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](../descriptions/Shared/Preloader.cs.md) | 225 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |
-| [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | 81 | Thin Steam helper for the Dedicated Server: resolves the Steam install path cross-platform, redirects `Steamworks.NET` assembly resolution to a bundled copy, and checks Workshop item install state through the *game-server* UGC API. |
+| [`Shared/Steam.cs`](../descriptions/Shared/Steam.cs.md) | 71 | Thin Steam helper for the Dedicated Server: resolves the Steam install path cross-platform and redirects `Steamworks.NET` assembly resolution to a bundled copy. |
 | [`Shared/Tools.cs`](../descriptions/Shared/Tools.cs.md) | 196 | Grab-bag of cross-cutting utilities used throughout Magnetar: SHA-256 hashing of files/strings/folders (used for cache invalidation), human-friendly "time ago" formatting, console/error message reporting, file globbing, filename sanitizing, JSON-based deep copy, interactive-terminal detection, and a cross-platform native crash handler. |
 | [`Shared/Updater.cs`](../descriptions/Shared/Updater.cs.md) | 209 | Handles Magnetar's self-update against a GitHub release repo. |
 
@@ -54,7 +54,7 @@ This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Fra
 - `new Updater(repoName).TryUpdate(); Updater.GameUpdatePrompt(...)`
 - `AssemblyResolver.AddSourceFolder/AddAllowedAssemblyName/AddAllowedAssemblyFile + AssemblyResolved event`
 - `Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()`
-- `Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)`
+- `Steam.GetSteamPath(); Steam.SteamworksResolver(baseDir)`
 - `LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose`
 - `Flags.* flags (incl. NoImplicitMod/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()`
 - `new Launcher(sePath).CanStart()/VerifyConfig()`

@@ -188,7 +188,7 @@
       "Legacy/Program.cs"
     ],
     "file_count": 6,
-    "total_lines": 1560,
+    "total_lines": 1570,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -203,7 +203,7 @@
       "Legacy/Loader/SteamMods.cs"
     ],
     "file_count": 6,
-    "total_lines": 1078,
+    "total_lines": 1184,
     "model": "opus",
     "dominant_tier": 1
   },
@@ -378,7 +378,7 @@
       "Shared/Updater.cs"
     ],
     "file_count": 11,
-    "total_lines": 2240,
+    "total_lines": 2230,
     "model": "opus",
     "dominant_tier": 1
   },

@@ -1,6 +1,6 @@
 # Module: Legacy.Launcher
 
-**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1560
+**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1570
 
 ## Purpose
 
@@ -14,7 +14,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
-| `Folder` | static class | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | Resolves and validates the SE DedicatedServer64 directory from -ds64 override, Steam launch args, Steam library VDF, or the Windows registry. |
+| `Folder` | static class | [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | Resolves and validates DedicatedServer64 from -ds64, Steam launch args, Steam library VDF, or the Windows registry; malformed Steam metadata warns and falls through. |
 | `Game` | static class | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | Reflection/Mono.Cecil bridge into SE engine internals: registers the plugin, sets MyFileSystem paths, reads the game version from IL, and starts the DS. |
 | `GameLog` | class | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | Adapts SE's MyLog.Default to Magnetar's IGameLog (exists/open/write). |
 | `ServerControl` | static class | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | Single source of truth for server lifecycle (save/reload/quit/restart), backing POSIX signal handlers and the PluginSdk.ServerControl facade; waits for Keen save-idle state and is idempotent. |
@@ -27,7 +27,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Legacy/Launcher/Daemon.cs`](../descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
-| [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | 161 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
+| [`Legacy/Launcher/Folder.cs`](../descriptions/Legacy/Launcher/Folder.cs.md) | 171 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory from an explicit override, Steam launch arguments, Steam library metadata, or the Windows registry. |
 | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | 141 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
 | [`Legacy/Launcher/PidFile.cs`](../descriptions/Legacy/Launcher/PidFile.cs.md) | 79 | Writes and removes `magnetar.pid` in the Magnetar config directory so an external tool (MagnetarConfig) can discover this dedicated-server instance and verify the running process belongs to it. |
 | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 529 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |

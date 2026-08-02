@@ -17,7 +17,22 @@ namespace Pulsar.Legacy.Loader;
 
 public static class SteamMods
 {
+    private const string SteamWorkshopService = "Steam";
+
     private static MethodInfo DownloadModsBlocking;
+    private static bool installStateWarningLogged;
+
+    public static bool IsSteamWorkshopAvailable()
+    {
+        try
+        {
+            return MyGameService.GetUGC(SteamWorkshopService) is not null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     public static void Update(IEnumerable<ulong> ids)
     {
@@ -26,42 +41,97 @@ public static class SteamMods
         );
         if (modItems.Count == 0)
             return;
-        LogFile.WriteLine($"Updating {modItems.Count} workshop items");
 
-        // Source: MyWorkshop.DownloadWorldModsBlocking
-        MyWorkshop.ResultData result = new();
-        Task task = Parallel.Start(
-            delegate
-            {
-                result = UpdateInternal(modItems);
-            }
-        );
-        while (!task.IsComplete)
+        if (!IsSteamWorkshopAvailable())
         {
-            MyGameService.Update();
-            Thread.Sleep(10);
+            LogFile.Warn(
+                $"Steam Workshop service unavailable; skipping update for {modItems.Count} workshop items. Server startup will continue."
+            );
+            return;
         }
 
-        if (result.Result != VRage.GameServices.MyGameServiceCallResult.OK)
+        LogFile.WriteLine($"Updating {modItems.Count} workshop items");
+
+        try
         {
+            // Source: MyWorkshop.DownloadWorldModsBlocking
+            MyWorkshop.ResultData result = new();
+            Task task = Parallel.Start(
+                delegate
+                {
+                    result = UpdateInternal(modItems);
+                }
+            );
+            while (!task.IsComplete)
+            {
+                MyGameService.Update();
+                Thread.Sleep(10);
+            }
+
             Exception[] exceptions = task.Exceptions;
             if (exceptions is not null && exceptions.Length > 0)
             {
                 StringBuilder sb = new();
-                sb.AppendLine("An error occurred while updating workshop items:");
+                sb.AppendLine("Unable to update workshop items; server startup will continue:");
                 foreach (Exception e in exceptions)
                     sb.Append(e);
-                LogFile.Error(sb.ToString());
+                LogFile.Warn(sb.ToString());
             }
-            else
+            else if (result.Result != MyGameServiceCallResult.OK)
             {
-                LogFile.Error("Unable to update workshop items. Result: " + result.Result);
+                LogFile.Warn(
+                    "Unable to update workshop items; server startup will continue. Result: "
+                        + result.Result
+                );
             }
+        }
+        catch (Exception e)
+        {
+            LogFile.Warn(
+                "Unable to update workshop items; server startup will continue: " + e
+            );
         }
     }
 
-    public static bool IsModUntrusted(MyObjectBuilder_Checkpoint.ModItem mod) =>
-        mod.PublishedServiceName != "Steam" || !Steam.IsItemInstalled(mod.PublishedFileId);
+    public static bool IsModUntrusted(MyObjectBuilder_Checkpoint.ModItem mod)
+    {
+        if (mod.PublishedServiceName != SteamWorkshopService)
+            return true;
+
+        try
+        {
+            IMyUGCService steam = MyGameService.GetUGC(SteamWorkshopService);
+            if (steam is null)
+            {
+                WarnInstallState(
+                    "Steam Workshop service unavailable; treating Steam workshop items as untrusted."
+                );
+                return true;
+            }
+
+            MyWorkshopItem item = steam.CreateWorkshopItem();
+            item.Id = mod.PublishedFileId;
+            item.UpdateState();
+            return !item.State.HasFlag(MyWorkshopItemState.Installed);
+        }
+        catch (Exception e)
+        {
+            WarnInstallState(
+                "Unable to verify installed Steam Workshop items; treating them as untrusted: "
+                    + e
+            );
+            return true;
+        }
+    }
+
+    private static void WarnInstallState(string message)
+    {
+        if (installStateWarningLogged)
+            return;
+
+        installStateWarningLogged = true;
+        LogFile.Warn(message);
+    }
 
     public static MyWorkshop.ResultData UpdateInternal(
         List<MyObjectBuilder_Checkpoint.ModItem> mods
@@ -70,25 +140,35 @@ public static class SteamMods
         // Source: MyWorkshop.DownloadWorldModsBlockingInternal
 
         MyLog.Default.IncreaseIndent();
+        try
+        {
+            List<WorkshopId> list =
+            [
+                .. mods.Select(x => new WorkshopId(x.PublishedFileId, x.PublishedServiceName)),
+            ];
 
-        List<WorkshopId> list =
-        [
-            .. mods.Select(x => new WorkshopId(x.PublishedFileId, x.PublishedServiceName)),
-        ];
-
-        DownloadModsBlocking ??= AccessTools.Method(typeof(MyWorkshop), "DownloadModsBlocking");
-
-        MyWorkshop.ResultData resultData = (MyWorkshop.ResultData)
-            DownloadModsBlocking.Invoke(
-                mods,
-                [mods, new MyWorkshop.ResultData(), list, new MyWorkshop.CancelToken()]
+            DownloadModsBlocking ??= AccessTools.Method(
+                typeof(MyWorkshop),
+                "DownloadModsBlocking"
             );
+            if (DownloadModsBlocking is null)
+                throw new MissingMethodException(typeof(MyWorkshop).FullName, "DownloadModsBlocking");
 
-        if (resultData.Result == MyGameServiceCallResult.OK)
-            RepairLegacyArchives(mods);
+            MyWorkshop.ResultData resultData = (MyWorkshop.ResultData)
+                DownloadModsBlocking.Invoke(
+                    mods,
+                    [mods, new MyWorkshop.ResultData(), list, new MyWorkshop.CancelToken()]
+                );
 
-        MyLog.Default.DecreaseIndent();
-        return resultData;
+            if (resultData.Result == MyGameServiceCallResult.OK)
+                RepairLegacyArchives(mods);
+
+            return resultData;
+        }
+        finally
+        {
+            MyLog.Default.DecreaseIndent();
+        }
     }
 
     public static void RepairLegacyArchives(IEnumerable<MyObjectBuilder_Checkpoint.ModItem> mods)

@@ -3,7 +3,6 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
-using Steamworks;
 
 namespace Pulsar.Shared;
 
@@ -15,15 +14,6 @@ public static class Steam
     private const string registryKey = @"SOFTWARE\Valve\Steam";
     private const string registryName = "SteamPath";
     private const string Steamworks = "Steamworks.NET";
-
-    // Dedicated servers must not initialize the Steam client API; only the game-server
-    // UGC is available. A workshop item the server has downloaded reports Installed
-    // (Subscribed is a client-only concept), so trust checks key off Installed.
-    public static bool IsItemInstalled(ulong id)
-    {
-        uint state = SteamGameServerUGC.GetItemState(new PublishedFileId_t(id));
-        return (state & (uint)EItemState.k_EItemStateInstalled) != 0;
-    }
 
     public static ResolveEventHandler SteamworksResolver(string baseDir)
     {

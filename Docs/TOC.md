@@ -87,8 +87,9 @@ graph TD
    redirect paths and intercept DS startup. *(Shared.Core, Legacy.Patch)*
 3. **Resolve install & config** — locate the DS, read `CoreConfig` and the active
    `Profile`, build the `PluginList`. *(Legacy.Launcher, Shared.Config, Shared.Core, Shared.Data)*
-4. **Acquire plugins** — download from GitHub/NuGet, fetch Steam Workshop mods,
-   resolve dependencies. *(Shared.Network, Shared.Data, Legacy.Loader)*
+4. **Acquire plugins** — download from GitHub/NuGet and, when SE registers its
+   Steam UGC service, fetch Workshop mods. Workshop failures warn and startup
+   continues. *(Shared.Network, Shared.Data, Legacy.Loader)*
 5. **Compile** — Roslyn compiles source plugins in an isolated context, with
    publicized SE assemblies as references. *(Compiler, Legacy.Integration)*
 6. **Load & run** — `PluginLoader` instantiates each plugin, injects services,
@@ -105,9 +106,9 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Legacy.Launcher](modules/Legacy.Launcher.md) | 5 | 1455 | Launcher bootstrap & entry point: argument parsing, DS detection, environment setup, daemon detach, and handoff to the game's `Main`. |
-| [Legacy.Loader](modules/Legacy.Loader.md) | 6 | 1078 | Runtime plugin host & native bootstrap: instantiates plugins, drives their SE lifecycle, registers components, manages the implicit MagnetarMod client companion, wires the mission-screen senders, prefetches Workshop mods (expanding legacy archives), preloads native libs. |
-| [Legacy.Patch](modules/Legacy.Patch.md) | 12 | 528 | All Harmony patches that adapt the DS binary to Magnetar's headless, in-process, externally-configured hosting model, including injecting the MagnetarMod client companion into SE's mod-loading pipeline. |
+| [Legacy.Launcher](modules/Legacy.Launcher.md) | 6 | 1570 | Launcher bootstrap & entry point: fail-soft Steam library probing, DS detection, environment setup, daemon detach, and handoff to the game's `Main`. |
+| [Legacy.Loader](modules/Legacy.Loader.md) | 6 | 1184 | Runtime plugin host & native bootstrap: drives plugins, commands, mission screens and fail-soft Workshop prefetch; injects MagnetarMod only when Steam UGC is available. |
+| [Legacy.Patch](modules/Legacy.Patch.md) | 12 | 528 | All Harmony patches that adapt the DS binary to Magnetar's headless hosting model, including conditionally applying MagnetarMod policy in SE's mod-loading pipeline. |
 | [Legacy.Commands](modules/Legacy.Commands.md) | 3 | 243 | Host side of the `!`-prefixed chat-command pipeline and the built-in `!save` / `!restart` / `!quit` / `!stop` commands. |
 | [Legacy.Integration](modules/Legacy.Integration.md) | 7 | 613 | Glue to SE internals: isolated Roslyn compilation host, Linux case-insensitive path resolution, and the host-side mission-screen sender that pushes popups to clients via the MagnetarMod world mod. |
 
@@ -115,7 +116,7 @@ Grouped by project. Click a module for its full doc.
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [Shared.Core](modules/Shared.Core.md) | 11 | 2240 | Core bootstrap layer: preloader, plugin list, updater, Steam helpers, assembly resolution, command-line flags, shared tools. |
+| [Shared.Core](modules/Shared.Core.md) | 11 | 2230 | Core bootstrap layer: preloader, plugin list, updater, Steam path/runtime resolver, assembly resolution, command-line flags, shared tools. |
 | [Shared.Data](modules/Shared.Data.md) | 11 | 1897 | The plugin-entry data model (GitHub / local-folder / local / mod / obsolete plugins, profiles, status), plus legacy Workshop `*_legacy.bin` archive expansion. |
 | [Shared.Config](modules/Shared.Config.md) | 12 | 530 | All persistent installation configuration: core config, profiles, plugin sources, and the instance.id consent anchor. |
 | [Shared.Network](modules/Shared.Network.md) | 7 | 892 | Outbound network I/O: GitHub REST/CDN, a full NuGet v3 client, and a lightweight HTTP façade. |
@@ -146,8 +147,9 @@ Grouped by project. Click a module for its full doc.
 ### `MagnetarMod` — companion in-game world mod
 
 An SE1 `Data/Scripts` mod compiled in-game, shipped alongside the launcher and
-auto-loaded as an implicit client mod (unless disabled with `-noimplicitmod` or
-running crossplay). It is the client-side receiver for server-pushed content.
+auto-loaded as an implicit client mod when Steam Workshop is available (unless
+disabled with `-noimplicitmod` or running crossplay). Missing Steam UGC produces
+a warning and leaves mission-screen popups unavailable without blocking startup.
 `MagnetarMod/src/` is the actual Workshop content root; `MagnetarMod/MagnetarMod.csproj`
 is an MDK2 project for IDE support, local builds, and ModAPI analyzer coverage.
 It is present in `Magnetar.sln`, but only the `Workshop|Any CPU` solution

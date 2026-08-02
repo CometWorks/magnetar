@@ -39,6 +39,12 @@ so server-side PluginSdk features can open mission-screen popups on clients. Pas
 `-noimplicitmod` to skip adding it and remove it from the active world mod list
 for that run.
 
+Magnetar only adds and downloads the companion when Space Engineers has
+registered its Steam Workshop service. Without that service, Magnetar removes
+the implicit mod, logs a warning, and continues loading the server; mission-screen
+popups remain unavailable for that run. Other Workshop update failures are also
+reported as warnings and do not abort startup.
+
 ## Legacy Workshop mods
 
 Some early Space Engineers Workshop mods download as a single `*_legacy.bin`
