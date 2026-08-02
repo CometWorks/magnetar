@@ -1,10 +1,10 @@
 # Module: Legacy.Loader
 
-**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1078
+**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1184
 
 ## Purpose
 
-Runtime plugin host and native bootstrap for the SE1 dedicated server. It instantiates compiled plugins, drives their SE lifecycle (Init/Update/HandleInput/Dispose), registers their SE session and entity components, applies late Harmony patches, wires up the chat-command pipeline and mission-screen popup senders, prefetches Steam Workshop mod content (including the implicit MagnetarMod client companion), and on Linux preloads native libraries and aliases Windows DLL names to their .so equivalents.
+Runtime plugin host and native bootstrap for the SE1 dedicated server. It instantiates compiled plugins, drives their SE lifecycle, wires commands and mission-screen senders, conditionally prefetches Steam Workshop content through SE's registered UGC service, and on Linux preloads native libraries. Missing Steam UGC and Workshop failures warn without blocking startup.
 
 ## Role in Magnetar
 
@@ -16,8 +16,8 @@ This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Win
 | ---- | ---- | ---------- | ------- |
 | `PluginLoader` | class | [`Legacy/Loader/PluginLoader.cs`](../descriptions/Legacy/Loader/PluginLoader.cs.md) | Singleton IHandleInputPlugin host that instantiates, initializes and drives all loaded plugins and owns the command pipeline. |
 | `PluginInstance` | class | [`Legacy/Loader/PluginInstance.cs`](../descriptions/Legacy/Loader/PluginInstance.cs.md) | Wrapper around one plugin's IPlugin object: lifecycle, DI, SE component registration and error isolation. |
-| `SteamMods` | static class | [`Legacy/Loader/SteamMods.cs`](../descriptions/Legacy/Loader/SteamMods.cs.md) | Reflection-bridged wrapper over SE's internal MyWorkshop downloader to prefetch mod-plugin workshop content; also expands legacy `*_legacy.bin` archives after download and tests whether a mod is untrusted. |
-| `MagnetarClientMod` | static class | [`Legacy/Loader/MagnetarClientMod.cs`](../descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | Policy + mechanics for the implicit MagnetarMod client companion world mod (workshop id 3750200326): injects it into workshop-id sets and checkpoint mod lists, removing/skipping it under -noimplicitmod or any crossplay configuration. |
+| `SteamMods` | static class | [`Legacy/Loader/SteamMods.cs`](../descriptions/Legacy/Loader/SteamMods.cs.md) | Fail-soft wrapper over SE's registered Steam UGC service and internal MyWorkshop downloader; skips unavailable Steam service, warns on failures, expands legacy archives, and checks hardened-mode trust. |
+| `MagnetarClientMod` | static class | [`Legacy/Loader/MagnetarClientMod.cs`](../descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | Policy + mechanics for the implicit MagnetarMod client companion: injects it only when enabled, non-crossplay, and Steam Workshop UGC is available; otherwise removes it and warns once. |
 | `NativeLibraryPreloader` | static class | [`Legacy/Loader/NativeLibraryPreloader.cs`](../descriptions/Legacy/Loader/NativeLibraryPreloader.cs.md) | Linux-only native bootstrap: dlopens bundled .so files and aliases Windows DLL names across all AssemblyLoadContexts. |
 | `LoaderTools` | static class | [`Legacy/Loader/LoaderTools.cs`](../descriptions/Legacy/Loader/LoaderTools.cs.md) | Process restart (execv on Linux, Process.Start on Windows) and assembly JIT precompilation utilities. |
 
@@ -26,11 +26,11 @@ This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Win
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Legacy/Loader/LoaderTools.cs`](../descriptions/Legacy/Loader/LoaderTools.cs.md) | 137 | Process-level utilities for the loader: restarting the dedicated server process with adjusted command-line arguments, and force-precompiling (JIT-preparing) plugin assemblies so member-access errors surface immediately instead of mid-game. |
-| [`Legacy/Loader/MagnetarClientMod.cs`](../descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | 102 | Manages the bundled **MagnetarMod** client companion world mod (Steam workshop id `3750200326`), the script-side counterpart clients must load so that plugin-driven mission-screen popups have receiving code. |
+| [`Legacy/Loader/MagnetarClientMod.cs`](../descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | 128 | Manages the bundled **MagnetarMod** client companion world mod (Steam workshop id `3750200326`). |
 | [`Legacy/Loader/NativeLibraryPreloader.cs`](../descriptions/Legacy/Loader/NativeLibraryPreloader.cs.md) | 154 | Linux-only native-library bootstrap that runs once at the very top of `Main()`. |
 | [`Legacy/Loader/PluginInstance.cs`](../descriptions/Legacy/Loader/PluginInstance.cs.md) | 336 | Runtime wrapper around a single loaded plugin: it locates the plugin's `IPlugin` implementation type in the compiled assembly, instantiates it, performs reflection-based dependency injection of loader services into well-known static fields/methods, and drives the SE plugin lifecycle (`Init` / `Update` / `HandleInput` / `Dispose`). |
 | [`Legacy/Loader/PluginLoader.cs`](../descriptions/Legacy/Loader/PluginLoader.cs.md) | 229 | The top-level plugin host: a singleton `IHandleInputPlugin` that SE itself drives (`Init`/`Update`/`HandleInput`/`Dispose`). |
-| [`Legacy/Loader/SteamMods.cs`](../descriptions/Legacy/Loader/SteamMods.cs.md) | 120 | Downloads/updates Steam Workshop items (mod-plugins referenced by the active profile) by reproducing SE's own blocking workshop-download path. |
+| [`Legacy/Loader/SteamMods.cs`](../descriptions/Legacy/Loader/SteamMods.cs.md) | 200 | Downloads/updates Steam Workshop items through SE's registered Steam UGC service and reflected internal downloader. |
 
 ## Public API surface
 
@@ -38,7 +38,7 @@ This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Win
 - `PluginLoader.TryGetPluginInstance(string, out PluginInstance)`
 - `PluginLoader.RegisterSessionComponents() / RegisterEntityComponents()`
 - `PluginInstance.TryGet(PluginData, Assembly, out PluginInstance)`
-- `SteamMods.Update(IEnumerable<ulong>) / IsModUntrusted(ModItem)`
+- `SteamMods.IsSteamWorkshopAvailable() / Update(IEnumerable<ulong>) / IsModUntrusted(ModItem)`
 - `MagnetarClientMod.WorkshopId / GetWorkshopIdsForUpdate(IEnumerable<ulong>) / ApplyToCheckpoint(MyObjectBuilder_Checkpoint) / ApplyToModList(...)`
 - `NativeLibraryPreloader.Initialize(string baseDir)`
 - `LoaderTools.Restart(bool, bool?) / Precompile(Assembly)`

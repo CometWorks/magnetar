@@ -12,6 +12,7 @@ internal static class MagnetarClientMod
     public const ulong WorkshopId = 3750200326UL;
 
     private const string WorkshopService = "Steam";
+    private static bool steamUnavailableWarningLogged;
 
     public static HashSet<ulong> GetWorkshopIdsForUpdate(IEnumerable<ulong> configuredIds)
     {
@@ -28,6 +29,13 @@ internal static class MagnetarClientMod
         {
             ids.Remove(WorkshopId);
             LogFile.WriteLine("Crossplay enabled; skipping MagnetarMod client companion.");
+            return ids;
+        }
+
+        if (!SteamMods.IsSteamWorkshopAvailable())
+        {
+            ids.Remove(WorkshopId);
+            WarnSteamUnavailable();
             return ids;
         }
 
@@ -74,6 +82,13 @@ internal static class MagnetarClientMod
             return;
         }
 
+        if (!SteamMods.IsSteamWorkshopAvailable())
+        {
+            mods.RemoveAll(IsMagnetarMod);
+            WarnSteamUnavailable();
+            return;
+        }
+
         if (mods.Any(IsMagnetarMod))
             return;
 
@@ -89,6 +104,17 @@ internal static class MagnetarClientMod
         return MySandboxGame.ConfigDedicated.CrossPlatform ||
                MySandboxGame.ConfigDedicated.ConsoleCompatibility ||
                string.Equals(MySandboxGame.ConfigDedicated.NetworkType, "eos", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void WarnSteamUnavailable()
+    {
+        if (steamUnavailableWarningLogged)
+            return;
+
+        steamUnavailableWarningLogged = true;
+        LogFile.Warn(
+            $"Steam Workshop service unavailable; MagnetarMod client companion ({WorkshopId}) will not be loaded. Mission-screen popups will be unavailable."
+        );
     }
 
     private static bool IsMagnetarMod(MyObjectBuilder_Checkpoint.ModItem mod)

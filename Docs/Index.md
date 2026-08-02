@@ -147,7 +147,7 @@ Every documented source file, grouped by module. 210 files across 25 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Launcher/Daemon.cs`](descriptions/Legacy/Launcher/Daemon.cs.md) | 164 | 2 | Detaches the running process from its parent (typically Quasar) when the `-daemon` flag is set, so the parent terminating does not take the dedicated server down with it. |
-| [`Legacy/Launcher/Folder.cs`](descriptions/Legacy/Launcher/Folder.cs.md) | 161 | 2 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory so the launcher knows which game binaries to load and patch. |
+| [`Legacy/Launcher/Folder.cs`](descriptions/Legacy/Launcher/Folder.cs.md) | 171 | 2 | Locates the Space Engineers Dedicated Server `DedicatedServer64` installation directory from an explicit override, Steam launch arguments, Steam library metadata, or the Windows registry. |
 | [`Legacy/Launcher/Game.cs`](descriptions/Legacy/Launcher/Game.cs.md) | 141 | 2 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
 | [`Legacy/Launcher/PidFile.cs`](descriptions/Legacy/Launcher/PidFile.cs.md) | 79 | 2 | Writes and removes `magnetar.pid` in the Magnetar config directory so an external tool (MagnetarConfig) can discover this dedicated-server instance and verify the running process belongs to it. |
 | [`Legacy/Launcher/ServerControl.cs`](descriptions/Legacy/Launcher/ServerControl.cs.md) | 529 | 1 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
@@ -158,11 +158,11 @@ Every documented source file, grouped by module. 210 files across 25 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Loader/LoaderTools.cs`](descriptions/Legacy/Loader/LoaderTools.cs.md) | 137 | 2 | Process-level utilities for the loader: restarting the dedicated server process with adjusted command-line arguments, and force-precompiling (JIT-preparing) plugin assemblies so member-access errors surface immediately instead of mid-game. |
-| [`Legacy/Loader/MagnetarClientMod.cs`](descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | 102 | 2 | Manages the bundled **MagnetarMod** client companion world mod (Steam workshop id `3750200326`), the script-side counterpart clients must load so that plugin-driven mission-screen popups have receiving code. |
+| [`Legacy/Loader/MagnetarClientMod.cs`](descriptions/Legacy/Loader/MagnetarClientMod.cs.md) | 128 | 2 | Manages the bundled **MagnetarMod** client companion world mod (Steam workshop id `3750200326`). |
 | [`Legacy/Loader/NativeLibraryPreloader.cs`](descriptions/Legacy/Loader/NativeLibraryPreloader.cs.md) | 154 | 1 | Linux-only native-library bootstrap that runs once at the very top of `Main()`. |
 | [`Legacy/Loader/PluginInstance.cs`](descriptions/Legacy/Loader/PluginInstance.cs.md) | 336 | 1 | Runtime wrapper around a single loaded plugin: it locates the plugin's `IPlugin` implementation type in the compiled assembly, instantiates it, performs reflection-based dependency injection of loader services into well-known static fields/methods, and drives the SE plugin lifecycle (`Init` / `Update` / `HandleInput` / `Dispose`). |
 | [`Legacy/Loader/PluginLoader.cs`](descriptions/Legacy/Loader/PluginLoader.cs.md) | 229 | 1 | The top-level plugin host: a singleton `IHandleInputPlugin` that SE itself drives (`Init`/`Update`/`HandleInput`/`Dispose`). |
-| [`Legacy/Loader/SteamMods.cs`](descriptions/Legacy/Loader/SteamMods.cs.md) | 120 | 2 | Downloads/updates Steam Workshop items (mod-plugins referenced by the active profile) by reproducing SE's own blocking workshop-download path. |
+| [`Legacy/Loader/SteamMods.cs`](descriptions/Legacy/Loader/SteamMods.cs.md) | 200 | 1 | Downloads/updates Steam Workshop items through SE's registered Steam UGC service and reflected internal downloader. |
 
 ## Legacy.Patch  ·  [module doc](modules/Legacy.Patch.md)
 
@@ -295,7 +295,7 @@ Every documented source file, grouped by module. 210 files across 25 modules.
 | [`Shared/PluginList.cs`](descriptions/Shared/PluginList.cs.md) | 868 | 1 | The plugin catalog. |
 | [`Shared/PluginProgress.cs`](descriptions/Shared/PluginProgress.cs.md) | 45 | 2 | Plain-text console progress reporter for plugin download and compilation, replacing the former WinForms splash screen that does not exist on the headless DS. |
 | [`Shared/Preloader.cs`](descriptions/Shared/Preloader.cs.md) | 225 | 1 | Implements Magnetar's "preloader plugin" mechanism: BepInEx/Pulsar-style assembly patching of SE DS DLLs *on disk* before they are loaded into the CLR. |
-| [`Shared/Steam.cs`](descriptions/Shared/Steam.cs.md) | 81 | 2 | Thin Steam helper for the Dedicated Server: resolves the Steam install path cross-platform, redirects `Steamworks.NET` assembly resolution to a bundled copy, and checks Workshop item install state through the *game-server* UGC API. |
+| [`Shared/Steam.cs`](descriptions/Shared/Steam.cs.md) | 71 | 2 | Thin Steam helper for the Dedicated Server: resolves the Steam install path cross-platform and redirects `Steamworks.NET` assembly resolution to a bundled copy. |
 | [`Shared/Tools.cs`](descriptions/Shared/Tools.cs.md) | 196 | 2 | Grab-bag of cross-cutting utilities used throughout Magnetar: SHA-256 hashing of files/strings/folders (used for cache invalidation), human-friendly "time ago" formatting, console/error message reporting, file globbing, filename sanitizing, JSON-based deep copy, interactive-terminal detection, and a cross-platform native crash handler. |
 | [`Shared/Updater.cs`](descriptions/Shared/Updater.cs.md) | 209 | 1 | Handles Magnetar's self-update against a GitHub release repo. |
 

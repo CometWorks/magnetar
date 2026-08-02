@@ -442,6 +442,7 @@
       "Legacy/Loader/PluginLoader.cs"
     ],
     "Legacy/Loader/MagnetarClientMod.cs": [
+      "Legacy/Loader/SteamMods.cs",
       "Shared/Flags.cs",
       "Shared/Steam.cs"
     ],
@@ -1361,6 +1362,7 @@
       "Legacy/Program.cs"
     ],
     "Legacy/Loader/SteamMods.cs": [
+      "Legacy/Loader/MagnetarClientMod.cs",
       "Legacy/Loader/PluginLoader.cs",
       "Legacy/Patch/Patch_MySessionLoader.cs",
       "Legacy/Patch/Patch_MyWorkshop.cs"

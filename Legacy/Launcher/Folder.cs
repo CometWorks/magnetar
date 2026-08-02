@@ -127,33 +127,43 @@ internal class Folder
         if (!Tools.IsNative())
             return null;
 
-        string steamPath = Steam.GetSteamPath();
-
-        if (steamPath is null)
-            return null;
-
-        string libraryPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
-        VProperty libraries = VdfConvert.Deserialize(File.ReadAllText(libraryPath));
-
-        foreach (var library in libraries.Value.Children<VProperty>())
+        try
         {
-            var data = (VObject)library.Value;
-            var apps = (VObject)data["apps"];
+            string steamPath = Steam.GetSteamPath();
 
-            if (!apps.ContainsKey(Steam.AppIdSe1DS.ToString()))
-                continue;
+            if (steamPath is null)
+                return null;
 
-            string targetPath = data.Value<string>("path");
-            string ds64 = Path.Combine(
-                targetPath,
-                "steamapps",
-                "common",
-                "SpaceEngineersDedicatedServer",
-                "DedicatedServer64"
+            string libraryPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
+            VProperty libraries = VdfConvert.Deserialize(File.ReadAllText(libraryPath));
+
+            foreach (var library in libraries.Value.Children<VProperty>())
+            {
+                var data = (VObject)library.Value;
+                var apps = (VObject)data["apps"];
+
+                if (!apps.ContainsKey(Steam.AppIdSe1DS.ToString()))
+                    continue;
+
+                string targetPath = data.Value<string>("path");
+                string ds64 = Path.Combine(
+                    targetPath,
+                    "steamapps",
+                    "common",
+                    "SpaceEngineersDedicatedServer",
+                    "DedicatedServer64"
+                );
+
+                if (IsDS64(ds64))
+                    return ds64;
+            }
+        }
+        catch (Exception e)
+        {
+            LogFile.Warn(
+                "Unable to inspect Steam libraries for the Dedicated Server; continuing other discovery methods: "
+                    + e.Message
             );
-
-            if (IsDS64(ds64))
-                return ds64;
         }
 
         return null;

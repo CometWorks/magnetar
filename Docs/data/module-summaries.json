@@ -236,7 +236,7 @@
         "name": "Folder",
         "kind": "static class",
         "file": "Legacy/Launcher/Folder.cs",
-        "summary": "Resolves and validates the SE DedicatedServer64 directory from -ds64 override, Steam launch args, Steam library VDF, or the Windows registry."
+        "summary": "Resolves and validates DedicatedServer64 from -ds64, Steam launch args, Steam library VDF, or the Windows registry; malformed Steam metadata warns and falls through."
       },
       {
         "name": "Game",
@@ -307,7 +307,7 @@
   {
     "module": "Legacy.Loader",
     "project": "Legacy",
-    "purpose": "Runtime plugin host and native bootstrap for the SE1 dedicated server. It instantiates compiled plugins, drives their SE lifecycle (Init/Update/HandleInput/Dispose), registers their SE session and entity components, applies late Harmony patches, wires up the chat-command pipeline and mission-screen popup senders, prefetches Steam Workshop mod content (including the implicit MagnetarMod client companion), and on Linux preloads native libraries and aliases Windows DLL names to their .so equivalents.",
+    "purpose": "Runtime plugin host and native bootstrap for the SE1 dedicated server. It instantiates compiled plugins, drives their SE lifecycle, wires commands and mission-screen senders, conditionally prefetches Steam Workshop content through SE's registered UGC service, and on Linux preloads native libraries. Missing Steam UGC and Workshop failures warn without blocking startup.",
     "role": "This is the heart of Magnetar's launcher on the Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) targets: the single SE-visible IHandleInputPlugin (PluginLoader) that fans the engine lifecycle out to every loaded Magnetar plugin, quarantines misbehaving plugins via first-chance exception attribution, manages the bundled MagnetarMod client world mod that backs plugin mission-screen popups, and supplies the cross-platform plumbing (process restart, JIT precompile, native library resolution) needed to run the headless DS on both platforms.",
     "key_types": [
       {
@@ -326,13 +326,13 @@
         "name": "SteamMods",
         "kind": "static class",
         "file": "Legacy/Loader/SteamMods.cs",
-        "summary": "Reflection-bridged wrapper over SE's internal MyWorkshop downloader to prefetch mod-plugin workshop content; also expands legacy `*_legacy.bin` archives after download and tests whether a mod is untrusted."
+        "summary": "Fail-soft wrapper over SE's registered Steam UGC service and internal MyWorkshop downloader; skips unavailable Steam service, warns on failures, expands legacy archives, and checks hardened-mode trust."
       },
       {
         "name": "MagnetarClientMod",
         "kind": "static class",
         "file": "Legacy/Loader/MagnetarClientMod.cs",
-        "summary": "Policy + mechanics for the implicit MagnetarMod client companion world mod (workshop id 3750200326): injects it into workshop-id sets and checkpoint mod lists, removing/skipping it under -noimplicitmod or any crossplay configuration."
+        "summary": "Policy + mechanics for the implicit MagnetarMod client companion: injects it only when enabled, non-crossplay, and Steam Workshop UGC is available; otherwise removes it and warns once."
       },
       {
         "name": "NativeLibraryPreloader",
@@ -352,7 +352,7 @@
       "PluginLoader.TryGetPluginInstance(string, out PluginInstance)",
       "PluginLoader.RegisterSessionComponents() / RegisterEntityComponents()",
       "PluginInstance.TryGet(PluginData, Assembly, out PluginInstance)",
-      "SteamMods.Update(IEnumerable<ulong>) / IsModUntrusted(ModItem)",
+      "SteamMods.IsSteamWorkshopAvailable() / Update(IEnumerable<ulong>) / IsModUntrusted(ModItem)",
       "MagnetarClientMod.WorkshopId / GetWorkshopIdsForUpdate(IEnumerable<ulong>) / ApplyToCheckpoint(MyObjectBuilder_Checkpoint) / ApplyToModList(...)",
       "NativeLibraryPreloader.Initialize(string baseDir)",
       "LoaderTools.Restart(bool, bool?) / Precompile(Assembly)"
@@ -384,7 +384,7 @@
   {
     "module": "Legacy.Patch",
     "project": "Legacy",
-    "purpose": "Provides all Harmony patches that adapt the Space Engineers Dedicated Server binary to Magnetar's in-process, headless, externally-configured hosting model. The patches cover: stripping the WinForms/Telerik configuration UI and Windows Service branch from DedicatedServer.Run; rerouting crash reporting, process exit, and chat commands; injecting the MagnetarMod client companion and client-mod definitions/scripts into SE's loading and workshop-download pipelines; enforcing a trusted-mods security policy; and capturing Roslyn compilation diagnostics with clean, cross-platform file paths.",
+    "purpose": "Provides all Harmony patches that adapt the Space Engineers Dedicated Server binary to Magnetar's in-process, headless, externally-configured hosting model. The patches strip the configuration UI/service branch, reroute lifecycle and chat paths, conditionally inject the MagnetarMod companion when Steam Workshop is available, enforce trusted mods, and capture script diagnostics.",
     "role": "Acts as the glue layer between the unmodified SE DS assemblies and the rest of Magnetar. Every patch in this module is registered via HarmonyLib under one of two categories: \"Early\" (applied at loader startup before the server initialises) or \"Late\" (applied from PluginLoader.Init once plugins are ready). Together the patches intercept the exact SE entry points needed by Legacy.Loader, Legacy.Launcher, Legacy.Commands, and the client-mod support in Shared.Data/Shared.Config, without requiring source changes to the SE binaries.",
     "key_types": [
       {
@@ -427,7 +427,7 @@
         "name": "Patch_MyDefinitionManager",
         "kind": "static class",
         "file": "Legacy/Patch/Patch_MyDefinitionManager.cs",
-        "summary": "Harmony Prefix on MyDefinitionManager.LoadData; injects the MagnetarMod client companion via MagnetarClientMod.ApplyToModList, then appends ModPlugin workshop mod-items from the active Magnetar profile into SE's definition-loading mod list"
+        "summary": "Harmony Prefix on MyDefinitionManager.LoadData; applies fail-soft MagnetarMod policy, then appends available ModPlugin items from the active profile to SE's definition-loading list."
       },
       {
         "name": "Patch_MyScriptManager",
@@ -439,13 +439,13 @@
         "name": "Patch_MySessionLoader",
         "kind": "class",
         "file": "Legacy/Patch/Patch_MySessionLoader.cs",
-        "summary": "Two Harmony Prefixes on MySessionLoader multiplayer-load methods; apply the MagnetarMod client companion to the world checkpoint via MagnetarClientMod.ApplyToCheckpoint, then strip untrusted (non-locally-installed Steam) mods when the -hardened flag is set"
+        "summary": "Two Harmony Prefixes on MySessionLoader multiplayer-load methods; apply fail-soft MagnetarMod policy, then strip untrusted mods in hardened mode. Missing Steam install-state service warns and fails closed."
       },
       {
         "name": "Patch_MyWorkshop",
         "kind": "static class",
         "file": "Legacy/Patch/Patch_MyWorkshop.cs",
-        "summary": "Harmony patch (Early) on MyWorkshop.DownloadWorldModsBlocking; injects/strips the MagnetarMod client companion before download and asks SteamMods to expand legacy `*_legacy.bin` archives afterward."
+        "summary": "Harmony patch on MyWorkshop.DownloadWorldModsBlocking; applies MagnetarMod policy before download and expands legacy archives afterward. Without Steam Workshop, the companion is removed and startup continues."
       },
       {
         "name": "Patch_PrepareCrashReport",
@@ -1216,7 +1216,7 @@
   {
     "module": "Shared.Core",
     "project": "Shared",
-    "purpose": "The core bootstrap layer of the Magnetar plugin/mod loader. It discovers and caches plugin metadata from GitHub hubs, single repos, Steam Workshop mods and local folders; compiles/loads enabled plugins per the active profile; performs pre-launch sanity checks; patches SE DS assemblies on disk (preloader mechanism); self-updates against GitHub; and provides cross-cutting services (logging, hashing, Steam path/UGC, assembly resolution, console progress).",
+    "purpose": "The core bootstrap layer of the Magnetar plugin/mod loader. It discovers and caches plugin metadata from GitHub hubs, single repos, Steam Workshop mods and local folders; compiles/loads enabled plugins per the active profile; performs pre-launch sanity checks; patches SE DS assemblies on disk; self-updates; and provides logging, hashing, Steam path/runtime assembly resolution, and console progress.",
     "role": "This is the environment-agnostic heart of the launcher/SDK. The Legacy (.NET Framework 4.8 / Windows) and Interim (.NET 10 / Linux) front-ends call into these types to load plugins and patch the SE Dedicated Server. It sits above Shared.Config/Data/Network/Votes and the Compiler, and below the environment-specific Launcher/Loader/Integration modules, exposing the Loader, PluginList, Preloader and Updater that those front-ends drive.",
     "key_types": [
       {
@@ -1265,7 +1265,7 @@
         "name": "Steam",
         "kind": "static class",
         "file": "Shared/Steam.cs",
-        "summary": "Cross-platform Steam path resolution, Steamworks.NET resolver, and game-server UGC install checks."
+        "summary": "Cross-platform Steam path resolution and optional runtime Steamworks.NET assembly resolver, with no direct Steamworks.NET compile-time dependency."
       },
       {
         "name": "LogFile",
@@ -1317,7 +1317,7 @@
       "new Updater(repoName).TryUpdate(); Updater.GameUpdatePrompt(...)",
       "AssemblyResolver.AddSourceFolder/AddAllowedAssemblyName/AddAllowedAssemblyFile + AssemblyResolved event",
       "Tools.Init(external, compiler); Tools.GetFolderHash/GetFileHash/ShowMessage/InstallNativeCrashHandler; Tools.IsInteractiveTerminal()",
-      "Steam.GetSteamPath(); Steam.IsItemInstalled(id); Steam.SteamworksResolver(baseDir)",
+      "Steam.GetSteamPath(); Steam.SteamworksResolver(baseDir)",
       "LogFile.Init(mainPath)/WriteLine/Error/Warn/Dispose",
       "Flags.* flags (incl. NoImplicitMod/Consent/Help), Flags.LogFlags(), Flags.PrintHelp()",
       "new Launcher(sePath).CanStart()/VerifyConfig()",

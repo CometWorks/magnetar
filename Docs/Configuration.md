@@ -44,6 +44,8 @@ directory.
 When not given, the DS install is auto-detected from the Steam registry
 (Windows) or `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64`
 (Linux), or any Steam library listed in `libraryfolders.vdf`.
+Unreadable or malformed Steam library metadata produces a warning and is skipped;
+use `-ds64` when no remaining discovery source identifies the installation.
 
 ### `-path <dir>` — DS data directory (AppData: config + world saves)
 

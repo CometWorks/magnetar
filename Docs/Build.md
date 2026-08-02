@@ -181,7 +181,6 @@ the same name); resolved per OS in [Directory.Build.props](../Directory.Build.pr
 | ---- | ------ | ----------------- | --------------- |
 | `DS64` | Folder containing `SpaceEngineersDedicated.exe` | Steam registry key | `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64` |
 | `Magnetar` | Install/deploy folder | `%APPDATA%\Magnetar` | `~/.local/share/Magnetar` |
-| `Steamworks` | Path to `Steamworks.NET.dll` (net48/net10 reference) | `$(DS64)\Steamworks.NET.dll` | `build/Libraries/Steamworks.NET.dll` |
 
 `build.sh` honours additional overrides for Linux dependency staging:
 `MAGNETAR_REPO_DIR`, `BUILD_DIR`, `LIBRARIES_DIR`, `OUTPUT_DIR`, plus the per-blob
@@ -229,8 +228,7 @@ it; the MDK2 project is for local/workshop validation and analyzer coverage.
 * **Windows-only items** (application icon, `app.manifest`, the
   `VRage.Platform.Windows` reference, `verify.bat`/`deploy.bat`) are gated with
   `Condition="'$(OS)' == 'Windows_NT'"`.
-* **Linux-only items** (the `build/Libraries/*` copy targets, the
-  `Steamworks.NET.dll` presence check) are gated with
+* **Linux-only items** (the `build/Libraries/*` copy targets) are gated with
   `Condition="'$(OS)' != 'Windows_NT'"`.
 * **Source guards** — platform-specific code uses
   `RuntimeInformation.IsOSPlatform(...)` where it must compile for both `net48`
