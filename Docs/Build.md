@@ -110,16 +110,28 @@ this:
 
 It populates `build/Libraries/` with:
 
+Nothing is compiled at this step — every artefact is downloaded from a public
+GitHub release, so the binaries are identical to the ones Pulsar for Linux
+ships:
+
 | Artefact | Source |
 | -------- | ------ |
-| `Steamworks.NET.dll` | built from [rlabrecque/Steamworks.NET](https://github.com/rlabrecque/Steamworks.NET) by [Scripts/build_steamworks_net.sh](../Scripts/build_steamworks_net.sh) |
-| `libsteam_api.so` | the proprietary Linux Steamworks SDK blob — drop it in `Vendor/` or set `LIBSTEAM_API_SO=` |
-| `libEOSSDK-Linux-Shipping.so` | Epic Online Services SDK (drop it in Magnetar's `Vendor/`, or set `LIBEOSSDK_SO=`) |
+| `Steamworks.NET.dll` | the [linux-dependencies](https://github.com/CometWorks/linux-dependencies) release, fetched by [Scripts/fetch_linux_dependencies.sh](../Scripts/fetch_linux_dependencies.sh) into `build/linux-deps/` (or `STEAMWORKS_NET_DLL=`) |
+| `libsteam_api.so` | same release (or `LIBSTEAM_API_SO=`, or the `$DS64` folder) |
+| `libEOSSDK-Linux-Shipping.so` | same release (or `LIBEOSSDK_SO=`) |
 | `libHavok.so`, `libRecastDetour.so`, `libVRageNative.so` | PE-loader replacements for Keen's Windows native DLLs, downloaded prebuilt from the [linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers) GitHub release by [Scripts/fetch_native_wrappers.sh](../Scripts/fetch_native_wrappers.sh) into `build/native/` (or `LIBHAVOK_SO=` etc.) |
 
-The proprietary blobs (`libsteam_api.so`, `libEOSSDK-Linux-Shipping.so`) are not
-committed; `build.sh` prints exactly where it looked if one is missing. Override
-the DS location for staging the same way as the build:
+The proprietary Steamworks and EOS runtimes used to be a manual step — you had
+to obtain them from the vendor portals and drop them in `Vendor/`. They now
+arrive with the `linux-dependencies` release, so a clean clone builds without
+any manual file shuffling. Every library still honours its per-file override
+env var, and a file dropped in `Vendor/` still wins over the fetched release;
+`build.sh` prints exactly where it looked if something is missing.
+
+To pin exact releases for a reproducible build, set `LINUX_DEPENDENCIES_TAG`
+and `NATIVE_WRAPPERS_TAG`.
+
+Override the DS location for staging the same way as the build:
 
 ```sh
 DS64=/opt/se1-ds/DedicatedServer64 ./build.sh --deps-only
@@ -260,14 +272,17 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
   download) and exposes it as the `ds_buildid` output used to key the DS cache.
 * **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and
   `p7zip-full`; restores the cached **DS library set** (or downloads the
-  **Windows** DS depot via `steamcmd` on a cache miss — see below); downloads
-  the Vendor blobs; then runs [`build.sh`](../build.sh), which fetches the
-  prebuilt native wrappers from the
+  **Windows** DS depot via `steamcmd` on a cache miss — see below); then runs
+  [`build.sh`](../build.sh), which fetches the prebuilt libraries from two
+  releases —
+  [linux-dependencies](https://github.com/CometWorks/linux-dependencies) via
+  [Scripts/fetch_linux_dependencies.sh](../Scripts/fetch_linux_dependencies.sh)
+  (cached by release tag under `build/linux-deps/`) and
   [linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers)
-  release via
+  via
   [Scripts/fetch_native_wrappers.sh](../Scripts/fetch_native_wrappers.sh)
-  (cached by release tag under `build/native/`), and uploads the bundle,
-  renamed to `MagnetarForLinux-<version>.7z`.
+  (cached under `build/native/`) — and uploads the bundle, renamed to
+  `MagnetarForLinux-<version>.7z`.
 * **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
   ships the .NET Framework 4.8 targeting pack); restores the cached DS library
   set (or downloads via `steamcmd` on a miss); builds `Magnetar.sln` with
@@ -301,9 +316,14 @@ cache budget, so they are not evicted by the small native-wrappers cache.
 
 ### Required repository configuration
 
-| Name | Kind | Purpose |
-| ---- | ---- | ------- |
-| `VENDOR_ARCHIVE_URL` | Repository **secret** | Download URL returning `Vendor.7z` (the `Vendor/` folder with `libsteam_api.so` and `libEOSSDK-Linux-Shipping.so`). Fetched fresh every run; the existing `Vendor/` is removed and replaced. |
+None. Every bundled library now comes from a public GitHub release
+([linux-dependencies](https://github.com/CometWorks/linux-dependencies) and
+[linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers))
+that `build.sh` fetches.
+
+The proprietary Steamworks and EOS runtimes used to arrive through a
+`VENDOR_ARCHIVE_URL` repository secret pointing at a `Vendor.7z`. That secret
+is no longer read by any workflow and can be deleted.
 
 On a cache miss the DS is retrieved anonymously (Steam app `298740`); the Linux job forces the
 Windows depot (`+@sSteamCmdForcePlatformType windows`) because there is no native

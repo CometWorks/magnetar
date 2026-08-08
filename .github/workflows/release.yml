@@ -14,11 +14,9 @@ name: Release
 #                          DRAFT build (not marked latest) or a real, public
 #                          "latest" release.
 #
-# Required repository configuration:
-#   * secrets.VENDOR_ARCHIVE_URL - download URL that returns Vendor.7z, containing
-#                                the Vendor/ folder with libsteam_api.so and
-#                                libEOSSDK-Linux-Shipping.so (the proprietary
-#                                blobs that can't be committed).
+# No repository secrets are needed: every bundled library comes from a public
+# GitHub release (CometWorks/linux-dependencies and
+# CometWorks/linux-native-wrappers), fetched by build.sh.
 
 on:
   push:
@@ -170,26 +168,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends p7zip-full ca-certificates curl
 
-      # The native wrappers (libHavok/libRecastDetour/libVRageNative) are no
-      # longer built here: build.sh's fetch_native_wrappers.sh downloads them
-      # from the CometWorks/linux-native-wrappers release (cached by tag under
-      # build/native/).
-
-      # --- Vendor proprietary blobs (always downloaded, never cached) --------
-      - name: Download Vendor archive
-        env:
-          VENDOR_ARCHIVE_URL: ${{ secrets.VENDOR_ARCHIVE_URL }}
-        run: |
-          set -euo pipefail
-          if [ -z "${VENDOR_ARCHIVE_URL:-}" ]; then
-            echo "ERROR: repository secret VENDOR_ARCHIVE_URL is not set." >&2
-            exit 1
-          fi
-          curl -fsSL "$VENDOR_ARCHIVE_URL" -o Vendor.7z
-          rm -rf Vendor
-          7z x -y Vendor.7z >/dev/null
-          echo "Vendor contents:"
-          ls -l Vendor
+      # No dependency is built or downloaded here any more. build.sh fetches
+      # two GitHub releases:
+      #   * CometWorks/linux-dependencies    Steamworks.NET.dll plus the
+      #                                      proprietary libsteam_api.so and
+      #                                      libEOSSDK-Linux-Shipping.so
+      #                                      (cached by tag under build/linux-deps/)
+      #   * CometWorks/linux-native-wrappers libHavok / libRecastDetour /
+      #                                      libVRageNative
+      #                                      (cached by tag under build/native/)
+      # The proprietary blobs used to arrive here as a Vendor.7z download behind
+      # the VENDOR_ARCHIVE_URL repository secret; that secret is no longer used
+      # and can be deleted.
 
       # --- Dedicated Server libraries (cached by DS build id) ----------------
       # Only the ~186 MB DedicatedServer64/ library set is cached, not the

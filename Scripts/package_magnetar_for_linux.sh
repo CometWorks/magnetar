@@ -64,7 +64,9 @@ MAGNETAR_CSPROJ="$MAGNETAR_REPO_DIR/Legacy/Legacy.csproj"
 MAGNETAR_PUBLISH_DIR="$MAGNETAR_REPO_DIR/Legacy/bin/Release/net10.0/publish"
 CONFIG_CSPROJ="$MAGNETAR_REPO_DIR/ConfigTerminal/ConfigTerminal.csproj"
 CONFIG_PUBLISH_DIR="$MAGNETAR_REPO_DIR/ConfigTerminal/bin/Release/net10.0/publish"
-LIBRARIES_DIR="$BUILD_DIR/Libraries"
+# Honour the override build.sh exports and documents; hard-coding it here made
+# LIBRARIES_DIR=<dir> ./build.sh stage into one place and package from another.
+LIBRARIES_DIR="${LIBRARIES_DIR:-$BUILD_DIR/Libraries}"
 
 # ---- preflight --------------------------------------------------------------
 
