@@ -31,6 +31,19 @@ only need `using PluginSdk;`.
 | `QuitWithoutSaving()` | `void` | Quits the process immediately with exit code 0, without saving. |
 | `RestartWithoutSaving()` | `void` | Restarts the process immediately (original command line, environment and working directory), without saving. |
 
+The four shutdown/restart methods first consult the optional typed cluster
+lifecycle provider described in [Clustering.md](Clustering.md). With no provider
+registered, standalone behaviour is unchanged. With one registered, the call is
+routed asynchronously and never falls back to the local action, including after
+rejection, link loss, timeout, or provider failure. The existing methods remain
+`void`; callers that need the authoritative acknowledgement can construct a
+`ClusterLifecycleRequest` and call `ClusterLifecycle.TryRequest` directly.
+
+This routing applies to plugin calls and Magnetar's in-game `!quit`, `!stop`, and
+`!restart` commands. It deliberately does not intercept `SIGTERM`/`SIGINT` or
+the dedicated server's internal exit path, so the process executor retains its
+host-level stop authority.
+
 ## Reacting to admin lifecycle commands
 
 The methods above let a plugin *cause* a lifecycle change. The `Terminating`

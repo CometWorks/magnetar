@@ -24,4 +24,4 @@ Handlers access this object through the inherited `CommandModule.Context` proper
 
 ## Cross-references
 - **Uses:** `PluginSdk/Commands/CommandCaller.cs`, `PluginSdk/Commands/CommandReply.cs`, `PluginSdk/Commands/ICommandResponder.cs`, `VRage.Game.MyFontEnum`, `VRageMath.Color` (SE DS assemblies)
-- **Used by:** [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandModule.cs](CommandModule.cs.md), [RegisteredCommand.cs](RegisteredCommand.cs.md)
+- **Used by:** [MagnetarCommands.cs](../../Legacy/Commands/MagnetarCommands.cs.md), [CommandDispatcher.cs](CommandDispatcher.cs.md), [CommandModule.cs](CommandModule.cs.md), [RegisteredCommand.cs](RegisteredCommand.cs.md)

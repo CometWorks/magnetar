@@ -22,4 +22,4 @@ owners from silently replacing each other.
 ## Cross-references
 
 - **Uses:** `IClusterNodeLink`, `Interlocked`, `Volatile`
-- **Used by:** DirectTransport and ClusterRuntime plugins outside this repository
+- **Used by:** [ClusterNodeLinkTests.cs](../../PluginSdkTests/ClusterNodeLinkTests.cs.md)

@@ -157,7 +157,7 @@
       "Legacy/Commands/ServerCommandResponder.cs"
     ],
     "file_count": 3,
-    "total_lines": 243,
+    "total_lines": 297,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -298,6 +298,9 @@
   "PluginSdk.Runtime": {
     "project": "PluginSdk",
     "files": [
+      "PluginSdk/Clustering/ClusterLifecycle.cs",
+      "PluginSdk/Clustering/ClusterNodeLink.cs",
+      "PluginSdk/Clustering/IClusterNodeLink.cs",
       "PluginSdk/MissionScreenContent.cs",
       "PluginSdk/MissionScreens.cs",
       "PluginSdk/Paths/IPathResolver.cs",
@@ -306,8 +309,8 @@
       "PluginSdk/ServerControl.cs",
       "PluginSdk/Tools/SerializableDictionary.cs"
     ],
-    "file_count": 7,
-    "total_lines": 484,
+    "file_count": 10,
+    "total_lines": 744,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -328,6 +331,8 @@
     "project": "PluginSdkTests",
     "files": [
       "PluginSdkTests/ChangeNotificationTests.cs",
+      "PluginSdkTests/ClusterLifecycleTests.cs",
+      "PluginSdkTests/ClusterNodeLinkTests.cs",
       "PluginSdkTests/CommandTests.cs",
       "PluginSdkTests/LoggingTests.cs",
       "PluginSdkTests/PathResolverTests.cs",
@@ -336,8 +341,8 @@
       "PluginSdkTests/ServerControlTests.cs",
       "PluginSdkTests/TestConfig.cs"
     ],
-    "file_count": 8,
-    "total_lines": 2261,
+    "file_count": 10,
+    "total_lines": 2423,
     "model": "sonnet",
     "dominant_tier": 2
   },

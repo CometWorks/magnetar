@@ -13,9 +13,11 @@ namespace PluginSdk.Clustering
         event Action<byte[]> MessageReceived;
         event Action<bool> ConnectionChanged;
         event Action<ulong> ClientDetached;
+        event Action<ClusterLifecycleAcknowledgement> LifecycleAcknowledged;
 
         Func<ulong, byte[], bool> AttachValidator { get; set; }
 
         bool Send(byte[] payload);
+        bool SendLifecycleRequest(ClusterLifecycleRequest request);
     }
 }

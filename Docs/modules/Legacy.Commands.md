@@ -1,6 +1,6 @@
 # Module: Legacy.Commands
 
-**Project:** `Legacy` · **Files:** 3 · **Source lines:** 243
+**Project:** `Legacy` · **Files:** 3 · **Source lines:** 297
 
 ## Purpose
 
@@ -16,9 +16,10 @@ Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) an
 | ---- | ---- | ---------- | ------- |
 | `CommandService` | class | [`Legacy/Commands/CommandService.cs`](../descriptions/Legacy/Commands/CommandService.cs.md) | Host-side ICommandRegistrar: owns CommandRegistry and CommandDispatcher, resolves SE identity for callers, routes chat to registered command roots. |
 | `SaveCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !save command module; acknowledges caller, saves on a worker thread, then posts a completion/timeout reply. |
-| `RestartCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !restart command module; acknowledges caller then saves and restarts the server on a worker thread. |
-| `QuitCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !quit command module; acknowledges caller then shuts down without saving on a worker thread. |
-| `StopCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Built-in !stop command module (graceful !quit); acknowledges caller, saves on a worker thread, posts the completion/timeout reply, then shuts the server down without saving again. |
+| `RestartCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Routes one coordinated cluster restart request, or preserves standalone save/restart behavior. |
+| `QuitCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Routes one cluster shutdown request, or preserves standalone quit behavior. |
+| `StopCommand` | class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Routes one save-first cluster shutdown request, or preserves standalone save/quit behavior. |
+| `LifecycleCommandRouting` | static class | [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | Builds correlated chat-origin requests and reports typed acknowledgements on the game thread. |
 | `ServerCommandResponder` | class | [`Legacy/Commands/ServerCommandResponder.cs`](../descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | ICommandResponder singleton that delivers CommandReply values into SE DS chat via MyVisualScriptLogicProvider. |
 
 ## Files
@@ -26,7 +27,7 @@ Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) an
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`Legacy/Commands/CommandService.cs`](../descriptions/Legacy/Commands/CommandService.cs.md) | 114 | `CommandService` is the host-side owner of the chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. |
-| [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 92 | Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers with `CommandService` before any plugin loads. |
+| [`Legacy/Commands/MagnetarCommands.cs`](../descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 146 | Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers before plugins. |
 | [`Legacy/Commands/ServerCommandResponder.cs`](../descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | 37 | `ServerCommandResponder` is the `ICommandResponder` implementation that delivers command replies into the SE DS chat system. |
 
 ## Public API surface
@@ -38,8 +39,8 @@ Sits between the Harmony chat-intercept patch (Legacy.Patch/Patch_ServerChat) an
 
 ## Dependencies
 
-**Uses modules:** [Legacy.Launcher](Legacy.Launcher.md), [PluginSdk.Commands](PluginSdk.Commands.md)  
-**Used by modules:** [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md)  
+**Uses modules:** [Legacy.Launcher](Legacy.Launcher.md), [PluginSdk.Commands](PluginSdk.Commands.md), [PluginSdk.Runtime](PluginSdk.Runtime.md)
+**Used by modules:** [Legacy.Loader](Legacy.Loader.md), [Legacy.Patch](Legacy.Patch.md)
 **External systems:** SE DS assemblies
 
 ---
