@@ -25,7 +25,8 @@ namespace PluginSdk.Tests
                 ServerControl.SaveAndRestart();
                 ServerControl.QuitWithoutSaving();
                 ServerControl.RestartWithoutSaving();
-                await provider.AllReceived.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                Assert.Same(provider.AllReceived.Task,
+                    await Task.WhenAny(provider.AllReceived.Task, Task.Delay(TimeSpan.FromSeconds(2))));
 
                 Assert.Equal(0, localCalls);
                 Assert.Collection(provider.Requests,
@@ -86,7 +87,7 @@ namespace PluginSdk.Tests
         private sealed class RecordingProvider : IClusterLifecycleProvider
         {
             public readonly System.Collections.Generic.List<ClusterLifecycleRequest> Requests = new();
-            public readonly TaskCompletionSource AllReceived = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            public readonly TaskCompletionSource<bool> AllReceived = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
             public Task<ClusterLifecycleAcknowledgement> RequestAsync(
                 ClusterLifecycleRequest request, CancellationToken cancellationToken)
@@ -95,7 +96,7 @@ namespace PluginSdk.Tests
                 {
                     Requests.Add(request);
                     if (Requests.Count == 4)
-                        AllReceived.TrySetResult();
+                        AllReceived.TrySetResult(true);
                 }
                 return Task.FromResult(new ClusterLifecycleAcknowledgement(request.RequestId,
                     ClusterLifecycleDisposition.Accepted, request.RequestId,
