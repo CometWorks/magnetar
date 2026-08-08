@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 210 files across 25 modules.
+Every documented source file, grouped by module. 213 files across 25 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -236,6 +236,8 @@ Every documented source file, grouped by module. 210 files across 25 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
+| [`PluginSdk/Clustering/ClusterNodeLink.cs`](descriptions/PluginSdk/Clustering/ClusterNodeLink.cs.md) | 31 | 2 | Atomic process-wide registration point for one cluster node-link provider. |
+| [`PluginSdk/Clustering/IClusterNodeLink.cs`](descriptions/PluginSdk/Clustering/IClusterNodeLink.cs.md) | 21 | 2 | Transport-neutral authenticated Gateway data-link contract for cluster infrastructure plugins. |
 | [`PluginSdk/MissionScreenContent.cs`](descriptions/PluginSdk/MissionScreenContent.cs.md) | 35 | 2 | Immutable value type carrying the text payload that the Magnetar client mod renders through Space Engineers' mission-screen popup. |
 | [`PluginSdk/MissionScreens.cs`](descriptions/PluginSdk/MissionScreens.cs.md) | 95 | 2 | Plugin-facing facade for opening Space Engineers mission-screen popups on connected clients from server-side plugin code, decoupled from the host launcher implementation. |
 | [`PluginSdk/Paths/IPathResolver.cs`](descriptions/PluginSdk/Paths/IPathResolver.cs.md) | 48 | 2 | Defines the backend contract for cross-platform, case-insensitive path resolution. |
@@ -258,6 +260,7 @@ Every documented source file, grouped by module. 210 files across 25 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`PluginSdkTests/ChangeNotificationTests.cs`](descriptions/PluginSdkTests/ChangeNotificationTests.cs.md) | 257 | 2 | Verifies the change-notification contract of `PluginConfig` — the base class for all Magnetar plugin configuration objects. |
+| [`PluginSdkTests/ClusterNodeLinkTests.cs`](descriptions/PluginSdkTests/ClusterNodeLinkTests.cs.md) | 41 | 2 | Specifies single-provider, identity-safe cluster node-link registration. |
 | [`PluginSdkTests/CommandTests.cs`](descriptions/PluginSdkTests/CommandTests.cs.md) | 470 | 2 | Comprehensive specification for the PluginSdk chat-command pipeline: `CommandRegistry`, `CommandDispatcher`, `CommandModule`, `CommandCaller`, `CommandReply`, `ICommandResponder`, and the associated attributes (`CommandRoot`, `Command`, `Permission`). |
 | [`PluginSdkTests/LoggingTests.cs`](descriptions/PluginSdkTests/LoggingTests.cs.md) | 198 | 2 | Specifies the PluginSdk logging subsystem: `Logger`, `LogEntry`, `ILogSink`, `LogLevel`, `QuasarLogSink`, `MagnetarLogSink`, and `LogEnvironment`. |
 | [`PluginSdkTests/PathResolverTests.cs`](descriptions/PluginSdkTests/PathResolverTests.cs.md) | 88 | 2 | Specifies the `PathResolver` façade and its `IPathResolver` plug-in point. |

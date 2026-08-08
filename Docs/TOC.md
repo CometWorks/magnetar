@@ -135,14 +135,14 @@ Grouped by project. Click a module for its full doc.
 | [PluginSdk.Config](modules/PluginSdk.Config.md) | 5 | 1832 | Declarative, attribute-driven plugin configuration → local XML, remote JSON envelope, and Quasar UI schema. |
 | [PluginSdk.Commands](modules/PluginSdk.Commands.md) | 17 | 1289 | The chat-command framework: attribute-declared handlers, registry, dispatcher, argument binding, permissions, mission-screen help rendering. |
 | [PluginSdk.Logging](modules/PluginSdk.Logging.md) | 8 | 425 | Unified, environment-agnostic logging API (game log standalone, structured JSON under Quasar). |
-| [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 7 | 484 | Host-agnostic path resolution, dedicated-server lifecycle control (`ServerControl`), and mission-screen popups (`MissionScreens`) pushed to clients. |
+| [PluginSdk.Runtime](modules/PluginSdk.Runtime.md) | 9 | 536 | Host-agnostic paths, server lifecycle, mission screens, and the cluster transport/runtime service boundary. |
 | [PluginSdk.Stats](modules/PluginSdk.Stats.md) | 4 | 498 | Self-describing runtime telemetry: attribute-declared counters / gauges / discrete values published as snapshots a consumer (Quasar Agent) rolls up and charts. |
 
 ### `PluginSdkTests` — specifications
 
 | Module | Files | Lines | What it does |
 | ------ | ----- | ----- | ------------ |
-| [PluginSdkTests](modules/PluginSdkTests.md) | 8 | 2261 | xUnit tests that specify and regression-guard every public `PluginSdk` API. |
+| [PluginSdkTests](modules/PluginSdkTests.md) | 9 | 2302 | xUnit tests that specify and regression-guard every public `PluginSdk` API. |
 
 ### `MagnetarMod` — companion in-game world mod
 

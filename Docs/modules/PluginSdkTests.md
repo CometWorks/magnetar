@@ -1,6 +1,6 @@
 # Module: PluginSdkTests
 
-**Project:** `PluginSdkTests` · **Files:** 8 · **Source lines:** 2261
+**Project:** `PluginSdkTests` · **Files:** 9 · **Source lines:** 2302
 
 ## Purpose
 
@@ -15,6 +15,7 @@ Specification and regression suite for PluginSdk. Sits at the leaf of the build 
 | Type | Kind | Defined in | Summary |
 | ---- | ---- | ---------- | ------- |
 | `ChangeNotificationTests` | class | [`PluginSdkTests/ChangeNotificationTests.cs`](../descriptions/PluginSdkTests/ChangeNotificationTests.cs.md) | Specifies PluginConfig property-change notification: equality gating, in-place mutation limitations, and the NotifyChanged escape hatch. |
+| `ClusterNodeLinkTests` | class | [`PluginSdkTests/ClusterNodeLinkTests.cs`](../descriptions/PluginSdkTests/ClusterNodeLinkTests.cs.md) | Specifies single-provider, identity-safe cluster node-link registration. |
 | `CommandTests` | class | [`PluginSdkTests/CommandTests.cs`](../descriptions/PluginSdkTests/CommandTests.cs.md) | Comprehensive specification for the chat-command pipeline: registration, argument binding, permissions, default commands, overview/help, error handling, and global !help. |
 | `LoggingTests` | class | [`PluginSdkTests/LoggingTests.cs`](../descriptions/PluginSdkTests/LoggingTests.cs.md) | Specifies Logger stamping, LogEntry field capture, QuasarLogSink ISO 8601 JSON format, MagnetarLogSink text format, and LogEnvironment sink selection. |
 | `PathResolverTests` | class | [`PluginSdkTests/PathResolverTests.cs`](../descriptions/PluginSdkTests/PathResolverTests.cs.md) | Specifies the PathResolver static façade: default pass-through shim behaviour and IPathResolver backend installation for Linux case-insensitive path resolution. |
@@ -35,6 +36,7 @@ Specification and regression suite for PluginSdk. Sits at the leaf of the build 
 | File | Lines | Summary |
 | ---- | ----- | ------- |
 | [`PluginSdkTests/ChangeNotificationTests.cs`](../descriptions/PluginSdkTests/ChangeNotificationTests.cs.md) | 257 | Verifies the change-notification contract of `PluginConfig` — the base class for all Magnetar plugin configuration objects. |
+| [`PluginSdkTests/ClusterNodeLinkTests.cs`](../descriptions/PluginSdkTests/ClusterNodeLinkTests.cs.md) | 41 | Verifies single-provider registration and identity-safe unregistration for the cluster node link. |
 | [`PluginSdkTests/CommandTests.cs`](../descriptions/PluginSdkTests/CommandTests.cs.md) | 470 | Comprehensive specification for the PluginSdk chat-command pipeline: `CommandRegistry`, `CommandDispatcher`, `CommandModule`, `CommandCaller`, `CommandReply`, `ICommandResponder`, and the associated attributes (`CommandRoot`, `Command`, `Permission`). |
 | [`PluginSdkTests/LoggingTests.cs`](../descriptions/PluginSdkTests/LoggingTests.cs.md) | 198 | Specifies the PluginSdk logging subsystem: `Logger`, `LogEntry`, `ILogSink`, `LogLevel`, `QuasarLogSink`, `MagnetarLogSink`, and `LogEnvironment`. |
 | [`PluginSdkTests/PathResolverTests.cs`](../descriptions/PluginSdkTests/PathResolverTests.cs.md) | 88 | Specifies the `PathResolver` façade and its `IPathResolver` plug-in point. |
@@ -46,6 +48,7 @@ Specification and regression suite for PluginSdk. Sits at the leaf of the build 
 ## Public API surface
 
 - `ChangeNotificationTests (xunit test class)`
+- `ClusterNodeLinkTests (xunit test class)`
 - `CommandTests (xunit test class)`
 - `LoggingTests (xunit test class)`
 - `PathResolverTests (xunit test class)`

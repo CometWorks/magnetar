@@ -1,10 +1,10 @@
 # Module: PluginSdk.Runtime
 
-**Project:** `PluginSdk` · **Files:** 7 · **Source lines:** 484
+**Project:** `PluginSdk` · **Files:** 9 · **Source lines:** 536
 
 ## Purpose
 
-Provides plugins with a stable, host-agnostic API surface for cross-cutting runtime concerns: (1) cross-platform case-insensitive path resolution that works identically on Windows and Linux by swapping a backend at startup, (2) dedicated-server lifecycle control (save, reload config, quit, restart) and a pre-teardown notification event, and (3) sending Space Engineers mission-screen popups to clients (per-player, per-Steam-id, or broadcast) for rendering by the bundled MagnetarMod client receiver — all backed by host-bound delegates that default to safe no-ops until the launcher installs real implementations.
+Provides plugins with a stable, host-agnostic API surface for cross-cutting runtime concerns: cross-platform path resolution, dedicated-server lifecycle control, client mission-screen popups, and a narrow single-provider contract connecting cluster transport to cluster game behavior without leaking transport implementation types.
 
 ## Role in Magnetar
 
@@ -22,6 +22,8 @@ Acts as the plugin-facing contract layer between plugin code and the underlying 
 | `SerializableDictionary` | class | [`PluginSdk/Tools/SerializableDictionary.cs`](../descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | Generic Dictionary subclass implementing IXmlSerializable so XmlSerializer can round-trip dictionary-typed plugin config options. |
 | `MissionScreens` | static class | [`PluginSdk/MissionScreens.cs`](../descriptions/PluginSdk/MissionScreens.cs.md) | Plugin-facing facade for showing SE mission-screen popups to a player, a Steam id, or all clients, backed by host-bound sender delegates. |
 | `MissionScreenContent` | readonly struct | [`PluginSdk/MissionScreenContent.cs`](../descriptions/PluginSdk/MissionScreenContent.cs.md) | Immutable text payload (title, objective prefix/text, description, OK caption) rendered by the MagnetarMod client on SE's mission screen. |
+| `IClusterNodeLink` | interface | [`PluginSdk/Clustering/IClusterNodeLink.cs`](../descriptions/PluginSdk/Clustering/IClusterNodeLink.cs.md) | Transport-neutral authenticated Gateway data-link contract for cluster infrastructure plugins. |
+| `ClusterNodeLink` | static class | [`PluginSdk/Clustering/ClusterNodeLink.cs`](../descriptions/PluginSdk/Clustering/ClusterNodeLink.cs.md) | Atomic process-wide registration point for one node-link provider. |
 
 ## Files
 
@@ -29,6 +31,8 @@ Acts as the plugin-facing contract layer between plugin code and the underlying 
 | ---- | ----- | ------- |
 | [`PluginSdk/MissionScreenContent.cs`](../descriptions/PluginSdk/MissionScreenContent.cs.md) | 35 | Immutable value type carrying the text payload that the Magnetar client mod renders through Space Engineers' mission-screen popup. |
 | [`PluginSdk/MissionScreens.cs`](../descriptions/PluginSdk/MissionScreens.cs.md) | 95 | Plugin-facing facade for opening Space Engineers mission-screen popups on connected clients from server-side plugin code, decoupled from the host launcher implementation. |
+| [`PluginSdk/Clustering/ClusterNodeLink.cs`](../descriptions/PluginSdk/Clustering/ClusterNodeLink.cs.md) | 31 | Registers exactly one process-wide cluster node-link provider and identity-checks removal. |
+| [`PluginSdk/Clustering/IClusterNodeLink.cs`](../descriptions/PluginSdk/Clustering/IClusterNodeLink.cs.md) | 21 | Defines the transport-neutral Gateway link consumed by ClusterRuntime. |
 | [`PluginSdk/Paths/IPathResolver.cs`](../descriptions/PluginSdk/Paths/IPathResolver.cs.md) | 48 | Defines the backend contract for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/PathResolver.cs`](../descriptions/PluginSdk/Paths/PathResolver.cs.md) | 48 | Plugin-facing static facade for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/ShimPathResolver.cs`](../descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
@@ -49,6 +53,9 @@ Acts as the plugin-facing contract layer between plugin code and the underlying 
 - `MissionScreens.IsHostSenderAvailable — true once the host has installed a server-side sender (does not guarantee the client receiver is enabled)`
 - `MissionScreens.ChannelId / ProtocolVersion / ShowMissionScreenPacket — network channel/protocol constants shared with the MagnetarMod client receiver`
 - `MissionScreens.Bind(...) — internal; host installs the real sender delegates at launcher startup`
+- `ClusterNodeLink.Current — returns the active IClusterNodeLink provider, or null`
+- `ClusterNodeLink.Register / Unregister — atomically manage one identity-checked provider`
+- `IClusterNodeLink — connection, global-message, client-detach and attach-validation boundary`
 
 ## Dependencies
 
