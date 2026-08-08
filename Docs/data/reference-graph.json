@@ -393,9 +393,12 @@
     ],
     "Legacy/Commands/MagnetarCommands.cs": [
       "Legacy/Launcher/Game.cs",
+      "PluginSdk/Clustering/ClusterLifecycle.cs",
+      "PluginSdk/Commands/CommandContext.cs",
       "PluginSdk/Commands/CommandModule.cs",
       "PluginSdk/Commands/CommandReply.cs",
-      "PluginSdk/Commands/CommandRoot.cs"
+      "PluginSdk/Commands/CommandRoot.cs",
+      "PluginSdk/ServerControl.cs"
     ],
     "Legacy/Commands/ServerCommandResponder.cs": [
       "PluginSdk/Commands/CommandCaller.cs",
@@ -539,6 +542,15 @@
       "Shared/Updater.cs",
       "Shared/Votes/ConsentManager.cs"
     ],
+    "PluginSdk/Clustering/ClusterLifecycle.cs": [
+      "PluginSdk/ServerControl.cs"
+    ],
+    "PluginSdk/Clustering/ClusterNodeLink.cs": [
+      "PluginSdk/Clustering/IClusterNodeLink.cs"
+    ],
+    "PluginSdk/Clustering/IClusterNodeLink.cs": [
+      "PluginSdk/Clustering/ClusterLifecycle.cs"
+    ],
     "PluginSdk/Commands/CommandContext.cs": [
       "PluginSdk/Commands/CommandCaller.cs",
       "PluginSdk/Commands/CommandReply.cs",
@@ -634,6 +646,9 @@
     "PluginSdk/Paths/ShimPathResolver.cs": [
       "PluginSdk/Paths/IPathResolver.cs"
     ],
+    "PluginSdk/ServerControl.cs": [
+      "PluginSdk/Clustering/ClusterLifecycle.cs"
+    ],
     "PluginSdk/Stats/PluginStats.cs": [
       "PluginSdk/Logging/Logger.cs",
       "PluginSdk/Stats/StatsSnapshot.cs"
@@ -648,6 +663,15 @@
     "PluginSdkTests/ChangeNotificationTests.cs": [
       "PluginSdk/Tools/SerializableDictionary.cs",
       "PluginSdkTests/TestConfig.cs"
+    ],
+    "PluginSdkTests/ClusterLifecycleTests.cs": [
+      "PluginSdk/Clustering/ClusterLifecycle.cs",
+      "PluginSdk/ServerControl.cs"
+    ],
+    "PluginSdkTests/ClusterNodeLinkTests.cs": [
+      "PluginSdk/Clustering/ClusterLifecycle.cs",
+      "PluginSdk/Clustering/ClusterNodeLink.cs",
+      "PluginSdk/Clustering/IClusterNodeLink.cs"
     ],
     "PluginSdkTests/CommandTests.cs": [
       "PluginSdk/Commands/CommandCaller.cs",
@@ -1382,6 +1406,20 @@
     "Legacy/Paths/ReflectionPathResolver.cs": [
       "Legacy/Paths/PathResolverBinder.cs"
     ],
+    "PluginSdk/Clustering/ClusterLifecycle.cs": [
+      "Legacy/Commands/MagnetarCommands.cs",
+      "PluginSdk/Clustering/IClusterNodeLink.cs",
+      "PluginSdk/ServerControl.cs",
+      "PluginSdkTests/ClusterLifecycleTests.cs",
+      "PluginSdkTests/ClusterNodeLinkTests.cs"
+    ],
+    "PluginSdk/Clustering/ClusterNodeLink.cs": [
+      "PluginSdkTests/ClusterNodeLinkTests.cs"
+    ],
+    "PluginSdk/Clustering/IClusterNodeLink.cs": [
+      "PluginSdk/Clustering/ClusterNodeLink.cs",
+      "PluginSdkTests/ClusterNodeLinkTests.cs"
+    ],
     "PluginSdk/Commands/ArgumentBinder.cs": [
       "PluginSdk/Commands/CommandDispatcher.cs",
       "PluginSdk/Commands/RegisteredCommand.cs"
@@ -1398,6 +1436,7 @@
       "PluginSdkTests/CommandTests.cs"
     ],
     "PluginSdk/Commands/CommandContext.cs": [
+      "Legacy/Commands/MagnetarCommands.cs",
       "PluginSdk/Commands/CommandDispatcher.cs",
       "PluginSdk/Commands/CommandModule.cs",
       "PluginSdk/Commands/RegisteredCommand.cs"
@@ -1549,6 +1588,11 @@
     ],
     "PluginSdk/Paths/ShimPathResolver.cs": [
       "PluginSdk/Paths/PathResolver.cs"
+    ],
+    "PluginSdk/ServerControl.cs": [
+      "Legacy/Commands/MagnetarCommands.cs",
+      "PluginSdk/Clustering/ClusterLifecycle.cs",
+      "PluginSdkTests/ClusterLifecycleTests.cs"
     ],
     "PluginSdk/Stats/StatsAttributes.cs": [
       "PluginSdk/Stats/StatsSchema.cs"

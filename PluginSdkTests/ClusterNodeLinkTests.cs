@@ -34,8 +34,10 @@ namespace PluginSdk.Tests
             public event Action<byte[]> MessageReceived { add { } remove { } }
             public event Action<bool> ConnectionChanged { add { } remove { } }
             public event Action<ulong> ClientDetached { add { } remove { } }
+            public event Action<ClusterLifecycleAcknowledgement> LifecycleAcknowledged { add { } remove { } }
             public Func<ulong, byte[], bool> AttachValidator { get; set; }
             public bool Send(byte[] payload) => false;
+            public bool SendLifecycleRequest(ClusterLifecycleRequest request) => false;
         }
     }
 }

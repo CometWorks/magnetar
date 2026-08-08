@@ -57,6 +57,10 @@ Cluster infrastructure plugins can share the authenticated Gateway data link
 through the single-provider `PluginSdk.Clustering` contract. See
 [Clustering.md](Clustering.md).
 
+The same cluster boundary routes plugin and in-game shutdown/restart requests
+through one typed, correlated lifecycle request/ack provider. See
+[Clustering.md](Clustering.md).
+
 When Magnetar compiles a plugin it defines a **platform preprocessor symbol**
 (`PLATFORM_WINDOWS` or `PLATFORM_LINUX`) for the OS the server runs on, so a
 plugin can pick platform-specific code paths and know which SDK behaviour to

@@ -19,7 +19,7 @@ Discriminates the two shutdown intents communicated through `ServerControl.Termi
 
 ### `ServerControl` — static class, public
 
-Plugin-facing facade for server lifecycle operations. Internally holds six private `Func<bool>` / `Action` delegate fields, each initialized to a safe no-op lambda. `Bind` replaces all six atomically (null-safe). All public methods delegate to the corresponding field with no additional locking; thread safety is documented as the host's responsibility (marshalling to the game update thread, null-guarding sessions).
+Plugin-facing facade for server lifecycle operations. Internally holds six private `Func<bool>` / `Action` delegate fields, each initialized to a safe no-op lambda. `Bind` replaces all six atomically (null-safe). Save/reload delegate directly. Each termination method creates one typed cluster request; without a provider it invokes the local delegate, while provider presence owns the request and an asynchronous rejection/failure never falls back locally.
 
 - **Fields (private static):**
   - `saveWorld` (`Func<bool>`) — invoked by `SaveWorld()`; no-op returns `false` until bound
@@ -40,11 +40,15 @@ Plugin-facing facade for server lifecycle operations. Internally holds six priva
   - `QuitWithoutSaving()` — immediate exit, no save
   - `RestartWithoutSaving()` — immediate process-replace, no save
 
+- **Cluster routing:**
+  - `RequestOrRun(...)` — sends one plugin-origin request with kind/save preference, or runs the standalone action when no provider exists
+  - `ObserveClusterAcknowledgement(...)` — observes fail-closed asynchronous results and logs rejected/unavailable outcomes
+
 - **Methods (internal):**
   - `RaiseTerminating(ServerTerminationKind kind)` — host-only; iterates the invocation list of `Terminating` and calls each subscriber individually inside a try/catch, logging failures to `MyLog.Default.Error` so a faulting plugin cannot block teardown
   - `Bind(Func<bool>, Func<bool>, Action, Action, Action, Action)` — host-only; installs the six real delegate implementations; null arguments fall back to the no-op defaults; called once at launcher startup
 
 ## Cross-references
 
-- **Uses:** `VRage.Utils.MyLog` (SE DS assembly, for error logging in `RaiseTerminating`)
-- **Used by:** _none within the repository_
+- **Uses:** `PluginSdk.Clustering.ClusterLifecycle`, `VRage.Utils.MyLog`
+- **Used by:** [MagnetarCommands.cs](../Legacy/Commands/MagnetarCommands.cs.md), [ClusterLifecycle.cs](Clustering/ClusterLifecycle.cs.md), [ClusterLifecycleTests.cs](../PluginSdkTests/ClusterLifecycleTests.cs.md)

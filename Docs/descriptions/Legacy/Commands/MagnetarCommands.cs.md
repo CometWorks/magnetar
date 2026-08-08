@@ -3,7 +3,7 @@
 **Project:** Legacy · **Namespace:** `Pulsar.Legacy.Commands` · **Kind:** class (multiple) · **Lines:** 92
 
 ## Summary
-Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers with `CommandService` before any plugin loads. Because they are registered first and last-registration wins, a plugin may override any of them. Each command offloads its lifecycle work to a worker thread via `Task.Run` so save/restart work can block to completion without stalling the game-update thread; `!save` and `!stop` acknowledge immediately and then send a completion, timeout, or failure reply after `ServerControl.SaveWorld()` returns.
+Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers before plugins. Lifecycle commands first submit exactly one typed chat-origin cluster request. If no provider exists they preserve the standalone worker-thread save/quit/restart flow; otherwise they asynchronously report the authoritative acknowledgement and never invoke a local termination path.
 
 ## Types
 
@@ -31,12 +31,19 @@ Handles `!stop` (save the world, then shut down). Responds with "Saving world an
 - **Methods:**
   - `Stop()` — `[Command("", "Save the world then shut the server down")]`; captures the context, acknowledges the caller, dispatches the save+reply+quit sequence on a `Task`, posting the reply through `Game.RunOnGameThread`
 
+### `LifecycleCommandRouting` — static class, internal
+
+Creates one correlated request carrying command kind, save preference, caller Steam ID, and
+reason. It distinguishes standalone (no provider) from cluster-owned routing and posts the final
+typed acknowledgement back on the game thread.
+
 ## Cross-references
 - **Uses:**
   - `PluginSdk/Commands/CommandModule.cs` — base class; provides `Context` (including `Context.Respond`)
   - `PluginSdk/Commands/CommandAttribute.cs` — `[Command]` attribute
   - `PluginSdk/Commands/CommandRootAttribute.cs` — `[CommandRoot]` attribute
   - `Legacy/Launcher/Game.cs` — `Game.RunOnGameThread` for final `!save` / `!stop` replies
-  - `Legacy/Launcher/ServerControl.cs` — `SaveWorld`, `SaveAndRestart`, `QuitWithoutSaving` implementations
+  - `PluginSdk/Clustering/ClusterLifecycle.cs` — typed provider routing and acknowledgements
+  - `PluginSdk/ServerControl.cs` — standalone lifecycle facade
   - `Shared/LogFile.cs` — logs unexpected `!save` / `!stop` failures
 - **Used by:** [PluginLoader.cs](../Loader/PluginLoader.cs.md)

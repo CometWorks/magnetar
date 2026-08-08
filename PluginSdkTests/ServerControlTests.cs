@@ -3,6 +3,11 @@ using Xunit;
 
 namespace PluginSdk.Tests
 {
+    [CollectionDefinition("ServerControl", DisableParallelization = true)]
+    public sealed class ServerControlCollection
+    {
+    }
+
     /// <summary>
     /// Tests for the plugin-facing <see cref="ServerControl"/> facade: that
     /// <see cref="ServerControl.Bind"/> routes each public call to the supplied
@@ -11,6 +16,7 @@ namespace PluginSdk.Tests
     /// nothing). The facade is static global state, so each test rebinds rather
     /// than relying on the pre-Bind default.
     /// </summary>
+    [Collection("ServerControl")]
     public class ServerControlTests
     {
         [Fact]

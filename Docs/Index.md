@@ -1,6 +1,6 @@
 # Magnetar — Full File Index
 
-Every documented source file, grouped by module. 213 files across 25 modules.
+Every documented source file, grouped by module. 215 files across 25 modules.
 
 [◀ Back to TOC](TOC.md)
 
@@ -127,7 +127,7 @@ Every documented source file, grouped by module. 213 files across 25 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`Legacy/Commands/CommandService.cs`](descriptions/Legacy/Commands/CommandService.cs.md) | 114 | 2 | `CommandService` is the host-side owner of the chat-command pipeline for the Legacy (.NET Framework 4.8 / Windows) build of Magnetar. |
-| [`Legacy/Commands/MagnetarCommands.cs`](descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 92 | 2 | Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers with `CommandService` before any plugin loads. |
+| [`Legacy/Commands/MagnetarCommands.cs`](descriptions/Legacy/Commands/MagnetarCommands.cs.md) | 146 | 2 | Declares four built-in chat-command modules — `!save`, `!restart`, `!quit`, and `!stop` — that Magnetar registers before plugins. |
 | [`Legacy/Commands/ServerCommandResponder.cs`](descriptions/Legacy/Commands/ServerCommandResponder.cs.md) | 37 | 2 | `ServerCommandResponder` is the `ICommandResponder` implementation that delivers command replies into the SE DS chat system. |
 
 ## Legacy.Integration  ·  [module doc](modules/Legacy.Integration.md)
@@ -236,14 +236,15 @@ Every documented source file, grouped by module. 213 files across 25 modules.
 
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
-| [`PluginSdk/Clustering/ClusterNodeLink.cs`](descriptions/PluginSdk/Clustering/ClusterNodeLink.cs.md) | 31 | 2 | Atomic process-wide registration point for one cluster node-link provider. |
-| [`PluginSdk/Clustering/IClusterNodeLink.cs`](descriptions/PluginSdk/Clustering/IClusterNodeLink.cs.md) | 21 | 2 | Transport-neutral authenticated Gateway data-link contract for cluster infrastructure plugins. |
+| [`PluginSdk/Clustering/ClusterLifecycle.cs`](descriptions/PluginSdk/Clustering/ClusterLifecycle.cs.md) | 166 | 2 | Defines the typed, asynchronous authority boundary for plugin/chat lifecycle requests in a cluster node. |
+| [`PluginSdk/Clustering/ClusterNodeLink.cs`](descriptions/PluginSdk/Clustering/ClusterNodeLink.cs.md) | 31 | 2 | Provides the process-wide rendezvous for one `IClusterNodeLink` provider. |
+| [`PluginSdk/Clustering/IClusterNodeLink.cs`](descriptions/PluginSdk/Clustering/IClusterNodeLink.cs.md) | 23 | 3 | Defines the transport-independent Gateway data-link contract shared by the DirectTransport provider and ClusterRuntime consumer. |
 | [`PluginSdk/MissionScreenContent.cs`](descriptions/PluginSdk/MissionScreenContent.cs.md) | 35 | 2 | Immutable value type carrying the text payload that the Magnetar client mod renders through Space Engineers' mission-screen popup. |
 | [`PluginSdk/MissionScreens.cs`](descriptions/PluginSdk/MissionScreens.cs.md) | 95 | 2 | Plugin-facing facade for opening Space Engineers mission-screen popups on connected clients from server-side plugin code, decoupled from the host launcher implementation. |
 | [`PluginSdk/Paths/IPathResolver.cs`](descriptions/PluginSdk/Paths/IPathResolver.cs.md) | 48 | 2 | Defines the backend contract for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/PathResolver.cs`](descriptions/PluginSdk/Paths/PathResolver.cs.md) | 48 | 2 | Plugin-facing static facade for cross-platform, case-insensitive path resolution. |
 | [`PluginSdk/Paths/ShimPathResolver.cs`](descriptions/PluginSdk/Paths/ShimPathResolver.cs.md) | 36 | 2 | Default, no-op implementation of `IPathResolver` used when the server is running on a case-insensitive filesystem (Windows) or when no real case-insensitive backend has been installed yet. |
-| [`PluginSdk/ServerControl.cs`](descriptions/PluginSdk/ServerControl.cs.md) | 142 | 2 | Exposes the dedicated server's lifecycle controls (save, reload config, quit, restart) as a stable plugin-facing API, decoupled from the host launcher implementation. |
+| [`PluginSdk/ServerControl.cs`](descriptions/PluginSdk/ServerControl.cs.md) | 182 | 2 | Exposes the dedicated server's lifecycle controls (save, reload config, quit, restart) as a stable plugin-facing API, decoupled from the host launcher implementation. |
 | [`PluginSdk/Tools/SerializableDictionary.cs`](descriptions/PluginSdk/Tools/SerializableDictionary.cs.md) | 80 | 2 | Provides a generic dictionary that can be round-tripped by `XmlSerializer`, which cannot handle the standard `Dictionary<TKey, TValue>`. |
 
 ## PluginSdk.Stats  ·  [module doc](modules/PluginSdk.Stats.md)
@@ -260,13 +261,14 @@ Every documented source file, grouped by module. 213 files across 25 modules.
 | File | Lines | Tier | Description |
 | ---- | ----- | ---- | ----------- |
 | [`PluginSdkTests/ChangeNotificationTests.cs`](descriptions/PluginSdkTests/ChangeNotificationTests.cs.md) | 257 | 2 | Verifies the change-notification contract of `PluginConfig` — the base class for all Magnetar plugin configuration objects. |
-| [`PluginSdkTests/ClusterNodeLinkTests.cs`](descriptions/PluginSdkTests/ClusterNodeLinkTests.cs.md) | 41 | 2 | Specifies single-provider, identity-safe cluster node-link registration. |
+| [`PluginSdkTests/ClusterLifecycleTests.cs`](descriptions/PluginSdkTests/ClusterLifecycleTests.cs.md) | 113 | 2 | Verifies that one registered lifecycle provider receives all four `ServerControl` termination paths exactly once with the correct kind/save preference, no local delegate runs, provider registration is exact-owner, provider failure returns `Unavailable`, and no provider preserves standalone behavior. |
+| [`PluginSdkTests/ClusterNodeLinkTests.cs`](descriptions/PluginSdkTests/ClusterNodeLinkTests.cs.md) | 43 | 2 | Specifies the single-provider lifecycle of `ClusterNodeLink`: the first provider wins, another provider cannot replace or unregister it, and the exact provider can unregister cleanly. |
 | [`PluginSdkTests/CommandTests.cs`](descriptions/PluginSdkTests/CommandTests.cs.md) | 470 | 2 | Comprehensive specification for the PluginSdk chat-command pipeline: `CommandRegistry`, `CommandDispatcher`, `CommandModule`, `CommandCaller`, `CommandReply`, `ICommandResponder`, and the associated attributes (`CommandRoot`, `Command`, `Permission`). |
 | [`PluginSdkTests/LoggingTests.cs`](descriptions/PluginSdkTests/LoggingTests.cs.md) | 198 | 2 | Specifies the PluginSdk logging subsystem: `Logger`, `LogEntry`, `ILogSink`, `LogLevel`, `QuasarLogSink`, `MagnetarLogSink`, and `LogEnvironment`. |
 | [`PluginSdkTests/PathResolverTests.cs`](descriptions/PluginSdkTests/PathResolverTests.cs.md) | 88 | 2 | Specifies the `PathResolver` façade and its `IPathResolver` plug-in point. |
 | [`PluginSdkTests/SchemaTests.cs`](descriptions/PluginSdkTests/SchemaTests.cs.md) | 525 | 2 | Specifies the schema and JSON-envelope subsystems of `PluginSdk.Config`. |
 | [`PluginSdkTests/SerializationTests.cs`](descriptions/PluginSdkTests/SerializationTests.cs.md) | 464 | 2 | End-to-end round-trip and format-pinning tests for `PluginSdk.Config` serialisation. |
-| [`PluginSdkTests/ServerControlTests.cs`](descriptions/PluginSdkTests/ServerControlTests.cs.md) | 62 | 2 | Specifies the `ServerControl` static façade that plugins call to trigger server lifecycle operations (save, reload config, quit, restart). |
+| [`PluginSdkTests/ServerControlTests.cs`](descriptions/PluginSdkTests/ServerControlTests.cs.md) | 68 | 2 | Specifies the `ServerControl` static façade that plugins call to trigger server lifecycle operations (save, reload config, quit, restart). |
 | [`PluginSdkTests/TestConfig.cs`](descriptions/PluginSdkTests/TestConfig.cs.md) | 197 | 2 | Defines the shared fixture types used across all PluginSdkTests test classes. |
 
 ## Shared.Config  ·  [module doc](modules/Shared.Config.md)

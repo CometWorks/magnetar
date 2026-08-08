@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using PluginSdk.Clustering;
 using VRage.Utils;
 
 // Only the host launcher may Bind the facade to its implementation.
@@ -82,21 +84,59 @@ namespace PluginSdk
         /// loaded or the host has not bound an implementation.</summary>
         public static bool ReloadConfig() => reloadConfig();
 
-        /// <summary>Saves the world, then quits the process with exit code 0.</summary>
-        public static void SaveAndQuit() => saveAndQuit();
+        /// <summary>Saves the world, then quits the process with exit code 0.
+        /// A registered cluster lifecycle provider routes the request and fails closed.</summary>
+        public static void SaveAndQuit()
+        {
+            RequestOrRun(ServerTerminationKind.Shutdown, true, saveAndQuit);
+        }
 
         /// <summary>Saves the world, then replaces the process with a fresh
         /// instance launched with the original command line, environment and
-        /// working directory captured when the server first started.</summary>
-        public static void SaveAndRestart() => saveAndRestart();
+        /// working directory captured when the server first started. A registered
+        /// cluster lifecycle provider routes the request and fails closed.</summary>
+        public static void SaveAndRestart()
+        {
+            RequestOrRun(ServerTerminationKind.Restart, true, saveAndRestart);
+        }
 
         /// <summary>Quits the process immediately with exit code 0, without
-        /// saving.</summary>
-        public static void QuitWithoutSaving() => quitWithoutSaving();
+        /// saving. A registered cluster lifecycle provider routes the
+        /// request.</summary>
+        public static void QuitWithoutSaving()
+        {
+            RequestOrRun(ServerTerminationKind.Shutdown, false, quitWithoutSaving);
+        }
 
         /// <summary>Restarts the process immediately (original command line,
-        /// environment and working directory), without saving.</summary>
-        public static void RestartWithoutSaving() => restartWithoutSaving();
+        /// environment and working directory), without saving. A registered
+        /// cluster lifecycle provider routes the request and fails closed.</summary>
+        public static void RestartWithoutSaving()
+        {
+            RequestOrRun(ServerTerminationKind.Restart, false, restartWithoutSaving);
+        }
+
+        private static void RequestOrRun(ServerTerminationKind kind, bool saveFirst, Action standaloneAction)
+        {
+            var request = new ClusterLifecycleRequest(Guid.NewGuid(), kind,
+                ClusterLifecycleOrigin.Plugin, saveFirst, reason: "PluginSdk ServerControl");
+            if (!ClusterLifecycle.TryRequest(request, out Task<ClusterLifecycleAcknowledgement> acknowledgement))
+            {
+                standaloneAction();
+                return;
+            }
+
+            _ = ObserveClusterAcknowledgement(acknowledgement);
+        }
+
+        private static async Task ObserveClusterAcknowledgement(
+            Task<ClusterLifecycleAcknowledgement> pending)
+        {
+            ClusterLifecycleAcknowledgement acknowledgement = await pending.ConfigureAwait(false);
+            if (acknowledgement.Disposition is ClusterLifecycleDisposition.Rejected
+                or ClusterLifecycleDisposition.Unavailable)
+                MyLog.Default?.WriteLine($"Cluster lifecycle request denied: {acknowledgement.ReasonCode}: {acknowledgement.Message}");
+        }
 
         /// <summary>Host-only: raises <see cref="Terminating"/>, isolating each
         /// subscriber so a faulting or slow handler cannot derail the shutdown

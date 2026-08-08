@@ -14,9 +14,9 @@ provider can unregister cleanly.
 
 - `Register_and_unregister_require_the_same_provider()` verifies registration,
   collision rejection, identity-safe unregistration, and cleanup.
-- `TestNodeLink` is a no-op `IClusterNodeLink` fixture.
+- `TestNodeLink` is a no-op `IClusterNodeLink` fixture covering both global and lifecycle members.
 
 ## Cross-references
 
 - **Uses:** `PluginSdk.Clustering.ClusterNodeLink`, `IClusterNodeLink`, xUnit
-- **Used by:** _none_
+- **Used by:** _none within the repository_

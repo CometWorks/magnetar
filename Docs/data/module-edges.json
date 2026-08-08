@@ -34,7 +34,8 @@
   ],
   "Legacy.Commands": [
     "Legacy.Launcher",
-    "PluginSdk.Commands"
+    "PluginSdk.Commands",
+    "PluginSdk.Runtime"
   ],
   "Legacy.Integration": [
     "Compiler",
