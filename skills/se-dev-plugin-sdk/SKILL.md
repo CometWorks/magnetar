@@ -1,6 +1,6 @@
 ---
 name: se-dev-plugin-sdk
-description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables, the UI layout Quasar renders remotely, server-side chat commands, client mission-screen popups, server lifecycle control (save/reload/quit/restart) and reacting to admin shutdown/restart, case-insensitive path resolution that works on both Windows and Linux, to log through one environment-agnostic Logger, and to publish self-describing runtime statistics a consumer can collect and chart.
+description: Handbook for plugin developers using Magnetar's PluginSdk to declare configuration variables, the UI layout Quasar renders remotely, server-side chat commands, client mission-screen popups, server lifecycle control (save/reload/quit/restart), cluster node-link services, case-insensitive paths, environment-agnostic logging, and self-describing runtime statistics.
 license: MIT
 ---
 
@@ -53,6 +53,10 @@ and discrete values declared on a plain annotated class — as self-describing
 snapshots that a consumer (such as the Quasar Agent) can collect, roll up and
 chart without knowing the plugin's types. See [Stats.md](Stats.md).
 
+Cluster infrastructure plugins can share the authenticated Gateway data link
+through the single-provider `PluginSdk.Clustering` contract. See
+[Clustering.md](Clustering.md).
+
 When Magnetar compiles a plugin it defines a **platform preprocessor symbol**
 (`PLATFORM_WINDOWS` or `PLATFORM_LINUX`) for the OS the server runs on, so a
 plugin can pick platform-specific code paths and know which SDK behaviour to
@@ -75,6 +79,7 @@ expect. See [Platform.md](Platform.md).
 | [Paths.md](Paths.md) | Resolving filesystem paths case-insensitively via `PathResolver` so file handling works on both Windows and Linux. |
 | [ServerControl.md](ServerControl.md) | Driving the server lifecycle — save, reload config, quit, restart — via the static `ServerControl` facade, and reacting to admin shutdown/restart via its `Terminating` event. |
 | [Stats.md](Stats.md) | Publishing self-describing telemetry — counters / gauges / discrete values on an annotated POCO — for the Quasar Agent or another plugin to collect, roll up and chart. |
+| [Clustering.md](Clustering.md) | Wiring the transport-owned Gateway node link to the cluster runtime through a single process-local provider. |
 | [Platform.md](Platform.md) | Using the `PLATFORM_WINDOWS` / `PLATFORM_LINUX` compile symbols Magnetar defines to branch on the OS the server runs on. |
 
 ## Minimal example
