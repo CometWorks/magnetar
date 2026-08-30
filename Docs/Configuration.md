@@ -17,12 +17,12 @@ Overrides where Magnetar stores its own configuration, logs, and the preloader
 cache. A relative path resolves against the launcher's directory. This does
 **not** affect the dedicated server's config or saves.
 
-Each Magnetar startup creates a new timestamped `info_yyyyMMdd_HHmmssfff.log`
-file in this directory and updates `info.current` with the active file name.
-This matches the Dedicated Server's per-start log history: failed startup
-attempts are preserved instead of being overwritten. The compiler AppDomain and
-Quasar.Agent's PluginSdk log mirror both use the active file named by
-`info.current`.
+The current launch always logs to `info.log` in this directory. On startup the
+previous launch's `info.log` is first rotated to `info_yyyyMMdd_HHmmss.log`
+(named from its last write time), and the oldest rotated logs are pruned, so
+failed startup attempts are preserved instead of being overwritten while an
+unattended server cannot fill the disk. The out-of-process compiler logs into
+the same `info.log`.
 
 While a Magnetar-launched server is running it also writes a `magnetar.pid`
 file here — the process id on the first line, the resolved DS data dir
@@ -105,16 +105,17 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
   Steam ID or account is ever involved). Deleting this file disables telemetry;
   `-withdraw-consent` deletes it and also asks the server to erase the data.
 * **`config.xml`** — records the human-visible decision in `DataHandlingConsent`
-  (`true` / `false` / unset) and `DataHandlingConsentDate`. An accepted decision is
-  only honored while its `instance.id` exists; a stored `true` with no `instance.id`
-  is treated as undecided and you are prompted again.
+  and `DataHandlingConsentDate`. A decision has been made when the date is set;
+  an accepted decision is only honored while its `instance.id` exists (a stored
+  `true` with no `instance.id` is treated as undecided and you are prompted
+  again), and a set date with no `instance.id` means a remembered denial.
 
 ## Environment variables
 
 | Variable             | Effect                                                           |
 | -------------------- | ---------------------------------------------------------------- |
 | `MAGNETAR_SAFE_MODE` | When `1`, disables preloader patches for a one-off recovery run. |
-| `MAGNETAR_GITHUB_TOKEN` | GitHub token used for GitHub API/archive downloads when `-github-token` is not supplied; use a classic token from https://github.com/settings/tokens/new with no permissions selected. |
+| `MAGNETAR_GITHUB_TOKEN` | Accepted for compatibility but currently has **no effect** (Pulsar's network layer does not support authenticated GitHub requests yet); a warning is logged when it is set. |
 | `XDG_CONFIG_HOME`    | Overrides the Magnetar config-dir base (Linux).                  |
 | `XDG_DATA_HOME`      | Overrides the Magnetar install-dir base (Linux).                 |
 | `DS64`               | Build-time override for the DS reference path.                   |

@@ -1,8 +1,11 @@
 # Magnetar
 
-A plugin and mod loader for the **Space Engineers (SE1) Dedicated Server**. Hard
-fork of [Pulsar](https://github.com/SpaceGT/Pulsar), adapted to run the headless
-dedicated server — no WinForms, no Telerik UI, no Windows-service host.
+A plugin and mod loader for the **Space Engineers (SE1) Dedicated Server**,
+built on [Pulsar](https://github.com/SpaceGT/Pulsar) — the game-client plugin
+loader — which is vendored as a git submodule. Pulsar provides the plugin
+model, configuration, network and compiler infrastructure; Magnetar adds the
+server host: headless launch of the dedicated server, daemon mode, lifecycle
+control, chat commands, and the `PluginSdk` server plugins compile against.
 
 Magnetar ships two launchers that drop in for `SpaceEngineersDedicated.exe`:
 
@@ -17,6 +20,11 @@ On **Windows** both launchers are built; on **Linux** only `MagnetarInterim`
 Compatibility plugins are loaded implicitly:
 - [dotnet-compat](https://github.com/CometWorks/dotnet-compat) for .NET 10 compatibility
 - [linux-compat](https://github.com/CometWorks/linux-compat) for Linux compatibility
+
+Command-line flags are unified with Pulsar: the plugin-loader flags are
+Pulsar's own, plus Magnetar's server-specific flags (`-daemon`, `-config`,
+`-ds64`, consent control, …); client-only options do not apply. Configuration,
+profile and source files use Pulsar's current formats.
 
 You can register new plugins by making PRs to the [MagnetarHub](https://github.com/CometWorks/magnetar-hub).
 
@@ -38,6 +46,19 @@ the game and Magnetar logs. It ships in both bundles next to the launcher and
 runs as `~/.local/share/Magnetar/MagnetarConfig` (Linux) or
 `MagnetarConfig.bat` (Windows). See the **[Config tool user manual](Docs/ConfigTerminal.md)**.
 
+## Building
+
+Clone with the Pulsar submodule and build the solution:
+
+```sh
+git clone --recurse-submodules https://github.com/CometWorks/magnetar
+cd magnetar
+./build.sh --deps-only   # Linux only: stage Steamworks + native libraries
+dotnet build -c Release Magnetar.slnx
+```
+
+See **[Building](Docs/Build.md)** for details.
+
 ## Documentation
 
 | Page | What's in it |
@@ -50,10 +71,6 @@ runs as `~/.local/share/Magnetar/MagnetarConfig` (Linux) or
 | [Plugins](Docs/Plugins.md) | Plugin hubs and the trust boundary. |
 | [Building](Docs/Build.md) | Per-platform build, dependency staging, packaging, releases. |
 | [Repository layout](Docs/Layout.md) | What lives where in the source tree. |
-
-For the full **code handbook** — architecture overview, launch sequence, and a
-navigable module-by-module / file-by-file reference of the entire source tree —
-see **[Docs/TOC.md](Docs/TOC.md)**.
 
 ## Contact
 

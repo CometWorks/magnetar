@@ -11,7 +11,7 @@ off to the dedicated server's own `Main`.
 %APPDATA%\Magnetar\MagnetarInterim.exe
 
 # Linux
-~/.local/share/Magnetar/MagnetarInterim
+~/.local/share/Magnetar/MagnetarInterim.bin
 ```
 
 See **[Configuration](Configuration.md)** for the config/install directories, DS
@@ -20,17 +20,22 @@ detection, and environment variables.
 ## Command-line help
 
 Pass `-help` (also `-h` or `--help`) to print the full list of options — Magnetar's
-own switches, the telemetry-consent switches, and the dedicated-server arguments
-Magnetar passes through — then exit without starting the server. On Linux the help
-screen deliberately skips loading the bundled native libraries, so it prints
-cleanly without startup noise.
+own switches, the plugin-loader switches shared with Pulsar, the telemetry-consent
+switches, and the dedicated-server arguments Magnetar passes through — then exit
+without starting the server. On Linux the help screen deliberately skips loading
+the bundled native libraries, so it prints cleanly without startup noise.
 
-Use `-github-token <token>` when running under a supervisor that needs Magnetar's
-GitHub API and archive downloads to use an authenticated REST API rate limit. For
-public GitHub resources, generate a classic personal access token at
-https://github.com/settings/tokens/new with no permissions selected. The same
-value can also be supplied with `MAGNETAR_GITHUB_TOKEN`. Quasar passes its
-stored GitHub update token this way for managed servers.
+The plugin-loader flags (`-profile`, `-safeMode`, `-bare`, `-sources`,
+`-hardened`, `-multiInstance`, `-lazyPreload`, `-stableLogs`, `-noUpdate`,
+`-preRelease`, `-mkCheck`, `-debug`, `-debugMods`, `-debugCompileAll`) are
+Pulsar's own flags with Pulsar's semantics; Magnetar additionally forces the
+headless defaults (`-noSplash -noPrompt -lazySteam`) internally, and Pulsar's
+client-only options (splash, intro video, F12 menu, …) are accepted but
+meaningless on a server.
+
+`-github-token <token>` / `MAGNETAR_GITHUB_TOKEN` is accepted for compatibility
+but currently has **no effect**: Pulsar's network layer does not support
+authenticated GitHub requests yet. Magnetar logs a warning when it is supplied.
 
 ## Client companion mod
 

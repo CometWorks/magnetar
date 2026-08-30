@@ -17,7 +17,22 @@ and is built on both platforms.
 
 The per-OS target frameworks are selected in each project with the MSBuild
 `$(OS)` reserved property (`Windows_NT` on Windows, `Unix` elsewhere), so the
-same `Magnetar.sln` builds correctly on either host with no manual switches.
+same `Magnetar.slnx` builds correctly on either host with no manual switches.
+
+**The Pulsar submodule is required.** Magnetar's plugin-loader core
+(`Pulsar.Shared`, `Pulsar.Protocol`) and the out-of-process Roslyn compiler
+come from the [`Pulsar/`](../Pulsar/) git submodule:
+
+```sh
+git clone --recurse-submodules https://github.com/CometWorks/magnetar
+# or, in an existing clone:
+git submodule update --init
+```
+
+The submodule's projects are deliberately **not** part of `Magnetar.slnx`;
+they are built through the `ProjectReference`s in
+[Legacy.csproj](../Legacy/Legacy.csproj), which forward the properties they
+need (the `Steamworks` folder and the deployment root).
 
 ---
 
@@ -41,29 +56,30 @@ Override it if your install is elsewhere:
 ```powershell
 # environment variable
 $env:DS64 = "D:\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64"
-dotnet build -c Release Magnetar.sln
+dotnet build -c Release Magnetar.slnx
 
 # or per-invocation MSBuild property
-dotnet build -c Release Magnetar.sln -p:DS64="D:\...\DedicatedServer64"
+dotnet build -c Release Magnetar.slnx -p:DS64="D:\...\DedicatedServer64"
 ```
 
 ### Build
 
 ```powershell
-dotnet build -c Release Magnetar.sln
+dotnet build -c Release Magnetar.slnx
 ```
 
-This builds both launchers. Each project's targets then:
+This builds both launchers. MSBuild targets then stage the install tree
+(mirroring Pulsar's deployment convention):
 
-* **Pre-build** ([verify.bat](../verify.bat)) — fails the build early with a clear
-  message if the resolved `DS64` path does not exist.
-* **Post-build** ([deploy.bat](../Legacy/deploy.bat)) — copies the launcher and
-  its dependencies into the Magnetar install folder, by default
-  `%APPDATA%\Magnetar` (override with the `Magnetar` property/env var). The
-  launcher executable lands at the root; its managed dependencies go under
-  `Libraries\MagnetarLegacy\` or `Libraries\MagnetarInterim\`. Roslyn compiler
-  dependencies that are private to source-plugin compilation live in the
-  matching `Compiler\` subdirectory.
+* **Verify** (before build) — fails early with a clear message if the resolved
+  `DS64` or `Steamworks` path does not exist.
+* **Deploy** (after build) — copies the launcher and its dependencies into the
+  Magnetar install folder, by default `%APPDATA%\Magnetar` (override with the
+  `Magnetar` property/env var). The launcher executable lands at the root; its
+  managed dependencies go under `Libraries\MagnetarLegacy\` or
+  `Libraries\MagnetarInterim\`. The Pulsar submodule's Compiler project deploys
+  the out-of-process Roslyn compiler into `Libraries\Compiler\` — one copy
+  serves both launchers because it runs as a separate process.
 
 To build just one launcher, restrict the target framework:
 
@@ -146,26 +162,22 @@ DS64=/opt/se1-ds/DedicatedServer64 ./build.sh --deps-only
 Once `build/Libraries/` is populated:
 
 ```sh
-dotnet build -c Release Magnetar.sln
+dotnet build -c Release Magnetar.slnx
 ```
 
-On Linux, `Legacy.csproj`'s `AfterBuild` target copies `build/Libraries/*` next
-to the produced `MagnetarInterim` apphost (`cp -a`, preserving soname symlinks).
-If `build/Libraries/` is missing the build fails fast with a clear message.
+On Linux the **Deploy** target stages the complete install tree into
+`~/.local/share/Magnetar` (override with `-p:Magnetar=...`): the
+`MagnetarInterim.bin` apphost at the root, the managed dependencies plus
+`Steamworks.NET.dll` and the native `.so` set under
+`Libraries/MagnetarInterim/`, and the out-of-process Roslyn compiler under
+`Libraries/Compiler/`. If `build/Libraries/` is missing, the Verify target
+fails fast with a clear message.
 
-### Publish
+### Package
 
-Produce a framework-dependent bundle ready to drop next to the dedicated server:
-
-```sh
-dotnet publish -c Release Legacy/Legacy.csproj \
-    -r linux-x64 --self-contained false \
-    -o ~/.local/share/Magnetar
-```
-
-The `AfterPublish` target stages `build/Libraries/*` into the publish output too.
-Running the full `./build.sh` (no flags) does this publish and packs the result
-into `dist/`.
+Running the full `./build.sh` (no flags) stages the dependencies, deploys the
+same install tree into `build/MagnetarForLinux/Magnetar/`, and packs it into
+`dist/MagnetarForLinux.7z`.
 
 The full packager also publishes the **`MagnetarConfig`** terminal UI
 (`ConfigTerminal/`, framework-dependent net10.0) into its own `Config/` folder
@@ -177,7 +189,7 @@ launcher. See [Config tool internals → Build & packaging](ConfigTerminalIntern
 ### Run / verify
 
 ```sh
-~/.local/share/Magnetar/MagnetarInterim
+~/.local/share/Magnetar/MagnetarInterim.bin
 ```
 
 A successful launch logs `Game ready...` once the world has loaded.
@@ -193,6 +205,7 @@ the same name); resolved per OS in [Directory.Build.props](../Directory.Build.pr
 | ---- | ------ | ----------------- | --------------- |
 | `DS64` | Folder containing `SpaceEngineersDedicated.exe` | Steam registry key | `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64` |
 | `Magnetar` | Install/deploy folder | `%APPDATA%\Magnetar` | `~/.local/share/Magnetar` |
+| `Steamworks` | Folder containing `Steamworks.NET.dll` + the steam_api library | `%DS64%` (ships with the DS) | `<repo>/build/Libraries` (staged by `./build.sh`) |
 
 `build.sh` honours additional overrides for Linux dependency staging:
 `MAGNETAR_REPO_DIR`, `BUILD_DIR`, `LIBRARIES_DIR`, `OUTPUT_DIR`, plus the per-blob
@@ -214,33 +227,31 @@ stay one level above it:
 
 ```sh
 dotnet build MagnetarMod/MagnetarMod.csproj
-dotnet build Magnetar.sln -c Workshop
 ```
 
 It targets `net48`, uses `Mal.Mdk2.References` and
 `Mal.Mdk2.ModAnalyzers`, and reads the local Space Engineers install from
-`MagnetarMod/MagnetarMod.mdk.local.ini`. It is included in `Magnetar.sln` only
-for the `Workshop|Any CPU` solution configuration. The normal `Debug` and
-`Release` solution configurations leave `MagnetarMod` unselected for build, so
-the regular release pipeline's `dotnet build -c Release Magnetar.sln` does not
-build the mod project. Space Engineers still compiles the world mod when loading
-it; the MDK2 project is for local/workshop validation and analyzer coverage.
+`MagnetarMod/MagnetarMod.mdk.local.ini`. It is not part of `Magnetar.slnx`, so
+the regular release pipeline never builds the mod project. Space Engineers
+still compiles the world mod when loading it; the MDK2 project is for
+local/workshop validation and analyzer coverage.
 
 ---
 
 ## How the multi-target build works
 
 * **Target frameworks** are OS-conditional in
-  [Legacy.csproj](../Legacy/Legacy.csproj),
-  [Shared.csproj](../Shared/Shared.csproj) and
+  [Legacy.csproj](../Legacy/Legacy.csproj) and
   [PluginSdkTests.csproj](../PluginSdkTests/PluginSdkTests.csproj):
-  `net48;net10.0` on Windows, `net10.0` on Linux.
+  `net48;net10.0` on Windows, `net10.0` on Linux. The submodule's
+  `Pulsar/Shared` multi-targets the same pair on its own.
 * **Assembly name** switches per target framework: `net48` →
   `MagnetarLegacy`, `net10.0` → `MagnetarInterim`.
 * **Windows-only items** (application icon, `app.manifest`, the
-  `VRage.Platform.Windows` reference, `verify.bat`/`deploy.bat`) are gated with
+  `VRage.Platform.Windows` reference) are gated with
   `Condition="'$(OS)' == 'Windows_NT'"`.
-* **Linux-only items** (the `build/Libraries/*` copy targets) are gated with
+* **Linux-only items** (staging the native `.so` set into
+  `Libraries/MagnetarInterim/`) are gated inside the Deploy target with
   `Condition="'$(OS)' != 'Windows_NT'"`.
 * **Source guards** — platform-specific code uses
   `RuntimeInformation.IsOSPlatform(...)` where it must compile for both `net48`
@@ -285,10 +296,11 @@ platforms and publishes a GitHub release with the two `.7z` bundles attached.
   `MagnetarForLinux-<version>.7z`.
 * **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
   ships the .NET Framework 4.8 targeting pack); restores the cached DS library
-  set (or downloads via `steamcmd` on a miss); builds `Magnetar.sln` with
-  `Magnetar` pointed at a staging tree so [deploy.bat](../Legacy/deploy.bat)
-  lays out the install folder there, then packs it as
-  `MagnetarForWindows-<version>.7z`.
+  set (or downloads via `steamcmd` on a miss); runs [build.bat](../build.bat),
+  which builds `Magnetar.slnx` into a staging tree via the Deploy targets,
+  publishes MagnetarConfig into it, and packs it; the bundle is then renamed to
+  `MagnetarForWindows-<version>.7z`. Both build jobs check out the Pulsar
+  submodule (`submodules: recursive`).
 * **release** (`ubuntu-latest`) — downloads both bundles and creates the release
   with `gh`.
 

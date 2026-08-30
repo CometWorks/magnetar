@@ -57,8 +57,8 @@ The tool binds to a *pair* of folders (both overridable — see the
 
 <Magnetar config dir>  (-config)        ← Magnetar's own state
 ├── config.xml                          ← Magnetar CoreConfig
-├── info_yyyyMMdd_HHmmssfff.log         ← Magnetar log, one per startup
-├── info.current                        ← name of the active log file
+├── info.log                            ← Magnetar log of the current launch
+├── info_yyyyMMdd_HHmmss.log            ← rotated logs of previous launches
 ├── magnetar.pid                        ← PID file, see §2.8
 ├── ConfigTerminal.xml                  ← this tool's own settings (see the manual)
 └── Profiles/, Sources/, …              ← plugin config (not edited by this tool)
@@ -226,7 +226,7 @@ itself a process-group leader, which does not happen when this tool spawns it.
 Magnetar today writes **no PID file** — this branch adds one to the launcher
 (a small `Legacy`/`Shared` change shipped together with this tool):
 
-- `magnetar.pid` in the **Magnetar config dir** (next to `info.current`),
+- `magnetar.pid` in the **Magnetar config dir** (next to `info.log`),
   written after daemon detach so it always holds the final PID; content is
   the PID in the first line and the resolved DS data dir in the second line
   (lets the tool confirm the process belongs to *this* instance).
@@ -253,10 +253,10 @@ Two log groups, both covered by the log reader:
   receives `userDataPath` as the log path, `DedicatedServer.cs:198`), file
   name `SpaceEngineersDedicated.log` (+ rotated/dated variants; the reader
   globs `SpaceEngineersDedicated*.log`).
-- **Magnetar logs** — one `info_yyyyMMdd_HHmmssfff.log` per startup in the
-  Magnetar config dir; `info.current` names the active file (see
+- **Magnetar logs** — `info.log` is the current launch's log; the launcher
+  rotates the previous one to `info_yyyyMMdd_HHmmss.log` on startup (see
   [Configuration.md](Configuration.md)). The reader treats the file named by
-  `info.current` as "live" and lists older ones by timestamp.
+  The viewer marks `info.log` as "live" and lists rotated ones by timestamp.
 
 Both formats are plain text with .NET-style exception traces (an exception
 message line followed by indented `   at Namespace.Type.Method(...)` frames);
@@ -411,7 +411,7 @@ CLI batch mode).
 The intentional coupling to Magnetar is *behavioural*, not compile-time:
 identical `-path`/`-config` semantics, the `.bak` convention, spawning the
 launcher executable with `-daemon`, the `magnetar.pid` contract ([§2.8](#28-process-model-and-pid-file)),
-the `info_*.log`/`info.current` log layout, and the SIGTERM/SIGHUP lifecycle
+the `info.log` + rotated `info_*.log` layout, and the SIGTERM/SIGHUP lifecycle
 handshake.
 
 ### 4.3 Layering
@@ -710,13 +710,13 @@ sealed class LogFileInfo
 {
     string Path; LogGroup Group;
     DateTime LastWrite; long Size;
-    bool IsActive;                  // info.current match, or newest game log
+    bool IsActive;                  // info.log (current launch), or newest game log
 }
 
 sealed class LogCatalog
 {
     IReadOnlyList<LogFileInfo> Files;           // both groups, newest first
-    static LogCatalog Scan(InstanceBinding b);  // SpaceEngineersDedicated*.log + info_*.log
+    static LogCatalog Scan(InstanceBinding b);  // SpaceEngineersDedicated*.log + info*.log
 }
 
 sealed class LogTailReader          // never loads the whole file
@@ -1231,7 +1231,7 @@ New xUnit project `ConfigTerminalTests` (patterned on `PluginSdkTests`):
   (`GitHub`, `RemoteHub`/`RemotePlugin`/`LocalHub`) with sibling (incl. the
   preserved `Mods`/`ModSources`) and Magnetar-managed-field preservation; the
   `MagnetarPlugins` façade's catalog-join and dependency pull-in
-  (`PluginConfigTests`). Interop against the **deployed `Magnetar.Shared.dll`**:
+  (`PluginConfigTests`). Interop against the **deployed `Pulsar.Shared.dll`**:
   the tool-written `Profile` and `SourcesConfig` deserialize with Magnetar's own
   `XmlSerializer` and pass `Profile.Validate()`, and a tool-written **named
   profile** is discovered and validated by Magnetar's real `ProfilesConfig.Load`
@@ -1255,7 +1255,7 @@ real saves, to keep the repo lean.
 
 ## 13. Build, packaging and documentation integration
 
-- `Magnetar.sln` carries the `ConfigTerminal` + `ConfigTerminalTests` projects.
+- `Magnetar.slnx` carries the `ConfigTerminal` + `ConfigTerminalTests` projects.
 - `build.sh` / `build.bat` ship `MagnetarConfig` in each bundle next to
   the launcher. Rather than co-mingling it with the launcher's own
   assemblies, it gets its own folder + a root launcher, mirroring how the

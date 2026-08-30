@@ -20,12 +20,12 @@ plus [linux-compat](https://github.com/CometWorks/linux-compat).
 ## Prebuilt bundles
 
 Prebuilt bundles are published on the
-[GitHub Releases](https://github.com/viktor-ferenczi/Magnetar/releases) page:
+[GitHub Releases](https://github.com/CometWorks/magnetar/releases) page:
 
 | Asset | Contents |
 | ----- | -------- |
-| `MagnetarForLinux-<version>.7z` | `install.sh` / `uninstall.sh` + the `MagnetarInterim` (.NET 10) bundle. Extract and run `./install.sh`. |
-| `MagnetarForWindows-<version>.7z` | The `Magnetar/` install tree: `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) plus their `Libraries/`. Extract next to your dedicated server. |
+| `MagnetarForLinux-<version>.7z` | `install.sh` / `uninstall.sh` + the `MagnetarInterim.bin` (.NET 10) install tree. Extract and run `./install.sh`. |
+| `MagnetarForWindows-<version>.7z` | The `Magnetar/` install tree: `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) plus `Libraries/` (per-launcher dependencies and the out-of-process compiler). Extract into `%APPDATA%` so it lands as `%APPDATA%\Magnetar`. |
 
 After installing, see **[Usage](Usage.md)** for how to run the launcher.
 

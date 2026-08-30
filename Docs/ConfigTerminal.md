@@ -59,7 +59,7 @@ architecture, data model, internal state machines, testing and packaging — see
   own caches), manage the catalog **sources**, and manage named **profiles** of
   the enabled-plugin set.
 - **Read logs** — browse and follow the game log and Magnetar's timestamped
-  `info_*.log` files.
+  `info.log` (current launch) and rotated `info_*.log` files.
 
 **It does not:**
 
@@ -101,7 +101,7 @@ MagnetarConfig [options]
                      magnetar.pid). Same semantics as Magnetar's own -config.
                      Default (Linux): ~/.config/Magnetar
   -magnetar <file>   Magnetar launcher executable to start/stop. Default:
-                     ~/.local/share/Magnetar/MagnetarInterim (Linux); on Windows
+                     ~/.local/share/Magnetar/MagnetarInterim.bin (Linux); on Windows
                      chosen at startup between the installed MagnetarLegacy.exe
                      (.NET Framework 4.8) and MagnetarInterim.exe (.NET 10) — see
                      the resolution order below
@@ -336,7 +336,7 @@ at startup, so settings changes simply take effect on the next start.
 
 `Tools → Logs` (F4) opens the log viewer over two groups: the **game log**
 (`SpaceEngineersDedicated*.log` in the DS data dir) and **Magnetar's logs**
-(`info_*.log` in the config dir, the active one marked). Pick a file on the left;
+(`info.log` and rotated `info_*.log` in the config dir, the active one marked). Pick a file on the left;
 the pane on the right shows its tail.
 
 - `End` toggles follow (tail -f), `Home` jumps to the top, `W` toggles line

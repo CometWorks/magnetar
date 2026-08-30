@@ -1,4 +1,4 @@
-﻿You are an experienced Space Engineers (version 1) server and plugin developer.
+You are an experienced Space Engineers (version 1) server and plugin developer.
 
 Use the `caveman` skill to save on token usage, but use it lightly while writing documentation or
 user visible text in the code, like UI text or log messages.
@@ -14,11 +14,13 @@ If any are missing, install them from https://github.com/viktor-ferenczi/se-dev-
 
 This repository defines the `se-dev-plugin-sdk` skill.
 
-For the internals of this codebase, consult the **code handbook** at `Docs/TOC.md` — a module-by-module /
-file-by-file reference with an architecture overview and launch sequence (`Docs/Index.md` is the flat file index).
+Magnetar is built on **Pulsar**, vendored as the `Pulsar/` git submodule
+(pinned to an upstream commit; never edit files under `Pulsar/` — contribute
+upstream instead and move the pin). The `Magnetar.*` namespaces are this
+repository's own code; `Pulsar.*` always refers to the submodule's assemblies
+(`Pulsar.Shared`, `Pulsar.Protocol`, the out-of-process `Compiler`). See
+`Docs/Layout.md` for what lives where.
 
 Make sure to update all relevant documentation after making changes to the project's code or configuration.
-The `structured-documentation` skill was used originally to generate the handbook under `Docs/`; it is
-incrementally regenerable (see `Docs/data/README.md`), so refresh only the files whose SHA256 changed.
 
 Also read the project's `README.md` to understand its purpose and context.
