@@ -28,6 +28,7 @@ internal static class References
         "VRage*.dll",
         "Sandbox*.dll",
         "ProtoBuf*.dll",
+        "protobuf*.dll", // the DS ships a lowercase protobuf-net.dll; Linux globs are case-sensitive
     ];
 
     private static readonly string[] excludeGlobs = ["VRage.Native.dll"];

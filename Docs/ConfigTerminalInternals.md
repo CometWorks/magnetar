@@ -1278,11 +1278,9 @@ real saves, to keep the repo lean.
 - Docs integration: `README.md` (documentation table + a "Configuration tool"
   note), `Docs/Usage.md` ("Configuring the server (MagnetarConfig)" section) and
   `Docs/Layout.md` (`ConfigTerminal/` + `ConfigTerminalTests/` rows) cover the
-  tool. The machine-generated code handbook (`Docs/TOC.md` / `Docs/Index.md` +
-  per-file module docs, via the `structured-documentation` refresh) covers the
-  `ConfigTerminal/` and
-  `ConfigTerminalTests/` trees (modules `ConfigTerminal.{App,Model,Ui,Process,Logs,Io}`
-  and `ConfigTerminalTests`).
+  tool. (The machine-generated code handbook that once accompanied the old
+  source tree was removed with the Pulsar-based rebuild; this document and the
+  user manual are the reference for the ConfigTerminal trees.)
 
 ---
 

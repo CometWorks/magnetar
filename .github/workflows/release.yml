@@ -243,6 +243,16 @@ jobs:
           rm -rf dsfull
           echo "Cached DS library set:"; du -sh ds64
 
+      - name: Run tests
+        env:
+          DS64: ${{ github.workspace }}/ds64
+        run: |
+          set -euo pipefail
+          # The launcher build needs the staged Steamworks/native set; the test
+          # projects do not, so run them before build.sh to fail fast.
+          dotnet test PluginSdkTests/PluginSdkTests.csproj -c Release
+          dotnet test ConfigTerminalTests/ConfigTerminalTests.csproj -c Release
+
       - name: Build and package (build.sh)
         env:
           DS64: ${{ github.workspace }}/ds64
@@ -269,7 +279,8 @@ jobs:
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
-  # Windows build: build.bat (the Deploy targets stage the install tree,
+  # Windows build: build.bat (the Deploy targets stage the install tree from
+  # the Legacy project build,
   # ConfigTerminal is published into it, 7z packs it) ->
   # MagnetarForWindows-<version>.7z
   # ---------------------------------------------------------------------------

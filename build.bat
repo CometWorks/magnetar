@@ -55,7 +55,7 @@ REM ---- locate self / repo ----------------------------------------------------
 set "REPO_DIR=%~dp0"
 if "%REPO_DIR:~-1%"=="\" set "REPO_DIR=%REPO_DIR:~0,-1%"
 
-set "SOLUTION=%REPO_DIR%\Magnetar.slnx"
+set "SOLUTION=%REPO_DIR%\Legacy\Legacy.csproj"
 set "BUILD_DIR=%REPO_DIR%\build"
 set "STAGE_DIR=%BUILD_DIR%\MagnetarForWindows"
 set "MAGNETAR_STAGE=%STAGE_DIR%\Magnetar"
@@ -98,10 +98,13 @@ if not exist "%DIST_DIR%" mkdir "%DIST_DIR%" >NUL 2>&1
 REM ---- build + deploy into the staging tree ----------------------------------
 REM Overriding the `Magnetar` property redirects the Deploy targets from
 REM %APPDATA%\Magnetar into our staging tree. Both inner builds (net48 and
-REM net10.0) deploy into the same folder.
+REM net10.0) deploy into the same folder. Building the Legacy project (not the
+REM whole solution) pulls in Shared/Protocol/Compiler/PluginSdk through its
+REM ProjectReferences without also compiling the test projects; ConfigTerminal
+REM is published separately below.
 echo.
 echo ############################################################
-echo # build: Magnetar.slnx (Release)
+echo # build: Legacy\Legacy.csproj (Release)
 echo #   deploy target: %MAGNETAR_STAGE%
 echo ############################################################
 dotnet build "%SOLUTION%" -c Release -p:Magnetar="%MAGNETAR_STAGE%"

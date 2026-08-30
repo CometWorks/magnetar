@@ -57,21 +57,21 @@ public static class ConsentManager
             Console.WriteLine(
                 "Consent: nothing to withdraw (no local consent on record); recorded denial."
             );
+            DeleteInstanceId(); // clears a corrupted (unreadable) id file too
         }
 
-        config.DataHandlingConsent = false;
-        config.DataHandlingConsentDate = DateTime.UtcNow.ToString("o");
-        config.Save();
+        Deny(config, "-withdraw-consent");
     }
 
     public static void Resolve()
     {
         ConsentChoice flag = ServerFlags.Consent;
         CoreConfig config = ConfigManager.Instance.Core;
+        string instanceId = ReadInstanceId();
 
         // Reconcile: a grant is only valid alongside its instance.id, so a
         // leftover/legacy grant without one is stale — clear it to undecided.
-        if (!HasInstanceId() && config.DataHandlingConsent)
+        if (instanceId is null && config.DataHandlingConsent)
         {
             config.DataHandlingConsent = false;
             config.DataHandlingConsentDate = null;
@@ -91,11 +91,10 @@ public static class ConsentManager
         }
 
         // No flag — check stored state
-        if (HasInstanceId())
+        if (instanceId is not null)
         {
             // instance.id exists → consent was granted previously
-            string id = ReadInstanceId();
-            PlayerHash = DerivePlayerHash(id);
+            PlayerHash = DerivePlayerHash(instanceId);
             Granted = true;
             PendingServerConsent = true; // idempotent re-register
             LogFile.WriteLine("Consent: active (instance.id present)");
@@ -210,20 +209,22 @@ public static class ConsentManager
     private static string InstanceIdPath =>
         Path.Combine(ConfigManager.Instance.PulsarDir, "instance.id");
 
-    private static bool HasInstanceId() => File.Exists(InstanceIdPath);
-
+    // Returns null for a missing OR corrupted/truncated file (one that cannot
+    // yield the 20-character player hash), so a damaged id never crashes
+    // startup — the state machine then treats consent as undecided.
     private static string ReadInstanceId()
     {
         if (!File.Exists(InstanceIdPath))
             return null;
 
-        return File.ReadAllText(InstanceIdPath).Trim();
+        string id = File.ReadAllText(InstanceIdPath).Trim();
+        return id.Replace("-", "").Length >= 20 ? id : null;
     }
 
     private static string CreateInstanceId()
     {
-        if (File.Exists(InstanceIdPath))
-            return File.ReadAllText(InstanceIdPath).Trim();
+        if (ReadInstanceId() is string existing)
+            return existing;
 
         string id = Guid.NewGuid().ToString("D");
         File.WriteAllText(InstanceIdPath, id);

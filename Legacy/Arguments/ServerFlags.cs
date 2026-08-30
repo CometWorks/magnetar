@@ -51,21 +51,60 @@ public static class ServerFlags
         else if (HasArg("noconsent"))
             Consent = ConsentChoice.Deny;
 
-        // -h, -help, -? and --help (the latter matches as the "-help" argument).
-        Help = HasArg("h") || HasArg("help") || HasArg("-help") || HasArg("?");
-        Version = HasArg("v") || HasArg("version") || HasArg("-version");
+        // -h/-help/-?/--help, plus the /h //help style Pulsar also accepts.
+        Help = HasArg("h") || HasArg("help") || HasArg("?");
+        Version = HasArg("v") || HasArg("version");
     }
 
+    // Magnetar and dedicated-server options that take a value in the next
+    // argv element. Their pairs are stripped from what is handed to Pulsar's
+    // parser: its Normalize step strips '-'/'/' from EVERY token and rewrites
+    // any that then matches an option short name — so an instance directory
+    // named "debug" in `-path debug` would otherwise flip Pulsar's -debug.
+    private static readonly string[] valueOptions =
+    [
+        "config",
+        "ds64",
+        "github-token",
+        "path",
+        "ip",
+        "port",
+        "maxPlayers",
+    ];
+
     /// <summary>
-    /// The headless defaults appended to the arguments handed to Pulsar's
-    /// parser. A dedicated server has no display for the splash or the prompt
-    /// dialogs, and must never block on (or launch) the Steam client.
+    /// The arguments to hand to Pulsar's <c>Parser.Initialize</c>: the raw
+    /// argv minus the value-taking Magnetar/dedicated-server option pairs
+    /// (see <see cref="valueOptions"/>) and minus DS session selectors, with
+    /// the forced headless defaults appended — a dedicated server has no
+    /// display for the splash or the prompt dialogs, and must never block on
+    /// (or launch) the Steam client. The dedicated server itself always
+    /// receives the ORIGINAL argv, never this filtered list.
     /// </summary>
-    public static IEnumerable<string> ForcedPulsarFlags()
+    public static string[] PulsarParserArgs(string[] args)
     {
-        yield return "-noSplash";
-        yield return "-noPrompt";
-        yield return "-lazySteam";
+        List<string> filtered = [];
+
+        for (int index = 0; index < args.Length; index++)
+        {
+            string arg = args[index];
+
+            if (arg.StartsWith("-session:", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (valueOptions.Any(name => IsOption(arg, name)))
+            {
+                index++; // skip the value as well
+                continue;
+            }
+
+            filtered.Add(arg);
+        }
+
+        filtered.Add("-noSplash");
+        filtered.Add("-noPrompt");
+        filtered.Add("-lazySteam");
+        return [.. filtered];
     }
 
     public static void LogFlags()
@@ -148,17 +187,25 @@ public static class ServerFlags
         Console.WriteLine("  -version, -v        Show the Magnetar version and exit");
     }
 
+    // Matches -name, --name and /name (the prefix styles Pulsar accepts).
+    private static bool IsOption(string arg, string name)
+    {
+        if (string.IsNullOrEmpty(arg) || (arg[0] != '-' && arg[0] != '/'))
+            return false;
+
+        string trimmed = arg.TrimStart('-', '/');
+        return trimmed.Equals(name, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool HasArg(string argument) =>
-        Environment
-            .GetCommandLineArgs()
-            .Any(arg => arg.Equals($"-{argument}", StringComparison.OrdinalIgnoreCase));
+        Environment.GetCommandLineArgs().Skip(1).Any(arg => IsOption(arg, argument));
 
     private static string GetArgValue(string argument)
     {
         string[] args = Environment.GetCommandLineArgs();
-        for (var index = 0; index < args.Length - 1; index++)
+        for (var index = 1; index < args.Length - 1; index++)
         {
-            if (args[index].Equals($"-{argument}", StringComparison.OrdinalIgnoreCase))
+            if (IsOption(args[index], argument))
                 return args[index + 1];
         }
 

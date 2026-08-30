@@ -18,6 +18,7 @@ using Pulsar.Protocol.Interface;
 using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
 using Pulsar.Shared.Config;
+using Pulsar.Shared.Data;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
 
@@ -52,17 +53,10 @@ static class Program
 
         // -help/-version just print and exit, so skip loading the bundled
         // native libraries (which register process lifecycle handlers that emit
-        // noise). Detected from the raw args rather than ServerFlags so Main
-        // pulls in no Pulsar.Shared type before the resolver below is installed.
-        bool fastPath = args.Any(a =>
-            a.Equals("-h", StringComparison.OrdinalIgnoreCase)
-            || a.Equals("-help", StringComparison.OrdinalIgnoreCase)
-            || a.Equals("--help", StringComparison.OrdinalIgnoreCase)
-            || a.Equals("-?", StringComparison.Ordinal)
-            || a.Equals("-v", StringComparison.OrdinalIgnoreCase)
-            || a.Equals("-version", StringComparison.OrdinalIgnoreCase)
-            || a.Equals("--version", StringComparison.OrdinalIgnoreCase)
-        );
+        // noise). ServerFlags lives in this assembly and its detection path
+        // references no Pulsar.Shared type, so it is safe to consult before
+        // the resolver below is installed.
+        bool fastPath = ServerFlags.Help || ServerFlags.Version;
 
         // On Linux, preload every bundled native .so and register a single
         // DllImport resolver covering every present and future ALC. Must run
@@ -93,13 +87,16 @@ static class Program
             return;
         }
 
-        // Populate Pulsar's flags. Magnetar-specific and dedicated-server
-        // arguments are unknown to this parser and pass through untouched;
-        // the appended defaults force headless behaviour (no splash, no
-        // dialogs, never launch or block on the Steam client).
-        Parser.Initialize([.. args, .. ServerFlags.ForcedPulsarFlags()], se1: true);
+        // Populate Pulsar's flags from a filtered argv: value-taking
+        // Magnetar/DS option pairs are stripped (Pulsar's normalizer could
+        // otherwise rewrite their values into Pulsar flags) and the appended
+        // defaults force headless behaviour (no splash, no dialogs, never
+        // launch or block on the Steam client). The dedicated server itself
+        // still receives the original args.
+        Parser.Initialize(ServerFlags.PulsarParserArgs(args), se1: true);
 
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        CrashHandler.InstallNative("Magnetar");
 
         if (Flags.Current.ExternalDebug)
             Debugger.Launch();
@@ -120,14 +117,9 @@ static class Program
         using InterfaceClient interfaceClient = new(guiPath);
         Tools.EarlyInit(interfaceClient);
 
-        if (ServerLauncher.IsOtherMagnetarRunning())
-        {
-            Console.Error.WriteLine(
-                "[Magnetar] Another Magnetar instance is already running! "
-                    + "Use -multiInstance to run several servers on this machine."
-            );
-            return;
-        }
+        // Unlike the game client there is deliberately no single-instance
+        // mutex: multi-server hosts run several Magnetar processes, each on
+        // its own -path/-config pair, and the pid file identifies each one.
 
         SetupCoreData(baseDir);
 
@@ -183,14 +175,18 @@ static class Program
                     + "Pulsar-based network layer yet and has no effect."
             );
 
-        if (Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1")
+        // MAGNETAR_SAFE_MODE only disables the preloader patches (a one-off
+        // recovery knob); Pulsar's -safeMode flag is the way to start with
+        // user plugins disabled. Kept separate from ConfigManager.SafeMode,
+        // which Pulsar's Loader uses to drop every non-core plugin.
+        preloaderDisabled = Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1";
+        if (preloaderDisabled)
             LogFile.Warn("MAGNETAR_SAFE_MODE=1 set. No preloader patches will be applied!");
 
         ConfigManager.EarlyInit(magnetarDir);
-
-        if (Environment.GetEnvironmentVariable("MAGNETAR_SAFE_MODE") == "1")
-            ConfigManager.Instance.SafeMode = true;
     }
+
+    private static bool preloaderDisabled;
 
     private static string GetConfigDir(string baseDir, AssemblyName asmName)
     {
@@ -241,25 +237,29 @@ static class Program
         // object is still used for the bitrot and game-update prompts.
         // updater.TryUpdate();
 
-        string checkSum = null;
         string checkFile = Path.Combine(baseDir, "checksum.txt");
         string libraryDir = Path.Combine(baseDir, "Libraries");
 
         if (Flags.Current.MakeCheckFile && Directory.Exists(libraryDir))
         {
+            // The freshly written checksum trivially matches; skip the verify.
             UTF8Encoding encoding = new();
-            checkSum = Tools.GetFolderHash(libraryDir);
-            File.WriteAllText(checkFile, checkSum, encoding);
+            File.WriteAllText(checkFile, Tools.GetFolderHash(libraryDir), encoding);
         }
-        else if (File.Exists(checkFile))
-            checkSum = File.ReadAllText(checkFile);
-
-        if (
-            checkSum is not null
-            && Directory.Exists(libraryDir)
-            && Tools.GetFolderHash(libraryDir) != checkSum
-        )
-            updater.ShowBitrotPrompt();
+        else if (File.Exists(checkFile) && Directory.Exists(libraryDir))
+        {
+            string checkSum = File.ReadAllText(checkFile);
+            if (Tools.GetFolderHash(libraryDir) != checkSum)
+            {
+                // The prompt itself is suppressed by the forced -noPrompt, so
+                // name the reason for the exit here.
+                ShowStartupError(
+                    "The Libraries folder does not match checksum.txt (corrupted install). "
+                        + "Reinstall Magnetar, or regenerate the checksum with -mkCheck."
+                );
+                updater.ShowBitrotPrompt();
+            }
+        }
 
         return updater;
     }
@@ -301,7 +301,14 @@ static class Program
 
         Version seVersion = Game.GetGameVersion(ds64Dir);
         if (seVersion is null) // Prevent NRE from Keen updates
+        {
+            ShowStartupError(
+                "Unable to read the game version from the dedicated server binaries. "
+                    + "A Space Engineers update may have changed their layout; "
+                    + "check for a Magnetar update."
+            );
             updater.ShowBitrotPrompt();
+        }
 
         RemoteHubConfig[] defaultHubs =
         [
@@ -324,7 +331,22 @@ static class Program
         if (seVersion != oldSeVersion)
         {
             if (oldSeVersion is not null)
-                Updater.GameUpdatePrompt(oldSeVersion, seVersion, 3);
+            {
+                // Pulsar's Updater.GameUpdatePrompt is a Yes/No dialog that
+                // exits the process unless confirmed — under the forced
+                // -noPrompt it would silently Exit(0) on every launch after a
+                // game update. A server just logs the change and clears the
+                // compiled-plugin caches so everything rebuilds for the new
+                // game version.
+                string change = (seVersion > oldSeVersion ? "up" : "down") + "graded";
+                LogFile.WriteLine(
+                    $"Space Engineers has been {change} "
+                        + $"({oldSeVersion.ToString(3)} -> {seVersion.ToString(3)}); "
+                        + "plugins will be rebuilt for the new game version."
+                );
+                GitHubPlugin.ClearGitHubCache();
+                LocalFolderPlugin.ClearDevFolderCache();
+            }
 
             coreConfig.GameVersion = seVersion;
             coreConfig.Save();
@@ -339,23 +361,46 @@ static class Program
 
 #if NETFRAMEWORK
         if (!launcher.VerifyConfig())
+        {
+            ShowStartupError(
+                "The launcher's .exe.config is missing next to MagnetarLegacy.exe "
+                    + "(required because the dedicated server ships one). Reinstall Magnetar."
+            );
             updater.ShowBitrotPrompt();
+        }
 #endif
 
         if (!launcher.CanStart())
+        {
+            // CanStart's own dialog is suppressed by the forced -noPrompt.
+            ShowStartupError(
+                "Refusing to start (a conflicting Space Engineers process is running, "
+                    + "or an unsupported argument was passed). Use -multiInstance to run "
+                    + "several servers on this machine."
+            );
             Environment.Exit(1);
+        }
     }
 
     private static void SetupSteam()
     {
         // Register a resolver for the DS-shipped Steamworks.NET so workshop
-        // calls bind at world-load time. Do NOT initialize the Steam client API
+        // calls bind at world-load time. Narrow on purpose: the broad DS64
+        // resolver is installed later (SetupGameResolver), after the launcher
+        // dependencies have priority. Do NOT initialize the Steam client API
         // here (Pulsar's Steam.Init): the dedicated server runs the Steam
         // game-server API itself, and starting the client API in the same
         // process corrupts game-server registration, making the server
         // invisible in the browser and unjoinable.
         string ds64Dir = ConfigManager.Instance.GameDir;
-        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([ds64Dir]);
+        AppDomain.CurrentDomain.AssemblyResolve += (sender, eventArgs) =>
+        {
+            if (new AssemblyName(eventArgs.Name).Name != "Steamworks.NET")
+                return null;
+
+            string path = Path.Combine(ds64Dir, "Steamworks.NET.dll");
+            return File.Exists(path) ? Assembly.LoadFrom(path) : null;
+        };
     }
 
     private static void SetupPlugins(string baseDir)
@@ -393,7 +438,7 @@ static class Program
         }
 
         Preloader preloader = new(SharedLoader.Instance.Plugins.Select(x => x.Value));
-        if (preloader.HasPatches && !ConfigManager.Instance.SafeMode)
+        if (preloader.HasPatches && !preloaderDisabled)
         {
             string preloadDir = Path.Combine(magnetarDir, "Preloader");
 
@@ -490,12 +535,16 @@ static class Program
         // the server starts. Safe this early — handlers tolerate a null session.
         ServerControl.InstallSignalHandlers();
 
+        // Validate -path (this can Exit(1)) BEFORE publishing the pid file, so
+        // an aborted startup never leaves a stale magnetar.pid behind.
+        string[] finalArgs = EnsureDataPathApplied(args, ds64Dir);
+
         // Publish this instance's pid so an external tool (MagnetarConfig) can
         // discover and verify it. Written after the daemon detach (the pid is
         // final) and removed by ServerControl.FlushAll on every clean exit.
         PidFile.Write(ConfigManager.Instance.PulsarDir, ResolveDataDir(args, ds64Dir));
 
-        Game.StartDedicatedServer(EnsureDataPathApplied(args, ds64Dir));
+        Game.StartDedicatedServer(finalArgs);
     }
 
     // Resolves the DS data directory (the "-path" value) the same way the DS's

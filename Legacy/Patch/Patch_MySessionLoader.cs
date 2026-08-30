@@ -20,7 +20,7 @@ internal class Patch_MySessionLoader
     {
         MagnetarClientMod.ApplyToCheckpoint(world?.Checkpoint);
 
-        if (Flags.Current.TrustedMods)
+        if (Flags.Current.TrustedMods && world?.Checkpoint?.Mods is not null)
             world.Checkpoint.Mods.RemoveAll(SteamMods.IsModUntrusted);
     }
 
@@ -33,7 +33,7 @@ internal class Patch_MySessionLoader
     {
         MagnetarClientMod.ApplyToCheckpoint(world?.Checkpoint);
 
-        if (Flags.Current.TrustedMods)
+        if (Flags.Current.TrustedMods && world?.Checkpoint?.Mods is not null)
             world.Checkpoint.Mods.RemoveAll(SteamMods.IsModUntrusted);
     }
 }

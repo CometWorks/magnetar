@@ -1,9 +1,9 @@
 using System;
 using System.Net.Http;
 using System.Text;
-using Magnetar.Legacy.Stats.Model;
 using Newtonsoft.Json;
 using Pulsar.Shared;
+using Pulsar.Shared.Stats.Model;
 
 namespace Magnetar.Legacy.Stats;
 
@@ -16,7 +16,7 @@ namespace Magnetar.Legacy.Stats;
 /// </summary>
 public static class VotesClient
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
+    private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromSeconds(3) };
 
     // API address
     public static string BaseUrl { get; set; }
@@ -55,10 +55,9 @@ public static class VotesClient
     {
         try
         {
-            using HttpClient client = new() { Timeout = Timeout };
             string json = JsonConvert.SerializeObject(request);
             using StringContent content = new(json, Encoding.UTF8, "application/json");
-            using HttpResponseMessage response = client
+            using HttpResponseMessage response = Client
                 .PostAsync(url, content)
                 .GetAwaiter()
                 .GetResult();

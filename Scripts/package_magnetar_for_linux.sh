@@ -124,6 +124,7 @@ echo "############################################################"
 dotnet build "$MAGNETAR_CSPROJ" \
     -c Release \
     -p:Magnetar="$MAGNETAR_ROOT" \
+    -p:Steamworks="$LIBRARIES_DIR" \
     -p:DebugType=None \
     -p:DebugSymbols=false
 

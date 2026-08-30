@@ -49,13 +49,14 @@
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
   </PropertyGroup>
   <PropertyGroup>
-    <StartAction>Program</StartAction>
-    <StartProgram>$(Magnetar)/$(AssemblyName)$(_MagnetarExeExt)</StartProgram>
-    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
+    <!-- Defined before StartProgram: MSBuild evaluates properties top-down. -->
     <_MagnetarExeExt Condition="'$(OS)' == 'Windows_NT'">.exe</_MagnetarExeExt>
     <_MagnetarExeExt Condition="'$(OS)' != 'Windows_NT'">.bin</_MagnetarExeExt>
     <_SteamApiFile Condition="'$(OS)' == 'Windows_NT'">steam_api64.dll</_SteamApiFile>
     <_SteamApiFile Condition="'$(OS)' != 'Windows_NT'">libsteam_api.so</_SteamApiFile>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(Magnetar)/$(AssemblyName)$(_MagnetarExeExt)</StartProgram>
+    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
@@ -77,6 +78,12 @@
        reached from Main() under #if NETCOREAPP, so exclude it from the net48 build. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <Compile Remove="Loader\NativeLibraryPreloader.cs" />
+  </ItemGroup>
+  <!-- Compiled from the submodule source (not copied) so upstream fixes are
+       picked up automatically on a submodule bump. Only patches with no
+       Pulsar.Legacy-internal dependencies can be linked this way. -->
+  <ItemGroup>
+    <Compile Include="..\Pulsar\Legacy\Patch\Patch_StableLogs.cs" Link="Patch\Patch_StableLogs.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis" HintPath="$(DS64)\Microsoft.CodeAnalysis.dll" Private="False" />
@@ -132,6 +139,9 @@
       <DeployLibraryFile Include="$(TargetDir)PluginSdk.dll" />
       <DeployLibraryFile Include="$(TargetDir)0Harmony.dll" />
       <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.dll" />
+      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.Mdb.dll" Condition="Exists('$(TargetDir)Mono.Cecil.Mdb.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.Pdb.dll" Condition="Exists('$(TargetDir)Mono.Cecil.Pdb.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.Rocks.dll" Condition="Exists('$(TargetDir)Mono.Cecil.Rocks.dll')" />
       <DeployLibraryFile Include="$(TargetDir)Newtonsoft.Json.dll" />
       <DeployLibraryFile Include="$(TargetDir)Gameloop.Vdf.dll" />
       <DeployLibraryFile Include="$(TargetDir)NLog.dll" />
@@ -150,20 +160,28 @@
       <DeployLibraryFile Include="$(TargetDir)NuGet.ProjectModel.dll" />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Protocol.dll" />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Versioning.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Credentials.dll" Condition="Exists('$(TargetDir)NuGet.Credentials.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll" Condition="Exists('$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll" Condition="Exists('$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)Microsoft.Extensions.Primitives.dll" Condition="Exists('$(TargetDir)Microsoft.Extensions.Primitives.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)System.ServiceModel.dll" Condition="Exists('$(TargetDir)System.ServiceModel.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)System.ServiceModel.Primitives.dll" Condition="Exists('$(TargetDir)System.ServiceModel.Primitives.dll')" />
       <!-- Needed by NuGet signature verification on .NET Core (in the GAC on Framework). -->
       <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.Pkcs.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.Pkcs.dll')" />
       <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.ProtectedData.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.ProtectedData.dll')" />
     </ItemGroup>
-    <ItemGroup>
-      <DeployLibraryFile Include="$(Steamworks)/Steamworks.NET.dll" />
-      <DeployLibraryFile Include="$(Steamworks)/$(_SteamApiFile)" />
-    </ItemGroup>
-    <!-- Linux: the native dependencies staged by ./build.sh (EOS, Havok,
-         RecastDetour, VRageNative wrappers) plus their license notices. The
-         NativeLibraryPreloader dlopens every lib*.so* in this folder. -->
+    <!-- Windows deliberately does NOT bundle Steamworks.NET: it ships next to
+         the dedicated server and is resolved from there at runtime, so a DS
+         update can never be paired with a stale bundled copy. On Linux the
+         matching Linux Steamworks pair plus the native dependencies staged by
+         ./build.sh (EOS, Havok, RecastDetour, VRageNative wrappers) are
+         bundled from $(Steamworks) — the folder ./build.sh populates — along
+         with their license notices. The NativeLibraryPreloader dlopens every
+         lib*.so* in the deploy folder. -->
     <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
-      <DeployNativeFile Include="$(MSBuildThisFileDirectory)../build/Libraries/*.so" />
-      <DeployLicenseFile Include="$(MSBuildThisFileDirectory)../build/Libraries/LICENSES/*" />
+      <DeployLibraryFile Include="$(Steamworks)/Steamworks.NET.dll" />
+      <DeployNativeFile Include="$(Steamworks)/*.so" />
+      <DeployLicenseFile Include="$(Steamworks)/LICENSES/*" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).exe.config" />
@@ -180,6 +198,21 @@
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).runtimeconfig.json" />
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).deps.json" />
     </ItemGroup>
+    <!-- Safety net: the DeployLibraryFile list is maintained by hand (mirroring
+         Pulsar's convention), so warn when the build output contains a
+         copy-local dependency the list does not stage — typically after a
+         Pulsar submodule bump added or renamed a package. -->
+    <ItemGroup>
+      <_DeployedName Include="@(DeployLibraryFile->'%(Filename)%(Extension)')" />
+      <!-- Skip satellite/RID-specific assets (they carry a destination
+           subdirectory and are not loaded from the flat Libraries folder). -->
+      <_CopyLocalName
+          Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
+          Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))" />
+      <_UnstagedDependency Include="@(_CopyLocalName)" Exclude="@(_DeployedName)" />
+    </ItemGroup>
+    <Warning Condition="'@(_UnstagedDependency)' != ''"
+             Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Pulsar submodule bump add a package?)." />
     <Error Condition="!Exists('$(LicensePath)')" Text="License file not found!" />
     <Error Condition="!Exists('$(ReadmePath)')" Text="Readme file not found!" />
     <RemoveDir Directories="$(DeployDirectory)" />
