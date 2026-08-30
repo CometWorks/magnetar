@@ -61,7 +61,7 @@ internal static class InstanceLocator
         string baseDir = !string.IsNullOrWhiteSpace(xdgData)
             ? xdgData
             : Path.Combine(Home, ".local", "share");
-        return Path.Combine(baseDir, "Magnetar", "MagnetarInterim");
+        return Path.Combine(baseDir, "Magnetar", "MagnetarInterim.bin");
     }
 
     /// <summary>The %APPDATA%\Magnetar root the Windows launchers are deployed under.</summary>

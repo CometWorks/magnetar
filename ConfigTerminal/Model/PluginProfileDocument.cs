@@ -11,7 +11,6 @@ namespace Magnetar.ConfigTerminal.Model;
 internal sealed class DevFolderEntry
 {
     public string Id;         // == the source folder name (last path segment)
-    public string DataFile;   // manifest filename, relative to the folder
     public bool DebugBuild = true;
     public string Folder;     // resolved from the matching sources entry (may be null)
 }
@@ -177,15 +176,16 @@ internal sealed class PluginProfileDocument
 
     // --- dev folders (Profile.DevFolder: HashSet<LocalFolderConfig>) ---
 
+    // The manifest-file hint lives in the sources.xml LocalPlugin entry (its
+    // File element); the profile's LocalFolderConfig carries only Id + DebugBuild.
     public IReadOnlyList<DevFolderEntry> DevFolders =>
         Root.Element("DevFolder")?.Elements("LocalFolderConfig").Select(e => new DevFolderEntry
         {
             Id = e.Element("Id")?.Value?.Trim(),
-            DataFile = e.Element("DataFile")?.Value?.Trim(),
             DebugBuild = ConfigDocumentBase.ParseBool(e.Element("DebugBuild")?.Value),
         }).ToList() ?? new List<DevFolderEntry>();
 
-    public bool EnableDevFolder(string id, string dataFile, bool debugBuild)
+    public bool EnableDevFolder(string id, bool debugBuild)
     {
         XElement list = List("DevFolder");
         if (list.Elements("LocalFolderConfig").Any(e => IdEq(e.Element("Id")?.Value, id)))
@@ -193,7 +193,6 @@ internal sealed class PluginProfileDocument
 
         list.Add(new XElement("LocalFolderConfig",
             new XElement("Id", id),
-            dataFile == null ? null : new XElement("DataFile", dataFile),
             new XElement("DebugBuild", debugBuild ? "true" : "false")));
         return true;
     }

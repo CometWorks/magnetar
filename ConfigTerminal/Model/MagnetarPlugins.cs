@@ -200,16 +200,25 @@ internal sealed class MagnetarPlugins
 
     /// <summary>
     /// Enables or disables a registered dev folder in the active profile. Enabling
-    /// writes a LocalFolderConfig { Id, DataFile, DebugBuild } (the manifest name
-    /// re-derived from the folder when not supplied); disabling removes it.
+    /// writes a LocalFolderConfig { Id, DebugBuild }; the manifest-file hint stays
+    /// in the sources.xml LocalPlugin entry (its File element). Disabling removes it.
     /// </summary>
     public bool SetDevFolderEnabled(string id, string dataFile, bool on)
     {
         bool changed;
         if (on)
         {
-            string manifest = dataFile ?? PluginManifest.FindInFolder(sources.FindById(id)?.Folder);
-            changed = profile.EnableDevFolder(id, manifest, debugBuild: true);
+            // Backfill the manifest-file hint into the sources entry when it is
+            // missing, so Magnetar can load the plugin's metadata.
+            LocalPluginSource source = sources.FindById(id);
+            if (source != null && string.IsNullOrEmpty(source.DataFile))
+            {
+                string manifest = dataFile ?? PluginManifest.FindInFolder(source.Folder);
+                if (!string.IsNullOrEmpty(manifest) && sources.SetLocalPluginFile(source.Folder, manifest))
+                    sources.Save(writer);
+            }
+
+            changed = profile.EnableDevFolder(id, debugBuild: true);
         }
         else
         {

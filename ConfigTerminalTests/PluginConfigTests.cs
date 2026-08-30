@@ -40,7 +40,7 @@ public class PluginConfigTests : IDisposable
 
         PluginProfileDocument doc = PluginProfileDocument.Open(dir);
         Assert.True(doc.EnableLocalDll("Essentials.dll"));
-        Assert.True(doc.EnableDevFolder("my-plugin", "Manifest.xml", true));
+        Assert.True(doc.EnableDevFolder("my-plugin", true));
         doc.Save(new AtomicFile());
 
         string xml = File.ReadAllText(path);
@@ -48,12 +48,13 @@ public class PluginConfigTests : IDisposable
         Assert.Contains("12345", xml);                // Mods preserved
         Assert.Contains("<string>Essentials.dll</string>", xml);
         Assert.Contains("<Id>my-plugin</Id>", xml);
-        Assert.Contains("<DataFile>Manifest.xml</DataFile>", xml);
+        Assert.Contains("<DebugBuild>true</DebugBuild>", xml);
+        Assert.DoesNotContain("DataFile", xml); // the manifest hint lives in sources.xml now
 
         // Re-open and confirm the model reads them back.
         PluginProfileDocument reopened = PluginProfileDocument.Open(dir);
         Assert.Contains("Essentials.dll", reopened.LocalDlls);
-        Assert.Contains(reopened.DevFolders, d => d.Id == "my-plugin" && d.DataFile == "Manifest.xml");
+        Assert.Contains(reopened.DevFolders, d => d.Id == "my-plugin" && d.DebugBuild);
     }
 
     [Fact]
@@ -228,7 +229,7 @@ public class PluginConfigTests : IDisposable
         // is left untouched — adding only makes the folder selectable.
         string sources = File.ReadAllText(PluginSourcesDocument.PathFor(dir));
         Assert.Contains("<Name>cool-plugin</Name>", sources);
-        Assert.Contains("<DataFile>CoolPlugin.xml</DataFile>", sources);
+        Assert.Contains("<File>CoolPlugin.xml</File>", sources);
         Assert.False(File.Exists(PluginProfileDocument.PathFor(dir)));
 
         // It shows up as a selectable catalog row, flagged as a dev folder, using

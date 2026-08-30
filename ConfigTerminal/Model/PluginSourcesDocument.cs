@@ -13,9 +13,9 @@ internal sealed class LocalPluginSource
     public string Name;
     public string Folder;
     public bool Enabled = true;
-    // The picked manifest filename, kept as a hint for enabling the folder later.
-    // Not part of Magnetar's own LocalPlugin schema, so Magnetar strips it on its
-    // next save — the manifest is re-derived from the folder when it's gone.
+    // The picked manifest filename (the LocalPlugin schema's File element),
+    // relative to the folder. Magnetar passes it to the dev-folder plugin as
+    // the data file; may be null, then the manifest is re-derived on enable.
     public string DataFile;
 }
 
@@ -105,7 +105,7 @@ internal sealed class PluginSourcesDocument
             Name = e.Element("Name")?.Value?.Trim(),
             Folder = e.Element("Folder")?.Value?.Trim(),
             Enabled = ConfigDocumentBase.ParseBool(e.Element("Enabled")?.Value),
-            DataFile = e.Element("DataFile")?.Value?.Trim(),
+            DataFile = e.Element("File")?.Value?.Trim(),
         }).ToList() ?? new List<LocalPluginSource>();
 
     /// <summary>Adds a dev-folder source (dedup by folder path). Returns false if already present.</summary>
@@ -124,8 +124,8 @@ internal sealed class PluginSourcesDocument
         list.Add(new XElement("LocalPlugin",
             new XElement("Name", name),
             new XElement("Folder", folder),
-            new XElement("Enabled", enabled ? "true" : "false"),
-            string.IsNullOrEmpty(dataFile) ? null : new XElement("DataFile", dataFile)));
+            string.IsNullOrEmpty(dataFile) ? null : new XElement("File", dataFile),
+            new XElement("Enabled", enabled ? "true" : "false")));
         return true;
     }
 
@@ -142,6 +142,33 @@ internal sealed class PluginSourcesDocument
 
     public bool SetLocalPluginEnabled(string folder, bool enabled) =>
         SetChildFlag(ListName, "LocalPlugin", "Folder", folder, PathEq, "Enabled", enabled);
+
+    /// <summary>Sets the manifest-file hint (File element) on a dev-folder source.</summary>
+    public bool SetLocalPluginFile(string folder, string file)
+    {
+        XElement entry = Root.Element(ListName)?.Elements("LocalPlugin")
+            .FirstOrDefault(e => PathEq(e.Element("Folder")?.Value, folder));
+        if (entry == null)
+            return false;
+
+        XElement existing = entry.Element("File");
+        if (existing != null)
+        {
+            if (existing.Value == file)
+                return false;
+            existing.Value = file;
+            return true;
+        }
+
+        // Keep the serializer-friendly order: File before Enabled.
+        XElement enabled = entry.Element("Enabled");
+        XElement element = new("File", file);
+        if (enabled != null)
+            enabled.AddBeforeSelf(element);
+        else
+            entry.Add(element);
+        return true;
+    }
 
     public LocalPluginSource FindById(string id) =>
         LocalPlugins.FirstOrDefault(p => string.Equals(

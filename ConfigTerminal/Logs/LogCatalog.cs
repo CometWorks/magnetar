@@ -21,7 +21,7 @@ internal sealed class LogFileInfo
     public LogGroup Group;
     public DateTime LastWrite;
     public long Size;
-    public bool IsActive; // info.current match, or newest game log
+    public bool IsActive; // info.log (current launch), or newest game log
 
     /// <summary>Bare file name shown in the selector.</summary>
     public string Name => System.IO.Path.GetFileName(Path);
@@ -45,8 +45,9 @@ internal sealed class LogFileInfo
 /// Discovers the game and Magnetar log files for the bound instance (§2.9) and
 /// marks the active file of each group: the game log named
 /// <c>SpaceEngineersDedicated*.log</c> in the DS data dir (newest is active) and
-/// the Magnetar <c>info_*.log</c> files in the config dir (the one named by
-/// <c>info.current</c> is active). Pure filesystem discovery — no Terminal.Gui.
+/// the Magnetar logs in the config dir — <c>info.log</c> is the current
+/// launch's (active) log, and <c>info_*.log</c> are the rotated logs of
+/// previous launches. Pure filesystem discovery — no Terminal.Gui.
 /// </summary>
 internal sealed class LogCatalog
 {
@@ -84,13 +85,13 @@ internal sealed class LogCatalog
 
     private void ScanMagnetarLogs()
     {
+        // info.log is the current launch's log; info_*.log are the rotated
+        // logs of previous launches (the launcher renames info.log on start).
         string dir = binding?.MagnetarConfigDir;
-        List<LogFileInfo> magnetar = Discover(dir, "info_*.log", LogGroup.Magnetar);
+        List<LogFileInfo> magnetar = Discover(dir, "info*.log", LogGroup.Magnetar);
 
-        string activeName = ReadInfoCurrent(dir);
         foreach (LogFileInfo f in magnetar)
-            f.IsActive = activeName != null &&
-                         string.Equals(f.Name, activeName, StringComparison.OrdinalIgnoreCase);
+            f.IsActive = string.Equals(f.Name, "info.log", StringComparison.OrdinalIgnoreCase);
         files.AddRange(magnetar);
     }
 
@@ -126,18 +127,4 @@ internal sealed class LogCatalog
         return result;
     }
 
-    private static string ReadInfoCurrent(string dir)
-    {
-        if (string.IsNullOrEmpty(dir))
-            return null;
-        string marker = Path.Combine(dir, "info.current");
-        try
-        {
-            if (!File.Exists(marker))
-                return null;
-            return File.ReadAllText(marker).Trim();
-        }
-        catch (IOException) { return null; }
-        catch (UnauthorizedAccessException) { return null; }
-    }
 }

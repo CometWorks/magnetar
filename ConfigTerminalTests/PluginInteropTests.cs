@@ -12,10 +12,11 @@ namespace Magnetar.ConfigTerminal.Tests;
 
 /// <summary>
 /// Proves a profile written by this tool is accepted by Magnetar's own
-/// serializer: loads the deployed Magnetar.Shared.dll, deserializes the produced
-/// Current.xml with XmlSerializer(typeof(Profile)) exactly as Magnetar's
+/// serializer: loads the deployed Pulsar.Shared.dll (from the Pulsar submodule,
+/// staged into Libraries/MagnetarInterim by the build), deserializes the
+/// produced Current.xml with XmlSerializer(typeof(Profile)) exactly as
 /// ProfilesConfig.Load does, and checks Validate() + the enabled sets. Gated on
-/// the Shared.dll being present (defaults to the standard Magnetar install).
+/// the Shared dll being present (defaults to the standard Magnetar install).
 /// </summary>
 public class PluginInteropTests
 {
@@ -25,7 +26,9 @@ public class PluginInteropTests
         if (!string.IsNullOrEmpty(env))
             return env;
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return Path.Combine(home, ".local", "share", "Magnetar", "Bin", "Magnetar.Shared.dll");
+        return Path.Combine(
+            home, ".local", "share", "Magnetar",
+            "Libraries", "MagnetarInterim", "Pulsar.Shared.dll");
     }
 
     [Fact]
@@ -50,7 +53,7 @@ public class PluginInteropTests
 
             PluginProfileDocument doc = PluginProfileDocument.Open(dir);
             doc.EnableLocalDll("Essentials.dll");
-            doc.EnableDevFolder("my-plugin", "Manifest.xml", true);
+            doc.EnableDevFolder("my-plugin", true);
             doc.Save(new AtomicFile());
 
             // Deserialize with Magnetar's own serializer, resolving Shared's deps
@@ -86,8 +89,8 @@ public class PluginInteropTests
                 foreach (object cfg in dev)
                 {
                     string id = (string)cfg.GetType().GetProperty("Id").GetValue(cfg);
-                    string dataFile = (string)cfg.GetType().GetProperty("DataFile").GetValue(cfg);
-                    if (id == "my-plugin" && dataFile == "Manifest.xml")
+                    bool debugBuild = (bool)cfg.GetType().GetProperty("DebugBuild").GetValue(cfg);
+                    if (id == "my-plugin" && debugBuild)
                         foundDev = true;
                 }
                 Assert.True(foundDev, "the dev-folder entry did not round-trip through Magnetar's serializer");
@@ -208,6 +211,13 @@ public class PluginInteropTests
                 Assembly shared = Assembly.LoadFrom(sharedDll);
                 Type cfgType = shared.GetType("Pulsar.Shared.Config.ProfilesConfig");
                 Assert.NotNull(cfgType);
+
+                // ProfilesConfig.Load consults Flags.Current (the -profile
+                // override); initialize Pulsar's parser with empty arguments
+                // exactly like a launcher with no flags would.
+                Type parserType = shared.GetType("Pulsar.Shared.Arguments.Parser");
+                parserType.GetMethod("Initialize")
+                    .Invoke(null, new object[] { Array.Empty<string>(), true });
 
                 // Magnetar's own loader must discover the named profile and the
                 // active Current, both passing Validate() (Load discards invalid ones).
