@@ -12,8 +12,12 @@ using Magnetar.Legacy.Launcher;
 using Magnetar.Legacy.Loader;
 using Magnetar.Legacy.Patch;
 using Magnetar.Legacy.Stats;
+using Magnetar.Legacy;
 using Pulsar.Compiler;
 using Pulsar.Interface;
+using Pulsar.Legacy.Launcher;
+using Pulsar.Legacy.Loader;
+using Pulsar.Legacy.Patch;
 using Pulsar.Protocol.Interface;
 using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
@@ -22,7 +26,7 @@ using Pulsar.Shared.Data;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
 
-namespace Magnetar.Legacy;
+namespace Pulsar.Legacy;
 
 static class Program
 {

@@ -1,12 +1,13 @@
 using HarmonyLib;
 using Magnetar.Legacy.Loader;
+using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
 using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.World;
 using VRage.Game;
 
-namespace Magnetar.Legacy.Patch;
+namespace Pulsar.Legacy.Patch;
 
 [HarmonyPatchCategory("Early")]
 internal class Patch_MySessionLoader

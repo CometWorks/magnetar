@@ -2,7 +2,7 @@ using Pulsar.Shared.Data;
 using VRage.Game;
 using VRage.GameServices;
 
-namespace Magnetar.Legacy.Extensions;
+namespace Pulsar.Legacy.Extensions;
 
 internal static class ModPluginExtensions
 {

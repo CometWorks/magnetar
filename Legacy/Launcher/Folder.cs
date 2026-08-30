@@ -9,7 +9,7 @@ using Gameloop.Vdf.Linq;
 using Microsoft.Win32;
 using Pulsar.Shared;
 
-namespace Magnetar.Legacy.Launcher;
+namespace Pulsar.Legacy.Launcher;
 
 internal class Folder
 {

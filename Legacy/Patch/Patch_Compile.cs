@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Text;
 using Pulsar.Shared;
 using VRage.Scripting;
 
-namespace Magnetar.Legacy.Patch;
+namespace Pulsar.Legacy.Patch;
 
 [HarmonyPatchCategory("Early")]
 [HarmonyPatch(typeof(MyScriptCompiler), "AnalyzeDiagnostics")]

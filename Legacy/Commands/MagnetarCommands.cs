@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using PluginSdk.Clustering;
 using PluginSdk.Commands;
 using Magnetar.Legacy.Launcher;
+using Pulsar.Legacy.Launcher;
 using Pulsar.Shared;
 using SdkServerControl = PluginSdk.ServerControl;
 using ServerTerminationKind = PluginSdk.ServerTerminationKind;

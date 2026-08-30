@@ -4,7 +4,7 @@ using Pulsar.Shared;
 using VRage.FileSystem;
 using VRage.Game;
 
-namespace Magnetar.Legacy.Patch;
+namespace Pulsar.Legacy.Patch;
 
 [HarmonyPatchCategory("Early")]
 [HarmonyPatch(typeof(MyDefinitionErrors), "Add")]

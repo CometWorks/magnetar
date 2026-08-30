@@ -9,7 +9,7 @@ using System.Text;
 using HarmonyLib;
 using Pulsar.Shared;
 
-namespace Magnetar.Legacy.Loader;
+namespace Pulsar.Legacy.Loader;
 
 public static class LoaderTools
 {

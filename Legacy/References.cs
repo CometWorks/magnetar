@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Pulsar.Shared;
 
-namespace Magnetar.Legacy;
+namespace Pulsar.Legacy;
 
 /// <summary>
 /// Reference names handed to the out-of-process Roslyn compiler for building

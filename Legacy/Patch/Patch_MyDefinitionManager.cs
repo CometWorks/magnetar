@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
-using Magnetar.Legacy.Extensions;
+using Pulsar.Legacy.Extensions;
 using Magnetar.Legacy.Loader;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
@@ -10,7 +10,7 @@ using Pulsar.Shared.Data;
 using Sandbox.Definitions;
 using VRage.Game;
 
-namespace Magnetar.Legacy.Patch;
+namespace Pulsar.Legacy.Patch;
 
 [HarmonyPatchCategory("Early")]
 [HarmonyPatch(typeof(MyDefinitionManager), "LoadData")]

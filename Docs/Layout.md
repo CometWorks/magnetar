@@ -12,6 +12,17 @@
 | `Directory.Build.props`      | Build settings (deploy folder, DS path); override locally with a git-ignored `Directory.Build.props.user` |
 
 There is no forked `Shared/` or `Compiler/` project any more: everything that
-is not server-specific comes from the `Pulsar/` submodule, and the Magnetar
-projects use the `Magnetar.*` namespaces while `Pulsar.*` always refers to the
-submodule's assemblies.
+is not server-specific comes from the `Pulsar/` submodule. Namespaces mark the
+origin of code:
+
+- `Magnetar.*` — Magnetar-original code.
+- `Pulsar.Shared`, `Pulsar.Protocol` — the submodule's assemblies, referenced
+  as projects.
+- `Pulsar.Legacy.*` — source-level reuse of the submodule's `Legacy` project
+  (which targets the game client and cannot be referenced as an assembly).
+  Files that need no server-specific changes are compiled straight from the
+  submodule via `<Compile Link>` entries in `Legacy/Legacy.csproj`; files that
+  do need changes are forks under `Legacy/` that keep the upstream namespace,
+  so the linked files resolve them and diffs against upstream show only real
+  divergence. After a submodule bump, diff the forks against their upstream
+  counterparts to pick up fixes.

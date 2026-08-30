@@ -2,7 +2,7 @@ using HarmonyLib;
 using Magnetar.Legacy.Launcher;
 using Sandbox;
 
-namespace Magnetar.Legacy.Patch;
+namespace Pulsar.Legacy.Patch;
 
 [HarmonyPatchCategory("Early")]
 [HarmonyPatch(typeof(MySandboxGame), "ExitThreadSafe")]

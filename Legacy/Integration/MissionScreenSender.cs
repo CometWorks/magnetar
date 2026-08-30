@@ -7,7 +7,7 @@ using Pulsar.Shared;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using VRage.Game;
-using LauncherGame = Magnetar.Legacy.Launcher.Game;
+using LauncherGame = Pulsar.Legacy.Launcher.Game;
 
 namespace Magnetar.Legacy.Integration;
 

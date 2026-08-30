@@ -16,10 +16,16 @@ This repository defines the `se-dev-plugin-sdk` skill.
 
 Magnetar is built on **Pulsar**, vendored as the `Pulsar/` git submodule
 (pinned to an upstream commit; never edit files under `Pulsar/` — contribute
-upstream instead and move the pin). The `Magnetar.*` namespaces are this
-repository's own code; `Pulsar.*` always refers to the submodule's assemblies
-(`Pulsar.Shared`, `Pulsar.Protocol`, the out-of-process `Compiler`). See
-`Docs/Layout.md` for what lives where.
+upstream instead and move the pin). Namespaces mark the origin of code:
+`Magnetar.*` is this repository's own code; `Pulsar.Shared` and
+`Pulsar.Protocol` are the submodule's assemblies (plus the out-of-process
+`Compiler`); `Pulsar.Legacy.*` is code reused at the source level from the
+submodule's `Legacy` project — either compiled directly from the submodule
+via `<Compile Link>` entries in `Legacy/Legacy.csproj` (never copy such a
+file when it needs no server-specific changes; link it) or forked under
+`Legacy/` keeping the upstream namespace so linked files resolve the forks
+and diffs against upstream stay minimal. See `Docs/Layout.md` for what lives
+where.
 
 Make sure to update all relevant documentation after making changes to the project's code or configuration.
 

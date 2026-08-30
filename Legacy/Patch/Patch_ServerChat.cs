@@ -1,7 +1,7 @@
 using System;
 using HarmonyLib;
 using Magnetar.Legacy.Commands;
-using Magnetar.Legacy.Loader;
+using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Gui;

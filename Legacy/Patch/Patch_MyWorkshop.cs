@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using Magnetar.Legacy.Loader;
+using Pulsar.Legacy.Loader;
 using Sandbox.Engine.Networking;
 using VRage.Game;
 using VRage.GameServices;

@@ -84,9 +84,19 @@
     <Compile Remove="Loader\NativeLibraryPreloader.cs" />
   </ItemGroup>
   <!-- Compiled from the submodule source (not copied) so upstream fixes are
-       picked up automatically on a submodule bump. Only patches with no
-       Pulsar.Legacy-internal dependencies can be linked this way. -->
+       picked up automatically on a submodule bump. To make this possible, all
+       code derived from Pulsar/Legacy keeps its upstream Pulsar.Legacy.*
+       namespaces (Magnetar-original code lives in Magnetar.Legacy.*), so the
+       linked files resolve the forked parts of their dependency closure
+       (LoaderTools, PluginLoader, SteamMods, Game, Folder, the Patch_* forks)
+       without any source edit. A file can be linked here whenever it needs no
+       server-specific changes; otherwise it stays a fork under Legacy/. -->
   <ItemGroup>
+    <Compile Include="..\Pulsar\Legacy\Loader\PluginInstance.cs" Link="Loader\PluginInstance.cs" />
+    <Compile Include="..\Pulsar\Legacy\Patch\Patch_ComponentRegistered.cs" Link="Patch\Patch_ComponentRegistered.cs" />
+    <Compile Include="..\Pulsar\Legacy\Patch\Patch_LoadScripts.cs" Link="Patch\Patch_LoadScripts.cs" />
+    <Compile Include="..\Pulsar\Legacy\Patch\Patch_PrepareCrashReport.cs" Link="Patch\Patch_PrepareCrashReport.cs" />
+    <Compile Include="..\Pulsar\Legacy\Patch\Patch_Rewriter.cs" Link="Patch\Patch_Rewriter.cs" />
     <Compile Include="..\Pulsar\Legacy\Patch\Patch_StableLogs.cs" Link="Patch\Patch_StableLogs.cs" />
   </ItemGroup>
   <ItemGroup>

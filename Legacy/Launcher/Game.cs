@@ -16,7 +16,7 @@ using VRage.Plugins;
 using VRage.Scripting;
 using VRage.Utils;
 
-namespace Magnetar.Legacy.Launcher;
+namespace Pulsar.Legacy.Launcher;
 
 internal class GameLog : IGameLog
 {

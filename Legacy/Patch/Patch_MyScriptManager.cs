@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-using Magnetar.Legacy.Extensions;
+using Pulsar.Legacy.Extensions;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
@@ -11,7 +11,7 @@ using Sandbox.Game.World;
 using VRage.Game;
 using VRage.Scripting;
 
-namespace Magnetar.Legacy.Patch;
+namespace Pulsar.Legacy.Patch;
 
 [HarmonyPatchCategory("Late")]
 [HarmonyPatch(typeof(MyScriptManager), "LoadData")]

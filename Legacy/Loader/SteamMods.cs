@@ -14,7 +14,7 @@ using VRage.Game;
 using VRage.GameServices;
 using VRage.Utils;
 
-namespace Magnetar.Legacy.Loader;
+namespace Pulsar.Legacy.Loader;
 
 public static class SteamMods
 {

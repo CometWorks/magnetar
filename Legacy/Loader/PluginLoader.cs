@@ -9,6 +9,7 @@ using PluginSdk;
 using PluginSdk.Commands;
 using Magnetar.Legacy.Commands;
 using Magnetar.Legacy.Integration;
+using Magnetar.Legacy.Loader;
 using Magnetar.Legacy.Paths;
 using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
@@ -18,7 +19,7 @@ using Sandbox.Game.World;
 using VRage.Plugins;
 using SharedLoader = Pulsar.Shared.Loader;
 
-namespace Magnetar.Legacy.Loader;
+namespace Pulsar.Legacy.Loader;
 
 public class PluginLoader : IHandleInputPlugin
 {
