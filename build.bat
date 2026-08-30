@@ -4,15 +4,17 @@ REM
 REM Magnetar Windows build + packaging orchestrator - the Windows counterpart
 REM to build.sh (Linux).
 REM
-REM Builds Magnetar.sln in Release. The Legacy project's post-build step
-REM (Legacy\deploy.bat) copies both launchers and their managed dependencies
-REM into the folder named by the `Magnetar` MSBuild property:
+REM Builds Magnetar.slnx in Release. The Legacy project's Deploy MSBuild target
+REM (and the Pulsar submodule's Compiler project, which deploys itself) copy
+REM both launchers and their dependencies into the folder named by the
+REM `Magnetar` MSBuild property:
 REM
 REM   <Magnetar>\MagnetarLegacy.exe   (.NET Framework 4.8 launcher)
 REM   <Magnetar>\MagnetarInterim.exe  (.NET 10 launcher)
-REM   <Magnetar>\LICENSE
+REM   <Magnetar>\LICENSE + README.md
 REM   <Magnetar>\Libraries\MagnetarLegacy\...
 REM   <Magnetar>\Libraries\MagnetarInterim\...
+REM   <Magnetar>\Libraries\Compiler\...  (out-of-process Roslyn compiler)
 REM
 REM We additionally publish the ConfigTerminal TUI (net10, framework-dependent -
 REM requires the .NET 10 runtime, same as MagnetarInterim) into <Magnetar>\Config\
@@ -36,6 +38,7 @@ REM Unlike Linux, Windows needs no native wrappers and no Vendor\ libraries -
 REM those are Linux-only. Steamworks.NET ships next to the dedicated server.
 REM
 REM Prerequisites (see Docs\Build.md):
+REM   * The Pulsar submodule checked out: git submodule update --init
 REM   * .NET 10 SDK
 REM   * .NET Framework 4.8 Developer Pack (for the MagnetarLegacy launcher target)
 REM   * Space Engineers Dedicated Server installed (DS64 auto-detected; override
@@ -52,7 +55,7 @@ REM ---- locate self / repo ----------------------------------------------------
 set "REPO_DIR=%~dp0"
 if "%REPO_DIR:~-1%"=="\" set "REPO_DIR=%REPO_DIR:~0,-1%"
 
-set "SOLUTION=%REPO_DIR%\Magnetar.sln"
+set "SOLUTION=%REPO_DIR%\Magnetar.slnx"
 set "BUILD_DIR=%REPO_DIR%\build"
 set "STAGE_DIR=%BUILD_DIR%\MagnetarForWindows"
 set "MAGNETAR_STAGE=%STAGE_DIR%\Magnetar"
@@ -93,12 +96,12 @@ mkdir "%MAGNETAR_STAGE%" >NUL 2>&1
 if not exist "%DIST_DIR%" mkdir "%DIST_DIR%" >NUL 2>&1
 
 REM ---- build + deploy into the staging tree ----------------------------------
-REM Overriding the `Magnetar` property redirects deploy.bat (Legacy's PostBuild
-REM event) from %APPDATA%\Magnetar into our staging tree. Both inner builds
-REM (net48 and net10.0) deploy into the same folder.
+REM Overriding the `Magnetar` property redirects the Deploy targets from
+REM %APPDATA%\Magnetar into our staging tree. Both inner builds (net48 and
+REM net10.0) deploy into the same folder.
 echo.
 echo ############################################################
-echo # build: Magnetar.sln (Release)
+echo # build: Magnetar.slnx (Release)
 echo #   deploy target: %MAGNETAR_STAGE%
 echo ############################################################
 dotnet build "%SOLUTION%" -c Release -p:Magnetar="%MAGNETAR_STAGE%"
@@ -185,6 +188,10 @@ if not exist "%MAGNETAR_STAGE%\Libraries\MagnetarInterim\" (
     echo MISSING: %MAGNETAR_STAGE%\Libraries\MagnetarInterim 1>&2
     set "MISSING=1"
 )
+if not exist "%MAGNETAR_STAGE%\Libraries\Compiler\Compiler.exe" (
+    echo MISSING: %MAGNETAR_STAGE%\Libraries\Compiler\Compiler.exe 1>&2
+    set "MISSING=1"
+)
 for %%F in ("Config\MagnetarConfig.exe" "Config\Terminal.Gui.dll" "MagnetarConfig.bat") do (
     if not exist "%MAGNETAR_STAGE%\%%~F" (
         echo MISSING: %MAGNETAR_STAGE%\%%~F 1>&2
@@ -192,7 +199,7 @@ for %%F in ("Config\MagnetarConfig.exe" "Config\Terminal.Gui.dll" "MagnetarConfi
     )
 )
 if "%MISSING%"=="1" (
-    echo ERROR: staged tree is incomplete - did deploy.bat run? 1>&2
+    echo ERROR: staged tree is incomplete - did the Deploy targets run? 1>&2
     exit /b 1
 )
 

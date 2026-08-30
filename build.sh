@@ -2,8 +2,8 @@
 # build.sh
 #
 # Magnetar Linux build orchestrator. Populates build/Libraries/ with the
-# managed and native dependencies that Legacy.csproj's AfterBuild and
-# AfterPublish targets copy next to the MagnetarInterim apphost.
+# managed and native dependencies that Legacy.csproj's Deploy target copies
+# into the install tree's Libraries/MagnetarInterim/ folder.
 #
 # Nothing is compiled here. Every artefact is downloaded from a GitHub release
 # of the repo that builds it, so the binaries are byte-for-byte the same ones
@@ -33,8 +33,8 @@
 # without touching either release.
 #
 # After this script runs, build:
-#   dotnet build  -c Release Magnetar.sln
-#   dotnet publish -c Release Legacy/Legacy.csproj -r linux-x64 --self-contained false
+#   dotnet build -c Release Magnetar.slnx
+# (requires the Pulsar submodule: git submodule update --init)
 #
 # Usage:
 #   ./build.sh                  Build/refresh build/Libraries/ AND package

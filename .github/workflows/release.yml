@@ -154,6 +154,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Pulsar is vendored as a git submodule; the launcher cannot build
+          # without it.
+          submodules: recursive
 
       - name: Install .NET SDKs
         uses: actions/setup-dotnet@v5
@@ -265,8 +269,9 @@ jobs:
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
-  # Windows build: build Magnetar.sln (deploy.bat stages the install tree) ->
-  # MagnetarForWindows.<date>.<hash>.7z
+  # Windows build: build.bat (the Deploy targets stage the install tree,
+  # ConfigTerminal is published into it, 7z packs it) ->
+  # MagnetarForWindows-<version>.7z
   # ---------------------------------------------------------------------------
   build-windows:
     needs: version-check
@@ -274,6 +279,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Pulsar is vendored as a git submodule; the launcher cannot build
+          # without it.
+          submodules: recursive
 
       - name: Install .NET 10 SDK
         uses: actions/setup-dotnet@v5
@@ -321,31 +330,19 @@ jobs:
           Copy-Item -Path (Join-Path $dsfull "DedicatedServer64\*") -Destination $ds64 -Recurse -Force
           Remove-Item -Recurse -Force $dsfull
 
-      - name: Build and stage (Magnetar.sln)
-        shell: pwsh
+      - name: Build and package (build.bat)
+        shell: cmd
         env:
           DS64: ${{ github.workspace }}\ds64
-          # deploy.bat (post-build) stages the install tree here instead of
-          # %APPDATA%\Magnetar. The leaf folder name becomes the archive root.
-          Magnetar: ${{ github.workspace }}\stage\Magnetar
-        run: |
-          $ErrorActionPreference = "Stop"
-          dotnet build -c Release Magnetar.sln
-          Write-Host "Staged install tree:"
-          Get-ChildItem -Recurse "$env:GITHUB_WORKSPACE\stage\Magnetar" -Depth 1 | Select-Object FullName
+        run: build.bat
 
-      - name: Package Windows bundle
+      - name: Version-stamp the bundle
         shell: pwsh
         env:
           VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          $name = "MagnetarForWindows-$env:VERSION.7z"
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          $sevenzip = "C:\Program Files\7-Zip\7z.exe"
-          # Pack the staged Magnetar/ folder so the archive root mirrors the
-          # %APPDATA%\Magnetar install layout deploy.bat produces.
-          & $sevenzip a -t7z -mx=9 "dist\$name" "$env:GITHUB_WORKSPACE\stage\Magnetar"
+          Move-Item "dist\MagnetarForWindows.7z" "dist\MagnetarForWindows-$env:VERSION.7z"
           Get-ChildItem dist
 
       - name: Upload Windows bundle
