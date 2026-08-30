@@ -1,11 +1,4 @@
 <Project>
-  <!-- Bump the Magnetar version here (centralized) -->
-  <PropertyGroup>
-    <Version>2.0.0</Version>
-    <AssemblyVersion>$(Version)</AssemblyVersion>
-    <FileVersion>$(Version)</FileVersion>
-  </PropertyGroup>
-
   <!-- Override Project Settings -->
   <PropertyGroup>
     <!-- Folder where Magnetar will be deployed -->
@@ -17,6 +10,13 @@
     <!-- Folder containing Steamworks.NET.dll and steam_api64.dll.
          The dedicated server ships both, so this defaults to DS64. -->
     <Steamworks></Steamworks>
+  </PropertyGroup>
+
+  <!-- Bump the Magnetar version here (centralized) -->
+  <PropertyGroup>
+    <Version>2.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
 
   <!-- Local developer overrides for the settings above; ignored by Git (*.user).
