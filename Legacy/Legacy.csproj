@@ -1,0 +1,194 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Product>Magnetar</Product>
+    <Copyright>© 2026 SpaceGT</Copyright>
+    <AssemblyTitle>Magnetar</AssemblyTitle>
+    <Description>Plugin and Mod loader for the Space Engineers 1 Dedicated Server</Description>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Magnetar.Legacy</RootNamespace>
+    <PackageId>Magnetar</PackageId>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- Windows builds both the .NET Framework (MagnetarLegacy) and .NET 10
+         (MagnetarInterim) launchers. Linux can only build the .NET 10 launcher
+         (net48 needs the Windows .NET Framework reference assemblies). -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFrameworks>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+    <AssemblyName>MagnetarLegacy</AssemblyName>
+    <!-- Binding redirects are deliberately off (above): Magnetar is the host
+         process itself — it loads the Space Engineers DS assemblies and runs the
+         server inside its own process, so this app's config governs assembly
+         resolution for the game. Auto-generated redirects to newer transitive
+         versions (Roslyn, System.*) would then shadow the versions the game
+         expects and could break it. The resulting MSB3276 conflict warning is
+         therefore expected noise here. -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3276</MSBuildWarningsAsMessages>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net48'">
+    <AssemblyName>MagnetarInterim</AssemblyName>
+  </PropertyGroup>
+  <!-- Windows-only launcher polish: the .ico is embedded in the apphost.
+       It does not apply on Linux. -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Required by SpaceEngineers internally; Deserialization is patched to use safer methods. -->
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(Magnetar)/$(AssemblyName)$(_MagnetarExeExt)</StartProgram>
+    <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
+    <_MagnetarExeExt Condition="'$(OS)' == 'Windows_NT'">.exe</_MagnetarExeExt>
+    <_MagnetarExeExt Condition="'$(OS)' != 'Windows_NT'">.bin</_MagnetarExeExt>
+    <_SteamApiFile Condition="'$(OS)' == 'Windows_NT'">steam_api64.dll</_SteamApiFile>
+    <_SteamApiFile Condition="'$(OS)' != 'Windows_NT'">libsteam_api.so</_SteamApiFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+    <!-- Pulsar submodule projects use Pulsar's own Directory.Build.props;
+         forward the values they need explicitly. -->
+    <ProjectReference Include="..\Pulsar\Shared\Shared.csproj"
+                      AdditionalProperties="Steamworks=$(Steamworks)" />
+    <!-- The out-of-process Roslyn compiler. Not referenced as an assembly: its
+         own Deploy target stages the executable and its dependencies into
+         $(Magnetar)/Libraries/Compiler (the 'Pulsar' property is its
+         deployment root). -->
+    <ProjectReference Include="..\Pulsar\Compiler\Compiler.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true"
+                      AdditionalProperties="Pulsar=$(Magnetar);Steamworks=$(Steamworks)" />
+  </ItemGroup>
+  <!-- The Linux native-library bootstrap pulls in System.Runtime.Loader /
+       OperatingSystem.IsLinux, which do not exist on .NET Framework. It is only
+       reached from Main() under #if NETCOREAPP, so exclude it from the net48 build. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Compile Remove="Loader\NativeLibraryPreloader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(DS64)\Microsoft.CodeAnalysis.dll" Private="False" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(DS64)\Microsoft.CodeAnalysis.CSharp.dll" Private="False" />
+    <Reference Include="Sandbox.Game" HintPath="$(DS64)\Sandbox.Game.dll" Private="False" />
+    <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
+    <Reference Include="Sandbox.Graphics" HintPath="$(DS64)\Sandbox.Graphics.dll" Private="False" />
+    <Reference Include="SpaceEngineersDedicated" HintPath="$(DS64)\SpaceEngineersDedicated.exe" Private="False" />
+    <Reference Include="SpaceEngineers.Game" HintPath="$(DS64)\SpaceEngineers.Game.dll" Private="False" />
+    <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="False" />
+    <Reference Include="VRage.Dedicated" HintPath="$(DS64)\VRage.Dedicated.dll" Private="False" />
+    <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="False" />
+    <Reference Include="VRage.Input" HintPath="$(DS64)\VRage.Input.dll" Private="False" />
+    <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="False" />
+    <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
+    <Reference Include="VRage.Scripting" HintPath="$(DS64)\VRage.Scripting.dll" Private="False" />
+  </ItemGroup>
+  <!-- VRage.Platform.Windows is a Windows-only platform assembly shipped with the
+       Windows dedicated server; the Linux server replaces it with its own. -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <Reference Include="VRage.Platform.Windows" HintPath="$(DS64)\VRage.Platform.Windows.dll" Private="False" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <PackageReference Include="Gameloop.Vdf" Version="0.6.2" />
+  </ItemGroup>
+  <Target Name="Verify" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Magnetar)' == ''" Text="Specify Magnetar's deployment location!" />
+    <Error Condition="$(Magnetar.Contains(';'))" Text="Magnetar directory is not unique!" />
+    <Error Condition="'$(DS64)' == '' or !Exists('$(DS64)')" Text="Specify the SpaceEngineers DedicatedServer64 path (DS64)!" />
+    <Error Condition="'$(Steamworks)' == ''" Text="Specify the Steamworks path!" />
+    <Error Condition="!Exists('$(Steamworks)/Steamworks.NET.dll')" Text="Steamworks.NET.dll not found in $(Steamworks)! On Linux run ./build.sh first." />
+    <Error Condition="!Exists('$(Steamworks)/$(_SteamApiFile)')" Text="$(_SteamApiFile) not found in $(Steamworks)!" />
+  </Target>
+  <!-- Deploy the freshly built launcher and its libraries into the Magnetar
+       install folder, mirroring Pulsar's deployment convention:
+         $(Magnetar)/MagnetarLegacy.exe | MagnetarInterim.exe|.bin
+         $(Magnetar)/Libraries/<AssemblyName>/  managed + native dependencies
+         $(Magnetar)/Libraries/Compiler/        staged by Pulsar's Compiler project
+       The '$(TargetFramework)' != '' guard restricts this to the per-TFM inner
+       builds of this multi-targeting project (the outer build has no OutDir). -->
+  <Target Name="Deploy" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
+    <PropertyGroup>
+      <DeployDirectory>$(Magnetar)/Libraries/$(AssemblyName)</DeployDirectory>
+      <LicensePath>$(MSBuildProjectDirectory)/../LICENSE</LicensePath>
+      <ReadmePath>$(MSBuildProjectDirectory)/../README.md</ReadmePath>
+      <SourceExecutable>$(TargetDir)$(AssemblyName)$(_NativeExecutableExtension)</SourceExecutable>
+      <DestinationExecutable>$(Magnetar)/$(AssemblyName)$(_MagnetarExeExt)</DestinationExecutable>
+    </PropertyGroup>
+    <ItemGroup>
+      <DeployLibraryFile Include="$(TargetDir)Pulsar.Shared.dll" />
+      <DeployLibraryFile Include="$(TargetDir)Pulsar.Protocol.dll" />
+      <DeployLibraryFile Include="$(TargetDir)PluginSdk.dll" />
+      <DeployLibraryFile Include="$(TargetDir)0Harmony.dll" />
+      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.dll" />
+      <DeployLibraryFile Include="$(TargetDir)Newtonsoft.Json.dll" />
+      <DeployLibraryFile Include="$(TargetDir)Gameloop.Vdf.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NLog.dll" />
+      <DeployLibraryFile Include="$(TargetDir)protobuf-net.dll" />
+      <DeployLibraryFile Include="$(TargetDir)SharpCompress.dll" />
+      <DeployLibraryFile Include="$(TargetDir)McMaster.Extensions.CommandLineUtils.dll" />
+      <DeployLibraryFile Include="$(TargetDir)FuzzySharp.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Text.Json.dll" Condition="Exists('$(TargetDir)System.Text.Json.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Commands.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Common.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Configuration.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.DependencyResolver.Core.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Frameworks.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.LibraryModel.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Packaging.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.ProjectModel.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Protocol.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NuGet.Versioning.dll" />
+      <!-- Needed by NuGet signature verification on .NET Core (in the GAC on Framework). -->
+      <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.Pkcs.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.Pkcs.dll')" />
+      <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.ProtectedData.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.ProtectedData.dll')" />
+    </ItemGroup>
+    <ItemGroup>
+      <DeployLibraryFile Include="$(Steamworks)/Steamworks.NET.dll" />
+      <DeployLibraryFile Include="$(Steamworks)/$(_SteamApiFile)" />
+    </ItemGroup>
+    <!-- Linux: the native dependencies staged by ./build.sh (EOS, Havok,
+         RecastDetour, VRageNative wrappers) plus their license notices. The
+         NativeLibraryPreloader dlopens every lib*.so* in this folder. -->
+    <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
+      <DeployNativeFile Include="$(MSBuildThisFileDirectory)../build/Libraries/*.so" />
+      <DeployLicenseFile Include="$(MSBuildThisFileDirectory)../build/Libraries/LICENSES/*" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).exe.config" />
+      <DeployLibraryFile Include="$(TargetDir)Microsoft.Win32.Registry.dll" />
+      <DeployLibraryFile Include="$(TargetDir)Microsoft.Bcl.AsyncInterfaces.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Buffers.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Memory.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Numerics.Vectors.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Threading.Tasks.Extensions.dll" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).dll" />
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).runtimeconfig.json" />
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).deps.json" />
+    </ItemGroup>
+    <Error Condition="!Exists('$(LicensePath)')" Text="License file not found!" />
+    <Error Condition="!Exists('$(ReadmePath)')" Text="Readme file not found!" />
+    <RemoveDir Directories="$(DeployDirectory)" />
+    <Copy SourceFiles="@(DeployRootFile)" DestinationFolder="$(Magnetar)" />
+    <Copy SourceFiles="@(DeployLibraryFile)" DestinationFolder="$(DeployDirectory)" />
+    <Copy SourceFiles="@(DeployNativeFile)" DestinationFolder="$(DeployDirectory)" />
+    <Copy SourceFiles="@(DeployLicenseFile)" DestinationFolder="$(DeployDirectory)/LICENSES" />
+    <Copy SourceFiles="$(SourceExecutable)" DestinationFiles="$(DestinationExecutable)" />
+    <Copy SourceFiles="$(LicensePath)" DestinationFolder="$(Magnetar)" />
+    <Copy SourceFiles="$(ReadmePath)" DestinationFolder="$(Magnetar)" />
+  </Target>
+</Project>

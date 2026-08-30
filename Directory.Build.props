@@ -1,7 +1,7 @@
 <Project>
   <!-- Bump the Magnetar version here (centralized) -->
   <PropertyGroup>
-    <Version>1.1.5</Version>
+    <Version>2.0.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
@@ -12,6 +12,11 @@
     MSBuild $(OS) reserved property ('Windows_NT' on Windows, 'Unix' elsewhere).
     DS64 / Magnetar can always be overridden on the command line
     (`-p:DS64=...`) or via an environment variable of the same name.
+
+    Note: these properties apply to Magnetar's own projects only. Projects under
+    the Pulsar/ git submodule use Pulsar's Directory.Build.props; the values they
+    need (Steamworks, Pulsar deployment dir) are forwarded on the
+    ProjectReference via AdditionalProperties in Legacy/Legacy.csproj.
   -->
 
   <!-- ===== Windows ===== -->
@@ -23,13 +28,14 @@
     <DS64 Condition="'$(DS64)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
     <DS64 Condition="'$(DS64)' == '\DedicatedServer64'">C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
 
-    <!-- Path to Steamworks.NET (for .NET 4.8). On Windows it ships next to the DS. -->
-    <Steamworks Condition="'$(Steamworks)' == ''">$(DS64)\Steamworks.NET.dll</Steamworks>
+    <!-- Folder containing Steamworks.NET.dll and steam_api64.dll.
+         On Windows both ship next to the dedicated server. -->
+    <Steamworks Condition="'$(Steamworks)' == ''">$(DS64)</Steamworks>
   </PropertyGroup>
 
   <!-- ===== Linux ===== -->
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-    <!-- Magnetar install location (where deploy/publish goes by default) -->
+    <!-- Magnetar install location (where the Deploy target stages by default) -->
     <Magnetar Condition="'$(Magnetar)' == ''">$(HOME)/.local/share/Magnetar</Magnetar>
 
     <!-- Folder containing SpaceEngineersDedicated.exe.
@@ -37,8 +43,9 @@
          or set the DS64 environment variable before invoking dotnet build. -->
     <DS64 Condition="'$(DS64)' == ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
 
-    <!-- Steamworks.NET is built dynamically into <repo>/build/Libraries/ by
-         Scripts/build_steamworks_net.sh (invoked from ./build.sh). -->
-    <Steamworks Condition="'$(Steamworks)' == ''">$(MSBuildThisFileDirectory)build/Libraries/Steamworks.NET.dll</Steamworks>
+    <!-- Folder containing Steamworks.NET.dll and libsteam_api.so; staged into
+         <repo>/build/Libraries/ by ./build.sh from the released dependency
+         archives (CometWorks/linux-dependencies). -->
+    <Steamworks Condition="'$(Steamworks)' == ''">$(MSBuildThisFileDirectory)build/Libraries</Steamworks>
   </PropertyGroup>
 </Project>
