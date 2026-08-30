@@ -99,8 +99,8 @@ MagnetarConfig [options]
                      ~/.config/SpaceEngineersDedicated
   -config <dir>      Magnetar config directory (Magnetar's config.xml, logs,
                      magnetar.pid). Same semantics as Magnetar's own -config.
-                     Default: the launcher's own folder next to the binary,
-                     e.g. ~/.local/share/Magnetar/MagnetarInterim
+                     Default: the Magnetar folder next to the binaries,
+                     e.g. ~/.local/share/Magnetar/Magnetar
   -magnetar <file>   Magnetar launcher executable to start/stop. Default:
                      ~/.local/share/Magnetar/MagnetarInterim.bin (Linux); on Windows
                      chosen at startup between the installed MagnetarLegacy.exe

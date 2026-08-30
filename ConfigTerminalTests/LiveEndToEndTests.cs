@@ -34,7 +34,7 @@ public class LiveEndToEndTests
         var binding = new InstanceBinding
         {
             DataDir = Env("MC_DATA", Path.Combine(home, ".config", "SpaceEngineersDedicated")),
-            MagnetarConfigDir = Env("MC_CONFIG", Path.Combine(home, ".config", "Magnetar")),
+            MagnetarConfigDir = Env("MC_CONFIG", Path.Combine(home, ".local", "share", "Magnetar", "Magnetar")),
             MagnetarExePath = Env("MC_EXE", Path.Combine(home, ".local", "share", "Magnetar", "MagnetarInterim.bin")),
             Ds64Dir = Env("MC_DS64", Path.Combine(home, ".steam", "steam", "steamapps", "common", "SpaceEngineersDedicatedServer", "DedicatedServer64")),
         };

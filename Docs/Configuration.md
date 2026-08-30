@@ -5,7 +5,7 @@ line:
 
 | Folder | Holds | Default | Override |
 | ------ | ----- | ------- | -------- |
-| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | A folder named after the launcher, next to the binary: `<install>\MagnetarLegacy` or `<install>/MagnetarInterim`. Magnetar is portable, so its state travels with the install folder. `-useHome` moves it under `%APPDATA%\Magnetar` (Windows) or `~/.config/Magnetar` (Linux) instead. | `-config <dir>` |
+| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | `<install>/Magnetar`, next to the binaries — the counterpart of Pulsar's per-flavour `Legacy`/`Modern` folders, shared by both launchers. Magnetar is portable, so its state travels with the install folder. `-useHome` puts the folder under `%APPDATA%\Magnetar` (Windows) or `~/.config/Magnetar` (Linux) instead. | `-config <dir>` |
 | **DS install dir** | The dedicated-server binaries (`DedicatedServer64/`) | Auto-detected (see below) | `-ds64 <dir>` |
 | **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg` **and the world saves** (`Saves/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
 
@@ -30,11 +30,11 @@ file here — the process id on the first line, the resolved DS data dir
 uses it to discover the instance and report server status; see the
 [Config tool internals](ConfigTerminalInternals.md#28-process-model-and-pid-file).
 
-Without `-config`, the launcher keeps its state in a folder named after
-itself next to the binary (`MagnetarInterim/`, or `MagnetarLegacy/` for the
-.NET Framework launcher). When only the shared `MagnetarLegacy` folder exists,
-both launchers use it, so switching launchers keeps the configuration. Pass
-`-useHome` to store the state under the user's app-data directory instead
+Without `-config`, the launcher keeps its state in the `Magnetar` folder next
+to the binaries, the same way Pulsar keeps its state in its `Legacy` and
+`Modern` folders. Both launchers target the same SE1 dedicated server, so they
+share this folder and switching launchers keeps the configuration. Pass
+`-useHome` to place the folder under the user's app-data directory instead
 (`%APPDATA%\Magnetar` on Windows, `~/.config/Magnetar` on Linux), which keeps
 the install folder read-only.
 

@@ -37,21 +37,20 @@ internal static class InstanceLocator
 
     /// <summary>
     /// Default Magnetar config dir (config.xml, logs, magnetar.pid). Magnetar
-    /// is portable: the launcher keeps its config in a folder named after
-    /// itself, next to the binary, so the default mirrors the launcher's own
-    /// resolution against the default install location.
+    /// is portable: both launchers keep their shared config in the Magnetar
+    /// folder next to the binaries (the counterpart of Pulsar's Legacy/Modern
+    /// flavour folders), so the default resolves against the default install
+    /// location.
     /// </summary>
     public static string DefaultMagnetarConfigDir()
     {
         if (PlatformPaths.IsWindows)
-            return ResolveLauncherConfigDir(
+            return LauncherConfigDir(
                 Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Magnetar"),
-                "MagnetarLegacy");
+                    "Magnetar"));
 
-        string install = Path.GetDirectoryName(DefaultMagnetarExe());
-        return ResolveLauncherConfigDir(install, "MagnetarInterim");
+        return LauncherConfigDir(Path.GetDirectoryName(DefaultMagnetarExe()));
     }
 
     /// <summary>Default Magnetar launcher executable to spawn.</summary>
@@ -101,28 +100,19 @@ internal static class InstanceLocator
                     Name = name,
                     Label = label,
                     ExePath = exe,
-                    ConfigDir = ResolveLauncherConfigDir(root, name),
+                    ConfigDir = LauncherConfigDir(root),
                 });
         }
         return launchers;
     }
 
     /// <summary>
-    /// The config dir a launcher actually reads, mirroring the launcher's own
-    /// resolution (<c>Legacy\Program.cs</c> <c>GetConfigDir</c>): the folder named
-    /// after the launcher if it exists, otherwise the shared
-    /// <c>MagnetarLegacy</c> folder if that exists, otherwise the named folder
-    /// (which the launcher creates on first start).
+    /// The config dir the launchers read, mirroring their own resolution
+    /// (<c>Legacy\Program.cs</c> <c>GetConfigDir</c>): the Magnetar folder
+    /// inside the install, shared by both launchers and created on first
+    /// start.
     /// </summary>
-    private static string ResolveLauncherConfigDir(string root, string name)
-    {
-        string named = Path.Combine(root, name);
-        if (Directory.Exists(named))
-            return named;
-
-        string fallback = Path.Combine(root, "MagnetarLegacy");
-        return Directory.Exists(fallback) ? fallback : named;
-    }
+    private static string LauncherConfigDir(string root) => Path.Combine(root, "Magnetar");
 
     /// <summary>Best-effort DS install (DedicatedServer64) auto-detection; null when not found.</summary>
     public static string DetectDs64()

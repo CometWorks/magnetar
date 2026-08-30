@@ -72,8 +72,8 @@ Defaults — DS data dir: Windows interactive `%APPDATA%\SpaceEngineersDedicated
 Windows service `%ProgramData%\SpaceEngineersDedicated\<InstanceName>`, Linux
 `~/.config/SpaceEngineersDedicated` (what
 `Environment.GetFolderPath(ApplicationData)` resolves to). Magnetar config
-dir: `<launcher dir>/MagnetarInterim` or `<launcher dir>\MagnetarLegacy`
-(Magnetar is portable and keeps its state next to the binary; see
+dir: `<install>/Magnetar`, shared by both launchers (Magnetar is portable and
+keeps its state next to the binaries; see
 [Configuration.md](Configuration.md)).
 
 ### 2.2 `SpaceEngineers-Dedicated.cfg`

@@ -96,8 +96,8 @@ $(Magnetar)/
 The tree is portable: copy it anywhere and run the launcher from there. The
 Deploy targets wipe and rewrite `Libraries/` and `Config/` on every build, so
 treat `$(Magnetar)` as build output, not as a place for your own files. The
-launcher's configuration is safe because it lives in a folder the deploy never
-touches (see [Configuration.md](Configuration.md)).
+launcher's configuration is safe because it lives in the `Magnetar` folder,
+which the deploy never touches (see [Configuration.md](Configuration.md)).
 
 To build just one launcher on Windows, restrict the target framework:
 

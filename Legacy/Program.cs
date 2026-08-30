@@ -155,7 +155,7 @@ static class Program
         Environment.CurrentDirectory = baseDir;
 
         var asmName = Assembly.GetExecutingAssembly().GetName();
-        string magnetarDir = GetConfigOverride(baseDir) ?? GetConfigDir(baseDir, asmName);
+        string magnetarDir = GetConfigOverride(baseDir) ?? GetConfigDir(baseDir);
 
         if (!Directory.Exists(magnetarDir))
             Directory.CreateDirectory(magnetarDir);
@@ -192,23 +192,18 @@ static class Program
 
     private static bool preloaderDisabled;
 
-    // Magnetar is portable, like Pulsar: config, logs and caches live in a
-    // folder named after the launcher, next to the binary. -useHome moves
-    // that folder under the user's app-data directory instead (%APPDATA% on
-    // Windows, ~/.config on Linux), and -config overrides it entirely.
-    private static string GetConfigDir(string baseDir, AssemblyName asmName)
+    // Magnetar is portable, like Pulsar: config, logs and caches live in the
+    // Magnetar folder next to the binary — the counterpart of Pulsar's
+    // per-flavour Legacy/Modern folders. Both launchers target the same SE1
+    // dedicated server, so they share this one folder (as Pulsar's Legacy and
+    // Interim share theirs). -useHome moves it under the user's app-data
+    // directory instead (%APPDATA% on Windows, ~/.config on Linux), and
+    // -config overrides it entirely.
+    private static string GetConfigDir(string baseDir)
     {
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string dataDir = Flags.Current.UseHome ? Path.Combine(appData, "Magnetar") : baseDir;
-
-        string named = Path.Combine(dataDir, asmName.Name);
-        if (Directory.Exists(named))
-            return named;
-
-        // Both launchers share the MagnetarLegacy folder until a named one
-        // exists, so switching between them keeps the configuration.
-        string fallback = Path.Combine(dataDir, "MagnetarLegacy");
-        return Directory.Exists(fallback) ? fallback : named;
+        return Path.Combine(dataDir, "Magnetar");
     }
 
     private static string GetConfigOverride(string baseDir)

@@ -28,14 +28,14 @@ and extract its `Magnetar/` folder anywhere you like:
 | `MagnetarForLinux-<version>.7z` | `MagnetarInterim.bin` (.NET 10) with `Libraries/` and the `Config/MagnetarConfig` terminal UI. |
 | `MagnetarForWindows-<version>.7z` | `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) with `Libraries/` and `Config\MagnetarConfig.exe`. |
 
-Then run the launcher in place of `SpaceEngineersDedicated.exe`. The launcher
-keeps its own configuration and logs in a folder named after itself inside the
+Then run the launcher in place of `SpaceEngineersDedicated.exe`. The launchers
+keep their shared configuration and logs in the `Magnetar` folder inside the
 install folder, so the whole thing moves as one unit. To uninstall, delete the
 folder.
 
 An update replaces the install folder's binaries (`Libraries/`, `Config/`, the
-launchers), so do not keep unrelated files in it. The launcher's own
-configuration folder survives updates.
+launchers), so do not keep unrelated files in it. The `Magnetar` configuration
+folder survives updates.
 
 `MagnetarInterim` and `MagnetarConfig` need the .NET 10 runtime
 (`Microsoft.NETCore.App 10.x`) installed on the host. On Linux the native
