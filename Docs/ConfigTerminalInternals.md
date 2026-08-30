@@ -72,8 +72,8 @@ Defaults — DS data dir: Windows interactive `%APPDATA%\SpaceEngineersDedicated
 Windows service `%ProgramData%\SpaceEngineersDedicated\<InstanceName>`, Linux
 `~/.config/SpaceEngineersDedicated` (what
 `Environment.GetFolderPath(ApplicationData)` resolves to). Magnetar config
-dir: Linux `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar`; Windows
-`<launcher dir>\MagnetarLegacy|MagnetarInterim` (see
+dir: `<launcher dir>/MagnetarInterim` or `<launcher dir>\MagnetarLegacy`
+(Magnetar is portable and keeps its state next to the binary; see
 [Configuration.md](Configuration.md)).
 
 ### 2.2 `SpaceEngineers-Dedicated.cfg`
@@ -1256,22 +1256,16 @@ real saves, to keep the repo lean.
 ## 13. Build, packaging and documentation integration
 
 - `Magnetar.slnx` carries the `ConfigTerminal` + `ConfigTerminalTests` projects.
-- `build.sh` / `build.bat` ship `MagnetarConfig` in each bundle next to
-  the launcher. Rather than co-mingling it with the launcher's own
-  assemblies, it gets its own folder + a root launcher, mirroring how the
-  MagnetarInterim apphost sits under `Bin/` with a root shim — so its
-  Terminal.Gui/NStack/System.Management deps stay isolated and can never clash
-  with the launcher's:
-  - **Linux** (`Scripts/package_magnetar_for_linux.sh`): a framework-dependent
-    net10.0 publish is staged into `Magnetar/Config/`, with a `Magnetar/MagnetarConfig`
-    bash launcher (`cd Config; exec ./MagnetarConfig`) beside `Magnetar/MagnetarInterim`.
-    `install.sh` deploys both to `~/.local/share/Magnetar/`, so the tool runs as
-    `~/.local/share/Magnetar/MagnetarConfig`.
-  - **Windows** (`build.bat`): a framework-dependent net10.0 publish (requires the
-    .NET 10 runtime, same as `MagnetarInterim`) is staged into `<Magnetar>\Config\`,
-    with a `<Magnetar>\MagnetarConfig.bat` shim next to `MagnetarInterim.exe`.
-  Both packagers verify the config apphost/shim is present before packing, and
-  the Linux path-leak check covers the staged `Config/` tree.
+- The `ConfigTerminal` project's own Deploy MSBuild target ships
+  `MagnetarConfig` in each bundle. Rather than co-mingling it with the
+  launcher's assemblies, its whole build output lands in the install tree's
+  `Config/` folder, so its Terminal.Gui/NStack/System.Management deps stay
+  isolated and can never clash with the launcher's or the game's assembly
+  graph. The apphost resolves its dependencies from its own folder, so no
+  shim is needed: the tool runs as `<install>/Config/MagnetarConfig` on Linux
+  and `<install>\Config\MagnetarConfig.exe` on Windows (it requires the
+  .NET 10 runtime, same as `MagnetarInterim`). The release workflow verifies
+  the apphost is present before packing.
 - Terminal.Gui + NStack.Core (and System.Management) DLLs land next to the
   executable in its own folder (normal `dotnet publish` behaviour; no native
   components, so no changes to the native-wrapper release flow).
@@ -1320,9 +1314,9 @@ The tool is built and in daily use on Linux; every layer in the source map
   ([user manual](ConfigTerminal.md#2-running-magnetarconfig)) — not recent instance pairs,
   per-pair overrides or extra launch args; the instance picker pre-fills resolved
   defaults rather than offering a recent-pairs list.
-- **Verification** — the Linux bundle is produced end-to-end by `build.sh` as
-  `dist/MagnetarForLinux.7z`. The main open item is a manual driver pass on
-  Linux xterm/kitty/ssh and Windows Terminal/conhost.
+- **Verification** — the Linux bundle is produced end-to-end by the release
+  workflow as `MagnetarForLinux-<version>.7z`. The main open item is a manual
+  driver pass on Linux xterm/kitty/ssh and Windows Terminal/conhost.
 
 ---
 

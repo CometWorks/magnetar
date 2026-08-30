@@ -39,7 +39,7 @@
   </PropertyGroup>
   <!-- Windows-only launcher polish: icon + long-path manifest, mirroring Legacy. -->
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <ApplicationIcon>..\Shared\Splash\icon.ico</ApplicationIcon>
+    <ApplicationIcon>..\Legacy\Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <!-- Terminal.Gui v1 (classic API). Pinned to the last v1 stable; v2 is a
@@ -49,4 +49,20 @@
   <ItemGroup>
     <InternalsVisibleTo Include="ConfigTerminalTests" />
   </ItemGroup>
+  <!-- Deploy the config tool into the install tree's Config/ folder, next to
+       the launchers Legacy.csproj deploys. The apphost resolves its managed
+       dependencies from its own folder, so no shim is needed: operators run
+       <install>/Config/MagnetarConfig directly. -->
+  <Target Name="Deploy" AfterTargets="Build">
+    <PropertyGroup>
+      <DeployDirectory>$(Magnetar)/Config</DeployDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <ConfigDeployFile Include="$(TargetDir)**/*" Exclude="$(TargetDir)**/*.pdb" />
+    </ItemGroup>
+    <Error Condition="'$(Magnetar)' == ''" Text="Specify Magnetar's deployment location!" />
+    <RemoveDir Directories="$(DeployDirectory)" />
+    <Copy SourceFiles="@(ConfigDeployFile)"
+          DestinationFolder="$(DeployDirectory)/%(RecursiveDir)" />
+  </Target>
 </Project>

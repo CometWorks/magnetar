@@ -367,11 +367,6 @@ MigrationBackup/
 .editorconfig
 .claude
 
-# Optional local library overrides. build.sh probes Vendor/ before the fetched
-# linux-dependencies release, so a file dropped here wins. The proprietary
-# Steamworks and EOS runtimes must never be committed.
-Vendor/*.so
-
-# Linux build pipeline outputs (build.sh / Scripts/*)
-/build/
+# Release staging output (dotnet build with -p:Magnetar=... in CI)
+/stage/
 /dist/

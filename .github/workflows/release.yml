@@ -14,9 +14,8 @@ name: Release
 #                          DRAFT build (not marked latest) or a real, public
 #                          "latest" release.
 #
-# No repository secrets are needed: every bundled library comes from a public
-# GitHub release (CometWorks/linux-dependencies and
-# CometWorks/linux-native-wrappers), fetched by build.sh.
+# No repository secrets are needed. The bundles carry no native libraries:
+# the linux-compat plugin downloads them as assets at runtime.
 
 on:
   push:
@@ -146,7 +145,8 @@ jobs:
           echo "buildid=$buildid" >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------------------
-  # Linux build: build.sh -> dist/MagnetarForLinux.7z
+  # Linux build: dotnet build (Deploy targets stage the install tree) ->
+  # dist/MagnetarForLinux-<version>.7z
   # ---------------------------------------------------------------------------
   build-linux:
     needs: version-check
@@ -159,31 +159,16 @@ jobs:
           # without it.
           submodules: recursive
 
-      - name: Install .NET SDKs
+      - name: Install .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          dotnet-version: 10.0.x
 
       - name: Install build tools (7z)
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends p7zip-full ca-certificates curl
-
-      # No dependency is built or downloaded here any more. build.sh fetches
-      # two GitHub releases:
-      #   * CometWorks/linux-dependencies    Steamworks.NET.dll plus the
-      #                                      proprietary libsteam_api.so and
-      #                                      libEOSSDK-Linux-Shipping.so
-      #                                      (cached by tag under build/linux-deps/)
-      #   * CometWorks/linux-native-wrappers libHavok / libRecastDetour /
-      #                                      libVRageNative
-      #                                      (cached by tag under build/native/)
-      # The proprietary blobs used to arrive here as a Vendor.7z download behind
-      # the VENDOR_ARCHIVE_URL repository secret; that secret is no longer used
-      # and can be deleted.
 
       # --- Dedicated Server libraries (cached by DS build id) ----------------
       # Only the ~186 MB DedicatedServer64/ library set is cached, not the
@@ -243,32 +228,30 @@ jobs:
           rm -rf dsfull
           echo "Cached DS library set:"; du -sh ds64
 
-      - name: Run tests
+      - name: Build, test and package
         env:
           DS64: ${{ github.workspace }}/ds64
-        run: |
-          set -euo pipefail
-          # The launcher build needs the staged Steamworks/native set; the test
-          # projects do not, so run them before build.sh to fail fast.
-          dotnet test PluginSdkTests/PluginSdkTests.csproj -c Release
-          dotnet test ConfigTerminalTests/ConfigTerminalTests.csproj -c Release
-
-      - name: Build and package (build.sh)
-        env:
-          DS64: ${{ github.workspace }}/ds64
-          # build.sh downloads the native wrappers from the
-          # linux-native-wrappers release; the token only lifts the GitHub API
-          # rate limit while resolving the latest tag.
-          GH_TOKEN: ${{ github.token }}
+          Magnetar: ${{ github.workspace }}/stage/Magnetar
           VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           set -euo pipefail
-          chmod +x build.sh Scripts/*.sh
-          ./build.sh
-          # build.sh names the bundle dist/MagnetarForLinux.7z;
-          # rename it to the version-stamped release name.
-          mv dist/MagnetarForLinux.7z "dist/MagnetarForLinux-${VERSION}.7z"
-          echo "Produced:"
+          # The Deploy targets stage the complete portable install tree into
+          # $Magnetar: the MagnetarInterim.bin apphost, Libraries/ (launcher
+          # dependencies + the out-of-process compiler) and Config/
+          # (MagnetarConfig, deployed by its own project).
+          dotnet build -c Release Magnetar.slnx
+          dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
+          dotnet test --no-build -c Release ConfigTerminalTests/ConfigTerminalTests.csproj
+
+          for f in MagnetarInterim.bin MagnetarInterim.dll LICENSE README.md \
+                   Libraries/MagnetarInterim/Pulsar.Shared.dll \
+                   Libraries/Compiler/Compiler.bin \
+                   Config/MagnetarConfig; do
+            test -e "stage/Magnetar/$f" || { echo "missing $f" >&2; exit 1; }
+          done
+
+          mkdir -p dist
+          ( cd stage && 7z a -t7z -mx=9 -bso0 "../dist/MagnetarForLinux-${VERSION}.7z" Magnetar )
           ls -l "dist/MagnetarForLinux-${VERSION}.7z"
 
       - name: Upload Linux bundle
@@ -279,10 +262,8 @@ jobs:
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
-  # Windows build: build.bat (the Deploy targets stage the install tree from
-  # the Legacy project build,
-  # ConfigTerminal is published into it, 7z packs it) ->
-  # MagnetarForWindows-<version>.7z
+  # Windows build: dotnet build (Deploy targets stage the install tree) ->
+  # dist/MagnetarForWindows-<version>.7z
   # ---------------------------------------------------------------------------
   build-windows:
     needs: version-check
@@ -341,19 +322,31 @@ jobs:
           Copy-Item -Path (Join-Path $dsfull "DedicatedServer64\*") -Destination $ds64 -Recurse -Force
           Remove-Item -Recurse -Force $dsfull
 
-      - name: Build and package (build.bat)
-        shell: cmd
-        env:
-          DS64: ${{ github.workspace }}\ds64
-        run: build.bat
-
-      - name: Version-stamp the bundle
+      - name: Build and package
         shell: pwsh
         env:
+          DS64: ${{ github.workspace }}\ds64
+          Magnetar: ${{ github.workspace }}\stage\Magnetar
           VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          Move-Item "dist\MagnetarForWindows.7z" "dist\MagnetarForWindows-$env:VERSION.7z"
+          # The Deploy targets stage the complete portable install tree into
+          # $env:Magnetar: both launchers, Libraries/ and Config/.
+          dotnet build -c Release Magnetar.slnx
+
+          foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE",
+                           "Libraries\MagnetarLegacy\Pulsar.Shared.dll",
+                           "Libraries\MagnetarInterim\Pulsar.Shared.dll",
+                           "Libraries\Compiler\Compiler.exe",
+                           "Config\MagnetarConfig.exe")) {
+            if (-not (Test-Path "stage\Magnetar\$f")) { throw "missing $f" }
+          }
+
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $sevenzip = "C:\Program Files\7-Zip\7z.exe"
+          Push-Location stage
+          & $sevenzip a -t7z -mx=9 "..\dist\MagnetarForWindows-$env:VERSION.7z" "Magnetar"
+          Pop-Location
           Get-ChildItem dist
 
       - name: Upload Windows bundle

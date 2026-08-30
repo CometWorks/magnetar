@@ -26,8 +26,9 @@ without starting the server. On Linux the help screen deliberately skips loading
 the bundled native libraries, so it prints cleanly without startup noise.
 
 The plugin-loader flags (`-profile`, `-safeMode`, `-bare`, `-sources`,
-`-hardened`, `-multiInstance`, `-lazyPreload`, `-stableLogs`, `-noUpdate`,
-`-preRelease`, `-mkCheck`, `-debug`, `-debugMods`, `-debugCompileAll`) are
+`-hardened`, `-multiInstance`, `-useHome`, `-lazyPreload`, `-stableLogs`,
+`-noUpdate`, `-preRelease`, `-mkCheck`, `-debug`, `-debugMods`,
+`-debugCompileAll`) are
 Pulsar's own flags with Pulsar's semantics; Magnetar additionally forces the
 headless defaults (`-noSplash -noPrompt -lazySteam`) internally, and Pulsar's
 client-only options (splash, intro video, F12 menu, …) are accepted but
@@ -108,10 +109,10 @@ installed bundle:
 
 ```sh
 # Linux
-~/.local/share/Magnetar/MagnetarConfig
+~/.local/share/Magnetar/Config/MagnetarConfig
 
 # Windows
-%APPDATA%\Magnetar\MagnetarConfig.bat
+%APPDATA%\Magnetar\Config\MagnetarConfig.exe
 ```
 
 It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself

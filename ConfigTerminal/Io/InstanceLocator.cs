@@ -35,18 +35,23 @@ internal static class InstanceLocator
         return Path.Combine(Home, ".config", "SpaceEngineersDedicated");
     }
 
-    /// <summary>Default Magnetar config dir (config.xml, logs, magnetar.pid).</summary>
+    /// <summary>
+    /// Default Magnetar config dir (config.xml, logs, magnetar.pid). Magnetar
+    /// is portable: the launcher keeps its config in a folder named after
+    /// itself, next to the binary, so the default mirrors the launcher's own
+    /// resolution against the default install location.
+    /// </summary>
     public static string DefaultMagnetarConfigDir()
     {
         if (PlatformPaths.IsWindows)
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Magnetar", "MagnetarLegacy");
+            return ResolveLauncherConfigDir(
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Magnetar"),
+                "MagnetarLegacy");
 
-        string xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-        if (!string.IsNullOrWhiteSpace(xdg))
-            return Path.Combine(xdg, "Magnetar");
-        return Path.Combine(Home, ".config", "Magnetar");
+        string install = Path.GetDirectoryName(DefaultMagnetarExe());
+        return ResolveLauncherConfigDir(install, "MagnetarInterim");
     }
 
     /// <summary>Default Magnetar launcher executable to spawn.</summary>
@@ -105,13 +110,18 @@ internal static class InstanceLocator
     /// <summary>
     /// The config dir a launcher actually reads, mirroring the launcher's own
     /// resolution (<c>Legacy\Program.cs</c> <c>GetConfigDir</c>): the folder named
-    /// after the launcher if it exists, otherwise the <c>MagnetarLegacy</c>
-    /// fallback both launchers share until a named folder is created.
+    /// after the launcher if it exists, otherwise the shared
+    /// <c>MagnetarLegacy</c> folder if that exists, otherwise the named folder
+    /// (which the launcher creates on first start).
     /// </summary>
     private static string ResolveLauncherConfigDir(string root, string name)
     {
         string named = Path.Combine(root, name);
-        return Directory.Exists(named) ? named : Path.Combine(root, "MagnetarLegacy");
+        if (Directory.Exists(named))
+            return named;
+
+        string fallback = Path.Combine(root, "MagnetarLegacy");
+        return Directory.Exists(fallback) ? fallback : named;
     }
 
     /// <summary>Best-effort DS install (DedicatedServer64) auto-detection; null when not found.</summary>

@@ -52,8 +52,6 @@
     <!-- Defined before StartProgram: MSBuild evaluates properties top-down. -->
     <_MagnetarExeExt Condition="'$(OS)' == 'Windows_NT'">.exe</_MagnetarExeExt>
     <_MagnetarExeExt Condition="'$(OS)' != 'Windows_NT'">.bin</_MagnetarExeExt>
-    <_SteamApiFile Condition="'$(OS)' == 'Windows_NT'">steam_api64.dll</_SteamApiFile>
-    <_SteamApiFile Condition="'$(OS)' != 'Windows_NT'">libsteam_api.so</_SteamApiFile>
     <StartAction>Program</StartAction>
     <StartProgram>$(Magnetar)/$(AssemblyName)$(_MagnetarExeExt)</StartProgram>
     <StartWorkingDirectory>$(Magnetar)</StartWorkingDirectory>
@@ -62,8 +60,14 @@
     <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
     <!-- Pulsar submodule projects use Pulsar's own Directory.Build.props;
          forward the values they need explicitly. -->
+    <!-- SteamApiFileName is forwarded as steam_api64.dll on every platform:
+         $(Steamworks) points at the dedicated server's install, whose depot
+         carries the Windows files even on Linux (the server runs them through
+         the compatibility plugins). Pulsar's Verify would otherwise look for
+         libsteam_api.so, which nobody ships at build time any more; the
+         Linux runtime libraries arrive through linux-compat's assets. -->
     <ProjectReference Include="..\Pulsar\Shared\Shared.csproj"
-                      AdditionalProperties="Steamworks=$(Steamworks)" />
+                      AdditionalProperties="Steamworks=$(Steamworks);SteamApiFileName=steam_api64.dll" />
     <!-- The out-of-process Roslyn compiler. Not referenced as an assembly: its
          own Deploy target stages the executable and its dependencies into
          $(Magnetar)/Libraries/Compiler (the 'Pulsar' property is its
@@ -115,8 +119,7 @@
     <Error Condition="$(Magnetar.Contains(';'))" Text="Magnetar directory is not unique!" />
     <Error Condition="'$(DS64)' == '' or !Exists('$(DS64)')" Text="Specify the SpaceEngineers DedicatedServer64 path (DS64)!" />
     <Error Condition="'$(Steamworks)' == ''" Text="Specify the Steamworks path!" />
-    <Error Condition="!Exists('$(Steamworks)/Steamworks.NET.dll')" Text="Steamworks.NET.dll not found in $(Steamworks)! On Linux run ./build.sh first." />
-    <Error Condition="!Exists('$(Steamworks)/$(_SteamApiFile)')" Text="$(_SteamApiFile) not found in $(Steamworks)!" />
+    <Error Condition="!Exists('$(Steamworks)/Steamworks.NET.dll')" Text="Steamworks.NET.dll not found in $(Steamworks)!" />
   </Target>
   <!-- Deploy the freshly built launcher and its libraries into the Magnetar
        install folder, mirroring Pulsar's deployment convention:
@@ -170,19 +173,14 @@
       <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.Pkcs.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.Pkcs.dll')" />
       <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.ProtectedData.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.ProtectedData.dll')" />
     </ItemGroup>
-    <!-- Windows deliberately does NOT bundle Steamworks.NET: it ships next to
-         the dedicated server and is resolved from there at runtime, so a DS
-         update can never be paired with a stale bundled copy. On Linux the
-         matching Linux Steamworks pair plus the native dependencies staged by
-         ./build.sh (EOS, Havok, RecastDetour, VRageNative wrappers) are
-         bundled from $(Steamworks) — the folder ./build.sh populates — along
-         with their license notices. The NativeLibraryPreloader dlopens every
-         lib*.so* in the deploy folder. -->
-    <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
-      <DeployLibraryFile Include="$(Steamworks)/Steamworks.NET.dll" />
-      <DeployNativeFile Include="$(Steamworks)/*.so" />
-      <DeployLicenseFile Include="$(Steamworks)/LICENSES/*" />
-    </ItemGroup>
+    <!-- Steamworks.NET is deliberately NOT bundled: it ships next to the
+         dedicated server and is resolved from there at runtime, so a DS
+         update can never be paired with a stale bundled copy. The Linux
+         native libraries (libsteam_api, EOS, Havok, RecastDetour,
+         VRageNative) are not bundled either; the linux-compat plugin pulls
+         them as assets at runtime. The NativeLibraryPreloader still dlopens
+         any lib*.so* an operator drops into the deploy folder as a manual
+         override. -->
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).exe.config" />
       <DeployLibraryFile Include="$(TargetDir)Microsoft.Win32.Registry.dll" />
@@ -218,8 +216,6 @@
     <RemoveDir Directories="$(DeployDirectory)" />
     <Copy SourceFiles="@(DeployRootFile)" DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="@(DeployLibraryFile)" DestinationFolder="$(DeployDirectory)" />
-    <Copy SourceFiles="@(DeployNativeFile)" DestinationFolder="$(DeployDirectory)" />
-    <Copy SourceFiles="@(DeployLicenseFile)" DestinationFolder="$(DeployDirectory)/LICENSES" />
     <Copy SourceFiles="$(SourceExecutable)" DestinationFiles="$(DestinationExecutable)" />
     <Copy SourceFiles="$(LicensePath)" DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="$(ReadmePath)" DestinationFolder="$(Magnetar)" />

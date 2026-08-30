@@ -8,13 +8,16 @@ using System.Runtime.Loader;
 namespace Magnetar.Legacy.Loader;
 
 /// <summary>
-/// Linux native-library bootstrap. Runs once at the very top of Main() and
-/// is the single place that:
-///   * dlopens every bundled lib*.so* (from Libraries/MagnetarInterim and
-///     next to the launcher) with an absolute path and RTLD_GLOBAL, so
-///     subsequent lookups never go to disk;
-///   * resolves the Windows-style DLL names declared in Magnetar's bundled
-///     Steamworks.NET against the preloaded handles.
+/// Linux native-library bootstrap. The bundle ships no native libraries any
+/// more (the linux-compat plugin pulls them as assets at runtime), so this
+/// normally finds nothing and does nothing. It stays as the manual override
+/// hook: any lib*.so* an operator drops into Libraries/MagnetarInterim or
+/// next to the launcher is picked up here and wins over the plugin assets.
+/// Runs once at the very top of Main() and is the single place that:
+///   * dlopens every present lib*.so* with an absolute path and RTLD_GLOBAL,
+///     so subsequent lookups never go to disk;
+///   * resolves the Windows-style DLL names Steamworks.NET declares against
+///     the preloaded handles.
 ///
 /// Centralising here means plugins loaded into custom AssemblyLoadContexts
 /// (Magnetar's .pl5 cache directories) no longer need their own resolver

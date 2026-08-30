@@ -188,25 +188,23 @@ static class Program
 
     private static bool preloaderDisabled;
 
+    // Magnetar is portable, like Pulsar: config, logs and caches live in a
+    // folder named after the launcher, next to the binary. -useHome moves
+    // that folder under the user's app-data directory instead (%APPDATA% on
+    // Windows, ~/.config on Linux), and -config overrides it entirely.
     private static string GetConfigDir(string baseDir, AssemblyName asmName)
     {
-#if NETCOREAPP
-        // Linux: honour XDG_CONFIG_HOME, otherwise ~/.config/Magnetar.
-        if (OperatingSystem.IsLinux())
-        {
-            string xdg = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-            if (!string.IsNullOrWhiteSpace(xdg))
-                return Path.Combine(xdg, "Magnetar");
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string dataDir = Flags.Current.UseHome ? Path.Combine(appData, "Magnetar") : baseDir;
 
-            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            return Path.Combine(home, ".config", "Magnetar");
-        }
-#endif
-        // Windows: config/log directory next to the binary.
-        string dir = Path.Combine(baseDir, asmName.Name);
-        if (!Directory.Exists(dir))
-            dir = Path.Combine(baseDir, "MagnetarLegacy");
-        return dir;
+        string named = Path.Combine(dataDir, asmName.Name);
+        if (Directory.Exists(named))
+            return named;
+
+        // Both launchers share the MagnetarLegacy folder until a named one
+        // exists, so switching between them keeps the configuration.
+        string fallback = Path.Combine(dataDir, "MagnetarLegacy");
+        return Directory.Exists(fallback) ? fallback : named;
     }
 
     private static string GetConfigOverride(string baseDir)

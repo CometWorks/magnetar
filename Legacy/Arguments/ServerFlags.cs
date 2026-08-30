@@ -156,6 +156,8 @@ public static class ServerFlags
         Console.WriteLine("  -sources            Enable custom plugin sources");
         Console.WriteLine("  -hardened           Load only trusted mods, stripping untrusted Workshop mods");
         Console.WriteLine("  -multiInstance      Allow multiple launcher instances on this machine");
+        Console.WriteLine("  -useHome            Store Magnetar data under the user's app-data folder");
+        Console.WriteLine("                      instead of next to the launcher");
         Console.WriteLine("  -lazyPreload        Reuse existing preloader assemblies");
         Console.WriteLine("  -stableLogs         Overwrite game logs instead of timestamping them");
         Console.WriteLine("  -noUpdate           Disable update checks");

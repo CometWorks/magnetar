@@ -83,10 +83,10 @@ Run it from the installed bundle, next to the launcher:
 
 ```sh
 # Linux
-~/.local/share/Magnetar/MagnetarConfig
+~/.local/share/Magnetar/Config/MagnetarConfig
 
 # Windows
-%APPDATA%\Magnetar\MagnetarConfig.bat
+%APPDATA%\Magnetar\Config\MagnetarConfig.exe
 ```
 
 ### Command-line options
@@ -99,7 +99,8 @@ MagnetarConfig [options]
                      ~/.config/SpaceEngineersDedicated
   -config <dir>      Magnetar config directory (Magnetar's config.xml, logs,
                      magnetar.pid). Same semantics as Magnetar's own -config.
-                     Default (Linux): ~/.config/Magnetar
+                     Default: the launcher's own folder next to the binary,
+                     e.g. ~/.local/share/Magnetar/MagnetarInterim
   -magnetar <file>   Magnetar launcher executable to start/stop. Default:
                      ~/.local/share/Magnetar/MagnetarInterim.bin (Linux); on Windows
                      chosen at startup between the installed MagnetarLegacy.exe

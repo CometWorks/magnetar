@@ -43,8 +43,8 @@ instance: edit the global `SpaceEngineers-Dedicated.cfg`, per-world session
 settings and mod lists, create/delete/activate worlds, manage plugins and
 profiles, start/stop/reload the daemonized server (PID-file status), and read
 the game and Magnetar logs. It ships in both bundles next to the launcher and
-runs as `~/.local/share/Magnetar/MagnetarConfig` (Linux) or
-`MagnetarConfig.bat` (Windows). See the **[Config tool user manual](Docs/ConfigTerminal.md)**.
+runs as `Config/MagnetarConfig` inside the install folder. See the
+**[Config tool user manual](Docs/ConfigTerminal.md)**.
 
 ## Building
 
@@ -53,9 +53,14 @@ Clone with the Pulsar submodule and build the solution:
 ```sh
 git clone --recurse-submodules https://github.com/CometWorks/magnetar
 cd magnetar
-./build.sh --deps-only   # Linux only: stage Steamworks + native libraries
 dotnet build -c Release Magnetar.slnx
 ```
+
+Every build deploys a portable install tree (default: `%APPDATA%\Magnetar`
+on Windows, `~/.local/share/Magnetar` on Linux). Magnetar itself is portable:
+its configuration lives next to the binaries and the install folder can be
+moved anywhere. On Linux the native runtime libraries are downloaded by the
+linux-compat plugin on first launch.
 
 See **[Building](Docs/Build.md)** for details.
 

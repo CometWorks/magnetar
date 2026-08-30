@@ -5,7 +5,7 @@ line:
 
 | Folder | Holds | Default | Override |
 | ------ | ----- | ------- | -------- |
-| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | Windows: `<launcher dir>\MagnetarLegacy` or `<launcher dir>\MagnetarInterim` (named after the launcher, next to the binary; falls back to `MagnetarLegacy` if the named folder does not exist)<br>Linux: `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar` | `-config <dir>` |
+| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | A folder named after the launcher, next to the binary: `<install>\MagnetarLegacy` or `<install>/MagnetarInterim`. Magnetar is portable, so its state travels with the install folder. `-useHome` moves it under `%APPDATA%\Magnetar` (Windows) or `~/.config/Magnetar` (Linux) instead. | `-config <dir>` |
 | **DS install dir** | The dedicated-server binaries (`DedicatedServer64/`) | Auto-detected (see below) | `-ds64 <dir>` |
 | **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg` **and the world saves** (`Saves/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
 
@@ -30,10 +30,13 @@ file here — the process id on the first line, the resolved DS data dir
 uses it to discover the instance and report server status; see the
 [Config tool internals](ConfigTerminalInternals.md#28-process-model-and-pid-file).
 
-* **Install dir (default, where the launcher lives)**
-  * Windows — the extracted `Magnetar\` tree next to the dedicated-server
-    installation.
-  * Linux — `$XDG_DATA_HOME/Magnetar`, falling back to `~/.local/share/Magnetar`.
+Without `-config`, the launcher keeps its state in a folder named after
+itself next to the binary (`MagnetarInterim/`, or `MagnetarLegacy/` for the
+.NET Framework launcher). When only the shared `MagnetarLegacy` folder exists,
+both launchers use it, so switching launchers keeps the configuration. Pass
+`-useHome` to store the state under the user's app-data directory instead
+(`%APPDATA%\Magnetar` on Windows, `~/.config/Magnetar` on Linux), which keeps
+the install folder read-only.
 
 ### `-ds64 <dir>` — dedicated-server install location
 
@@ -116,8 +119,7 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
 | -------------------- | ---------------------------------------------------------------- |
 | `MAGNETAR_SAFE_MODE` | When `1`, disables preloader patches for a one-off recovery run. |
 | `MAGNETAR_GITHUB_TOKEN` | Accepted for compatibility but currently has **no effect** (Pulsar's network layer does not support authenticated GitHub requests yet); a warning is logged when it is set. |
-| `XDG_CONFIG_HOME`    | Overrides the Magnetar config-dir base (Linux).                  |
-| `XDG_DATA_HOME`      | Overrides the Magnetar install-dir base (Linux).                 |
+| `XDG_DATA_HOME`      | Changes the default build deploy folder on Linux (`$XDG_DATA_HOME/Magnetar`); the launcher itself is portable and does not read it. |
 | `DS64`               | Build-time override for the DS reference path.                   |
 
 Build-time overrides are covered in full in **[Build.md](Build.md)**.

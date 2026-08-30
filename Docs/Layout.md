@@ -9,9 +9,7 @@
 | `ConfigTerminal/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](ConfigTerminal.md) · [internals](ConfigTerminalInternals.md)) |
 | `ConfigTerminalTests/`       | xUnit tests for `ConfigTerminal` (registry, documents, process/pid, plugins, workshop resolver) |
 | `MagnetarMod/`               | Companion SE world mod project; Workshop/SE content lives under `MagnetarMod/src/` |
-| `Scripts/`                   | Build helpers (dependency fetch, Linux packaging)                 |
-| `build/Libraries/`           | Staged Linux dependencies (gitignored, populated by `./build.sh`) |
-| `dist/`                      | Packaged distributables (gitignored)                              |
+| `Directory.Build.props`      | Build settings (deploy folder, DS path); override locally with a git-ignored `Directory.Build.props.user` |
 
 There is no forked `Shared/` or `Compiler/` project any more: everything that
 is not server-specific comes from the `Pulsar/` submodule, and the Magnetar

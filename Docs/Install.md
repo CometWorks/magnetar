@@ -17,15 +17,30 @@ is shipped — .NET Framework 4.8 is Windows-only, and the Linux dedicated serve
 runs on .NET 10 via [dotnet-compat](https://github.com/CometWorks/dotnet-compat)
 plus [linux-compat](https://github.com/CometWorks/linux-compat).
 
-## Prebuilt bundles
+## Installing
 
-Prebuilt bundles are published on the
-[GitHub Releases](https://github.com/CometWorks/magnetar/releases) page:
+Magnetar is portable, like Pulsar. Download the bundle for your platform from
+the [GitHub Releases](https://github.com/CometWorks/magnetar/releases) page
+and extract its `Magnetar/` folder anywhere you like:
 
 | Asset | Contents |
 | ----- | -------- |
-| `MagnetarForLinux-<version>.7z` | `install.sh` / `uninstall.sh` + the `MagnetarInterim.bin` (.NET 10) install tree. Extract and run `./install.sh`. |
-| `MagnetarForWindows-<version>.7z` | The `Magnetar/` install tree: `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) plus `Libraries/` (per-launcher dependencies and the out-of-process compiler). Extract into `%APPDATA%` so it lands as `%APPDATA%\Magnetar`. |
+| `MagnetarForLinux-<version>.7z` | `MagnetarInterim.bin` (.NET 10) with `Libraries/` and the `Config/MagnetarConfig` terminal UI. |
+| `MagnetarForWindows-<version>.7z` | `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) with `Libraries/` and `Config\MagnetarConfig.exe`. |
+
+Then run the launcher in place of `SpaceEngineersDedicated.exe`. The launcher
+keeps its own configuration and logs in a folder named after itself inside the
+install folder, so the whole thing moves as one unit. To uninstall, delete the
+folder.
+
+An update replaces the install folder's binaries (`Libraries/`, `Config/`, the
+launchers), so do not keep unrelated files in it. The launcher's own
+configuration folder survives updates.
+
+`MagnetarInterim` and `MagnetarConfig` need the .NET 10 runtime
+(`Microsoft.NETCore.App 10.x`) installed on the host. On Linux the native
+runtime libraries arrive through the linux-compat plugin on first launch, so
+the host also needs outbound HTTPS to GitHub at that point.
 
 After installing, see **[Usage](Usage.md)** for how to run the launcher.
 
@@ -33,11 +48,10 @@ After installing, see **[Usage](Usage.md)** for how to run the launcher.
 
 Releases are produced automatically by the
 [`Release`](../.github/workflows/release.yml) GitHub Actions workflow, which
-builds both platforms (pulling the dedicated server via `steamcmd` and the
-[linux-compat](https://github.com/CometWorks/linux-compat) native
-wrappers) and attaches both `.7z` files. A push to `main` publishes a new public
-release when the version in `Directory.Build.props` is higher than the latest
-release; a manual run produces a draft by default, or a public release if you
-clear its **draft** option. See
-[Build.md](Build.md#continuous-integration--releases) for the full release
-process.
+builds both platforms with `dotnet build` (pulling the dedicated server via
+`steamcmd` for the build-time references) and attaches both `.7z` files. A
+push to `main` publishes a new public release when the version in
+`Directory.Build.props` is higher than the latest release; a manual run
+produces a draft by default, or a public release if you clear its **draft**
+option. See [Build.md](Build.md#continuous-integration--releases) for the full
+release process.

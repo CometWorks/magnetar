@@ -1,7 +1,15 @@
 # Building Magnetar
 
-Magnetar builds on **Windows** and **Linux**. The set of launchers produced
-depends on the host OS:
+The whole build is one command:
+
+```sh
+dotnet build -c Release Magnetar.slnx
+```
+
+There are no build scripts. MSBuild compiles everything and its Deploy targets
+stage a complete, portable install tree (see [Deployment](#deployment)).
+
+The set of launchers depends on the host OS:
 
 | Host OS | Launchers produced | Target frameworks |
 | ------- | ------------------ | ----------------- |
@@ -9,214 +17,122 @@ depends on the host OS:
 | Linux   | `MagnetarInterim` | `net10.0` |
 
 `MagnetarLegacy` runs the dedicated server on .NET Framework 4.8 and is
-Windows-only — the .NET Framework reference assemblies it needs do not exist on
-Linux. `MagnetarInterim` runs the server on .NET 10 (via
+Windows only, because the .NET Framework reference assemblies it needs do not
+exist on Linux. `MagnetarInterim` runs the server on .NET 10 (via
 [se-dotnet-compat](https://github.com/CometWorks/dotnet-compat), plus
-[se-linux-compat](https://github.com/CometWorks/linux-compat) on Linux)
-and is built on both platforms.
+[se-linux-compat](https://github.com/CometWorks/linux-compat) on Linux) and
+builds on both platforms. Each project selects its target frameworks with the
+MSBuild `$(OS)` reserved property, so the same solution builds correctly on
+either host.
 
-The per-OS target frameworks are selected in each project with the MSBuild
-`$(OS)` reserved property (`Windows_NT` on Windows, `Unix` elsewhere), so the
-same `Magnetar.slnx` builds correctly on either host with no manual switches.
+## Prerequisites
 
-**The Pulsar submodule is required.** Magnetar's plugin-loader core
-(`Pulsar.Shared`, `Pulsar.Protocol`) and the out-of-process Roslyn compiler
-come from the [`Pulsar/`](../Pulsar/) git submodule:
+* The Pulsar submodule. Magnetar's plugin-loader core (`Pulsar.Shared`,
+  `Pulsar.Protocol`) and the out-of-process Roslyn compiler come from the
+  [`Pulsar/`](../Pulsar/) git submodule:
 
-```sh
-git clone --recurse-submodules https://github.com/CometWorks/magnetar
-# or, in an existing clone:
-git submodule update --init
-```
+  ```sh
+  git clone --recurse-submodules https://github.com/CometWorks/magnetar
+  # or, in an existing clone:
+  git submodule update --init
+  ```
 
-The submodule's projects are deliberately **not** part of `Magnetar.slnx`;
-they are built through the `ProjectReference`s in
+* [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
+* On Windows, the
+  [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)
+  for the `MagnetarLegacy` target.
+* A Space Engineers Dedicated Server install (Steam or `steamcmd`). The build
+  references its assemblies; nothing else is downloaded.
+
+No native libraries are needed at build time. On Linux the
+[linux-compat](https://github.com/CometWorks/linux-compat) plugin downloads
+them as assets when the server first runs.
+
+## Configuration
+
+Build settings live in [Directory.Build.props](../Directory.Build.props),
+following Pulsar's convention. Three properties matter:
+
+| Property | Meaning | Default (Windows) | Default (Linux) |
+| -------- | ------- | ----------------- | --------------- |
+| `Magnetar` | Deploy folder for the install tree | `%APPDATA%\Magnetar` | `$XDG_DATA_HOME/Magnetar`, else `~/.local/share/Magnetar` |
+| `DS64` | Folder containing `SpaceEngineersDedicated.exe` | Steam registry key, else the default Steam path | `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64` |
+| `Steamworks` | Folder containing `Steamworks.NET.dll` | `$(DS64)` | `$(DS64)` |
+
+To override them, copy the "Override Project Settings" `PropertyGroup` into a
+`Directory.Build.props.user` file (git ignored) in the repo root, wrapped in a
+top-level `<Project>` element, and fill in your paths. Anything left empty
+there falls back to the defaults. Environment variables and `-p:DS64=...`
+style command line properties work too.
+
+The submodule's projects are deliberately not part of `Magnetar.slnx`. They
+build through the `ProjectReference`s in
 [Legacy.csproj](../Legacy/Legacy.csproj), which forward the properties they
-need (the `Steamworks` folder and the deployment root).
+need (`Steamworks`, the deployment root, and `SteamApiFileName`, pinned to
+`steam_api64.dll` because the DS depot carries the Windows files on every
+platform).
 
----
+## Deployment
 
-## Windows
+Every build deploys. The Verify targets fail early with a clear message when
+`DS64` or `Steamworks` is wrong; the Deploy targets then stage the install
+tree into `$(Magnetar)`:
 
-### Prerequisites
-
-* [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
-* [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)
-  (reference assemblies for the `net48` / `MagnetarLegacy` target)
-* Space Engineers Dedicated Server installed via Steam
-
-### Dedicated server location
-
-The DS folder (`DedicatedServer64/`, containing `SpaceEngineersDedicated.exe`)
-is resolved automatically from the Steam uninstall registry key, falling back to
-`C:\Program Files (x86)\Steam\...`. See [Directory.Build.props](../Directory.Build.props).
-
-Override it if your install is elsewhere:
-
-```powershell
-# environment variable
-$env:DS64 = "D:\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64"
-dotnet build -c Release Magnetar.slnx
-
-# or per-invocation MSBuild property
-dotnet build -c Release Magnetar.slnx -p:DS64="D:\...\DedicatedServer64"
+```
+$(Magnetar)/
+  MagnetarLegacy.exe                 Windows only
+  MagnetarInterim.exe | .bin         plus its .dll/.deps.json/.runtimeconfig.json
+  LICENSE, README.md
+  Libraries/
+    MagnetarLegacy/                  per-launcher managed dependencies
+    MagnetarInterim/                 (Pulsar.Shared, PluginSdk, Harmony, ...)
+    Compiler/                        the out-of-process Roslyn compiler;
+                                     one copy serves both launchers
+  Config/                            MagnetarConfig (Terminal.Gui) with its
+                                     own dependencies; deployed by the
+                                     ConfigTerminal project
 ```
 
-### Build
+The tree is portable: copy it anywhere and run the launcher from there. The
+Deploy targets wipe and rewrite `Libraries/` and `Config/` on every build, so
+treat `$(Magnetar)` as build output, not as a place for your own files. The
+launcher's configuration is safe because it lives in a folder the deploy never
+touches (see [Configuration.md](Configuration.md)).
 
-```powershell
-dotnet build -c Release Magnetar.slnx
-```
-
-This builds both launchers. MSBuild targets then stage the install tree
-(mirroring Pulsar's deployment convention):
-
-* **Verify** (before build) — fails early with a clear message if the resolved
-  `DS64` or `Steamworks` path does not exist.
-* **Deploy** (after build) — copies the launcher and its dependencies into the
-  Magnetar install folder, by default `%APPDATA%\Magnetar` (override with the
-  `Magnetar` property/env var). The launcher executable lands at the root; its
-  managed dependencies go under `Libraries\MagnetarLegacy\` or
-  `Libraries\MagnetarInterim\`. The Pulsar submodule's Compiler project deploys
-  the out-of-process Roslyn compiler into `Libraries\Compiler\` — one copy
-  serves both launchers because it runs as a separate process.
-
-To build just one launcher, restrict the target framework:
+To build just one launcher on Windows, restrict the target framework:
 
 ```powershell
 dotnet build -c Release Legacy/Legacy.csproj -f net48      # MagnetarLegacy
 dotnet build -c Release Legacy/Legacy.csproj -f net10.0    # MagnetarInterim
 ```
 
-### Run / verify
+The `DeployLibraryFile` list in `Legacy.csproj` is maintained by hand,
+mirroring Pulsar's convention. A safety net in the Deploy target warns when
+the build output contains a copy-local dependency the list does not stage,
+which is the usual symptom after a Pulsar submodule bump adds a package.
 
-Run either launcher in place of `SpaceEngineersDedicated.exe`:
+## Run / verify
+
+Run the launcher from the deploy folder in place of
+`SpaceEngineersDedicated.exe`:
 
 ```powershell
-& "$env:APPDATA\Magnetar\MagnetarLegacy.exe"
 & "$env:APPDATA\Magnetar\MagnetarInterim.exe"
 ```
-
-A successful launch logs `Game ready...` once the world has loaded. The server
-then runs normally; stop it with `Ctrl+C` (or kill the process).
-
----
-
-## Linux
-
-> **Do not** target `net48` on Linux. Build the solution as-is — the OS-conditional
-> target frameworks already restrict the Linux build to `net10.0`.
-
-### Prerequisites
-
-* [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
-* `git`, `dotnet`, `bash`
-* Space Engineers Dedicated Server installed via Steam (or any local copy of
-  `DedicatedServer64/`)
-
-### One-time dependency staging
-
-Linux needs a few dependencies that aren't on NuGet staged into
-`build/Libraries/` before the first build. [build.sh](../build.sh) orchestrates
-this:
-
-```sh
-./build.sh --deps-only
-```
-
-It populates `build/Libraries/` with:
-
-Nothing is compiled at this step — every artefact is downloaded from a public
-GitHub release, so the binaries are identical to the ones Pulsar for Linux
-ships:
-
-| Artefact | Source |
-| -------- | ------ |
-| `Steamworks.NET.dll` | the [linux-dependencies](https://github.com/CometWorks/linux-dependencies) release, fetched by [Scripts/fetch_linux_dependencies.sh](../Scripts/fetch_linux_dependencies.sh) into `build/linux-deps/` (or `STEAMWORKS_NET_DLL=`) |
-| `libsteam_api.so` | same release (or `LIBSTEAM_API_SO=`, or the `$DS64` folder) |
-| `libEOSSDK-Linux-Shipping.so` | same release (or `LIBEOSSDK_SO=`) |
-| `libHavok.so`, `libRecastDetour.so`, `libVRageNative.so` | PE-loader replacements for Keen's Windows native DLLs, downloaded prebuilt from the [linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers) GitHub release by [Scripts/fetch_native_wrappers.sh](../Scripts/fetch_native_wrappers.sh) into `build/native/` (or `LIBHAVOK_SO=` etc.) |
-
-The proprietary Steamworks and EOS runtimes used to be a manual step — you had
-to obtain them from the vendor portals and drop them in `Vendor/`. They now
-arrive with the `linux-dependencies` release, so a clean clone builds without
-any manual file shuffling. Every library still honours its per-file override
-env var, and a file dropped in `Vendor/` still wins over the fetched release;
-`build.sh` prints exactly where it looked if something is missing.
-
-To pin exact releases for a reproducible build, set `LINUX_DEPENDENCIES_TAG`
-and `NATIVE_WRAPPERS_TAG`.
-
-Override the DS location for staging the same way as the build:
-
-```sh
-DS64=/opt/se1-ds/DedicatedServer64 ./build.sh --deps-only
-```
-
-`build.sh` flags: `--deps-only` (stage only), `--skip-deps` (package only),
-`--clean` (wipe caches and rebuild), or no args to stage **and** package the
-`dist/MagnetarForLinux.7z` bundle.
-
-### Build
-
-Once `build/Libraries/` is populated:
-
-```sh
-dotnet build -c Release Magnetar.slnx
-```
-
-On Linux the **Deploy** target stages the complete install tree into
-`~/.local/share/Magnetar` (override with `-p:Magnetar=...`): the
-`MagnetarInterim.bin` apphost at the root, the managed dependencies plus
-`Steamworks.NET.dll` and the native `.so` set under
-`Libraries/MagnetarInterim/`, and the out-of-process Roslyn compiler under
-`Libraries/Compiler/`. If `build/Libraries/` is missing, the Verify target
-fails fast with a clear message.
-
-### Package
-
-Running the full `./build.sh` (no flags) stages the dependencies, deploys the
-same install tree into `build/MagnetarForLinux/Magnetar/`, and packs it into
-`dist/MagnetarForLinux.7z`.
-
-The full packager also publishes the **`MagnetarConfig`** terminal UI
-(`ConfigTerminal/`, framework-dependent net10.0) into its own `Config/` folder
-and drops a root launcher/shim next to `MagnetarInterim` — `Magnetar/MagnetarConfig`
-(bash) on Linux, `<Magnetar>\MagnetarConfig.bat` on Windows — so the config tool
-ships in both bundles with its Terminal.Gui dependencies isolated from the
-launcher. See [Config tool internals → Build & packaging](ConfigTerminalInternals.md#13-build-packaging-and-documentation-integration).
-
-### Run / verify
 
 ```sh
 ~/.local/share/Magnetar/MagnetarInterim.bin
 ```
 
-A successful launch logs `Game ready...` once the world has loaded.
+A successful launch logs `Game ready...` once the world has loaded. Stop the
+server with `Ctrl+C`, or with `SIGTERM` for a save and clean exit.
 
----
-
-## Build properties & environment variables
-
-These are read at **build time** (MSBuild property or environment variable of
-the same name); resolved per OS in [Directory.Build.props](../Directory.Build.props).
-
-| Name | Effect | Default (Windows) | Default (Linux) |
-| ---- | ------ | ----------------- | --------------- |
-| `DS64` | Folder containing `SpaceEngineersDedicated.exe` | Steam registry key | `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64` |
-| `Magnetar` | Install/deploy folder | `%APPDATA%\Magnetar` | `~/.local/share/Magnetar` |
-| `Steamworks` | Folder containing `Steamworks.NET.dll` + the steam_api library | `%DS64%` (ships with the DS) | `<repo>/build/Libraries` (staged by `./build.sh`) |
-
-`build.sh` honours additional overrides for Linux dependency staging:
-`MAGNETAR_REPO_DIR`, `BUILD_DIR`, `LIBRARIES_DIR`, `OUTPUT_DIR`, plus the per-blob
-`LIBSTEAM_API_SO`, `LIBEOSSDK_SO`, `LIBHAVOK_SO`, `LIBRECASTDETOUR_SO`,
-`LIBVRAGENATIVE_SO` (and the `LINUXCOMPAT_NATIVE` search root).
-
-Runtime knobs (set when launching, not building) — `MAGNETAR_SAFE_MODE`,
-`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and the `-ds64` / `-config` command-line
-overrides — are documented in [Configuration.md](Configuration.md).
-
----
+On Linux the server also needs the native runtime libraries (libsteam_api,
+EOS, Havok, RecastDetour, VRageNative) and a current `Steamworks.NET.dll`.
+The linux-compat plugin downloads them as assets on first run. To supply your
+own copies instead, drop them into `Libraries/MagnetarInterim/`; the launcher
+picks up any `lib*.so*` and `Steamworks.NET.dll` found there before anything
+else. A build wipes that folder, so re-copy manual overrides after building.
 
 ## MagnetarMod MDK2 project
 
@@ -229,141 +145,87 @@ stay one level above it:
 dotnet build MagnetarMod/MagnetarMod.csproj
 ```
 
-It targets `net48`, uses `Mal.Mdk2.References` and
-`Mal.Mdk2.ModAnalyzers`, and reads the local Space Engineers install from
+It targets `net48`, uses `Mal.Mdk2.References` and `Mal.Mdk2.ModAnalyzers`,
+and reads the local Space Engineers install from
 `MagnetarMod/MagnetarMod.mdk.local.ini`. It is not part of `Magnetar.slnx`, so
-the regular release pipeline never builds the mod project. Space Engineers
-still compiles the world mod when loading it; the MDK2 project is for
-local/workshop validation and analyzer coverage.
-
----
+the release pipeline never builds it. Space Engineers compiles the world mod
+when loading it; the MDK2 project exists for local validation and analyzer
+coverage.
 
 ## How the multi-target build works
 
-* **Target frameworks** are OS-conditional in
+* Target frameworks are OS-conditional in
   [Legacy.csproj](../Legacy/Legacy.csproj) and
   [PluginSdkTests.csproj](../PluginSdkTests/PluginSdkTests.csproj):
   `net48;net10.0` on Windows, `net10.0` on Linux. The submodule's
   `Pulsar/Shared` multi-targets the same pair on its own.
-* **Assembly name** switches per target framework: `net48` →
-  `MagnetarLegacy`, `net10.0` → `MagnetarInterim`.
-* **Windows-only items** (application icon, `app.manifest`, the
+* The assembly name switches per target framework: `net48` builds
+  `MagnetarLegacy`, `net10.0` builds `MagnetarInterim`.
+* Windows-only items (application icon, `app.manifest`, the
   `VRage.Platform.Windows` reference) are gated with
   `Condition="'$(OS)' == 'Windows_NT'"`.
-* **Linux-only items** (staging the native `.so` set into
-  `Libraries/MagnetarInterim/`) are gated inside the Deploy target with
-  `Condition="'$(OS)' != 'Windows_NT'"`.
-* **Source guards** — platform-specific code uses
-  `RuntimeInformation.IsOSPlatform(...)` where it must compile for both `net48`
-  and `net10.0`, and `OperatingSystem.IsLinux()` (.NET 5+) only inside
-  `#if NETCOREAPP`. `Loader/NativeLibraryPreloader.cs` (the Linux native
-  bootstrap) is excluded from the `net48` compile entirely.
+* Platform-specific code uses `RuntimeInformation.IsOSPlatform(...)` where it
+  must compile for both `net48` and `net10.0`, and `OperatingSystem.IsLinux()`
+  only inside `#if NETCOREAPP`. `Loader/NativeLibraryPreloader.cs` is excluded
+  from the `net48` compile entirely.
 
----
+## Continuous integration / releases
 
-## Continuous integration / Releases
-
-[`.github/workflows/release.yml`](../.github/workflows/release.yml) builds both
-platforms and publishes a GitHub release with the two `.7z` bundles attached.
+[`.github/workflows/release.yml`](../.github/workflows/release.yml) builds
+both platforms and publishes a GitHub release with the two `.7z` bundles
+attached.
 
 ### Triggers
 
 | Trigger | Behaviour |
 | ------- | --------- |
-| Push to `main` | Reads `<Version>` from [Directory.Build.props](../Directory.Build.props). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped — nothing is built and no existing release is touched. |
-| Manual run (`workflow_dispatch`) | Always builds for the current version, regardless of what is already released. A **draft** boolean input (default **true**) decides the outcome: when set (the default) it publishes a **draft** release (not marked latest), tag `v<version>` or `v<version>-build.<run>` if that tag already exists; when cleared it publishes a real, public **latest** release `v<version>` — no version-gate check, since the operator asked for it explicitly. |
+| Push to `main` | Reads `<Version>` from [Directory.Build.props](../Directory.Build.props). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped. |
+| Manual run (`workflow_dispatch`) | Always builds for the current version. A **draft** boolean input (default **true**) decides the outcome: when set it publishes a draft release (tag `v<version>`, or `v<version>-build.<run>` if that tag exists); when cleared it publishes a real, public **latest** release. |
 
 ### Jobs
 
-* **version-check** — parses the version and decides `should_build` / `draft`;
-  every other job is gated on `should_build`. The version is the single
-  `<Version>` defined in [Directory.Build.props](../Directory.Build.props), which
-  also drives `AssemblyVersion` / `FileVersion` for every project. When building, it also probes the
-  DS depot's public **build id** (via `steamcmd +app_info_print`, no depot
-  download) and exposes it as the `ds_buildid` output used to key the DS cache.
-* **build-linux** (`ubuntu-latest`) — installs the .NET 8 + 10 SDKs and
-  `p7zip-full`; restores the cached **DS library set** (or downloads the
-  **Windows** DS depot via `steamcmd` on a cache miss — see below); then runs
-  [`build.sh`](../build.sh), which fetches the prebuilt libraries from two
-  releases —
-  [linux-dependencies](https://github.com/CometWorks/linux-dependencies) via
-  [Scripts/fetch_linux_dependencies.sh](../Scripts/fetch_linux_dependencies.sh)
-  (cached by release tag under `build/linux-deps/`) and
-  [linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers)
-  via
-  [Scripts/fetch_native_wrappers.sh](../Scripts/fetch_native_wrappers.sh)
-  (cached under `build/native/`) — and uploads the bundle, renamed to
-  `MagnetarForLinux-<version>.7z`.
-* **build-windows** (`windows-latest`) — installs the .NET 10 SDK (the image
-  ships the .NET Framework 4.8 targeting pack); restores the cached DS library
-  set (or downloads via `steamcmd` on a miss); runs [build.bat](../build.bat),
-  which builds `Magnetar.slnx` into a staging tree via the Deploy targets,
-  publishes MagnetarConfig into it, and packs it; the bundle is then renamed to
-  `MagnetarForWindows-<version>.7z`. Both build jobs check out the Pulsar
-  submodule (`submodules: recursive`).
-* **release** (`ubuntu-latest`) — downloads both bundles and creates the release
-  with `gh`.
+* **version-check** parses the version, decides `should_build` / `draft`, and
+  probes the DS depot's public build id (via `steamcmd +app_info_print`, no
+  depot download) to key the DS cache.
+* **build-linux** and **build-windows** check out the repo with the Pulsar
+  submodule, restore the cached DS library set (or download the depot via
+  `steamcmd` on a miss), run `dotnet build -c Release Magnetar.slnx` with the
+  `Magnetar` property pointed at a staging tree, run both test suites
+  (Linux job), verify the staged tree, and pack it with 7-Zip as
+  `MagnetarFor<OS>-<version>.7z`.
+* **release** downloads both bundles and creates the release with `gh`.
 
 ### Dedicated Server cache
 
 The build only references the managed assemblies in `DedicatedServer64/`, so
-each build job caches just that **~186 MB library set** (via `actions/cache`,
-path `ds64`) — never the multi-GB `Content/`. The cache key is
-`ds64-<os>-<ds_buildid>`, where `ds_buildid` is the DS depot's public build id
-from `version-check`. Consequences:
-
-* Unchanged DS version → cache hit → the `steamcmd` download is skipped entirely
-  (faster, and no exposure to `steamcmd`'s first-run flakiness).
-* First build after Keen ships a new DS version → new build id → cache miss → a
-  full `steamcmd` download into a scratch dir, of which only `DedicatedServer64/`
-  is copied into `ds64` and cached. So the DS auto-updates exactly once per DS
-  release.
-* `ds64/` is populated only after the post-download marker check passes, so a
-  failed download never caches a partial tree. If the build id can't be probed,
-  the key falls back to a unique value (cache miss, full download) rather than
-  wedging the release.
-
-Two ~186 MB caches (Linux + Windows) stay well under GitHub's 10 GB per-repo
-cache budget, so they are not evicted by the small native-wrappers cache.
+each job caches just that library set (roughly 186 MB, via `actions/cache`,
+path `ds64`), never the multi-GB `Content/`. The cache key is
+`ds64-<os>-<ds_buildid>`, so an unchanged DS version restores instantly and a
+new Keen release causes exactly one fresh `steamcmd` download per OS. The
+Linux job forces the Windows depot (`+@sSteamCmdForcePlatformType windows`)
+because there is no native Linux DS. Both jobs bootstrap `steamcmd` once
+(`+quit`) and retry the `app_update`, because a brand-new `steamcmd`
+self-updates on its first run and otherwise aborts with
+`Failed to install app '298740' (Missing configuration)`.
 
 ### Required repository configuration
 
-None. Every bundled library now comes from a public GitHub release
-([linux-dependencies](https://github.com/CometWorks/linux-dependencies) and
-[linux-native-wrappers](https://github.com/CometWorks/linux-native-wrappers))
-that `build.sh` fetches.
-
-The proprietary Steamworks and EOS runtimes used to arrive through a
-`VENDOR_ARCHIVE_URL` repository secret pointing at a `Vendor.7z`. That secret
-is no longer read by any workflow and can be deleted.
-
-On a cache miss the DS is retrieved anonymously (Steam app `298740`); the Linux job forces the
-Windows depot (`+@sSteamCmdForcePlatformType windows`) because there is no native
-Linux DS — Magnetar runs the Windows files via the native wrappers. Both jobs
-bootstrap `steamcmd` once (`+quit`) and then retry the `app_update` a few times:
-a brand-new `steamcmd` self-updates on its first run, which otherwise makes the
-in-session install abort with `Failed to install app '298740' (Missing
-configuration)`. The `GITHUB_TOKEN` (`contents: write`) is used for the release;
-no other secret is needed.
+None. The `GITHUB_TOKEN` (`contents: write`) publishes the release; no other
+secret is needed.
 
 ### Testing the workflow from a branch
 
-Because the workflow lives on the default branch (`main`), `workflow_dispatch` is
-registered and can be run against **any** branch — a dispatched run executes the
-workflow *and* code from the chosen branch. Leaving the **draft** input at its
-default (`true`) keeps it on the **draft** path, so it never publishes a public
-release; pass `-f draft=false` only when you deliberately want a real release. A
-push to a non-`main` branch does not trigger anything (the push trigger is
-`main`-only). To iterate on a branch without touching `main`:
+The workflow lives on `main`, so `workflow_dispatch` can run it against any
+branch, executing that branch's workflow and code. The default `draft=true`
+keeps such runs on the draft path. A push to a non-`main` branch triggers
+nothing.
 
 ```sh
 git push origin HEAD:my-branch
-gh workflow run release.yml -R viktor-ferenczi/Magnetar --ref my-branch
-gh run watch -R viktor-ferenczi/Magnetar \
-  "$(gh run list -R viktor-ferenczi/Magnetar --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
+gh workflow run release.yml -R CometWorks/magnetar --ref my-branch
+gh run watch -R CometWorks/magnetar \
+  "$(gh run list -R CometWorks/magnetar --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
 ```
 
-Each dispatch (with the default `draft=true`) creates a draft release for the
-current version (`v<version>`, or `v<version>-build.<run>` if that tag already
-exists); prune them with
-`gh release delete <tag> -R viktor-ferenczi/Magnetar --yes`.
+Prune leftover draft releases with
+`gh release delete <tag> -R CometWorks/magnetar --yes`.
