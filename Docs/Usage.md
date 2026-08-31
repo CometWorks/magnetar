@@ -34,9 +34,15 @@ headless defaults (`-noSplash -noPrompt -lazySteam`) internally, and Pulsar's
 client-only options (splash, intro video, F12 menu, …) are accepted but
 meaningless on a server.
 
-`-github-token <token>` / `MAGNETAR_GITHUB_TOKEN` is accepted for compatibility
-but currently has **no effect**: Pulsar's network layer does not support
-authenticated GitHub requests yet. Magnetar logs a warning when it is supplied.
+`-github-token <token>` / `MAGNETAR_GITHUB_TOKEN` supplies a GitHub personal
+access token. Magnetar hands it to Pulsar's network layer, which sends it as a
+`Bearer` header on `api.github.com` requests only — every hub, plugin and
+archive fetch goes through that host. Without a token those calls are anonymous
+and capped at 60 requests per hour per IP, which a busy or shared-IP host
+exhausts quickly; with one the cap is far higher and private repositories become
+reachable. The token is never sent to any other host. When neither the flag nor
+`MAGNETAR_GITHUB_TOKEN` is set, Pulsar's own `PULSAR_GITHUB_TOKEN` variable still
+applies.
 
 ## Client companion mod
 

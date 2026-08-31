@@ -58,9 +58,18 @@ public static class ServerFlags
 
     // Magnetar and dedicated-server options that take a value in the next
     // argv element. Their pairs are stripped from what is handed to Pulsar's
-    // parser: its Normalize step strips '-'/'/' from EVERY token and rewrites
-    // any that then matches an option short name — so an instance directory
-    // named "debug" in `-path debug` would otherwise flip Pulsar's -debug.
+    // parser, for two reasons.
+    //
+    // The first is simply that Pulsar's parser has no business seeing
+    // dedicated-server options.
+    //
+    // The second is Pulsar's Normalize step, which strips '-'/'/' from a token
+    // and rewrites it when the result matches an option short name. Upstream
+    // now skips tokens that do not start with '-' or '/', so a relative value
+    // like `-path debug` is safe. A '/'-rooted value is not: on Linux
+    // `-path /debug` still normalizes to "debug" and would flip Pulsar's
+    // -debug. Stripping the pairs closes that off for every value-taking
+    // option at once.
     private static readonly string[] valueOptions =
     [
         "config",
@@ -147,7 +156,8 @@ public static class ServerFlags
         Console.WriteLine("  -daemon             Detach from the parent process and console so the");
         Console.WriteLine("                      server keeps running after the parent exits");
         Console.WriteLine("  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod");
-        Console.WriteLine("  -github-token <pat> Use a GitHub token for API/archive downloads");
+        Console.WriteLine("  -github-token <pat> GitHub token for API downloads (lifts the anonymous");
+        Console.WriteLine("                      rate limit; also reaches private repositories)");
         Console.WriteLine();
         Console.WriteLine("Plugin loader options (shared with Pulsar):");
         Console.WriteLine("  -profile <name>     Force a specific plugin profile");

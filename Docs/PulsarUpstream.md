@@ -2,23 +2,25 @@
 
 Magnetar's `pulsar-based` branch carries a handful of workarounds for gaps in upstream
 [SpaceGT/Pulsar](https://github.com/SpaceGT/Pulsar). This document tracks the proposals
-prepared to close those gaps, the text to submit upstream, and the Magnetar code to
+prepared to close those gaps, the text submitted upstream, and the Magnetar code to
 delete once each one lands.
 
-The patches live in the local Pulsar checkout at `~/dev/se1/Pulsar`, branch
-`magnetar-upstream-fixes`, one commit per proposal on top of upstream `main` (64ad1a1):
+Proposals 1–3 merged upstream as a single squashed commit,
+[`b9f391e`](https://github.com/SpaceGT/Pulsar/commit/b9f391eef89463bdbe6d8067081512746674f196)
+("Magnetar upstream fixes (#49)"), and the `Pulsar/` submodule now points at it. The
+Magnetar-side cleanup for those three is done; what upstream actually merged differs
+from the proposal text in two places, noted below.
 
-| Commit | Proposal |
+| Proposal | Status |
 |---|---|
-| `be9f738` | 1. Skip normalizing non-option arguments |
-| `9382111` | 2. Support an optional GitHub API token |
-| `b2ee39f` | 3. Log and safely auto-answer unattended prompts |
-| `3ca7fd2` | 4. Allow hosts to override the stats identity |
-| (none)    | 5. Host-agnostic `Patch_Rewriter` (issue only) |
+| 1. Skip normalizing non-option arguments | Merged in `b9f391e`, as proposed |
+| 2. Support an optional GitHub API token | Merged in `b9f391e`, different mechanism |
+| 3. Log and safely auto-answer unattended prompts | Merged in `b9f391e`, partially |
+| 4. Allow hosts to override the stats identity | Open — patch `3ca7fd2` |
+| 5. Host-agnostic `Patch_Rewriter` (issue only) | Open — no patch |
 
-Each commit is independent of the others, so they can be cherry-picked onto separate
-branches for individual pull requests. The full solution builds with zero warnings with
-all four applied. Proposal texts below are ready to paste into GitHub.
+The remaining patch lives in the local Pulsar checkout at `~/dev/se1/Pulsar`, branch
+`magnetar-upstream-fixes`. Proposal texts below are ready to paste into GitHub.
 
 ---
 
@@ -43,13 +45,13 @@ all four applied. Proposal texts below are ready to paste into GitHub.
 > passes through unchanged. Help/version aliases (`/?`, `-h`, `/v`, ...) all start
 > with one of those characters, so they still work.
 
-**Magnetar cleanup once merged:** none required immediately. Magnetar strips
-value-taking option pairs from the argv it hands to `Parser.Initialize`
-(`ServerFlags.PulsarParserArgs`), which it needs anyway so Pulsar's parser never sees
-dedicated-server options. After a submodule bump the stripping becomes belt and
-braces rather than a correctness requirement; update the comments in
-`Legacy/Arguments/ServerFlags.cs` and `Legacy/Program.cs` that cite the Normalize
-bug as the reason.
+**Magnetar cleanup (done):** the stripping in `ServerFlags.PulsarParserArgs` stays.
+Magnetar needs it anyway so Pulsar's parser never sees dedicated-server options, and
+it is still load-bearing for one case the upstream fix does not cover: a `/`-rooted
+value. `Normalize` skips tokens that start with neither `-` nor `/`, so `-path debug`
+is now safe, but on Linux `-path /debug` still trims to `debug` and would flip
+Pulsar's `-debug`. The comments in `Legacy/Arguments/ServerFlags.cs` and
+`Legacy/Program.cs` were rewritten to state that narrower reason.
 
 ---
 
@@ -83,12 +85,23 @@ bug as the reason.
 > A token also lets the same mechanism fetch private repositories, though rate
 > limits are the motivating case.
 
-**Magnetar cleanup once merged:** in `Legacy/Program.cs`, replace the "has no
-effect" warning for `-github-token` / `MAGNETAR_GITHUB_TOKEN` with
-`GitHub.Token = ServerFlags.GitHubToken;` (keep the Magnetar flag and environment
-variable names for Quasar compatibility; they just feed the upstream property).
-Remove the corresponding "currently inert" notes in the docs and in
-`ServerFlags.PrintHelp`.
+**What actually merged:** the token property and the `Bearer` header landed as
+proposed, but the host allow-list did not. Instead of accepting `api.github.com`,
+`github.com` and `raw.githubusercontent.com`, upstream moved the archive and file
+endpoints onto the API host — `FetchRepo` is now `/repos/{0}/zipball/{1}` and
+`FetchFile` is `/repos/{0}/contents/{1}?ref={2}` with an
+`Accept: application/vnd.github.raw+json` header — and `IsTokenHost` allow-lists
+`api.github.com` alone. The effect is the same and private repositories work, but
+every GitHub call now counts against the API rate limit, including the raw file
+fetches that used to be unmetered. That makes the token more valuable to set, not
+less.
+
+**Magnetar cleanup (done):** `Legacy/Program.cs` sets `GitHub.Token` from
+`ServerFlags.GitHubToken` in `SetupCoreData`, guarded on a non-empty value so
+Pulsar's own `PULSAR_GITHUB_TOKEN` default survives when the Magnetar flag and
+variable are both unset. The "has no effect" warning is gone, as are the inert notes
+in `ServerFlags.PrintHelp`, `Docs/Usage.md` and `Docs/Configuration.md`. The
+Magnetar flag and environment variable names are unchanged for Quasar compatibility.
 
 ---
 
@@ -157,12 +170,28 @@ without logging anything. Three consequences today:
 > Pulsar as a submodule) forces `-noSplash -noPrompt -lazySteam` and ships no
 > Interface binary; a supported headless mode would replace that arrangement.
 
-**Magnetar cleanup once merged:** `Legacy/Program.cs` can drop its pre-logged
-`ShowStartupError` duplicates before `ShowBitrotPrompt` (the prompt text itself is
-now logged), and the comment explaining the suppressed `GameUpdatePrompt` handling
-in `SetupGameData` can shrink. The manual "log the change and clear caches" branch
-becomes redundant with upstream's `Yes` auto-answer; either keep the friendlier
-server wording or call the upstream prompt directly.
+**What actually merged:** the dangerous exits are fixed, the logging design is not.
+Upstream put the log line in `InterfaceClient.ShowPrompt` — a single
+`LogFile.Warn($"Prompt cancelled: {message}")` when `-noPrompt` is set — rather than
+in `Tools.ShowMessageBox`. There is no `unattendedResult` parameter and no
+icon-matched log level, so a fatal prompt and an informational one look the same in
+the log, and a caller cannot pick a per-call fallback. `Updater.TryUpdate` no longer
+exits on `Cancel` and its prompt dropped to `YesNo`; `GameUpdatePrompt` exits only on
+an explicit `No`, so under `-noPrompt` (which answers `Cancel`) it now continues and
+clears the plugin caches. The boot-loop is gone.
+
+The companion "first-class headless mode" issue still stands, and is arguably more
+relevant now: the auto-answer behaviour is spread across `InterfaceClient` and
+`Updater` rather than centralised.
+
+**Magnetar cleanup (done):** less than the proposal anticipated. The
+`ShowStartupError` calls before `ShowBitrotPrompt` are **not** duplicates — they carry
+different, more specific text than Pulsar's generic "You have a broken Pulsar
+insallation!", and they also write to `Console.Error`, which the upstream `LogFile.Warn`
+does not. They stay. `SetupGameData` likewise keeps its own branch: upstream's prompt
+text is written for the game client (Discord, Plugin Hub snapshots, "click Yes to
+continue") and would be logged verbatim on a server. Only the comments changed, to
+stop citing an exit path that no longer exists.
 
 ---
 
@@ -238,10 +267,9 @@ the coupling just forces any downstream host to compile upstream's `PluginInstan
 
 ## Submitting
 
-Suggested order: 1 (clear bug fix) and 2 (small, self-contained feature) first;
-3 next, PR and companion issue together since the issue explains where the design
-should eventually go; 4 once there is appetite for stats from non-client hosts;
-5 whenever convenient.
+Proposals 1–3 are merged. Remaining: 4 once there is appetite for stats from
+non-client hosts, and 5 whenever convenient. The companion issue for 3 (first-class
+headless mode) has not been filed yet.
 
 To turn a commit into a PR branch:
 

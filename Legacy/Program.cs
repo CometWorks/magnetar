@@ -23,6 +23,7 @@ using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
+using Pulsar.Shared.Network;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
 
@@ -92,11 +93,12 @@ static class Program
         }
 
         // Populate Pulsar's flags from a filtered argv: value-taking
-        // Magnetar/DS option pairs are stripped (Pulsar's normalizer could
-        // otherwise rewrite their values into Pulsar flags) and the appended
-        // defaults force headless behaviour (no splash, no dialogs, never
-        // launch or block on the Steam client). The dedicated server itself
-        // still receives the original args.
+        // Magnetar/DS option pairs are stripped (so Pulsar's parser never sees
+        // dedicated-server options, and its normalizer cannot rewrite a
+        // '/'-rooted value into a Pulsar flag) and the appended defaults force
+        // headless behaviour (no splash, no dialogs, never launch or block on
+        // the Steam client). The dedicated server itself still receives the
+        // original args.
         Parser.Initialize(ServerFlags.PulsarParserArgs(args), se1: true);
 
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -173,11 +175,15 @@ static class Program
         Parser.LogChanged();
         ServerFlags.LogFlags();
 
+        // Hand the Magnetar flag / environment variable to Pulsar's network
+        // layer, which attaches it as a Bearer token on api.github.com requests.
+        // Every hub, plugin and archive fetch goes through that host, so this
+        // lifts the 60-requests-per-hour anonymous rate limit (and reaches
+        // private repositories). Only a non-empty value is assigned, so Pulsar's
+        // own PULSAR_GITHUB_TOKEN default survives when neither -github-token
+        // nor MAGNETAR_GITHUB_TOKEN is set.
         if (!string.IsNullOrWhiteSpace(ServerFlags.GitHubToken))
-            LogFile.Warn(
-                "-github-token / MAGNETAR_GITHUB_TOKEN is not supported by the "
-                    + "Pulsar-based network layer yet and has no effect."
-            );
+            GitHub.Token = ServerFlags.GitHubToken;
 
         // MAGNETAR_SAFE_MODE only disables the preloader patches (a one-off
         // recovery knob); Pulsar's -safeMode flag is the way to start with
@@ -231,7 +237,8 @@ static class Program
         // Auto-update stays disabled: Magnetar's release archives are not in
         // the layout Pulsar's updater expects (it validates the target folder
         // against the Pulsar launcher names before replacing it). The Updater
-        // object is still used for the bitrot and game-update prompts.
+        // object is still used for the bitrot prompt below; the game-update
+        // case has its own handling in SetupGameData.
         // updater.TryUpdate();
 
         string checkFile = Path.Combine(baseDir, "checksum.txt");
@@ -248,8 +255,9 @@ static class Program
             string checkSum = File.ReadAllText(checkFile);
             if (Tools.GetFolderHash(libraryDir) != checkSum)
             {
-                // The prompt itself is suppressed by the forced -noPrompt, so
-                // name the reason for the exit here.
+                // Under the forced -noPrompt the prompt is auto-cancelled;
+                // upstream logs its own generic text, so name the actual cause
+                // here and put it on the console where an operator sees it.
                 ShowStartupError(
                     "The Libraries folder does not match checksum.txt (corrupted install). "
                         + "Reinstall Magnetar, or regenerate the checksum with -mkCheck."
@@ -329,12 +337,14 @@ static class Program
         {
             if (oldSeVersion is not null)
             {
-                // Pulsar's Updater.GameUpdatePrompt is a Yes/No dialog that
-                // exits the process unless confirmed — under the forced
-                // -noPrompt it would silently Exit(0) on every launch after a
-                // game update. A server just logs the change and clears the
-                // compiled-plugin caches so everything rebuilds for the new
-                // game version.
+                // Pulsar's Updater.GameUpdatePrompt now only exits on an
+                // explicit "No", so it no longer boot-loops an unattended host.
+                // Magnetar still keeps its own branch: that prompt's text is
+                // written for the game client (Discord, Plugin Hub snapshots,
+                // "click Yes to continue") and would be logged verbatim on a
+                // server. This logs the version change and clears the compiled
+                // plugin caches so everything rebuilds for the new game version
+                // — the same cache clearing the upstream prompt performs.
                 string change = (seVersion > oldSeVersion ? "up" : "down") + "graded";
                 LogFile.WriteLine(
                     $"Space Engineers has been {change} "
@@ -369,7 +379,8 @@ static class Program
 
         if (!launcher.CanStart())
         {
-            // CanStart's own dialog is suppressed by the forced -noPrompt.
+            // CanStart's own dialog is auto-cancelled by the forced -noPrompt
+            // (upstream logs it); this adds the actionable console message.
             ShowStartupError(
                 "Refusing to start (a conflicting Space Engineers process is running, "
                     + "or an unsupported argument was passed). Use -multiInstance to run "

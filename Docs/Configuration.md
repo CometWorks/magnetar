@@ -118,7 +118,8 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
 | Variable             | Effect                                                           |
 | -------------------- | ---------------------------------------------------------------- |
 | `MAGNETAR_SAFE_MODE` | When `1`, disables preloader patches for a one-off recovery run. |
-| `MAGNETAR_GITHUB_TOKEN` | Accepted for compatibility but currently has **no effect** (Pulsar's network layer does not support authenticated GitHub requests yet); a warning is logged when it is set. |
+| `MAGNETAR_GITHUB_TOKEN` | GitHub personal access token for `api.github.com` requests (hub, plugin and archive downloads). Lifts the 60-per-hour anonymous rate limit and reaches private repositories. `-github-token` takes precedence over it. |
+| `PULSAR_GITHUB_TOKEN` | Pulsar's own name for the same token, read by the submodule. Used only when neither `-github-token` nor `MAGNETAR_GITHUB_TOKEN` is set. |
 | `XDG_DATA_HOME`      | Changes the default build deploy folder on Linux (`$XDG_DATA_HOME/Magnetar`); the launcher itself is portable and does not read it. |
 | `DS64`               | Build-time override for the DS reference path.                   |
 
