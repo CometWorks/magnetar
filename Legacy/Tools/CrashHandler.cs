@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using Magnetar.Legacy.Launcher;
 using Pulsar.Shared;
 
 namespace Magnetar.Legacy;
@@ -34,6 +35,11 @@ internal static class CrashHandler
             Console.Error.WriteLine($"[{label}] Native crash detected (unhandled SEH exception)");
             Console.Error.Flush();
             LogFile.Error("Native crash detected (unhandled SEH exception)");
+
+            // Same gap as the managed handler: this exit skips the quit
+            // sequence, so drop the pid file here rather than leave a stale one.
+            ServerControl.FlushOnFatalExit();
+
             Environment.Exit(-1);
             return 0;
         };

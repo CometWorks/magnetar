@@ -478,6 +478,14 @@ static class Program
         string message = $"Unhandled exception: {e.ExceptionObject}";
         Console.Error.WriteLine($"[Magnetar] {message}");
         LogFile.Error(message);
+
+        // Exiting here bypasses ServerControl's quit sequence, so the pid file
+        // published by SetupGame would survive the crash. Left behind, it makes
+        // MagnetarConfig report the instance as RUNNING the moment the recorded
+        // pid is recycled by an unrelated process — and a crash is exactly when
+        // an operator reaches for MagnetarConfig.
+        ServerControl.FlushOnFatalExit();
+
         Environment.Exit(1);
     }
 
