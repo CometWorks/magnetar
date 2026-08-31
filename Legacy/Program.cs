@@ -424,7 +424,7 @@ static class Program
                 references,
                 probeDirs,
                 LogFile.FilePath,
-                [.. Tools.GetCompilationSymbols(trusted: true)]
+                [.. CompilationSymbols.Get(trusted: true)]
             )
         )
         {
@@ -525,7 +525,7 @@ static class Program
         Game.ShowIntroVideo(Flags.Current.GameIntroVideo);
         Game.RegisterPlugin(new PluginLoader());
 
-        IEnumerable<string> symbols = Tools.GetCompilationSymbols(trusted: false);
+        IEnumerable<string> symbols = CompilationSymbols.Get(trusted: false);
         Game.ConfigureCompiler(symbols, Flags.Current.DebugMods);
 
         // Install POSIX signal handlers and bind the plugin SDK facade before
