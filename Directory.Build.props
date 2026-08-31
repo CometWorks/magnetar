@@ -7,8 +7,12 @@
     <!-- Folder containing SpaceEngineersDedicated.exe -->
     <DS64></DS64>
 
-    <!-- Folder containing Steamworks.NET.dll and steam_api64.dll.
-         The dedicated server ships both, so this defaults to DS64. -->
+    <!-- Folder containing Steamworks.NET.dll and the steam_api native library.
+         On Windows the dedicated server ships both, so this defaults to DS64.
+         On Linux the depot carries only the Windows steam_api64.dll, so point
+         this at an extracted steam-dependencies.tar.gz from
+         github.com/CometWorks/linux-dependencies instead; it holds the pair
+         Deploy stages (Steamworks.NET.dll + libsteam_api.so). -->
     <Steamworks></Steamworks>
   </PropertyGroup>
 
@@ -43,5 +47,13 @@
 
   <PropertyGroup>
     <Steamworks Condition="'$(Steamworks)' == ''">$(DS64)</Steamworks>
+  </PropertyGroup>
+
+  <!-- Name of the Steam native library inside $(Steamworks), the counterpart
+       of Pulsar's property of the same name. Deploy stages it on Linux only;
+       see the Steamworks comment above and Legacy.csproj. -->
+  <PropertyGroup>
+    <SteamApiFileName Condition="'$(OS)' == 'Windows_NT'">steam_api64.dll</SteamApiFileName>
+    <SteamApiFileName Condition="'$(OS)' != 'Windows_NT'">libsteam_api.so</SteamApiFileName>
   </PropertyGroup>
 </Project>

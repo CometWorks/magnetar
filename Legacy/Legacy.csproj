@@ -60,14 +60,12 @@
     <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
     <!-- Pulsar submodule projects use Pulsar's own Directory.Build.props;
          forward the values they need explicitly. -->
-    <!-- SteamApiFileName is forwarded as steam_api64.dll on every platform:
-         $(Steamworks) points at the dedicated server's install, whose depot
-         carries the Windows files even on Linux (the server runs them through
-         the compatibility plugins). Pulsar's Verify would otherwise look for
-         libsteam_api.so, which nobody ships at build time any more; the
-         Linux runtime libraries arrive through linux-compat's assets. -->
+    <!-- $(Steamworks) holds Steamworks.NET.dll (referenced by Shared) and the
+         platform's steam_api native library; SteamApiFileName names the
+         latter. Both are forwarded so the submodule sees the same values this
+         project's Verify and Deploy targets check against. -->
     <ProjectReference Include="..\Pulsar\Shared\Shared.csproj"
-                      AdditionalProperties="Steamworks=$(Steamworks);SteamApiFileName=steam_api64.dll" />
+                      AdditionalProperties="Steamworks=$(Steamworks);SteamApiFileName=$(SteamApiFileName)" />
     <!-- The out-of-process Roslyn compiler. Not referenced as an assembly: its
          own Deploy target stages the executable and its dependencies into
          $(Magnetar)/Libraries/Compiler (the 'Pulsar' property is its
@@ -130,6 +128,8 @@
     <Error Condition="'$(DS64)' == '' or !Exists('$(DS64)')" Text="Specify the SpaceEngineers DedicatedServer64 path (DS64)!" />
     <Error Condition="'$(Steamworks)' == ''" Text="Specify the Steamworks path!" />
     <Error Condition="!Exists('$(Steamworks)/Steamworks.NET.dll')" Text="Steamworks.NET.dll not found in $(Steamworks)!" />
+    <Error Condition="'$(OS)' != 'Windows_NT' and !Exists('$(Steamworks)/$(SteamApiFileName)')"
+           Text="$(SteamApiFileName) not found in $(Steamworks)! The dedicated server depot ships only the Windows steam_api64.dll, so on Linux point the Steamworks property at an extracted steam-dependencies.tar.gz from github.com/CometWorks/linux-dependencies." />
   </Target>
   <!-- Deploy the freshly built launcher and its libraries into the Magnetar
        install folder, mirroring Pulsar's deployment convention:
@@ -183,14 +183,37 @@
       <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.Pkcs.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.Pkcs.dll')" />
       <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.ProtectedData.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.ProtectedData.dll')" />
     </ItemGroup>
-    <!-- Steamworks.NET is deliberately NOT bundled: it ships next to the
-         dedicated server and is resolved from there at runtime, so a DS
-         update can never be paired with a stale bundled copy. The Linux
-         native libraries (libsteam_api, EOS, Havok, RecastDetour,
-         VRageNative) are not bundled either; the linux-compat plugin pulls
-         them as assets at runtime. The NativeLibraryPreloader still dlopens
-         any lib*.so* an operator drops into the deploy folder as a manual
-         override. -->
+    <!-- On Windows the Steam files are deliberately NOT bundled: the dedicated
+         server ships Steamworks.NET.dll and steam_api64.dll next to itself and
+         both resolve from there, so a DS update can never be paired with a
+         stale bundled copy.
+
+         Linux gets no such luck. The depot carries only the Windows
+         steam_api64.dll, which the native loader cannot use, so nothing on the
+         probe path satisfies Steamworks.NET's steam_api64 P/Invoke and the
+         server dies in MySteamGameServer.Start. The DS's Steamworks.NET.dll
+         also predates the overloads linux-compat's preloader rewrites
+         SetItemTags and GetNumSubscribedItems onto. Both therefore come from
+         $(Steamworks), which on Linux points at an extracted
+         steam-dependencies.tar.gz rather than at the DS (see
+         Directory.Build.props). linux-compat's own assets do not cover these
+         two; they carry EOS, Havok, RecastDetour and VRageNative, which is why
+         only the Steam pair is staged here.
+
+         The NativeLibraryPreloader still dlopens any lib*.so* an operator
+         drops into the deploy folder, so a manual copy keeps overriding
+         whatever a build stages. -->
+    <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
+      <DeployLibraryFile Include="$(Steamworks)/Steamworks.NET.dll" />
+      <DeployLibraryFile Include="$(Steamworks)/$(SteamApiFileName)" />
+      <!-- Attribution travels with the binaries it covers. steam-dependencies
+           ships these next to them; a $(Steamworks) folder assembled by hand
+           may not, hence the Exists guards. -->
+      <DeployLicenseFile Include="$(Steamworks)/LICENSES/Steamworks.NET-LICENSE.txt"
+                         Condition="Exists('$(Steamworks)/LICENSES/Steamworks.NET-LICENSE.txt')" />
+      <DeployLicenseFile Include="$(Steamworks)/LICENSES/Steam-NOTICE.txt"
+                         Condition="Exists('$(Steamworks)/LICENSES/Steam-NOTICE.txt')" />
+    </ItemGroup>
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).exe.config" />
       <DeployLibraryFile Include="$(TargetDir)Microsoft.Win32.Registry.dll" />
@@ -226,6 +249,8 @@
     <RemoveDir Directories="$(DeployDirectory)" />
     <Copy SourceFiles="@(DeployRootFile)" DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="@(DeployLibraryFile)" DestinationFolder="$(DeployDirectory)" />
+    <Copy SourceFiles="@(DeployLicenseFile)" DestinationFolder="$(DeployDirectory)/LICENSES"
+          Condition="'@(DeployLicenseFile)' != ''" />
     <Copy SourceFiles="$(SourceExecutable)" DestinationFiles="$(DestinationExecutable)" />
     <Copy SourceFiles="$(LicensePath)" DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="$(ReadmePath)" DestinationFolder="$(Magnetar)" />

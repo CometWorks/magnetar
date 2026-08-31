@@ -44,9 +44,14 @@ either host.
 * A Space Engineers Dedicated Server install (Steam or `steamcmd`). The build
   references its assemblies; nothing else is downloaded.
 
-No native libraries are needed at build time. On Linux the
+On Linux you also need `Steamworks.NET.dll` and `libsteam_api.so`. Download
+`steam-dependencies.tar.gz` from a
+[linux-dependencies](https://github.com/CometWorks/linux-dependencies/releases)
+release, extract it anywhere, and point the `Steamworks` property below at that
+folder. The rest of the Linux runtime libraries (EOS, Havok, RecastDetour,
+VRageNative) need nothing at build time — the
 [linux-compat](https://github.com/CometWorks/linux-compat) plugin downloads
-them as assets when the server first runs.
+those as assets when the server first runs.
 
 ## Configuration
 
@@ -57,7 +62,7 @@ following Pulsar's convention. Three properties matter:
 | -------- | ------- | ----------------- | --------------- |
 | `Magnetar` | Deploy folder for the install tree | `%APPDATA%\Magnetar` | `$XDG_DATA_HOME/Magnetar`, else `~/.local/share/Magnetar` |
 | `DS64` | Folder containing `SpaceEngineersDedicated.exe` | Steam registry key, else the default Steam path | `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64` |
-| `Steamworks` | Folder containing `Steamworks.NET.dll` | `$(DS64)` | `$(DS64)` |
+| `Steamworks` | Folder containing `Steamworks.NET.dll` and the Steam native library | `$(DS64)` | `$(DS64)`, but must be set — see below |
 
 To override them, copy the "Override Project Settings" `PropertyGroup` into a
 `Directory.Build.props.user` file (git ignored) in the repo root, wrapped in a
@@ -65,12 +70,20 @@ top-level `<Project>` element, and fill in your paths. Anything left empty
 there falls back to the defaults. Environment variables and `-p:DS64=...`
 style command line properties work too.
 
+On Windows the `$(DS64)` default is right: the dedicated server ships both
+`Steamworks.NET.dll` and `steam_api64.dll` next to itself, and neither is
+bundled, so a DS update can never leave a stale copy behind. On Linux the depot
+carries only the Windows `steam_api64.dll`, which the native loader cannot use,
+so `Steamworks` has to point at an extracted `steam-dependencies.tar.gz`
+instead. Deploy then stages that pair into `Libraries/MagnetarInterim/`. Leave
+it at the default and the build stops with a message saying so, rather than
+producing an install that dies at startup in `MySteamGameServer.Start`.
+
 The submodule's projects are deliberately not part of `Magnetar.slnx`. They
 build through the `ProjectReference`s in
 [Legacy.csproj](../Legacy/Legacy.csproj), which forward the properties they
-need (`Steamworks`, the deployment root, and `SteamApiFileName`, pinned to
-`steam_api64.dll` because the DS depot carries the Windows files on every
-platform).
+need: `Steamworks`, `SteamApiFileName` (the platform's Steam native library
+name) and the deployment root.
 
 ## Deployment
 
@@ -127,12 +140,14 @@ Run the launcher from the deploy folder in place of
 A successful launch logs `Game ready...` once the world has loaded. Stop the
 server with `Ctrl+C`, or with `SIGTERM` for a save and clean exit.
 
-On Linux the server also needs the native runtime libraries (libsteam_api,
-EOS, Havok, RecastDetour, VRageNative) and a current `Steamworks.NET.dll`.
-The linux-compat plugin downloads them as assets on first run. To supply your
-own copies instead, drop them into `Libraries/MagnetarInterim/`; the launcher
-picks up any `lib*.so*` and `Steamworks.NET.dll` found there before anything
-else. A build wipes that folder, so re-copy manual overrides after building.
+On Linux the server also needs native runtime libraries. `libsteam_api.so` and
+`Steamworks.NET.dll` come from the build, staged out of `$(Steamworks)` into
+`Libraries/MagnetarInterim/`. EOS, Havok, RecastDetour and VRageNative arrive
+separately: the linux-compat plugin downloads them as assets on first run. To
+supply your own copies of any of them, drop them into
+`Libraries/MagnetarInterim/`; the launcher picks up any `lib*.so*` and
+`Steamworks.NET.dll` found there before anything else. A build wipes that
+folder, so re-copy manual overrides after building.
 
 ## MagnetarMod MDK2 project
 
