@@ -460,10 +460,10 @@ static class Program
         if (!isGameFramework)
             return [];
 
-        // se-dotnet-compat lets the .NET Framework dedicated server run under
-        // CoreCLR (the Interim/.NET 10 launcher). se-linux-compat additionally
+        // dotnet-compat lets the .NET Framework dedicated server run under
+        // CoreCLR (the Interim/.NET 10 launcher). linux-compat additionally
         // wraps the Windows-native libraries with their Linux .so equivalents.
-        return Tools.IsWindows() ? ["se-dotnet-compat"] : ["se-dotnet-compat", "se-linux-compat"];
+        return Tools.IsWindows() ? ["dotnet-compat"] : ["dotnet-compat", "linux-compat"];
 #endif
     }
 

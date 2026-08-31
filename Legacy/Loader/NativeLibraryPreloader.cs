@@ -31,7 +31,7 @@ namespace Magnetar.Legacy.Loader;
 /// has a [DllImport("EOSSDK-Shipping.dll")] that has to resolve to the Linux
 /// libEOSSDK-Linux-Shipping.so. The native physics wrappers (Havok /
 /// RecastDetour / VRage.Native) are PE-loader replacements for the Windows
-/// DLLs of the same names; the se-linux-compat plugin still does an explicit
+/// DLLs of the same names; the linux-compat plugin still does an explicit
 /// Init call on each, but their DllImport sites also need the alias here so
 /// the runtime can resolve them from any AssemblyLoadContext.
 /// </summary>
@@ -60,7 +60,7 @@ internal static class NativeLibraryPreloader
         ("EOSSDK-Shipping",     "libEOSSDK-Linux-Shipping.so"),
         ("EOSSDK-Shipping.dll", "libEOSSDK-Linux-Shipping.so"),
 
-        // se-linux-compat PE-loader wrappers for the Havok / RecastDetour /
+        // linux-compat PE-loader wrappers for the Havok / RecastDetour /
         // VRage.Native Windows DLLs.
         ("Havok.dll",        "libHavok.so"),
         ("RecastDetour.dll", "libRecastDetour.so"),

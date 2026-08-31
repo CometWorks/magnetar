@@ -19,8 +19,8 @@ The set of launchers depends on the host OS:
 `MagnetarLegacy` runs the dedicated server on .NET Framework 4.8 and is
 Windows only, because the .NET Framework reference assemblies it needs do not
 exist on Linux. `MagnetarInterim` runs the server on .NET 10 (via
-[se-dotnet-compat](https://github.com/CometWorks/dotnet-compat), plus
-[se-linux-compat](https://github.com/CometWorks/linux-compat) on Linux) and
+[dotnet-compat](https://github.com/CometWorks/dotnet-compat), plus
+[linux-compat](https://github.com/CometWorks/linux-compat) on Linux) and
 builds on both platforms. Each project selects its target frameworks with the
 MSBuild `$(OS)` reserved property, so the same solution builds correctly on
 either host.
