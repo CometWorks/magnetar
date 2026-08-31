@@ -109,10 +109,10 @@ installed bundle:
 
 ```sh
 # Linux
-~/.local/share/Magnetar/Config/MagnetarConfig
+~/.local/share/Magnetar/MagnetarConfig.bin
 
 # Windows
-%APPDATA%\Magnetar\Config\MagnetarConfig.exe
+%APPDATA%\Magnetar\MagnetarConfig.exe
 ```
 
 It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself
@@ -131,5 +131,5 @@ templates) · `-netdriver` (portable terminal driver) · `-diag` (print a
 headless read-only instance report and exit) · `-help`. Graceful stop and config
 reload use SIGTERM/SIGHUP and are **Linux-only**; on Windows the server can only
 be force-killed (with a data-loss warning). See the
-[Config tool user manual](ConfigTerminal.md) for full usage, and the
-[design and implementation notes](ConfigTerminalInternals.md) for internals.
+[Config tool user manual](MagnetarConfig.md) for full usage, and the
+[design and implementation notes](MagnetarConfigInternals.md) for internals.

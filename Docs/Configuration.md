@@ -28,7 +28,7 @@ While a Magnetar-launched server is running it also writes a `magnetar.pid`
 file here — the process id on the first line, the resolved DS data dir
 (`-path`) on the second — and removes it on clean shutdown. `MagnetarConfig`
 uses it to discover the instance and report server status; see the
-[Config tool internals](ConfigTerminalInternals.md#28-process-model-and-pid-file).
+[Config tool internals](MagnetarConfigInternals.md#28-process-model-and-pid-file).
 
 Without `-config`, the launcher keeps its state in the `Magnetar` folder next
 to the binaries, the same way Pulsar keeps its state in its `Legacy` and

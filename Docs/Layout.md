@@ -6,8 +6,8 @@
 | `Legacy/`                    | The server launcher (`MagnetarLegacy` / `MagnetarInterim`) — entry point, DS detection, daemon/pid/lifecycle, headless Harmony patches, chat commands, mission screens, Linux native bootstrap. References the submodule's `Shared` and `Compiler`. |
 | `PluginSdk/`                 | Public API surface server plugins compile against                 |
 | `PluginSdkTests/`            | xUnit specifications for every public `PluginSdk` API             |
-| `ConfigTerminal/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](ConfigTerminal.md) · [internals](ConfigTerminalInternals.md)) |
-| `ConfigTerminalTests/`       | xUnit tests for `ConfigTerminal` (registry, documents, process/pid, plugins, workshop resolver) |
+| `MagnetarConfig/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](MagnetarConfig.md) · [internals](MagnetarConfigInternals.md)) |
+| `MagnetarConfigTests/`       | xUnit tests for `MagnetarConfig` (registry, documents, process/pid, plugins, workshop resolver) |
 | `MagnetarMod/`               | Companion SE world mod project; Workshop/SE content lives under `MagnetarMod/src/` |
 | `Directory.Build.props`      | Build settings (deploy folder, DS path); override locally with a git-ignored `Directory.Build.props.user` |
 

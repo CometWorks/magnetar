@@ -236,17 +236,18 @@ jobs:
         run: |
           set -euo pipefail
           # The Deploy targets stage the complete portable install tree into
-          # $Magnetar: the MagnetarInterim.bin apphost, Libraries/ (launcher
-          # dependencies + the out-of-process compiler) and Config/
-          # (MagnetarConfig, deployed by its own project).
+          # $Magnetar: the MagnetarInterim.bin and MagnetarConfig.bin apphosts
+          # and Libraries/ (launcher and config-tool dependencies + the
+          # out-of-process compiler).
           dotnet build -c Release Magnetar.slnx
           dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
-          dotnet test --no-build -c Release ConfigTerminalTests/ConfigTerminalTests.csproj
+          dotnet test --no-build -c Release MagnetarConfigTests/MagnetarConfigTests.csproj
 
           for f in MagnetarInterim.bin MagnetarInterim.dll LICENSE README.md \
                    Libraries/MagnetarInterim/Pulsar.Shared.dll \
                    Libraries/Compiler/Compiler.bin \
-                   Config/MagnetarConfig; do
+                   MagnetarConfig.bin MagnetarConfig.dll \
+                   Libraries/MagnetarConfig/Terminal.Gui.dll; do
             test -e "stage/Magnetar/$f" || { echo "missing $f" >&2; exit 1; }
           done
 
@@ -331,14 +332,16 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           # The Deploy targets stage the complete portable install tree into
-          # $env:Magnetar: both launchers, Libraries/ and Config/.
+          # $env:Magnetar: both launchers, the config tool and Libraries/.
           dotnet build -c Release Magnetar.slnx
 
           foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE",
                            "Libraries\MagnetarLegacy\Pulsar.Shared.dll",
                            "Libraries\MagnetarInterim\Pulsar.Shared.dll",
                            "Libraries\Compiler\Compiler.exe",
-                           "Config\MagnetarConfig.exe")) {
+                           "MagnetarConfig.exe", "MagnetarConfig.dll",
+                           "Libraries\MagnetarConfig\Terminal.Gui.dll",
+                           "Libraries\MagnetarConfig\System.Management.dll")) {
             if (-not (Test-Path "stage\Magnetar\$f")) { throw "missing $f" }
           }
 

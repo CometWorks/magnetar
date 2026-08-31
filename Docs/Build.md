@@ -82,19 +82,19 @@ tree into `$(Magnetar)`:
 $(Magnetar)/
   MagnetarLegacy.exe                 Windows only
   MagnetarInterim.exe | .bin         plus its .dll/.deps.json/.runtimeconfig.json
+  MagnetarConfig.exe | .bin          the config tool, same triplet convention
   LICENSE, README.md
   Libraries/
     MagnetarLegacy/                  per-launcher managed dependencies
     MagnetarInterim/                 (Pulsar.Shared, PluginSdk, Harmony, ...)
     Compiler/                        the out-of-process Roslyn compiler;
                                      one copy serves both launchers
-  Config/                            MagnetarConfig (Terminal.Gui) with its
-                                     own dependencies; deployed by the
-                                     ConfigTerminal project
+    MagnetarConfig/                  the config tool's dependencies
+                                     (Terminal.Gui, NStack, ...)
 ```
 
 The tree is portable: copy it anywhere and run the launcher from there. The
-Deploy targets wipe and rewrite `Libraries/` and `Config/` on every build, so
+Deploy targets wipe and rewrite `Libraries/` on every build, so
 treat `$(Magnetar)` as build output, not as a place for your own files. The
 launcher's configuration is safe because it lives in the `Magnetar` folder,
 which the deploy never touches (see [Configuration.md](Configuration.md)).

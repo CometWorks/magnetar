@@ -6,8 +6,8 @@
     they need (Steamworks, deployment dir). Building them directly from this
     solution would fail their Verify targets.
   -->
-  <Project Path="ConfigTerminal/ConfigTerminal.csproj" />
-  <Project Path="ConfigTerminalTests/ConfigTerminalTests.csproj" />
+  <Project Path="MagnetarConfig/MagnetarConfig.csproj" />
+  <Project Path="MagnetarConfigTests/MagnetarConfigTests.csproj" />
   <Project Path="Legacy/Legacy.csproj" />
   <Project Path="PluginSdk/PluginSdk.csproj" />
   <Project Path="PluginSdkTests/PluginSdkTests.csproj" />
