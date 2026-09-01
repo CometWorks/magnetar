@@ -159,19 +159,20 @@ public static class ServerFlags
         Console.WriteLine("  -github-token <pat> GitHub token for API downloads (lifts the anonymous");
         Console.WriteLine("                      rate limit; also reaches private repositories)");
         Console.WriteLine();
+        // Only the Pulsar flags that change something on a dedicated server are
+        // listed. Pulsar's parser still accepts the rest (client-only ones like
+        // -f12Menu and -keepIntro, and -sources/-noUpdate/-preRelease, which
+        // reach no live code path here); they are simply not advertised.
         Console.WriteLine("Plugin loader options (shared with Pulsar):");
         Console.WriteLine("  -profile <name>     Force a specific plugin profile");
         Console.WriteLine("  -safeMode           Start with user plugins disabled");
         Console.WriteLine("  -bare               Disable force-loading core (compatibility) plugins");
-        Console.WriteLine("  -sources            Enable custom plugin sources");
         Console.WriteLine("  -hardened           Load only trusted mods, stripping untrusted Workshop mods");
         Console.WriteLine("  -multiInstance      Allow multiple launcher instances on this machine");
         Console.WriteLine("  -useHome            Store Magnetar data under the user's app-data folder");
         Console.WriteLine("                      instead of next to the launcher");
         Console.WriteLine("  -lazyPreload        Reuse existing preloader assemblies");
         Console.WriteLine("  -stableLogs         Overwrite game logs instead of timestamping them");
-        Console.WriteLine("  -noUpdate           Disable update checks");
-        Console.WriteLine("  -preRelease         Use pre-release updates");
         Console.WriteLine("  -mkCheck            Regenerate the Libraries checksum file (bitrot detection)");
         Console.WriteLine("  -debug              Launch the managed debugger at startup");
         Console.WriteLine("  -debugMods          Build game mods in debug mode");

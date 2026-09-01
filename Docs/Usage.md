@@ -25,14 +25,28 @@ switches, and the dedicated-server arguments Magnetar passes through — then ex
 without starting the server. On Linux the help screen deliberately skips loading
 the bundled native libraries, so it prints cleanly without startup noise.
 
-The plugin-loader flags (`-profile`, `-safeMode`, `-bare`, `-sources`,
-`-hardened`, `-multiInstance`, `-useHome`, `-lazyPreload`, `-stableLogs`,
-`-noUpdate`, `-preRelease`, `-mkCheck`, `-debug`, `-debugMods`,
-`-debugCompileAll`) are
-Pulsar's own flags with Pulsar's semantics; Magnetar additionally forces the
-headless defaults (`-noSplash -noPrompt -lazySteam`) internally, and Pulsar's
-client-only options (splash, intro video, F12 menu, …) are accepted but
-meaningless on a server.
+The plugin-loader flags (`-profile`, `-safeMode`, `-bare`, `-hardened`,
+`-multiInstance`, `-useHome`, `-lazyPreload`, `-stableLogs`, `-mkCheck`,
+`-debug`, `-debugMods`, `-debugCompileAll`) are Pulsar's own flags with
+Pulsar's semantics. Magnetar additionally forces the headless defaults
+(`-noSplash -noPrompt -lazySteam`) internally.
+
+The list is deliberately a subset of Pulsar's. Pulsar's parser still accepts
+every other Pulsar flag, but the rest reach no live code path on a dedicated
+server, so Magnetar does not advertise them:
+
+* `-sources` only unlocks a button in Pulsar's plugin GUI, which a server has
+  no way to show.
+* `-noUpdate` and `-preRelease` only steer `Updater.TryUpdate`, which Magnetar
+  never calls — Magnetar's release archives are not in the layout Pulsar's
+  updater expects, so it stays disabled.
+* The client-only options (`-seSplash`, `-keepIntro`, `-f12Menu`, `-continue`)
+  drive a splash screen, an intro video, a debug menu and a "continue last
+  game" button, none of which exist headless.
+* `-bin64` is Pulsar's game-directory override; on Magnetar it is read by code
+  the server never reaches. Use `-ds64` instead.
+
+Passing any of them is harmless — it is collected and ignored, not rejected.
 
 `-github-token <token>` / `MAGNETAR_GITHUB_TOKEN` supplies a GitHub personal
 access token. Magnetar hands it to Pulsar's network layer, which sends it as a
