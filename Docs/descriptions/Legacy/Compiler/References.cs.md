@@ -10,7 +10,7 @@ Provides the list of assembly references that the Roslyn compiler must know abou
 ### `References` — static class, internal
 Enumerates all assemblies the Roslyn compiler should reference. The SE-specific assemblies are discovered by glob patterns applied to the game directory via `Tools.GetFiles`; the result excludes `VRage.Native.dll` which cannot be safely referenced. A hard-coded `baseEnvironment` list adds compiler-agnostic framework and library assemblies that all compiled scripts/plugins will need (`Microsoft.CSharp`, `0Harmony`, `Newtonsoft.Json`, `Mono.Cecil`, `NLog`, `PluginSdk`).
 
-- **Fields:** `baseEnvironment — string[] of unconditional assembly names (no path, resolved by RoslynReferences later)`; `includeGlobs — string[] of filename globs covering SpaceEngineers*, VRage*, Sandbox*, ProtoBuf* DLLs`; `excludeGlobs — string[] containing VRage.Native.dll to prevent it from being referenced`
+- **Fields:** `baseEnvironment — string[] of unconditional assembly names (no path, resolved by RoslynReferences later), including Magnetar.Protocol so source plugins can implement Quasar companion contracts`; `includeGlobs — string[] of filename globs covering SpaceEngineers*, VRage*, Sandbox*, ProtoBuf* DLLs`; `excludeGlobs — string[] containing VRage.Native.dll to prevent it from being referenced`
 - **Methods:** `GetReferences(exeLocation) — yields glob-matched SE assembly paths from the game directory, then yields each name in baseEnvironment; returns IEnumerable<string>`
 
 ## Cross-references

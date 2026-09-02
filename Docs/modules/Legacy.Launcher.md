@@ -1,6 +1,6 @@
 # Module: Legacy.Launcher
 
-**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1570
+**Project:** `Legacy` · **Files:** 6 · **Source lines:** 1574
 
 ## Purpose
 
@@ -31,7 +31,7 @@ This is the outermost layer of the Legacy launcher — it runs before any SE gam
 | [`Legacy/Launcher/Game.cs`](../descriptions/Legacy/Launcher/Game.cs.md) | 141 | Thin bridge between Magnetar's launcher and the Space Engineers DS engine internals (`Sandbox`, `VRage`). |
 | [`Legacy/Launcher/PidFile.cs`](../descriptions/Legacy/Launcher/PidFile.cs.md) | 79 | Writes and removes `magnetar.pid` in the Magnetar config directory so an external tool (MagnetarConfig) can discover this dedicated-server instance and verify the running process belongs to it. |
 | [`Legacy/Launcher/ServerControl.cs`](../descriptions/Legacy/Launcher/ServerControl.cs.md) | 529 | Single source of truth for the dedicated server's lifecycle operations — save world, reload dedicated config, quit, and restart — with and without saving. |
-| [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 486 | Entry point for the Magnetar launcher. |
+| [`Legacy/Program.cs`](../descriptions/Legacy/Program.cs.md) | 490 | Entry point for the Magnetar launcher. |
 
 ## Public API surface
 

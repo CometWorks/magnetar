@@ -173,7 +173,7 @@
       "Legacy/Paths/ReflectionPathResolver.cs"
     ],
     "file_count": 7,
-    "total_lines": 613,
+    "total_lines": 614,
     "model": "sonnet",
     "dominant_tier": 2
   },
@@ -188,7 +188,7 @@
       "Legacy/Program.cs"
     ],
     "file_count": 6,
-    "total_lines": 1570,
+    "total_lines": 1574,
     "model": "opus",
     "dominant_tier": 1
   },

@@ -13,6 +13,7 @@ internal static class References
         "Mono.Cecil",
         "NLog",
         "PluginSdk",
+        "Magnetar.Protocol",
     ];
 
     private static readonly string[] includeGlobs =

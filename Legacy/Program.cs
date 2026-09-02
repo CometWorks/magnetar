@@ -305,8 +305,12 @@ static class Program
 
         string pulsarDir = ConfigManager.Instance.PulsarDir;
         string ds64Dir = ConfigManager.Instance.GameDir;
+        string localPluginDir = Path.Combine(pulsarDir, "Local");
 
-        using (CompilerFactory compiler = new([ds64Dir, dependencyDir], ds64Dir, pulsarDir))
+        using (CompilerFactory compiler = new(
+                   [ds64Dir, dependencyDir, localPluginDir],
+                   ds64Dir,
+                   pulsarDir))
         {
 #if NETFRAMEWORK
             if (!Tools.IsNative())
