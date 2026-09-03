@@ -23,7 +23,6 @@ using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
-using Pulsar.Shared.Network;
 using SharedLauncher = Pulsar.Shared.Launcher;
 using SharedLoader = Pulsar.Shared.Loader;
 
@@ -174,16 +173,6 @@ static class Program
 
         Parser.LogChanged();
         ServerFlags.LogFlags();
-
-        // Hand the Magnetar flag / environment variable to Pulsar's network
-        // layer, which attaches it as a Bearer token on api.github.com requests.
-        // Every hub, plugin and archive fetch goes through that host, so this
-        // lifts the 60-requests-per-hour anonymous rate limit (and reaches
-        // private repositories). Only a non-empty value is assigned, so Pulsar's
-        // own PULSAR_GITHUB_TOKEN default survives when neither -github-token
-        // nor MAGNETAR_GITHUB_TOKEN is set.
-        if (!string.IsNullOrWhiteSpace(ServerFlags.GitHubToken))
-            GitHub.Token = ServerFlags.GitHubToken;
 
         // MAGNETAR_SAFE_MODE only disables the preloader patches (a one-off
         // recovery knob); Pulsar's -safeMode flag is the way to start with

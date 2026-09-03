@@ -48,15 +48,24 @@ server, so Magnetar does not advertise them:
 
 Passing any of them is harmless — it is collected and ignored, not rejected.
 
-`-github-token <token>` / `MAGNETAR_GITHUB_TOKEN` supplies a GitHub personal
-access token. Magnetar hands it to Pulsar's network layer, which sends it as a
-`Bearer` header on `api.github.com` requests only — every hub, plugin and
-archive fetch goes through that host. Without a token those calls are anonymous
-and capped at 60 requests per hour per IP, which a busy or shared-IP host
-exhausts quickly; with one the cap is far higher and private repositories become
-reachable. The token is never sent to any other host. When neither the flag nor
-`MAGNETAR_GITHUB_TOKEN` is set, Pulsar's own `PULSAR_GITHUB_TOKEN` variable still
-applies.
+## GitHub token
+
+Set `PULSAR_GITHUB_TOKEN` to a GitHub personal access token. Pulsar's network
+layer reads the variable and sends the token as a `Bearer` header on
+`api.github.com` requests only — every hub, plugin and archive fetch goes
+through that host. Without a token those calls are anonymous and capped at 60
+requests per hour per IP, which a busy or shared-IP host exhausts quickly; with
+one the cap is far higher and private repositories become reachable. The token
+is never sent to any other host.
+
+There is deliberately no command-line flag: on Linux `/proc/<pid>/cmdline` is
+readable by every local user, so a token passed as an argument leaks to anyone
+with a shell on the machine, while another user's environment does not.
+
+Magnetar 2.0 had a `-github-token` flag and a `MAGNETAR_GITHUB_TOKEN` variable.
+Both are gone. The flag and its value are still stripped from the command line
+for one release, with a warning; the token itself has no effect, so GitHub calls
+fall back to anonymous until you set `PULSAR_GITHUB_TOKEN`.
 
 ## Client companion mod
 

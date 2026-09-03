@@ -31,18 +31,24 @@ public static class ServerFlags
 {
     public static bool Daemon { get; private set; }
     public static bool NoImplicitMod { get; private set; }
-    public static string GitHubToken { get; private set; }
     public static ConsentChoice Consent { get; private set; }
     public static bool Help { get; private set; }
     public static bool Version { get; private set; }
+
+    // Warnings about retired flags, collected while parsing and emitted from
+    // LogFlags once the log file exists (parsing runs before LogFile.Init).
+    private static readonly List<string> deprecated = [];
 
     static ServerFlags()
     {
         Daemon = HasArg("daemon");
         NoImplicitMod = HasArg("noimplicitmod");
-        GitHubToken =
-            GetArgValue("github-token")
-            ?? Environment.GetEnvironmentVariable("MAGNETAR_GITHUB_TOKEN");
+
+        // Removed in 2.1.0: the token is taken from PULSAR_GITHUB_TOKEN alone.
+        // A command line token is readable by every local user through
+        // /proc/<pid>/cmdline, an environment variable is not.
+        if (HasArg("github-token"))
+            deprecated.Add("-github-token is gone; set the PULSAR_GITHUB_TOKEN environment variable instead");
 
         if (HasArg("withdraw-consent"))
             Consent = ConsentChoice.Withdraw;
@@ -74,6 +80,8 @@ public static class ServerFlags
     [
         "config",
         "ds64",
+        // Retired in 2.1.0, still stripped for one release so a legacy
+        // invocation cannot leak its token into Pulsar's parser or the log.
         "github-token",
         "path",
         "ip",
@@ -124,13 +132,19 @@ public static class ServerFlags
             changed.Add("Daemon");
         if (NoImplicitMod)
             changed.Add("NoImplicitMod");
-        if (!string.IsNullOrWhiteSpace(GitHubToken))
-            changed.Add("GitHubToken");
         if (Consent != ConsentChoice.Unset)
             changed.Add(Consent.ToString());
 
         if (changed.Count > 0)
             Pulsar.Shared.LogFile.WriteLine($"Magnetar flags: {string.Join(" ", changed)}");
+
+        foreach (string warning in deprecated)
+        {
+            Pulsar.Shared.LogFile.Warn(warning);
+            // Also on the console: an operator running a stale launch line has
+            // to see this without going looking for the log.
+            Console.Error.WriteLine($"Warning: {warning}");
+        }
     }
 
     public static void PrintVersion()
@@ -156,8 +170,6 @@ public static class ServerFlags
         Console.WriteLine("  -daemon             Detach from the parent process and console so the");
         Console.WriteLine("                      server keeps running after the parent exits");
         Console.WriteLine("  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod");
-        Console.WriteLine("  -github-token <pat> GitHub token for API downloads (lifts the anonymous");
-        Console.WriteLine("                      rate limit; also reaches private repositories)");
         Console.WriteLine();
         // Only the Pulsar flags that change something on a dedicated server are
         // listed. Pulsar's parser still accepts the rest (client-only ones like

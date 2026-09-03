@@ -96,12 +96,12 @@ every GitHub call now counts against the API rate limit, including the raw file
 fetches that used to be unmetered. That makes the token more valuable to set, not
 less.
 
-**Magnetar cleanup (done):** `Legacy/Program.cs` sets `GitHub.Token` from
-`ServerFlags.GitHubToken` in `SetupCoreData`, guarded on a non-empty value so
-Pulsar's own `PULSAR_GITHUB_TOKEN` default survives when the Magnetar flag and
-variable are both unset. The "has no effect" warning is gone, as are the inert notes
-in `ServerFlags.PrintHelp`, `Docs/Usage.md` and `Docs/Configuration.md`. The
-Magnetar flag and environment variable names are unchanged for Quasar compatibility.
+**Magnetar cleanup (done):** Magnetar carries no token code at all. Its own
+`-github-token` flag and `MAGNETAR_GITHUB_TOKEN` variable were dropped in 2.1.0
+in favour of Pulsar's `PULSAR_GITHUB_TOKEN`, which `GitHub.Token` reads on its
+own; the flag is still stripped from the command line for one release, with a
+deprecation warning. Following upstream in offering no CLI flag is also the
+safer choice, since `/proc/<pid>/cmdline` is world-readable on Linux.
 
 ---
 
