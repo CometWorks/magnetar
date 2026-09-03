@@ -32,6 +32,13 @@ public static class ServerFlags
     public static bool Daemon { get; private set; }
     public static bool NoImplicitMod { get; private set; }
     public static ConsentChoice Consent { get; private set; }
+
+    /// <summary>
+    /// Set when -consent was given an unusable value. Program prints it and
+    /// exits with status 1 rather than starting the server on a guess.
+    /// </summary>
+    public static string ConsentError { get; private set; }
+
     public static bool Help { get; private set; }
     public static bool Version { get; private set; }
 
@@ -50,16 +57,71 @@ public static class ServerFlags
         if (HasArg("github-token"))
             deprecated.Add("-github-token is gone; set the PULSAR_GITHUB_TOKEN environment variable instead");
 
-        if (HasArg("withdraw-consent"))
-            Consent = ConsentChoice.Withdraw;
-        else if (HasArg("consent"))
-            Consent = ConsentChoice.Accept;
-        else if (HasArg("noconsent"))
-            Consent = ConsentChoice.Deny;
+        ParseConsent();
 
         // -h/-help/-?/--help, plus the /h //help style Pulsar also accepts.
         Help = HasArg("h") || HasArg("help") || HasArg("?");
         Version = HasArg("v") || HasArg("version");
+    }
+
+    // Whether -consent was followed by its value, so PulsarParserArgs knows
+    // how many tokens to strip. A legacy bare -consent has no value and must
+    // not swallow the option that follows it.
+    private static bool consentHasValue;
+
+    // -consent <accept|deny|withdraw> replaced the -consent / -noconsent /
+    // -withdraw-consent trio in 2.1.0; the legacy spellings still work for one
+    // release, with a warning. A -consent whose next token is missing or looks
+    // like an option is the legacy bare form, not a bad value.
+    private static void ParseConsent()
+    {
+        bool given = HasArg("consent");
+        string value = GetArgValue("consent");
+
+        if (given && value != null && !LooksLikeOption(value))
+        {
+            consentHasValue = true;
+
+            switch (value.ToLowerInvariant())
+            {
+                case "accept":
+                    Consent = ConsentChoice.Accept;
+                    return;
+
+                case "deny":
+                    Consent = ConsentChoice.Deny;
+                    return;
+
+                case "withdraw":
+                    Consent = ConsentChoice.Withdraw;
+                    return;
+
+                default:
+                    ConsentError =
+                        $"Invalid -consent value '{value}'. Use accept, deny or withdraw.";
+                    return;
+            }
+        }
+
+        if (HasArg("withdraw-consent"))
+        {
+            Consent = ConsentChoice.Withdraw;
+            deprecated.Add("-withdraw-consent is deprecated, use -consent withdraw");
+            return;
+        }
+
+        if (HasArg("noconsent"))
+        {
+            Consent = ConsentChoice.Deny;
+            deprecated.Add("-noconsent is deprecated, use -consent deny");
+            return;
+        }
+
+        if (given)
+        {
+            Consent = ConsentChoice.Accept;
+            deprecated.Add("-consent without a value is deprecated, use -consent accept");
+        }
     }
 
     // Magnetar and dedicated-server options that take a value in the next
@@ -108,6 +170,16 @@ public static class ServerFlags
 
             if (arg.StartsWith("-session:", StringComparison.OrdinalIgnoreCase))
                 continue;
+
+            // Same rule as valueOptions: no Magnetar option value ever reaches
+            // Pulsar's parser. Handled apart from the table because the legacy
+            // bare -consent carries no value to skip.
+            if (IsOption(arg, "consent"))
+            {
+                if (consentHasValue)
+                    index++;
+                continue;
+            }
 
             if (valueOptions.Any(name => IsOption(arg, name)))
             {
@@ -191,9 +263,11 @@ public static class ServerFlags
         Console.WriteLine("  -debugCompileAll    Compile-check every available plugin (diagnostics)");
         Console.WriteLine();
         Console.WriteLine("Telemetry consent:");
-        Console.WriteLine("  -consent            Enable sending anonymous plugin usage statistics (remembers the decision)");
-        Console.WriteLine("  -noconsent          Disable sending usage statistics for this run only");
-        Console.WriteLine("  -withdraw-consent   Withdraw consent and erase data from the statistics server");
+        Console.WriteLine("  -consent <choice>   accept   Send anonymous plugin usage statistics (remembers");
+        Console.WriteLine("                               the decision)");
+        Console.WriteLine("                      deny     Do not send usage statistics for this run only");
+        Console.WriteLine("                      withdraw Withdraw consent, erase the data from the statistics");
+        Console.WriteLine("                               server, then exit without starting the server");
         Console.WriteLine();
         Console.WriteLine("Dedicated server options (passed through):");
         Console.WriteLine("  -path <dir>         Server instance directory (worlds and Dedicated.cfg);");
@@ -221,6 +295,9 @@ public static class ServerFlags
         string trimmed = arg.TrimStart('-', '/');
         return trimmed.Equals(name, StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool LooksLikeOption(string arg) =>
+        !string.IsNullOrEmpty(arg) && (arg[0] == '-' || arg[0] == '/');
 
     private static bool HasArg(string argument) =>
         Environment.GetCommandLineArgs().Skip(1).Any(arg => IsOption(arg, argument));

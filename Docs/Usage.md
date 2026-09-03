@@ -104,12 +104,18 @@ with these flags:
 
 | Flag | Effect |
 | ---- | ------ |
-| `-consent` | Enable sending anonymous usage statistics and remember the decision. |
-| `-noconsent` | Disable sending statistics **for this run only** (does not change the stored decision). |
-| `-withdraw-consent` | Ask the statistics server to erase this instance's data, delete the local instance ID, record the denial, then exit without starting the server. |
+| `-consent accept` | Enable sending anonymous usage statistics and remember the decision. |
+| `-consent deny` | Disable sending statistics **for this run only** (does not change the stored decision). |
+| `-consent withdraw` | Ask the statistics server to erase this instance's data, delete the local instance ID, record the denial, then exit without starting the server. |
 
-`-withdraw-consent` is best effort: if the statistics server cannot be reached,
+Any other value is a startup error: Magnetar prints the accepted choices and
+exits with status 1 rather than guessing which of the three you meant.
+
+`-consent withdraw` is best effort: if the statistics server cannot be reached,
 telemetry is still disabled locally.
+
+Magnetar 2.0 spelled these `-consent`, `-noconsent` and `-withdraw-consent`.
+The old spellings still work for one release, with a deprecation warning.
 
 ## Daemon mode
 
@@ -129,6 +135,11 @@ parent terminating does not take the server down with it.
 When Magnetar detaches, it also writes `magnetar.pid` (PID + resolved data dir)
 in its config dir so tools can find and verify the running instance; it is
 removed on clean shutdown.
+
+Do not combine `-daemon` with the dedicated server's `-checkAlive`: one asks the
+server to survive its parent, the other to shut down when the parent exits.
+Magnetar does not reject the combination, but the result depends on timing and
+is not useful.
 
 ## Configuring the server (MagnetarConfig)
 

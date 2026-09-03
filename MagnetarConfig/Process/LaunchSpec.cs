@@ -22,7 +22,7 @@ internal sealed class LaunchSpec
     /// <summary>Set for the world-creation start so the DS runs its new-world branch (§9.6).</summary>
     public bool IgnoreLastSession { get; set; }
 
-    /// <summary>Extra launch args from tool settings (e.g. -noconsent).</summary>
+    /// <summary>Extra launch args from tool settings (e.g. -consent deny).</summary>
     public string[] ExtraArgs { get; set; } = Array.Empty<string>();
 
     /// <summary>Validates extra args; returns the rejection reason or null when acceptable.</summary>

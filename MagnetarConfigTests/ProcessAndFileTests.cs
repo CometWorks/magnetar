@@ -79,7 +79,7 @@ public class ProcessAndFileTests : IDisposable
         Assert.NotNull(spec.RejectionReason());
         spec.ExtraArgs = new[] { "-session:foo" };
         Assert.NotNull(spec.RejectionReason());
-        spec.ExtraArgs = new[] { "-noconsent" };
+        spec.ExtraArgs = new[] { "-consent", "deny" };
         Assert.Null(spec.RejectionReason());
     }
 

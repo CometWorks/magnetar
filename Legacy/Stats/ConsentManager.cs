@@ -24,7 +24,7 @@ public static class ConsentManager
     public static string PlayerHash { get; private set; }
 
     // Withdraws consent: asks the server to erase this instance's data, deletes
-    // instance.id, and records the denial locally. Used by -withdraw-consent,
+    // instance.id, and records the denial locally. Used by -consent withdraw,
     // after which Magnetar exits without starting the server. Best effort: a
     // server that cannot be reached still leaves telemetry disabled locally.
     public static void Withdraw(string votesServer)
@@ -60,7 +60,7 @@ public static class ConsentManager
             DeleteInstanceId(); // clears a corrupted (unreadable) id file too
         }
 
-        Deny(config, "-withdraw-consent");
+        Deny(config, "-consent withdraw");
     }
 
     public static void Resolve()
@@ -81,12 +81,12 @@ public static class ConsentManager
         switch (flag)
         {
             case ConsentChoice.Deny:
-                LogFile.WriteLine("Consent: -noconsent specified, telemetry suppressed this run");
+                LogFile.WriteLine("Consent: -consent deny given, telemetry suppressed this run");
                 // Leave instance.id in place if it exists
                 return;
 
             case ConsentChoice.Accept:
-                Accept(config, "-consent flag");
+                Accept(config, "-consent accept flag");
                 return;
         }
 
@@ -112,7 +112,7 @@ public static class ConsentManager
         if (!IsInteractiveTerminal())
         {
             LogFile.Warn(
-                "Consent: no interactive terminal, telemetry disabled. Use -consent to enable."
+                "Consent: no interactive terminal, telemetry disabled. Use -consent accept to enable."
             );
             return;
         }
@@ -132,7 +132,7 @@ public static class ConsentManager
             "personal data, no account or Steam ID, no IP address, no world or server content."
         );
         Console.WriteLine(
-            "You can change this later with -consent, -noconsent, or -withdraw-consent."
+            "You can change this later with -consent accept, -consent deny or -consent withdraw."
         );
         Console.WriteLine();
 
@@ -157,7 +157,7 @@ public static class ConsentManager
                 // block again: leave the choice undecided and disable telemetry
                 // for this run. The flags still work non-interactively.
                 LogFile.Warn(
-                    "Consent: no usable console input, telemetry disabled this run. Use -consent or -noconsent."
+                    "Consent: no usable console input, telemetry disabled this run. Use -consent accept or -consent deny."
                 );
                 return;
             }

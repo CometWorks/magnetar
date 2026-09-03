@@ -91,6 +91,14 @@ static class Program
             return;
         }
 
+        // A misspelled consent choice is a configuration error: refuse to start
+        // rather than silently picking one of the three meanings.
+        if (ServerFlags.ConsentError != null)
+        {
+            Console.Error.WriteLine(ServerFlags.ConsentError);
+            Environment.Exit(1);
+        }
+
         // Populate Pulsar's flags from a filtered argv: value-taking
         // Magnetar/DS option pairs are stripped (so Pulsar's parser never sees
         // dedicated-server options, and its normalizer cannot rewrite a
@@ -128,7 +136,7 @@ static class Program
 
         SetupCoreData(baseDir);
 
-        // -withdraw-consent is a one-shot maintenance action: erase server-side
+        // -consent withdraw is a one-shot maintenance action: erase server-side
         // data, record the denial, and exit without starting the server.
         if (ServerFlags.Consent == ConsentChoice.Withdraw)
         {

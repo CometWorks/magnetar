@@ -106,7 +106,7 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
   Its presence *is* the record that telemetry is enabled, and the first 20 hex
   characters of the UUID are the only identifier sent to the statistics server (no
   Steam ID or account is ever involved). Deleting this file disables telemetry;
-  `-withdraw-consent` deletes it and also asks the server to erase the data.
+  `-consent withdraw` deletes it and also asks the server to erase the data.
 * **`config.xml`** — records the human-visible decision in `DataHandlingConsent`
   and `DataHandlingConsentDate`. A decision has been made when the date is set;
   an accepted decision is only honored while its `instance.id` exists (a stored
