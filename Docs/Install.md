@@ -28,6 +28,10 @@ and extract its `Magnetar/` folder anywhere you like:
 | `MagnetarForLinux-<version>.7z` | `MagnetarInterim.bin` (.NET 10) with `Libraries/` and the `MagnetarConfig.bin` terminal UI. |
 | `MagnetarForWindows-<version>.7z` | `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) with `Libraries/` and `MagnetarConfig.exe`. |
 
+`<version>` has four components: the Pulsar release Magnetar is built on, plus a
+Magnetar build number, as in `2.3.3.0`. See
+[Versioning](Build.md#versioning) for how it is bumped.
+
 Then run the launcher in place of `SpaceEngineersDedicated.exe`. The launchers
 keep their shared configuration and logs in the `Magnetar` folder inside the
 install folder, so the whole thing moves as one unit. To uninstall, delete the

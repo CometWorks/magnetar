@@ -46,6 +46,13 @@ the game and Magnetar logs. It ships in both bundles as `MagnetarConfig.exe`
 (Windows) / `MagnetarConfig.bin` (Linux) next to the launchers. See the
 **[Config tool user manual](Docs/MagnetarConfig.md)**.
 
+## Versioning
+
+Magnetar's version is the vendored Pulsar version plus a build component:
+`2.3.3.0` is the first Magnetar build on Pulsar 2.3.3, and `2.3.3.1` would be a
+Magnetar-only release on the same Pulsar base. Release tags and bundle names use
+all four components; `-version` prints the first three.
+
 ## Building
 
 Clone with the Pulsar submodule and build the solution:

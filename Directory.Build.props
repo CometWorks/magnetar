@@ -16,9 +16,14 @@
     <Steamworks></Steamworks>
   </PropertyGroup>
 
-  <!-- Bump the Magnetar version here (centralized) -->
+  <!-- Bump the Magnetar version here (centralized).
+       Format: <Pulsar version>.<Magnetar build>. 2.3.3.0 is the first Magnetar
+       build on the Pulsar 2.3.3 release vendored in Pulsar/; bump the fourth
+       component for Magnetar-only releases on the same Pulsar base, and reset
+       it to 0 when the submodule moves to a new Pulsar version.
+       See Docs/Build.md ("Versioning"). -->
   <PropertyGroup>
-    <Version>2.3.3</Version>
+    <Version>2.3.3.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>

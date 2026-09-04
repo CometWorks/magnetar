@@ -184,6 +184,41 @@ coverage.
   only inside `#if NETCOREAPP`. `Loader/NativeLibraryPreloader.cs` is excluded
   from the `net48` compile entirely.
 
+## Versioning
+
+Magnetar's version is `<Pulsar version>.<Magnetar build>`: the first three
+components mirror the Pulsar release vendored in `Pulsar/`, the fourth is
+Magnetar's own build number on that base. `2.3.3.0` is the first Magnetar build
+on Pulsar 2.3.3; a Magnetar-only fix released against the same Pulsar would be
+`2.3.3.1`. Moving the submodule to a new Pulsar release resets the fourth
+component to 0.
+
+[Directory.Build.props](../Directory.Build.props) holds the single `<Version>`,
+which also feeds `AssemblyVersion` and `FileVersion`. It applies to Magnetar's
+own projects only (the launchers, `MagnetarConfig`, `PluginSdk`). Projects under
+`Pulsar/` build with Pulsar's own props and keep their upstream versions, so the
+shipped `Pulsar.Shared.dll` carries Pulsar's number, not Magnetar's.
+
+What the fourth component changes:
+
+* The release tag (`v2.3.3.0`) and the bundle names
+  (`MagnetarFor<OS>-2.3.3.0.7z`), both derived from `<Version>`.
+* `AssemblyInformationalVersion`, now `2.3.3.0+<commit sha>` instead of
+  `2.3.3+<commit sha>`. Quasar logs this string for the running launcher.
+
+What it does not change: `AssemblyVersion` and `FileVersion` were already
+four-component at runtime, because .NET pads `2.3.3` to `2.3.3.0` when it loads
+the assembly. Anything comparing or recording the loaded version — Pulsar's
+plugin cache among them — sees the same value as before, so the notation change
+alone does not invalidate compiled plugin caches. `-version` and the startup log
+line print three components (`Version.ToString(3)`), so both still read
+`Magnetar v2.3.3`.
+
+The release gate compares versions with `sort -V`, which orders `2.3.3` before
+`2.3.3.0`, so adding the build component counts as newer and publishes. The
+reverse does not: once a four-component version is released, dropping back to
+three components looks older and the release run is skipped.
+
 ## Continuous integration / releases
 
 [`.github/workflows/release.yml`](../.github/workflows/release.yml) builds
