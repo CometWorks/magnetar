@@ -1,11 +1,15 @@
 <Project>
-  <!-- Override Project Settings -->
+  <!-- Override Project Settings.
+       The empty values below are placeholders: they only apply when nothing
+       else set the property, so the Magnetar / DS64 / Steamworks environment
+       variables the release workflow exports (and -p:... on the command line)
+       win over them. Put real local paths into Directory.Build.props.user. -->
   <PropertyGroup>
     <!-- Folder where Magnetar will be deployed -->
-    <Magnetar></Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == ''"></Magnetar>
 
     <!-- Folder containing SpaceEngineersDedicated.exe -->
-    <DS64></DS64>
+    <DS64 Condition="'$(DS64)' == ''"></DS64>
 
     <!-- Folder containing Steamworks.NET.dll and the steam_api native library.
          On Windows the dedicated server ships both, so this defaults to DS64.
@@ -13,7 +17,7 @@
          this at an extracted steam-dependencies.tar.gz from
          github.com/CometWorks/linux-dependencies instead; it holds the pair
          Deploy stages (Steamworks.NET.dll + libsteam_api.so). -->
-    <Steamworks></Steamworks>
+    <Steamworks Condition="'$(Steamworks)' == ''"></Steamworks>
   </PropertyGroup>
 
   <!-- Bump the Magnetar version here (centralized).
