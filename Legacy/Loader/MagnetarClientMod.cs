@@ -1,11 +1,13 @@
+using Magnetar.Legacy.Arguments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox;
 using VRage.Game;
 
-namespace Pulsar.Legacy.Loader;
+namespace Magnetar.Legacy.Loader;
 
 internal static class MagnetarClientMod
 {
@@ -18,7 +20,7 @@ internal static class MagnetarClientMod
     {
         var ids = new HashSet<ulong>(configuredIds ?? Enumerable.Empty<ulong>());
 
-        if (Flags.NoImplicitMod)
+        if (ServerFlags.NoImplicitMod)
         {
             ids.Remove(WorkshopId);
             LogFile.WriteLine("MagnetarMod client companion disabled by -noimplicitmod.");
@@ -66,7 +68,7 @@ internal static class MagnetarClientMod
         if (mods == null)
             return;
 
-        if (Flags.NoImplicitMod)
+        if (ServerFlags.NoImplicitMod)
         {
             int removed = mods.RemoveAll(IsMagnetarMod);
             if (removed > 0)

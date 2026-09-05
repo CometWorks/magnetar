@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using Magnetar.Legacy;
 using Pulsar.Legacy.Extensions;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
@@ -19,7 +20,7 @@ public static class Patch_MyScriptManager
 {
     private static readonly Action<MyScriptManager, string, MyModContext> loadScripts;
     private static readonly FieldInfo conditionalSymbols;
-    private const string ConditionalSymbol = "PULSAR";
+    private const string ConditionalSymbol = CompilationSymbols.MagnetarSymbol;
 
     private static HashSet<string> ConditionalSymbols =>
         (HashSet<string>)conditionalSymbols.GetValue(MyScriptCompiler.Static);

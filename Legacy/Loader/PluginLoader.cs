@@ -7,10 +7,12 @@ using System.Text;
 using HarmonyLib;
 using PluginSdk;
 using PluginSdk.Commands;
-using Pulsar.Legacy.Commands;
-using Pulsar.Legacy.Integration;
-using Pulsar.Legacy.Paths;
+using Magnetar.Legacy.Commands;
+using Magnetar.Legacy.Integration;
+using Magnetar.Legacy.Loader;
+using Magnetar.Legacy.Paths;
 using Pulsar.Shared;
+using Pulsar.Shared.Arguments;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
 using Sandbox.Game.World;
@@ -87,7 +89,7 @@ public class PluginLoader : IHandleInputPlugin
             InstantiatePlugins();
             LogFile.WriteLine($"Initializing {plugins.Count} plugins");
 
-            if (Flags.CheckAllPlugins)
+            if (Flags.Current.CheckAllPlugins)
                 debugCompileResults.Append("Plugins that failed to Init:").AppendLine();
 
             // Install the host's command registrar before plugins initialize.
@@ -125,7 +127,7 @@ public class PluginLoader : IHandleInputPlugin
                 if (!p.Init(gameInstance))
                 {
                     plugins.RemoveAtFast(i);
-                    if (Flags.CheckAllPlugins)
+                    if (Flags.Current.CheckAllPlugins)
                         debugCompileResults
                             .Append(p.FriendlyName ?? "(null)")
                             .Append(" - ")
@@ -139,7 +141,7 @@ public class PluginLoader : IHandleInputPlugin
 
         init = true;
 
-        if (Flags.CheckAllPlugins)
+        if (Flags.Current.CheckAllPlugins)
         {
             LogFile.WriteLine("All plugins compiled, opening log file");
             LogFile.WriteLine(debugCompileResults.ToString());

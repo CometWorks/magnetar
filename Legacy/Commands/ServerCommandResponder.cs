@@ -3,7 +3,7 @@ using Sandbox.Game;
 using VRage.Game;
 using VRageMath;
 
-namespace Pulsar.Legacy.Commands;
+namespace Magnetar.Legacy.Commands;
 
 /// <summary>
 /// Delivers command replies to chat through the game's scripted-message API.

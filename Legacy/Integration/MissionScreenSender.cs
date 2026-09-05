@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using PluginSdk;
 using ProtoBuf;
-using Pulsar.Legacy.Loader;
+using Magnetar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using VRage.Game;
 using LauncherGame = Pulsar.Legacy.Launcher.Game;
 
-namespace Pulsar.Legacy.Integration;
+namespace Magnetar.Legacy.Integration;
 
 /// <summary>
 /// Host-side sender for <see cref="MissionScreens"/>. The paired client

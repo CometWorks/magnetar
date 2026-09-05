@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Pulsar.Shared;
 
-namespace Pulsar.Legacy.Launcher;
+namespace Magnetar.Legacy.Launcher;
 
 /// <summary>
 /// Detaches the running process from its parent (typically Quasar) when the
@@ -59,7 +59,7 @@ internal static class Daemon
 
     /// <summary>
     /// Detaches the process from its parent. Call once at startup, after the log
-    /// file is initialized, when <see cref="Flags.Daemon"/> is set. Idempotent:
+    /// file is initialized, when <see cref="ServerFlags.Daemon"/> is set. Idempotent:
     /// safe to call again after a daemon-mode restart (the process is already
     /// detached and the call is a no-op).
     /// </summary>

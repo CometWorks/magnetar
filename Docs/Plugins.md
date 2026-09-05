@@ -1,7 +1,7 @@
 # Plugins
 
-Plugins are registered on
-[PluginHub-DS](https://github.com/viktor-ferenczi/PluginHub-DS/). Adding other
+Plugins are registered on the
+[MagnetarHub](https://github.com/CometWorks/magnetar-hub). Adding other
 hubs is possible but extends the trust boundary — plugins run unsandboxed native
 code.
 

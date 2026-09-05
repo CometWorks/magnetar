@@ -7,6 +7,7 @@ using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Pulsar.Shared;
+using Pulsar.Shared.Arguments;
 using Sandbox;
 using Sandbox.Engine.Utils;
 using Sandbox.Game;
@@ -101,7 +102,7 @@ internal static class Game
     public static void SetupMyFakes()
     {
         typeof(MyFakes).TypeInitializer.Invoke(null, null);
-        MyFakes.ENABLE_F12_MENU = Flags.DebugMenu;
+        MyFakes.ENABLE_F12_MENU = Flags.Current.DebugMenu;
         MyFakes.ENABLE_SPLASHSCREEN = false;
     }
 
@@ -130,8 +131,14 @@ internal static class Game
         main.Invoke(null, [args]);
     }
 
-    public static void AddCompilationSymbols(params string[] symbols) =>
-        MyScriptCompiler.Static.AddConditionalCompilationSymbols(symbols);
+    public static void ConfigureCompiler(IEnumerable<string> symbols, bool debug)
+    {
+        if (debug)
+            symbols = symbols.Append("DEBUG");
+
+        MyScriptCompiler.Static.EnableDebugInformation = debug;
+        MyScriptCompiler.Static.AddConditionalCompilationSymbols([.. symbols]);
+    }
 
     public static void ShowIntroVideo(bool enabled) =>
         MyPlatformGameSettings.ENABLE_LOGOS = enabled;

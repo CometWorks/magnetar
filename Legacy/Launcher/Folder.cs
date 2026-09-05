@@ -13,6 +13,10 @@ namespace Pulsar.Legacy.Launcher;
 
 internal class Folder
 {
+    // Steam app id of the SE1 Dedicated Server depot (the game client id
+    // lives in Pulsar's Steam class; the DS id is Magnetar-specific).
+    public const uint AppIdSe1DS = 298740u;
+
     private const string registryKey =
         @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App {0}";
     private const string registryName = "InstallLocation";
@@ -43,7 +47,7 @@ internal class Folder
 
     private static string TryConvertUnix(string path)
     {
-        if (!Tools.IsNative() && path.StartsWith("/"))
+        if (Tools.IsProton() && path.StartsWith("/"))
             return "Z:" + path;
         return path;
     }
@@ -64,7 +68,7 @@ internal class Folder
             RegistryView.Registry64
         );
 
-        using var key = baseKey.OpenSubKey(string.Format(registryKey, Steam.AppIdSe1DS));
+        using var key = baseKey.OpenSubKey(string.Format(registryKey, AppIdSe1DS));
         if (key is null)
             return null;
 
@@ -124,7 +128,7 @@ internal class Folder
 
     private static string FromSteamFiles()
     {
-        if (!Tools.IsNative())
+        if (Tools.IsProton())
             return null;
 
         try
@@ -142,7 +146,7 @@ internal class Folder
                 var data = (VObject)library.Value;
                 var apps = (VObject)data["apps"];
 
-                if (!apps.ContainsKey(Steam.AppIdSe1DS.ToString()))
+                if (!apps.ContainsKey(AppIdSe1DS.ToString()))
                     continue;
 
                 string targetPath = data.Value<string>("path");

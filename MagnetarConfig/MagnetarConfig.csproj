@@ -1,0 +1,102 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Product>Magnetar</Product>
+    <Copyright>© 2025 SpaceGT</Copyright>
+    <AssemblyTitle>MagnetarConfig</AssemblyTitle>
+    <Description>Terminal UI configuration tool for a Magnetar-managed Space Engineers 1 Dedicated Server</Description>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Magnetar.Config</RootNamespace>
+    <AssemblyName>MagnetarConfig</AssemblyName>
+    <PackageId>MagnetarConfig</PackageId>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- .NET 10 only, on both Windows and Linux. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Configurations>Debug;Release</Configurations>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <!-- Windows-only launcher polish: icon + long-path manifest, mirroring Legacy. -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <ApplicationIcon>..\Legacy\Assets\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Terminal.Gui v1 (classic API). Pinned to the last v1 stable; v2 is a
+         breaking beta. See Docs/MagnetarConfig.md §4.2. -->
+    <PackageReference Include="Terminal.Gui" Version="1.19.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="MagnetarConfigTests" />
+  </ItemGroup>
+  <!-- Deploy the config tool with the same layout the launchers use (see
+       Legacy.csproj): the renamed apphost at the install root next to
+       MagnetarLegacy.exe / MagnetarInterim.exe|.bin, the managed assembly
+       triplet beside it (the apphost loads MagnetarConfig.dll from its own
+       folder), and the dependencies under Libraries/MagnetarConfig, where
+       the AssemblyResolve hook in Program.cs picks them up. Terminal.Gui's
+       satellite resource assemblies are deliberately not staged: the tool
+       is English-only and resource lookup falls back to the neutral
+       resources embedded in Terminal.Gui.dll. -->
+  <Target Name="Deploy" AfterTargets="Build">
+    <PropertyGroup>
+      <_MagnetarExeExt Condition="'$(OS)' == 'Windows_NT'">.exe</_MagnetarExeExt>
+      <_MagnetarExeExt Condition="'$(OS)' != 'Windows_NT'">.bin</_MagnetarExeExt>
+      <DeployDirectory>$(Magnetar)/Libraries/$(AssemblyName)</DeployDirectory>
+      <SourceExecutable>$(TargetDir)$(AssemblyName)$(_NativeExecutableExtension)</SourceExecutable>
+      <DestinationExecutable>$(Magnetar)/$(AssemblyName)$(_MagnetarExeExt)</DestinationExecutable>
+    </PropertyGroup>
+    <ItemGroup>
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).dll" />
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).runtimeconfig.json" />
+      <DeployRootFile Include="$(TargetDir)$(AssemblyName).deps.json" />
+      <DeployLibraryFile Include="$(TargetDir)Terminal.Gui.dll" />
+      <DeployLibraryFile Include="$(TargetDir)NStack.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.CodeDom.dll" />
+      <!-- Terminal.Gui's WMI dependency: Windows gets the real implementation
+           from the RID-specific asset, other platforms the throwing shim the
+           build output carries at its root (matching what the resolver would
+           have found in the flat app folder before the split deploy). -->
+      <DeployLibraryFile Include="$(TargetDir)runtimes/win/lib/**/System.Management.dll"
+                         Condition="'$(OS)' == 'Windows_NT'" />
+      <DeployLibraryFile Include="$(TargetDir)System.Management.dll"
+                         Condition="'$(OS)' != 'Windows_NT'" />
+    </ItemGroup>
+    <!-- Safety net (mirroring Legacy.csproj): warn when a Terminal.Gui bump
+         adds a copy-local dependency the hand-maintained list above misses. -->
+    <ItemGroup>
+      <_DeployedName Include="@(DeployLibraryFile->'%(Filename)%(Extension)')" />
+      <_CopyLocalName
+          Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
+          Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))" />
+      <_UnstagedDependency Include="@(_CopyLocalName)" Exclude="@(_DeployedName)" />
+    </ItemGroup>
+    <Warning Condition="'@(_UnstagedDependency)' != ''"
+             Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Terminal.Gui bump add a package?)." />
+    <Error Condition="'$(Magnetar)' == ''" Text="Specify Magnetar's deployment location!" />
+    <RemoveDir Directories="$(DeployDirectory)" />
+    <Copy SourceFiles="@(DeployRootFile)" DestinationFolder="$(Magnetar)" />
+    <Copy SourceFiles="@(DeployLibraryFile)" DestinationFolder="$(DeployDirectory)" />
+    <Copy SourceFiles="$(SourceExecutable)" DestinationFiles="$(DestinationExecutable)" />
+  </Target>
+</Project>

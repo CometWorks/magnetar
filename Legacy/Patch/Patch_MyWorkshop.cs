@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using Magnetar.Legacy.Loader;
 using Pulsar.Legacy.Loader;
 using Sandbox.Engine.Networking;
 using VRage.Game;
 using VRage.GameServices;
 
-namespace Pulsar.Legacy.Patch;
+namespace Magnetar.Legacy.Patch;
 
 [HarmonyPatchCategory("Early")]
 [HarmonyPatch(typeof(MyWorkshop), "DownloadWorldModsBlocking")]

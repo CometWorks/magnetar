@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using Pulsar.Shared;
 
-namespace Pulsar.Legacy.Launcher;
+namespace Magnetar.Legacy.Launcher;
 
 /// <summary>
 /// Writes and removes <c>magnetar.pid</c> in the Magnetar config dir so an

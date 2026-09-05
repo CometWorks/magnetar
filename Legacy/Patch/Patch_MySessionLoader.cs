@@ -1,6 +1,8 @@
 using HarmonyLib;
+using Magnetar.Legacy.Loader;
 using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
+using Pulsar.Shared.Arguments;
 using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.World;
 using VRage.Game;
@@ -19,7 +21,7 @@ internal class Patch_MySessionLoader
     {
         MagnetarClientMod.ApplyToCheckpoint(world?.Checkpoint);
 
-        if (Flags.TrustedMods)
+        if (Flags.Current.TrustedMods && world?.Checkpoint?.Mods is not null)
             world.Checkpoint.Mods.RemoveAll(SteamMods.IsModUntrusted);
     }
 
@@ -32,7 +34,7 @@ internal class Patch_MySessionLoader
     {
         MagnetarClientMod.ApplyToCheckpoint(world?.Checkpoint);
 
-        if (Flags.TrustedMods)
+        if (Flags.Current.TrustedMods && world?.Checkpoint?.Mods is not null)
             world.Checkpoint.Mods.RemoveAll(SteamMods.IsModUntrusted);
     }
 }
