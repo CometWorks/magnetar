@@ -1,0 +1,20 @@
+<Project>
+    <!-- Override Project Settings -->
+    <PropertyGroup>
+        <!-- Folder where Magnetar will be deployed Defaults:
+             Linux: ~/.config/Magnetar
+             Windows: %AppData\Magnetar 
+        -->
+        <Magnetar></Magnetar>
+
+        <!-- Folder containing SpaceEngineersDedicated.exe,
+             defaults to the installation by Steam -->
+        <DS64></DS64>
+
+        <!-- Folder containing Steamworks.NET.dll and steam_api64.dll.
+             Linux: Point to the extracted steam-dependencies.tar.gz released from the linux-dependencies repository
+             Windows: Defaults to the dedicated server ships both, so this defaults to DS64
+        -->
+        <Steamworks></Steamworks>
+    </PropertyGroup>
+</Project>
