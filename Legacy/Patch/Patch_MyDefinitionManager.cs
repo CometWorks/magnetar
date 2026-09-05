@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Pulsar.Legacy.Extensions;
-using Pulsar.Legacy.Loader;
+using Magnetar.Legacy.Loader;
 using Pulsar.Shared;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;

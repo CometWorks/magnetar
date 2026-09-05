@@ -1,8 +1,11 @@
 # Magnetar
 
-A plugin and mod loader for the **Space Engineers (SE1) Dedicated Server**. Hard
-fork of [Pulsar](https://github.com/SpaceGT/Pulsar), adapted to run the headless
-dedicated server — no WinForms, no Telerik UI, no Windows-service host.
+A plugin and mod loader for the **Space Engineers (SE1) Dedicated Server**,
+built on [Pulsar](https://github.com/SpaceGT/Pulsar) — the game-client plugin
+loader — which is vendored as a git submodule. Pulsar provides the plugin
+model, configuration, network and compiler infrastructure; Magnetar adds the
+server host: headless launch of the dedicated server, daemon mode, lifecycle
+control, chat commands, and the `PluginSdk` server plugins compile against.
 
 Magnetar ships two launchers that drop in for `SpaceEngineersDedicated.exe`:
 
@@ -17,6 +20,11 @@ On **Windows** both launchers are built; on **Linux** only `MagnetarInterim`
 Compatibility plugins are loaded implicitly:
 - [dotnet-compat](https://github.com/CometWorks/dotnet-compat) for .NET 10 compatibility
 - [linux-compat](https://github.com/CometWorks/linux-compat) for Linux compatibility
+
+Command-line flags are unified with Pulsar: the plugin-loader flags are
+Pulsar's own, plus Magnetar's server-specific flags (`-daemon`, `-config`,
+`-ds64`, consent control, …); client-only options do not apply. Configuration,
+profile and source files use Pulsar's current formats.
 
 You can register new plugins by making PRs to the [MagnetarHub](https://github.com/CometWorks/magnetar-hub).
 
@@ -34,9 +42,34 @@ look) that configures **and operates one** Magnetar-managed Dedicated Server
 instance: edit the global `SpaceEngineers-Dedicated.cfg`, per-world session
 settings and mod lists, create/delete/activate worlds, manage plugins and
 profiles, start/stop/reload the daemonized server (PID-file status), and read
-the game and Magnetar logs. It ships in both bundles next to the launcher and
-runs as `~/.local/share/Magnetar/MagnetarConfig` (Linux) or
-`MagnetarConfig.bat` (Windows). See the **[Config tool user manual](Docs/ConfigTerminal.md)**.
+the game and Magnetar logs. It ships in both bundles as `MagnetarConfig.exe`
+(Windows) / `MagnetarConfig.bin` (Linux) next to the launchers. See the
+**[Config tool user manual](Docs/MagnetarConfig.md)**.
+
+## Versioning
+
+Magnetar's version is the vendored Pulsar version plus a build component:
+`2.3.3.0` is the first Magnetar build on Pulsar 2.3.3, and `2.3.3.1` would be a
+Magnetar-only release on the same Pulsar base. Release tags and bundle names use
+all four components; `-version` prints the first three.
+
+## Building
+
+Clone with the Pulsar submodule and build the solution:
+
+```sh
+git clone --recurse-submodules https://github.com/CometWorks/magnetar
+cd magnetar
+dotnet build -c Release Magnetar.slnx
+```
+
+Every build deploys a portable install tree (default: `%APPDATA%\Magnetar`
+on Windows, `~/.local/share/Magnetar` on Linux). Magnetar itself is portable:
+its configuration lives next to the binaries and the install folder can be
+moved anywhere. On Linux the native runtime libraries are downloaded by the
+linux-compat plugin on first launch.
+
+See **[Building](Docs/Build.md)** for details.
 
 ## Documentation
 
@@ -45,15 +78,11 @@ runs as `~/.local/share/Magnetar/MagnetarConfig` (Linux) or
 | [Install & Releases](Docs/Install.md) | Prebuilt bundles, what to download, installing. |
 | [Usage](Docs/Usage.md) | Running the launcher, daemon mode, handoff to the DS. |
 | [Configuration](Docs/Configuration.md) | Config/install dirs, DS detection, environment variables. |
-| [Config tool](Docs/ConfigTerminal.md) | `MagnetarConfig` user manual: edit config/worlds/mods/plugins, start/stop, logs. |
-| [Config tool internals](Docs/ConfigTerminalInternals.md) | Design and implementation of `MagnetarConfig`: file formats, architecture, state machines, testing. |
+| [Config tool](Docs/MagnetarConfig.md) | `MagnetarConfig` user manual: edit config/worlds/mods/plugins, start/stop, logs. |
+| [Config tool internals](Docs/MagnetarConfigInternals.md) | Design and implementation of `MagnetarConfig`: file formats, architecture, state machines, testing. |
 | [Plugins](Docs/Plugins.md) | Plugin hubs and the trust boundary. |
 | [Building](Docs/Build.md) | Per-platform build, dependency staging, packaging, releases. |
 | [Repository layout](Docs/Layout.md) | What lives where in the source tree. |
-
-For the full **code handbook** — architecture overview, launch sequence, and a
-navigable module-by-module / file-by-file reference of the entire source tree —
-see **[Docs/TOC.md](Docs/TOC.md)**.
 
 ## Contact
 

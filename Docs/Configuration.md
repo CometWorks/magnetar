@@ -5,7 +5,7 @@ line:
 
 | Folder | Holds | Default | Override |
 | ------ | ----- | ------- | -------- |
-| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | Windows: `<launcher dir>\MagnetarLegacy` or `<launcher dir>\MagnetarInterim` (named after the launcher, next to the binary; falls back to `MagnetarLegacy` if the named folder does not exist)<br>Linux: `$XDG_CONFIG_HOME/Magnetar` → `~/.config/Magnetar` | `-config <dir>` |
+| **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | `<install>/Magnetar`, next to the binaries — the counterpart of Pulsar's per-flavour `Legacy`/`Modern` folders, shared by both launchers. Magnetar is portable, so its state travels with the install folder. `-useHome` puts the folder under `%APPDATA%\Magnetar` (Windows) or `~/.config/Magnetar` (Linux) instead. | `-config <dir>` |
 | **DS install dir** | The dedicated-server binaries (`DedicatedServer64/`) | Auto-detected (see below) | `-ds64 <dir>` |
 | **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg` **and the world saves** (`Saves/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
 
@@ -17,23 +17,26 @@ Overrides where Magnetar stores its own configuration, logs, and the preloader
 cache. A relative path resolves against the launcher's directory. This does
 **not** affect the dedicated server's config or saves.
 
-Each Magnetar startup creates a new timestamped `info_yyyyMMdd_HHmmssfff.log`
-file in this directory and updates `info.current` with the active file name.
-This matches the Dedicated Server's per-start log history: failed startup
-attempts are preserved instead of being overwritten. The compiler AppDomain and
-Quasar.Agent's PluginSdk log mirror both use the active file named by
-`info.current`.
+The current launch always logs to `info.log` in this directory. On startup the
+previous launch's `info.log` is first rotated to `info_yyyyMMdd_HHmmss.log`
+(named from its last write time), and the oldest rotated logs are pruned, so
+failed startup attempts are preserved instead of being overwritten while an
+unattended server cannot fill the disk. The out-of-process compiler logs into
+the same `info.log`.
 
 While a Magnetar-launched server is running it also writes a `magnetar.pid`
 file here — the process id on the first line, the resolved DS data dir
 (`-path`) on the second — and removes it on clean shutdown. `MagnetarConfig`
 uses it to discover the instance and report server status; see the
-[Config tool internals](ConfigTerminalInternals.md#28-process-model-and-pid-file).
+[Config tool internals](MagnetarConfigInternals.md#28-process-model-and-pid-file).
 
-* **Install dir (default, where the launcher lives)**
-  * Windows — the extracted `Magnetar\` tree next to the dedicated-server
-    installation.
-  * Linux — `$XDG_DATA_HOME/Magnetar`, falling back to `~/.local/share/Magnetar`.
+Without `-config`, the launcher keeps its state in the `Magnetar` folder next
+to the binaries, the same way Pulsar keeps its state in its `Legacy` and
+`Modern` folders. Both launchers target the same SE1 dedicated server, so they
+share this folder and switching launchers keeps the configuration. Pass
+`-useHome` to place the folder under the user's app-data directory instead
+(`%APPDATA%\Magnetar` on Windows, `~/.config/Magnetar` on Linux), which keeps
+the install folder read-only.
 
 ### `-ds64 <dir>` — dedicated-server install location
 
@@ -103,20 +106,20 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
   Its presence *is* the record that telemetry is enabled, and the first 20 hex
   characters of the UUID are the only identifier sent to the statistics server (no
   Steam ID or account is ever involved). Deleting this file disables telemetry;
-  `-withdraw-consent` deletes it and also asks the server to erase the data.
+  `-consent withdraw` deletes it and also asks the server to erase the data.
 * **`config.xml`** — records the human-visible decision in `DataHandlingConsent`
-  (`true` / `false` / unset) and `DataHandlingConsentDate`. An accepted decision is
-  only honored while its `instance.id` exists; a stored `true` with no `instance.id`
-  is treated as undecided and you are prompted again.
+  and `DataHandlingConsentDate`. A decision has been made when the date is set;
+  an accepted decision is only honored while its `instance.id` exists (a stored
+  `true` with no `instance.id` is treated as undecided and you are prompted
+  again), and a set date with no `instance.id` means a remembered denial.
 
 ## Environment variables
 
 | Variable             | Effect                                                           |
 | -------------------- | ---------------------------------------------------------------- |
 | `MAGNETAR_SAFE_MODE` | When `1`, disables preloader patches for a one-off recovery run. |
-| `MAGNETAR_GITHUB_TOKEN` | GitHub token used for GitHub API/archive downloads when `-github-token` is not supplied; use a classic token from https://github.com/settings/tokens/new with no permissions selected. |
-| `XDG_CONFIG_HOME`    | Overrides the Magnetar config-dir base (Linux).                  |
-| `XDG_DATA_HOME`      | Overrides the Magnetar install-dir base (Linux).                 |
+| `PULSAR_GITHUB_TOKEN` | GitHub personal access token for `api.github.com` requests (hub, plugin and archive downloads), read by Pulsar itself. Lifts the 60-per-hour anonymous rate limit and reaches private repositories. See [Usage → GitHub token](Usage.md#github-token). |
+| `XDG_DATA_HOME`      | Changes the default build deploy folder on Linux (`$XDG_DATA_HOME/Magnetar`); the launcher itself is portable and does not read it. |
 | `DS64`               | Build-time override for the DS reference path.                   |
 
 Build-time overrides are covered in full in **[Build.md](Build.md)**.

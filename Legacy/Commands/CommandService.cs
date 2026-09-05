@@ -5,7 +5,7 @@ using Pulsar.Shared;
 using Sandbox.Game.World;
 using VRage.Game.ModAPI;
 
-namespace Pulsar.Legacy.Commands;
+namespace Magnetar.Legacy.Commands;
 
 /// <summary>
 /// Host-side owner of the chat-command pipeline: it holds the

@@ -14,7 +14,7 @@ Windows-style path with the wrong casing simply fails to open. A plugin that
 builds paths from game data (mod paths, content-relative asset names, atlas
 manifests) breaks on Linux unless it fixes the casing itself.
 
-The `se-linux-compat` plugin maintains a two-level case-insensitive path cache
+The `linux-compat` plugin maintains a two-level case-insensitive path cache
 for exactly this. `PathResolver` exposes that cache to **every** plugin, so you
 don't reinvent it — and on Windows the same calls are cheap pass-throughs.
 
@@ -22,15 +22,15 @@ don't reinvent it — and on Windows the same calls are cheap pass-throughs.
 
 | Platform | Backend | Behaviour |
 |---|---|---|
-| **Linux** (se-linux-compat loaded) | forwards to the LinuxCompat path cache | real case-insensitive resolution against the on-disk tree |
-| **Windows** (se-linux-compat absent) | built-in no-op shim | paths pass through unchanged (the OS is already case-insensitive) |
+| **Linux** (linux-compat loaded) | forwards to the LinuxCompat path cache | real case-insensitive resolution against the on-disk tree |
+| **Windows** (linux-compat absent) | built-in no-op shim | paths pass through unchanged (the OS is already case-insensitive) |
 
 The host installs the backend once at startup, **before** plugins are
 initialised, so you may call `PathResolver` from your `Init()`. Until a backend
 is installed the shim is active, so the calls are always safe.
 
 > The backend is bound by reflection against the LinuxCompat assembly. You never
-> reference `se-linux-compat` from your plugin — you only depend on `PluginSdk`,
+> reference `linux-compat` from your plugin — you only depend on `PluginSdk`,
 > and the indirection keeps the actual cache living in (and updated with) the
 > compat plugin.
 

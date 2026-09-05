@@ -11,7 +11,7 @@ off to the dedicated server's own `Main`.
 %APPDATA%\Magnetar\MagnetarInterim.exe
 
 # Linux
-~/.local/share/Magnetar/MagnetarInterim
+~/.local/share/Magnetar/MagnetarInterim.bin
 ```
 
 See **[Configuration](Configuration.md)** for the config/install directories, DS
@@ -20,17 +20,52 @@ detection, and environment variables.
 ## Command-line help
 
 Pass `-help` (also `-h` or `--help`) to print the full list of options — Magnetar's
-own switches, the telemetry-consent switches, and the dedicated-server arguments
-Magnetar passes through — then exit without starting the server. On Linux the help
-screen deliberately skips loading the bundled native libraries, so it prints
-cleanly without startup noise.
+own switches, the plugin-loader switches shared with Pulsar, the telemetry-consent
+switches, and the dedicated-server arguments Magnetar passes through — then exit
+without starting the server. On Linux the help screen deliberately skips loading
+the bundled native libraries, so it prints cleanly without startup noise.
 
-Use `-github-token <token>` when running under a supervisor that needs Magnetar's
-GitHub API and archive downloads to use an authenticated REST API rate limit. For
-public GitHub resources, generate a classic personal access token at
-https://github.com/settings/tokens/new with no permissions selected. The same
-value can also be supplied with `MAGNETAR_GITHUB_TOKEN`. Quasar passes its
-stored GitHub update token this way for managed servers.
+The plugin-loader flags (`-profile`, `-safeMode`, `-bare`, `-hardened`,
+`-multiInstance`, `-useHome`, `-lazyPreload`, `-stableLogs`, `-mkCheck`,
+`-debug`, `-debugMods`, `-debugCompileAll`) are Pulsar's own flags with
+Pulsar's semantics. Magnetar additionally forces the headless defaults
+(`-noSplash -noPrompt -lazySteam`) internally.
+
+The list is deliberately a subset of Pulsar's. Pulsar's parser still accepts
+every other Pulsar flag, but the rest reach no live code path on a dedicated
+server, so Magnetar does not advertise them:
+
+* `-sources` only unlocks a button in Pulsar's plugin GUI, which a server has
+  no way to show.
+* `-noUpdate` and `-preRelease` only steer `Updater.TryUpdate`, which Magnetar
+  never calls — Magnetar's release archives are not in the layout Pulsar's
+  updater expects, so it stays disabled.
+* The client-only options (`-seSplash`, `-keepIntro`, `-f12Menu`, `-continue`)
+  drive a splash screen, an intro video, a debug menu and a "continue last
+  game" button, none of which exist headless.
+* `-bin64` is Pulsar's game-directory override; on Magnetar it is read by code
+  the server never reaches. Use `-ds64` instead.
+
+Passing any of them is harmless — it is collected and ignored, not rejected.
+
+## GitHub token
+
+Set `PULSAR_GITHUB_TOKEN` to a GitHub personal access token. Pulsar's network
+layer reads the variable and sends the token as a `Bearer` header on
+`api.github.com` requests only — every hub, plugin and archive fetch goes
+through that host. Without a token those calls are anonymous and capped at 60
+requests per hour per IP, which a busy or shared-IP host exhausts quickly; with
+one the cap is far higher and private repositories become reachable. The token
+is never sent to any other host.
+
+There is deliberately no command-line flag: on Linux `/proc/<pid>/cmdline` is
+readable by every local user, so a token passed as an argument leaks to anyone
+with a shell on the machine, while another user's environment does not.
+
+Magnetar 2.0 had a `-github-token` flag and a `MAGNETAR_GITHUB_TOKEN` variable.
+Both are gone. The flag and its value are still stripped from the command line
+for one release, with a warning; the token itself has no effect, so GitHub calls
+fall back to anonymous until you set `PULSAR_GITHUB_TOKEN`.
 
 ## Client companion mod
 
@@ -69,12 +104,18 @@ with these flags:
 
 | Flag | Effect |
 | ---- | ------ |
-| `-consent` | Enable sending anonymous usage statistics and remember the decision. |
-| `-noconsent` | Disable sending statistics **for this run only** (does not change the stored decision). |
-| `-withdraw-consent` | Ask the statistics server to erase this instance's data, delete the local instance ID, record the denial, then exit without starting the server. |
+| `-consent accept` | Enable sending anonymous usage statistics and remember the decision. |
+| `-consent deny` | Disable sending statistics **for this run only** (does not change the stored decision). |
+| `-consent withdraw` | Ask the statistics server to erase this instance's data, delete the local instance ID, record the denial, then exit without starting the server. |
 
-`-withdraw-consent` is best effort: if the statistics server cannot be reached,
+Any other value is a startup error: Magnetar prints the accepted choices and
+exits with status 1 rather than guessing which of the three you meant.
+
+`-consent withdraw` is best effort: if the statistics server cannot be reached,
 telemetry is still disabled locally.
+
+Magnetar 2.0 spelled these `-consent`, `-noconsent` and `-withdraw-consent`.
+The old spellings still work for one release, with a deprecation warning.
 
 ## Daemon mode
 
@@ -95,6 +136,11 @@ When Magnetar detaches, it also writes `magnetar.pid` (PID + resolved data dir)
 in its config dir so tools can find and verify the running instance; it is
 removed on clean shutdown.
 
+Do not combine `-daemon` with the dedicated server's `-checkAlive`: one asks the
+server to survive its parent, the other to shut down when the parent exits.
+Magnetar does not reject the combination, but the result depends on timing and
+is not useful.
+
 ## Configuring the server (MagnetarConfig)
 
 **MagnetarConfig** is a terminal UI bundled next to the launcher for editing and
@@ -103,10 +149,10 @@ installed bundle:
 
 ```sh
 # Linux
-~/.local/share/Magnetar/MagnetarConfig
+~/.local/share/Magnetar/MagnetarConfig.bin
 
 # Windows
-%APPDATA%\Magnetar\MagnetarConfig.bat
+%APPDATA%\Magnetar\MagnetarConfig.exe
 ```
 
 It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself
@@ -125,5 +171,5 @@ templates) · `-netdriver` (portable terminal driver) · `-diag` (print a
 headless read-only instance report and exit) · `-help`. Graceful stop and config
 reload use SIGTERM/SIGHUP and are **Linux-only**; on Windows the server can only
 be force-killed (with a data-loss warning). See the
-[Config tool user manual](ConfigTerminal.md) for full usage, and the
-[design and implementation notes](ConfigTerminalInternals.md) for internals.
+[Config tool user manual](MagnetarConfig.md) for full usage, and the
+[design and implementation notes](MagnetarConfigInternals.md) for internals.

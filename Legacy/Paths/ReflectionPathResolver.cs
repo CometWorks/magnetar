@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using PluginSdk.Paths;
 
-namespace Pulsar.Legacy.Paths;
+namespace Magnetar.Legacy.Paths;
 
 /// <summary>
 /// <see cref="IPathResolver"/> backend that forwards to the LinuxCompat plugin's

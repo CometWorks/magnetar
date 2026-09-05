@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 
-namespace Pulsar.Legacy.Patch;
+namespace Magnetar.Legacy.Patch;
 
 // Magnetar is configured by an external interface (Web UI), so the dedicated
 // server never shows its built-in Telerik/WinForms configuration UI and never

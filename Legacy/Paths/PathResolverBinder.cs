@@ -3,7 +3,7 @@ using System.Reflection;
 using PluginSdk.Paths;
 using Pulsar.Shared;
 
-namespace Pulsar.Legacy.Paths;
+namespace Magnetar.Legacy.Paths;
 
 /// <summary>
 /// Wires the SDK <see cref="PathResolver"/> facade to the LinuxCompat plugin's

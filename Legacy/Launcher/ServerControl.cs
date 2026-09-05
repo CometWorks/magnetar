@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Pulsar.Legacy.Launcher;
 using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox;
@@ -15,7 +16,7 @@ using Sandbox.Game.World;
 using VRage.Utils;
 using VRage.Voxels;
 
-namespace Pulsar.Legacy.Launcher;
+namespace Magnetar.Legacy.Launcher;
 
 /// <summary>
 /// Single source of truth for the dedicated server's lifecycle operations —
@@ -355,11 +356,26 @@ internal static class ServerControl
         }
     }
 
+    /// <summary>
+    /// Runs the shutdown cleanup on a fatal-exit path — an unhandled managed
+    /// exception or a native crash — where <see cref="Environment.Exit(int)"/> is
+    /// called directly and the normal quit sequence never runs. Only the pid
+    /// file removal and the log flush apply here: the world is deliberately not
+    /// saved and plugins are not disposed, because the process state is already
+    /// unsound. Never throws, so it cannot mask the failure being reported.
+    /// </summary>
+    public static void FlushOnFatalExit()
+    {
+        try { FlushAll(); } catch { }
+    }
+
     private static void FlushAll()
     {
         // Remove the pid file before flushing logs so a reader polling during
-        // shutdown sees it disappear promptly. A crash skips this path, leaving a
-        // stale file the reader detects by probing the (now dead) pid.
+        // shutdown sees it disappear promptly. The fatal-exit paths reach this
+        // through FlushOnFatalExit; anything that kills the process outright
+        // (SIGKILL, a native abort) still leaves a stale file behind, which the
+        // reader detects by probing the (now dead) pid.
         try { PidFile.Delete(); } catch { }
         try { Console.Out.Flush(); } catch { }
         try { Console.Error.Flush(); } catch { }

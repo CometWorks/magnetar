@@ -1,0 +1,14 @@
+<Solution>
+  <!--
+    Projects under the Pulsar/ git submodule are deliberately NOT solution
+    entries: they use Pulsar's own Directory.Build.props and are built through
+    the ProjectReference in Legacy/Legacy.csproj, which forwards the properties
+    they need (Steamworks, deployment dir). Building them directly from this
+    solution would fail their Verify targets.
+  -->
+  <Project Path="MagnetarConfig/MagnetarConfig.csproj" />
+  <Project Path="MagnetarConfigTests/MagnetarConfigTests.csproj" />
+  <Project Path="Legacy/Legacy.csproj" />
+  <Project Path="PluginSdk/PluginSdk.csproj" />
+  <Project Path="PluginSdkTests/PluginSdkTests.csproj" />
+</Solution>

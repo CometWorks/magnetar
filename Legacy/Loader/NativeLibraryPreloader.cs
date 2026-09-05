@@ -5,15 +5,19 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
-namespace Pulsar.Legacy.Loader;
+namespace Magnetar.Legacy.Loader;
 
 /// <summary>
-/// Linux native-library bootstrap. Runs once at the very top of Main() and
-/// is the single place that:
-///   * dlopens every bundled lib*.so* next to the launcher with an absolute
-///     path and RTLD_GLOBAL, so subsequent lookups never go to disk;
-///   * resolves the Windows-style DLL names declared in Magnetar's bundled
-///     Steamworks.NET against the preloaded handles.
+/// Linux native-library bootstrap. The bundle ships no native libraries any
+/// more (the linux-compat plugin pulls them as assets at runtime), so this
+/// normally finds nothing and does nothing. It stays as the manual override
+/// hook: any lib*.so* an operator drops into Libraries/MagnetarInterim or
+/// next to the launcher is picked up here and wins over the plugin assets.
+/// Runs once at the very top of Main() and is the single place that:
+///   * dlopens every present lib*.so* with an absolute path and RTLD_GLOBAL,
+///     so subsequent lookups never go to disk;
+///   * resolves the Windows-style DLL names Steamworks.NET declares against
+///     the preloaded handles.
 ///
 /// Centralising here means plugins loaded into custom AssemblyLoadContexts
 /// (Magnetar's .pl5 cache directories) no longer need their own resolver
@@ -27,7 +31,7 @@ namespace Pulsar.Legacy.Loader;
 /// has a [DllImport("EOSSDK-Shipping.dll")] that has to resolve to the Linux
 /// libEOSSDK-Linux-Shipping.so. The native physics wrappers (Havok /
 /// RecastDetour / VRage.Native) are PE-loader replacements for the Windows
-/// DLLs of the same names; the se-linux-compat plugin still does an explicit
+/// DLLs of the same names; the linux-compat plugin still does an explicit
 /// Init call on each, but their DllImport sites also need the alias here so
 /// the runtime can resolve them from any AssemblyLoadContext.
 /// </summary>
@@ -56,7 +60,7 @@ internal static class NativeLibraryPreloader
         ("EOSSDK-Shipping",     "libEOSSDK-Linux-Shipping.so"),
         ("EOSSDK-Shipping.dll", "libEOSSDK-Linux-Shipping.so"),
 
-        // se-linux-compat PE-loader wrappers for the Havok / RecastDetour /
+        // linux-compat PE-loader wrappers for the Havok / RecastDetour /
         // VRage.Native Windows DLLs.
         ("Havok.dll",        "libHavok.so"),
         ("RecastDetour.dll", "libRecastDetour.so"),
@@ -69,15 +73,18 @@ internal static class NativeLibraryPreloader
     [DllImport("libdl.so.2", EntryPoint = "dlopen")]
     private static extern IntPtr dlopen(string filename, int flags);
 
-    public static void Initialize(string baseDir)
+    public static void Initialize(params string[] searchDirs)
     {
         if (!OperatingSystem.IsLinux())
             return;
 
         // 1. Preload every bundled lib*.so* with absolute path + RTLD_GLOBAL.
         //    Absolute path bypasses ld.so search order; RTLD_GLOBAL exposes
-        //    symbols to subsequent dlopen calls.
-        PreloadBundled(baseDir);
+        //    symbols to subsequent dlopen calls. The libraries ship in
+        //    Libraries/MagnetarInterim/ (Pulsar's deployment layout); the
+        //    launcher directory is scanned too for portable installs.
+        foreach (string searchDir in searchDirs)
+            PreloadBundled(searchDir);
 
         // 2. Materialise the alias table. Done after preload so every alias
         //    that points to a successfully loaded library gets cached too.

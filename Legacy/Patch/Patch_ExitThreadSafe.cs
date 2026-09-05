@@ -1,5 +1,5 @@
 using HarmonyLib;
-using Pulsar.Legacy.Launcher;
+using Magnetar.Legacy.Launcher;
 using Sandbox;
 
 namespace Pulsar.Legacy.Patch;

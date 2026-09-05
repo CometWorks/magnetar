@@ -2,12 +2,13 @@ using System;
 using System.Threading.Tasks;
 using PluginSdk.Clustering;
 using PluginSdk.Commands;
+using Magnetar.Legacy.Launcher;
 using Pulsar.Legacy.Launcher;
 using Pulsar.Shared;
 using SdkServerControl = PluginSdk.ServerControl;
 using ServerTerminationKind = PluginSdk.ServerTerminationKind;
 
-namespace Pulsar.Legacy.Commands;
+namespace Magnetar.Legacy.Commands;
 
 // Built-in chat commands registered by Magnetar before plugins load, so a
 // plugin may override any of them (last registration wins). Each is the

@@ -1,13 +1,13 @@
 using System;
 using HarmonyLib;
-using Pulsar.Legacy.Commands;
+using Magnetar.Legacy.Commands;
 using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Gui;
 using VRage.Network;
 
-namespace Pulsar.Legacy.Patch;
+namespace Magnetar.Legacy.Patch;
 
 /// <summary>
 /// Intercepts player-typed chat on the server before it is relayed to other

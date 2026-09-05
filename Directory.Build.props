@@ -1,44 +1,68 @@
 <Project>
-  <!-- Bump the Magnetar version here (centralized) -->
+  <!-- Override Project Settings.
+       The empty values below are placeholders: they only apply when nothing
+       else set the property, so the Magnetar / DS64 / Steamworks environment
+       variables the release workflow exports (and -p:... on the command line)
+       win over them. Put real local paths into Directory.Build.props.user. -->
   <PropertyGroup>
-    <Version>1.1.5</Version>
+    <!-- Folder where Magnetar will be deployed -->
+    <Magnetar Condition="'$(Magnetar)' == ''"></Magnetar>
+
+    <!-- Folder containing SpaceEngineersDedicated.exe -->
+    <DS64 Condition="'$(DS64)' == ''"></DS64>
+
+    <!-- Folder containing Steamworks.NET.dll and the steam_api native library.
+         On Windows the dedicated server ships both, so this defaults to DS64.
+         On Linux the depot carries only the Windows steam_api64.dll, so point
+         this at an extracted steam-dependencies.tar.gz from
+         github.com/CometWorks/linux-dependencies instead; it holds the pair
+         Deploy stages (Steamworks.NET.dll + libsteam_api.so). -->
+    <Steamworks Condition="'$(Steamworks)' == ''"></Steamworks>
+  </PropertyGroup>
+
+  <!-- Bump the Magnetar version here (centralized).
+       Format: <Pulsar version>.<Magnetar build>. 2.3.4.0 is the first Magnetar
+       build on the Pulsar 2.3.4 release vendored in Pulsar/; bump the fourth
+       component for Magnetar-only releases on the same Pulsar base, and reset
+       it to 0 when the submodule moves to a new Pulsar version.
+       See Docs/Build.md ("Versioning"). -->
+  <PropertyGroup>
+    <Version>2.4.0.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
 
-  <!--
-    Windows and Linux locate the Magnetar install folder, the Space Engineers
-    dedicated server, and Steamworks.NET differently. Select per OS using the
-    MSBuild $(OS) reserved property ('Windows_NT' on Windows, 'Unix' elsewhere).
-    DS64 / Magnetar can always be overridden on the command line
-    (`-p:DS64=...`) or via an environment variable of the same name.
-  -->
+  <!-- Local developer overrides for the settings above; ignored by Git (*.user).
+       Copy the first PropertyGroup of this file into Directory.Build.props.user
+       and fill in your local paths there. -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.props.user"
+          Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')" />
 
-  <!-- ===== Windows ===== -->
+  <!-- Default Project Settings.
+       These apply to Magnetar's own projects only. Projects under the Pulsar/
+       git submodule use Pulsar's Directory.Build.props; the values they need
+       are forwarded on the ProjectReferences in Legacy/Legacy.csproj. -->
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <!-- Folder containing Magnetar -->
-    <Magnetar Condition="'$(Magnetar)' == ''">$(APPDATA)\Magnetar</Magnetar>
-
-    <!-- Folder containing SpaceEngineersDedicated.exe -->
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(APPDATA)' != ''">$(APPDATA)\Magnetar</Magnetar>
     <DS64 Condition="'$(DS64)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
     <DS64 Condition="'$(DS64)' == '\DedicatedServer64'">C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
-
-    <!-- Path to Steamworks.NET (for .NET 4.8). On Windows it ships next to the DS. -->
-    <Steamworks Condition="'$(Steamworks)' == ''">$(DS64)\Steamworks.NET.dll</Steamworks>
   </PropertyGroup>
 
-  <!-- ===== Linux ===== -->
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-    <!-- Magnetar install location (where deploy/publish goes by default) -->
-    <Magnetar Condition="'$(Magnetar)' == ''">$(HOME)/.local/share/Magnetar</Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(XDG_DATA_HOME)' != ''">$(XDG_DATA_HOME)/Magnetar</Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(HOME)' != ''">$(HOME)/.local/share/Magnetar</Magnetar>
+    <DS64 Condition="'$(DS64)' == '' and '$(HOME)' != ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
+  </PropertyGroup>
 
-    <!-- Folder containing SpaceEngineersDedicated.exe.
-         Override with `-p:DS64=/path/to/DedicatedServer64` on the command line,
-         or set the DS64 environment variable before invoking dotnet build. -->
-    <DS64 Condition="'$(DS64)' == ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
+  <PropertyGroup>
+    <Steamworks Condition="'$(Steamworks)' == ''">$(DS64)</Steamworks>
+  </PropertyGroup>
 
-    <!-- Steamworks.NET is built dynamically into <repo>/build/Libraries/ by
-         Scripts/build_steamworks_net.sh (invoked from ./build.sh). -->
-    <Steamworks Condition="'$(Steamworks)' == ''">$(MSBuildThisFileDirectory)build/Libraries/Steamworks.NET.dll</Steamworks>
+  <!-- Name of the Steam native library inside $(Steamworks), the counterpart
+       of Pulsar's property of the same name. Deploy stages it on Linux only;
+       see the Steamworks comment above and Legacy.csproj. -->
+  <PropertyGroup>
+    <SteamApiFileName Condition="'$(OS)' == 'Windows_NT'">steam_api64.dll</SteamApiFileName>
+    <SteamApiFileName Condition="'$(OS)' != 'Windows_NT'">libsteam_api.so</SteamApiFileName>
   </PropertyGroup>
 </Project>
