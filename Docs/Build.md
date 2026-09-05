@@ -60,7 +60,7 @@ following Pulsar's convention. Three properties matter:
 
 | Property | Meaning | Default (Windows) | Default (Linux) |
 | -------- | ------- | ----------------- | --------------- |
-| `Magnetar` | Deploy folder for the install tree | `%APPDATA%\Magnetar` | `$XDG_DATA_HOME/Magnetar`, else `~/.local/share/Magnetar` |
+| `Magnetar` | Deploy folder for the install tree | `%APPDATA%\Magnetar` | `$XDG_CONFIG_HOME/Magnetar`, else `~/.config/Magnetar` |
 | `DS64` | Folder containing `SpaceEngineersDedicated.exe` | Steam registry key, else the default Steam path | `~/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64` |
 | `Steamworks` | Folder containing `Steamworks.NET.dll` and the Steam native library | `$(DS64)` | `$(DS64)`, but must be set — see below |
 
@@ -134,7 +134,7 @@ Run the launcher from the deploy folder in place of
 ```
 
 ```sh
-~/.local/share/Magnetar/MagnetarInterim.bin
+~/.config/Magnetar/MagnetarInterim.bin
 ```
 
 A successful launch logs `Game ready...` once the world has loaded. Stop the

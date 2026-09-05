@@ -119,7 +119,7 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
 | -------------------- | ---------------------------------------------------------------- |
 | `MAGNETAR_SAFE_MODE` | When `1`, disables preloader patches for a one-off recovery run. |
 | `PULSAR_GITHUB_TOKEN` | GitHub personal access token for `api.github.com` requests (hub, plugin and archive downloads), read by Pulsar itself. Lifts the 60-per-hour anonymous rate limit and reaches private repositories. See [Usage → GitHub token](Usage.md#github-token). |
-| `XDG_DATA_HOME`      | Changes the default build deploy folder on Linux (`$XDG_DATA_HOME/Magnetar`); the launcher itself is portable and does not read it. |
+| `XDG_CONFIG_HOME`    | Changes the default build deploy folder on Linux (`$XDG_CONFIG_HOME/Magnetar`); the launcher itself is portable and does not read it. |
 | `DS64`               | Build-time override for the DS reference path.                   |
 
 Build-time overrides are covered in full in **[Build.md](Build.md)**.

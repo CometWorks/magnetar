@@ -79,14 +79,18 @@ architecture, data model, internal state machines, testing and packaging — see
 
 ## 2. Running MagnetarConfig
 
-Run it from the installed bundle, next to the launcher:
+Run it from the install folder, next to the launcher. The bundle is
+portable: the tool finds the launcher and the Magnetar config dir relative to
+its own binary, so the install folder can live anywhere (wherever you
+extracted the bundle, or the build's deploy folder — see [Install](Install.md)
+and [Building](Build.md)):
 
 ```sh
 # Linux
-~/.local/share/Magnetar/MagnetarConfig.bin
+<install>/MagnetarConfig.bin
 
 # Windows
-%APPDATA%\Magnetar\MagnetarConfig.exe
+<install>\MagnetarConfig.exe
 ```
 
 ### Command-line options
@@ -100,12 +104,13 @@ MagnetarConfig [options]
   -config <dir>      Magnetar config directory (Magnetar's config.xml, logs,
                      magnetar.pid). Same semantics as Magnetar's own -config.
                      Default: the Magnetar folder next to the binaries,
-                     e.g. ~/.local/share/Magnetar/Magnetar
+                     i.e. <install>/Magnetar where <install> is the folder
+                     MagnetarConfig runs from
   -magnetar <file>   Magnetar launcher executable to start/stop. Default:
-                     ~/.local/share/Magnetar/MagnetarInterim.bin (Linux); on Windows
-                     chosen at startup between the installed MagnetarLegacy.exe
-                     (.NET Framework 4.8) and MagnetarInterim.exe (.NET 10) — see
-                     the resolution order below
+                     MagnetarInterim.bin next to MagnetarConfig (Linux); on
+                     Windows chosen at startup between the MagnetarLegacy.exe
+                     (.NET Framework 4.8) and MagnetarInterim.exe (.NET 10)
+                     installed next to it — see the resolution order below
   -ds64 <dir>        DedicatedServer64 folder (for world templates). Default:
                      auto-detected like Magnetar (Steam registry / library
                      folders / ~/.steam default path)
@@ -131,7 +136,7 @@ Use **`-diag`** for a quick, scriptable status report without opening the UI.
 1. **Explicit arguments** win. A directory you name that does not exist is an
    error (the tool never silently falls back past a value you gave).
 2. **On Windows**, when neither `-magnetar` nor `-config` is given and **both**
-   launchers are installed under `%APPDATA%\Magnetar`, a startup prompt asks
+   launchers are installed next to `MagnetarConfig.exe`, a startup prompt asks
    which one to configure — `MagnetarLegacy.exe` (.NET Framework 4.8) or
    `MagnetarInterim.exe` (.NET 10). It is auto-selected when only one is present.
 3. **When neither `-path` nor `-config` is given**, the tool opens the

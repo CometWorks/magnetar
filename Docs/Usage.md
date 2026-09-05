@@ -1,17 +1,19 @@
 # Usage
 
-Run the `MagnetarLegacy` or `MagnetarInterim` executable from your Dedicated
-Server installation in place of `SpaceEngineersDedicated.exe`. Magnetar resolves
-the DS install, applies any preloader patches, loads enabled plugins, then hands
-off to the dedicated server's own `Main`.
+Run the `MagnetarLegacy` or `MagnetarInterim` executable from the install
+folder in place of `SpaceEngineersDedicated.exe`. Magnetar resolves the DS
+install, applies any preloader patches, loads enabled plugins, then hands off
+to the dedicated server's own `Main`. The install folder is wherever you
+extracted the bundle (see [Install](Install.md)) or where a build deployed it
+(see [Building](Build.md)); Magnetar is portable and the folder can live anywhere.
 
 ```sh
 # Windows
-%APPDATA%\Magnetar\MagnetarLegacy.exe
-%APPDATA%\Magnetar\MagnetarInterim.exe
+<install>\MagnetarLegacy.exe
+<install>\MagnetarInterim.exe
 
 # Linux
-~/.local/share/Magnetar/MagnetarInterim.bin
+<install>/MagnetarInterim.bin
 ```
 
 See **[Configuration](Configuration.md)** for the config/install directories, DS
@@ -145,14 +147,15 @@ is not useful.
 
 **MagnetarConfig** is a terminal UI bundled next to the launcher for editing and
 operating **one** DS instance without hand-editing XML. Run it from the
-installed bundle:
+install folder; it finds the launcher and the Magnetar config dir next to
+itself:
 
 ```sh
 # Linux
-~/.local/share/Magnetar/MagnetarConfig.bin
+<install>/MagnetarConfig.bin
 
 # Windows
-%APPDATA%\Magnetar\MagnetarConfig.exe
+<install>\MagnetarConfig.exe
 ```
 
 It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself

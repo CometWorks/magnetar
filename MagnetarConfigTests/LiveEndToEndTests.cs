@@ -30,13 +30,14 @@ public class LiveEndToEndTests
         if (Environment.GetEnvironmentVariable("MAGNETAR_LIVE") != "1")
             return; // skipped unless explicitly enabled
 
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        // Defaults resolve like the tool itself; the test host is not the
+        // installed bundle, so MC_EXE / MC_CONFIG normally point at it.
         var binding = new InstanceBinding
         {
-            DataDir = Env("MC_DATA", Path.Combine(home, ".config", "SpaceEngineersDedicated")),
-            MagnetarConfigDir = Env("MC_CONFIG", Path.Combine(home, ".local", "share", "Magnetar", "Magnetar")),
-            MagnetarExePath = Env("MC_EXE", Path.Combine(home, ".local", "share", "Magnetar", "MagnetarInterim.bin")),
-            Ds64Dir = Env("MC_DS64", Path.Combine(home, ".steam", "steam", "steamapps", "common", "SpaceEngineersDedicatedServer", "DedicatedServer64")),
+            DataDir = Env("MC_DATA", InstanceLocator.DefaultDataDir()),
+            MagnetarConfigDir = Env("MC_CONFIG", InstanceLocator.DefaultMagnetarConfigDir()),
+            MagnetarExePath = Env("MC_EXE", InstanceLocator.DefaultMagnetarExe()),
+            Ds64Dir = Env("MC_DS64", InstanceLocator.DetectDs64()),
         };
         string templateName = Env("MC_TEMPLATE", "Empty World");
         string worldName = "MCTest_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");

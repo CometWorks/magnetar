@@ -49,8 +49,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-    <Magnetar Condition="'$(Magnetar)' == '' and '$(XDG_DATA_HOME)' != ''">$(XDG_DATA_HOME)/Magnetar</Magnetar>
-    <Magnetar Condition="'$(Magnetar)' == '' and '$(HOME)' != ''">$(HOME)/.local/share/Magnetar</Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(XDG_CONFIG_HOME)' != ''">$(XDG_CONFIG_HOME)/Magnetar</Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(HOME)' != ''">$(HOME)/.config/Magnetar</Magnetar>
     <DS64 Condition="'$(DS64)' == '' and '$(HOME)' != ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
   </PropertyGroup>
 

@@ -17,8 +17,9 @@ internal sealed class MagnetarLauncher
 /// <summary>
 /// Resolves the default folder pair and the Magnetar/DS install locations, with
 /// the same semantics as Magnetar itself so a non-standard deployment resolves
-/// end to end. Explicit CLI values always win; nothing here silently falls back
-/// past a value the user gave.
+/// end to end: the Magnetar install is wherever this tool runs from. Explicit
+/// CLI values always win; nothing here silently falls back past a value the
+/// user gave.
 /// </summary>
 internal static class InstanceLocator
 {
@@ -36,49 +37,56 @@ internal static class InstanceLocator
     }
 
     /// <summary>
-    /// Default Magnetar config dir (config.xml, logs, magnetar.pid). Magnetar
-    /// is portable: both launchers keep their shared config in the Magnetar
-    /// folder next to the binaries (the counterpart of Pulsar's Legacy/Modern
-    /// flavour folders), so the default resolves against the default install
-    /// location.
+    /// The Magnetar install root: the folder holding the MagnetarConfig binary.
+    /// The launchers (MagnetarLegacy.exe / MagnetarInterim.exe|.bin) always sit
+    /// next to it, and Magnetar is portable, so the install can live anywhere;
+    /// nothing here assumes a deploy location. Resolved from the running
+    /// executable; when the tool is hosted by <c>dotnet MagnetarConfig.dll</c>
+    /// (tests, IDE) the process is the dotnet host, so the folder of the
+    /// managed assembly is used instead.
     /// </summary>
-    public static string DefaultMagnetarConfigDir()
+    public static string InstallRoot
     {
-        if (PlatformPaths.IsWindows)
-            return LauncherConfigDir(
-                Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Magnetar"));
-
-        return LauncherConfigDir(Path.GetDirectoryName(DefaultMagnetarExe()));
+        get
+        {
+            string exe = Environment.ProcessPath;
+            string dir = !string.IsNullOrEmpty(exe)
+                         && Path.GetFileNameWithoutExtension(exe)
+                             .Equals("MagnetarConfig", StringComparison.OrdinalIgnoreCase)
+                ? Path.GetDirectoryName(exe)
+                : AppContext.BaseDirectory;
+            return Path.GetFullPath(dir).TrimEnd(Path.DirectorySeparatorChar);
+        }
     }
-
-    /// <summary>Default Magnetar launcher executable to spawn.</summary>
-    public static string DefaultMagnetarExe()
-    {
-        if (PlatformPaths.IsWindows)
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Magnetar", "MagnetarLegacy.exe");
-
-        string xdgData = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
-        string baseDir = !string.IsNullOrWhiteSpace(xdgData)
-            ? xdgData
-            : Path.Combine(Home, ".local", "share");
-        return Path.Combine(baseDir, "Magnetar", "MagnetarInterim.bin");
-    }
-
-    /// <summary>The %APPDATA%\Magnetar root the Windows launchers are deployed under.</summary>
-    private static string WindowsMagnetarRoot() =>
-        Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Magnetar");
 
     /// <summary>
-    /// The Windows Magnetar launchers whose executable is installed under
-    /// %APPDATA%\Magnetar (Legacy first, then Interim). Empty off Windows. The
-    /// tool uses this to let the operator pick which launcher to configure when
-    /// both are present, and to auto-select when only one is.
+    /// Default Magnetar config dir (config.xml, logs, magnetar.pid). Both
+    /// launchers keep their shared config in the Magnetar folder next to the
+    /// binaries (the counterpart of Pulsar's Legacy/Modern flavour folders).
+    /// </summary>
+    public static string DefaultMagnetarConfigDir() => LauncherConfigDir(InstallRoot);
+
+    /// <summary>
+    /// Default Magnetar launcher executable to spawn: the launcher next to this
+    /// tool. Windows prefers Legacy over Interim when both are present; Linux
+    /// has Interim only.
+    /// </summary>
+    public static string DefaultMagnetarExe()
+    {
+        if (!PlatformPaths.IsWindows)
+            return Path.Combine(InstallRoot, "MagnetarInterim.bin");
+
+        IReadOnlyList<MagnetarLauncher> present = PresentWindowsLaunchers();
+        return present.Count > 0
+            ? present[0].ExePath
+            : Path.Combine(InstallRoot, "MagnetarLegacy.exe");
+    }
+
+    /// <summary>
+    /// The Windows Magnetar launchers installed next to this tool (Legacy
+    /// first, then Interim). Empty off Windows. The tool uses this to let the
+    /// operator pick which launcher to configure when both are present, and to
+    /// auto-select when only one is.
     /// </summary>
     public static IReadOnlyList<MagnetarLauncher> PresentWindowsLaunchers()
     {
@@ -86,7 +94,7 @@ internal static class InstanceLocator
         if (!PlatformPaths.IsWindows)
             return launchers;
 
-        string root = WindowsMagnetarRoot();
+        string root = InstallRoot;
         foreach ((string name, string label) in new[]
                  {
                      ("MagnetarLegacy", "Legacy (.NET Framework 4.8)"),
@@ -125,7 +133,7 @@ internal static class InstanceLocator
         return null;
     }
 
-    private static System.Collections.Generic.IEnumerable<string> Ds64Candidates()
+    private static IEnumerable<string> Ds64Candidates()
     {
         if (PlatformPaths.IsWindows)
         {

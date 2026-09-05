@@ -64,7 +64,7 @@ dotnet build -c Release Magnetar.slnx
 ```
 
 Every build deploys a portable install tree (default: `%APPDATA%\Magnetar`
-on Windows, `~/.local/share/Magnetar` on Linux). Magnetar itself is portable:
+on Windows, `~/.config/Magnetar` on Linux). Magnetar itself is portable:
 its configuration lives next to the binaries and the install folder can be
 moved anywhere. On Linux the native runtime libraries are downloaded by the
 linux-compat plugin on first launch.
