@@ -70,9 +70,16 @@
          own Deploy target stages the executable and its dependencies into
          $(Magnetar)/Libraries/Compiler (the 'Pulsar' property is its
          deployment root). -->
+    <!-- SkipGetTargetFrameworkProperties short-circuits the usual framework
+         negotiation, which would otherwise leak this project's inner-build
+         TargetFramework into Compiler; it picks its own from $(TargetPlatform)
+         (net48 on Windows, net10.0 on Linux), so undefine it. Without this the
+         net10.0 inner build asks Compiler for a net10.0 target it does not have
+         on Windows and fails with NETSDK1005. -->
     <ProjectReference Include="..\Pulsar\Compiler\Compiler.csproj"
                       ReferenceOutputAssembly="false"
                       SkipGetTargetFrameworkProperties="true"
+                      UndefineProperties="TargetFramework"
                       AdditionalProperties="Pulsar=$(Magnetar);Steamworks=$(Steamworks)" />
   </ItemGroup>
   <!-- The Linux native-library bootstrap pulls in System.Runtime.Loader /
