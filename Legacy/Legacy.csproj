@@ -237,6 +237,13 @@
       <DeployLibraryFile Include="$(TargetDir)System.Numerics.Vectors.dll" />
       <DeployLibraryFile Include="$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll" />
       <DeployLibraryFile Include="$(TargetDir)System.Threading.Tasks.Extensions.dll" />
+      <!-- System.Text.Json (staged above) hard-references Encodings.Web at
+           runtime on .NET Framework, and SharpCompress reaches for CodePages
+           when an archive entry uses a legacy codepage. Both are in-box on
+           .NET 10 but ship as packages here, so the launcher would throw
+           FileNotFoundException on first use without them. -->
+      <DeployLibraryFile Include="$(TargetDir)System.Text.Encodings.Web.dll" />
+      <DeployLibraryFile Include="$(TargetDir)System.Text.Encoding.CodePages.dll" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).dll" />
@@ -254,7 +261,17 @@
       <_CopyLocalName
           Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
           Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))" />
-      <_UnstagedDependency Include="@(_CopyLocalName)" Exclude="@(_DeployedName)" />
+      <!-- Transitive packages targeting netstandard also drop copies of
+           assemblies .NET Framework 4.8 already provides in-box. Staging those
+           is not merely redundant: binding redirects are deliberately off (see
+           the top of this file), so an app-local copy newer than the Framework
+           facade would shadow the version the game's assemblies bind against.
+           Pulsar ships without them for the same reason. -->
+      <_InBoxOnFramework Include="System.Security.AccessControl.dll" />
+      <_InBoxOnFramework Include="System.Security.Principal.Windows.dll" />
+      <_InBoxOnFramework Include="System.ValueTuple.dll" />
+      <_UnstagedDependency Include="@(_CopyLocalName)"
+                           Exclude="@(_DeployedName);@(_InBoxOnFramework)" />
     </ItemGroup>
     <Warning Condition="'@(_UnstagedDependency)' != ''"
              Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Pulsar submodule bump add a package?)." />
