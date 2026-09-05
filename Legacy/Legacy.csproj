@@ -113,6 +113,13 @@
     <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
     <Reference Include="VRage.Scripting" HintPath="$(DS64)\VRage.Scripting.dll" Private="False" />
   </ItemGroup>
+  <!-- System.Collections.Immutable is in-box on .NET 10 but not on .NET Framework,
+       where Patch_Compile needs it for the Roslyn ImmutableArray<Diagnostic>
+       signature. Take the DS's own copy (Private="False") so the patch binds to
+       the very assembly the server's Microsoft.CodeAnalysis was built against. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Collections.Immutable" HintPath="$(DS64)\System.Collections.Immutable.dll" Private="False" />
+  </ItemGroup>
   <!-- VRage.Platform.Windows is a Windows-only platform assembly shipped with the
        Windows dedicated server; the Linux server replaces it with its own. -->
   <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
