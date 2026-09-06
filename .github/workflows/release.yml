@@ -158,8 +158,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Pulsar is vendored as a git submodule; the launcher cannot build
-          # without it.
+          # Pulsar supplies the loader; ConfigTools supplies MagnetarConfig.
           submodules: recursive
 
       - name: Install .NET SDK
@@ -255,6 +254,7 @@ jobs:
           DS64: ${{ github.workspace }}/ds64
           Steamworks: ${{ github.workspace }}/steam-deps
           Magnetar: ${{ github.workspace }}/stage/Magnetar
+          MAGNETAR_SHARED: ${{ github.workspace }}/stage/Magnetar/Libraries/MagnetarInterim/Pulsar.Shared.dll
           VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           set -euo pipefail
@@ -264,7 +264,7 @@ jobs:
           # out-of-process compiler).
           dotnet build -c Release Magnetar.slnx
           dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
-          dotnet test --no-build -c Release MagnetarConfigTests/MagnetarConfigTests.csproj
+          dotnet test --no-build -c Release ConfigTools/MagnetarConfigTests/MagnetarConfigTests.csproj
 
           for f in MagnetarInterim.bin MagnetarInterim.dll LICENSE README.md \
                    Libraries/MagnetarInterim/Pulsar.Shared.dll \
@@ -299,8 +299,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Pulsar is vendored as a git submodule; the launcher cannot build
-          # without it.
+          # Pulsar supplies the loader; ConfigTools supplies MagnetarConfig.
           submodules: recursive
 
       - name: Install .NET 10 SDK

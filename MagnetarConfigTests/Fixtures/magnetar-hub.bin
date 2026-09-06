@@ -1,173 +1,0 @@
-
-·∫Y
-(ddf348f57f0e4d2e4ac284d4bce8b1bbb858b630ServerPluginShared2CometWorks/block-limits
-$9103FB18-9813-4B64-9D87-A58434266D93Block Limits*7Enforces block limit rules by player, faction, and grid2OwendB:ç
-BlockLimits is a Space Engineers dedicated server plugin for Magnetar that
-enforces block limit rules by player, faction, and grid. It supports grid size
-limits, optional import of the vanilla block type limits, and the !blocklimit
-chat commands for inspecting and managing limits in-game.
-
-Built on the Magnetar PluginSdk with its config UI rendered by Quasar, it also
-exposes a cross-plugin API (BlockLimits.PluginApi.Limits.CanAdd) that other
-plugins can call to gate block placement against the configured limits.
-
-Functionality is inspired by and reimplements the original Torch plugin
-BlockLimiter by N1Ran: https://github.com/N1Ran/BlockLimiter
-
-˝∫X
-(2051c7327a741e60244dbbc5f926d09ed20ec006ServerPluginShared2CometWorks/concealment
-$C88741F0-0AA5-4263-BD78-5D21467A84D3Concealment*AStops the simulation of grids if far away from all online players2Viktor:°
-Concealment is a server-side Space Engineers plugin for Magnetar that reduces
-dedicated server load by skipping work that only matters on a graphical client.
-
-It uses Harmony patches ‚Äî for example disabling LCD text-panel visibility
-updates on the dedicated server ‚Äî to cut needless CPU and network overhead.
-Patches are guarded by startup code-change detection so they fail-safe when a
-Space Engineers update alters the patched methods, and the plugin is configured
-through the Magnetar PluginSdk with its UI rendered by Quasar.
-
-Functionality is inspired by and reimplements the original Torch plugin
-Concealment by TorchAPI: https://github.com/TorchAPI/Concealment
-
-∆∫t
-(2212094d8ae64cb7d015ad27cbaa0a88e4bc5b70ServerPluginShared*
-
-LiteNetLib1.3.12CometWorks/direct-transport
-direct-transportDirect Transport"direct-transport*=Non-Steam direct UDP multiplayer transport (dedicated server)2
-CometWorks:∂Lets a Space Engineers dedicated server accept clients over raw UDP
-        without Steam, for headless multi-client test setups (functional and load
-        testing). Activated by the SE_DIRECT_TRANSPORT environment variable
-        (1/true/yes/on). Admits clients without Steam authentication. Requires the
-        matching DirectTransport (Client) plugin on each client with --connect and
-        --client-id parameters specified.
-    B
-NETCoreAppRLinux
-Û∫‡
-(0f0187049a5f157f8e0eb843c99f12ca397156b2ServerPlugin*ã
-System.Management4.5.0
-System.Formats.Nrbf10.0.1
-System.Drawing.Common6.0.0.
-%System.Diagnostics.PerformanceCounter9.0.02CometWorks/dotnet-compat
-se-dotnet-compatDotNetCompat"se-dotnet-compat*Compatibility with .NET 10.02Viktor:¶Support plugin for Magnetar to run the server on .NET 10.0.
-        
-Do NOT add this plugin manually, it won't work.
-It is added by Magnetar automatically on demand.
-B
-NETCoreApp
-‰∫W
-(1f5a56561c4a8e4ab4a2cf950d201e53024e6cb0ServerPluginShared2CometWorks/essentials
-$DF09925B-6D53-41F2-899C-CA6214B5DD6F
-Essentials*+Quality-of-life admin and player essentials2OwendB:†
-Essentials is a Magnetar server plugin for Space Engineers dedicated servers
-that bundles a broad set of quality-of-life and admin tools, all configured
-through the Magnetar PluginSdk with the config UI rendered by Quasar.
-
-It adds ship repair (!fixship), PCU and ownership transfer and inspection
-(!transfer, !pcu), economy management with player-to-player payments (!econ),
-bulk block enable/disable/removal (!blocks) and auto-commands.
-
-Server features include a customizable MOTD with optional Steam overlay links,
-stopping all ships on startup, automatic empty-backpack cleanup, owned-grid GPS
-listing, and optional matchmaking tag filtering. Harmony patches are guarded
-with the EnsureCode attribute so they fail-safe when Space Engineers ships an
-update that changes patched methods.
-
-Functionality is inspired by and reimplements the original Torch plugin
-Essentials by TorchAPI: https://github.com/TorchAPI/Essentials
-
-£∫r
-(25a88e01fe8e53b3d499a2cf44047187605082e8ServerPlugin	ContractsShared2%OwendB1/GameServerAuth-MagnetarPlugin
-$EC39AAEF-E46A-4291-A511-91ECE969D1D7GameServerAuth*2Discord-backed server access control for Magnetar.2OwendB:πGameServerAuth connects Space Engineers dedicated servers to the Game Server Auth service. Players link Discord and Steam accounts, then authorize in-game with chat commands. Server owners can manage role-based join access, promotion levels, reserved slots, and cluster lobby redirects from the web control plane.
-“∫Y
-(76127e8eed9bfabaf2910fe756e7e30ee4bb4fa4ServerPluginShared2CometWorks/grid-backups
-$9AC2F6A8-B8A7-4250-8814-BADE62C5CF3CGridBackups* Automatic grid blueprint backups2OwendB:ñ
-GridBackups is a Magnetar server plugin that exports ship and station grid
-blueprints on configurable triggers ‚Äî interval, steady-state, change
-thresholds, and pre-concealment ‚Äî and stores them in a shared Quasar data
-folder so backups aren't tied to a single managed Magnetar host.
-
-Supports connected-grid grouping, owner-named folders, NPC/nobody filtering,
-retention limits, the !gridbackup chat commands, and an external API for other
-plugins to request backups directly.
-
-Functionality is inspired by and reimplements the original Torch plugin
-GridBackup by LordTylus (license: Apache-2.0):
-https://github.com/LordTylus/SE-Torch-Plugin-ALE-GridBackup
-
-⁄∫S
-(53fe29629ec26455b0706f3e460a1a0975c7a522ServerPluginShared2CometWorks/hangar
-$17C928CE-4645-4E1B-9365-C3C46BFE061DHangar*Offline grid storage2Viktor:µ
-Hangar is a server-side Space Engineers plugin for Magnetar that lets players
-store grids in a personal hangar and retrieve them later.
-
-With the !hangar (!h) chat commands players can save the grid they are looking
-at or one named explicitly, list their stored grids with block and PCU
-summaries, view detailed grid info, load a grid back into the world near
-themselves or at its original position, and delete entries; admins can toggle
-the plugin and check its status.
-
-Configurable options include per-player slot limits, save cooldowns, block and
-PCU caps per entry, optional inclusion of connected subgrids, ownership
-transfer on load, majority-ownership checks, and a centralized Quasar-managed
-storage path. Built on the Magnetar PluginSdk with its UI rendered by Quasar.
-
-Functionality is inspired by and reimplements the original Torch plugin
-QuantumHangar by Casimir255 (license: Apache-2.0):
-https://github.com/Casimir255/QuantumHangar)
-
-Ë∫Q
-(bb7cf031c279e2822522e9934a4e2f7780a36eb9ServerPlugin2CometWorks/linux-compat
-se-linux-compatLinuxCompat"se-linux-compat*Linux compatibility2Viktor:∞Support plugin for Magnetar to run the server natively on Linux and .NET 10.0.
-
-Do NOT add this plugin manually, it won't work.
-It is added by Magnetar automatically on demand.B
-NETCoreAppRLinux
-∆∫
-(6f69095e3601c9dbf840e5c2063fa14521e58e4bServerPluginSharedMultigridProjectorApi2&viktor-ferenczi/se-multigrid-projector
-$B91FD7B3-E1AC-4B57-8765-C677A7AC1F5FMultigrid Projector*wServer-side support for building and repairing multigrid projections. Pairs with the Multigrid Projector client plugin.2Viktor:ÖServer-side plugin for Multigrid Projector. Enables full multigrid projection welding and repair for all players on the server.
-
-        Install it via Quasar (the Magnetar control plane), or into a standalone Magnetar by editing its profile. Configure it remotely from Quasar.
-
-        For help, troubleshooting and bug reports join the SE Mods Discord: https://discord.gg/PYPFPGf3Ca
-    
-ë∫m
-(ad4dd793cd8b2868baa577485620bb5b6af1832aServerPluginShared2+viktor-ferenczi/se-performance-improvements
-$454B0F55-C727-4DAB-B1A9-5AE6050A0932Performance*@Various performance improvements to let the server run smoother.2Viktor:°Various performance improvements to let the server run smoother.
-
-See the GitHub page for the list of fixes and technical details.
-
-For support please join the Pulsar Discord: https://discord.gg/z8ZczP2YZY
-
-Please consider supporting my work on Patreon: https://www.patreon.com/semods
-    
-∂	∫é
-(5d51df6b7a8e91cc37f2ada0b3d4c241d4a5e377ServerPluginShared\Core
-Shared\Se1*(&
-Microsoft.CodeAnalysis.CSharp5.3.02lolifamily/se-mcp
-$27A06865-67CA-4193-AEDD-8CF62A2F770ESeMcp*PMCP server for LLM-driven code execution inside Space Engineers Dedicated Server2
-lolifamily:ñ*** WARNING ‚Äî REMOTE CODE EXECUTION ***
-The bearer token = root password. Any client with it can run arbitrary C# on the dedicated server host (file I/O, processes, native [DllImport]). Never share or screenshot it; never port-forward the listener. Binds 127.0.0.1 only.
-
-Turns your Space Engineers Dedicated Server into an MCP (Model Context Protocol) server. An LLM like Claude can connect over HTTP and execute C# directly in the running server engine with full .NET and game API access.
-
-Features:
-- REPL-style: no boilerplate, Roslyn 5.3, [DllImport] supported
-- All assemblies referenced (.NET + game + plugins) incl. internal members
-- Multi-frame coroutines + parallel script execution
-- Console.WriteLine() piped back to the LLM
-- Per-field errors with corrected line numbers
-- Configurable port, auto-generated bearer token
-
-Transport: MCP Streamable HTTP (not SSE). POST JSON-RPC to http://localhost:9000/
-ã∫`
-(26e85d03e7bfe3dce92a481bcbad9f0f998d5eccServerPluginShared2viktor-ferenczi/se-test-plugin
-$D32C082B-1A80-418A-BB6B-28E83D86F940
-TestPlugin*4Plugin to test Magnetar and the Plugin SDK features.2Viktor:4Plugin to test Magnetar and the Plugin SDK features.
-é∫C
-TODO Git commit hashServerPlugin2todo-github-user/project-name
-$00000000-0000-0000-0000-000000000000TODO Your Plugin Name*TODO Short description2TODO Author Name:‹TODO Long description, multiple lines.
-
-        This text is shown on the plugin details panel in a scrollable text box.
-
-        You can use links here, players can click on them. For example, add a Discord invite.
-    

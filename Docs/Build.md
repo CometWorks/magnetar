@@ -27,14 +27,15 @@ either host.
 
 ## Prerequisites
 
-* The Pulsar submodule. Magnetar's plugin-loader core (`Pulsar.Shared`,
+* The Pulsar and ConfigTools submodules. Magnetar's plugin-loader core (`Pulsar.Shared`,
   `Pulsar.Protocol`) and the out-of-process Roslyn compiler come from the
-  [`Pulsar/`](../Pulsar/) git submodule:
+  [`Pulsar/`](../Pulsar/) git submodule. The configuration tool and its tests
+  come from [`ConfigTools/`](https://github.com/CometWorks/config-tools):
 
   ```sh
   git clone --recurse-submodules https://github.com/CometWorks/magnetar
   # or, in an existing clone:
-  git submodule update --init
+  git submodule update --init --recursive
   ```
 
 * [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
@@ -79,11 +80,20 @@ instead. Deploy then stages that pair into `Libraries/MagnetarInterim/`. Leave
 it at the default and the build stops with a message saying so, rather than
 producing an install that dies at startup in `MySteamGameServer.Start`.
 
-The submodule's projects are deliberately not part of `Magnetar.slnx`. They
+Pulsar's projects are deliberately not part of `Magnetar.slnx`. They
 build through the `ProjectReference`s in
 [Legacy.csproj](../Legacy/Legacy.csproj), which forward the properties they
 need: `Steamworks`, `SteamApiFileName` (the platform's Steam native library
 name) and the deployment root.
+
+`Magnetar.slnx` includes the two MagnetarConfig projects directly from
+`ConfigTools/`. They inherit this repository's `Directory.Build.props`,
+including the version, deployment folder, and local overrides. A normal
+solution build stages the config tool alongside the launchers. Source changes
+belong in [config-tools](https://github.com/CometWorks/config-tools); update the
+submodule pin here after the corresponding config-tools commit is available.
+Standalone config-tools releases publish self-contained single executables;
+Magnetar's bundles retain the layout below.
 
 ## Deployment
 
@@ -195,7 +205,8 @@ component to 0.
 
 [Directory.Build.props](../Directory.Build.props) holds the single `<Version>`,
 which also feeds `AssemblyVersion` and `FileVersion`. It applies to Magnetar's
-own projects only (the launchers, `MagnetarConfig`, `PluginSdk`). Projects under
+launcher and PluginSdk projects, plus the included `ConfigTools/MagnetarConfig`
+project. Projects under
 `Pulsar/` build with Pulsar's own props and keep their upstream versions, so the
 shipped `Pulsar.Shared.dll` carries Pulsar's number, not Magnetar's.
 
@@ -237,12 +248,15 @@ attached.
 * **version-check** parses the version, decides `should_build` / `draft`, and
   probes the DS depot's public build id (via `steamcmd +app_info_print`, no
   depot download) to key the DS cache.
-* **build-linux** and **build-windows** check out the repo with the Pulsar
-  submodule, restore the cached DS library set (or download the depot via
+* **build-linux** and **build-windows** check out the repo with the Pulsar and
+  ConfigTools submodules, restore the cached DS library set (or download the depot via
   `steamcmd` on a miss), run `dotnet build -c Release Magnetar.slnx` with the
   `Magnetar` property pointed at a staging tree, run both test suites
   (Linux job), verify the staged tree, and pack it with 7-Zip as
   `MagnetarFor<OS>-<version>.7z`.
+  The Linux config-tool tests set `MAGNETAR_SHARED` to the staged
+  `Libraries/MagnetarInterim/Pulsar.Shared.dll` so the serializer compatibility
+  checks exercise the bundled loader.
 * **release** downloads both bundles and creates the release with `gh`.
 
 ### Dedicated Server cache

@@ -6,8 +6,9 @@
 | `Legacy/`                    | The server launcher (`MagnetarLegacy` / `MagnetarInterim`) — entry point, DS detection, daemon/pid/lifecycle, headless Harmony patches, chat commands, mission screens, Linux native bootstrap. References the submodule's `Shared` and `Compiler`. |
 | `PluginSdk/`                 | Public API surface server plugins compile against                 |
 | `PluginSdkTests/`            | xUnit specifications for every public `PluginSdk` API             |
-| `MagnetarConfig/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](MagnetarConfig.md) · [internals](MagnetarConfigInternals.md)) |
-| `MagnetarConfigTests/`       | xUnit tests for `MagnetarConfig` (registry, documents, process/pid, plugins, workshop resolver) |
+| `ConfigTools/`               | **Git submodule**: [config-tools](https://github.com/CometWorks/config-tools), which owns the configuration tools, tests, shared terminal theme, and manuals. Update its pinned commit to consume changes. |
+| `ConfigTools/MagnetarConfig/` | Terminal.Gui TUI to configure and operate one DS instance ([manual](MagnetarConfig.md) · [internals](MagnetarConfigInternals.md)); built and bundled by this solution. |
+| `ConfigTools/MagnetarConfigTests/` | xUnit tests for `MagnetarConfig` (registry, documents, process/pid, plugins, workshop resolver). |
 | `MagnetarMod/`               | Companion SE world mod project; Workshop/SE content lives under `MagnetarMod/src/` |
 | `Directory.Build.props`      | Build settings (deploy folder, DS path) and the centralized `<Version>`; override the settings locally with a git-ignored `Directory.Build.props.user` |
 

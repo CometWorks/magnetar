@@ -158,6 +158,12 @@ itself:
 <install>\MagnetarConfig.exe
 ```
 
+The tool is maintained in [config-tools](https://github.com/CometWorks/config-tools)
+and bundled from a pinned source revision. It defaults to a muted slate theme.
+**Tools → Theme** also offers the original Turbo C / Turbo Vision appearance;
+the preference is stored locally for the user and shared with PulsarConfig.
+The existing terminal driver behavior is unchanged.
+
 It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself
 runs with — and edits the DS files in place (atomic writes with `.bak`
 backups): the global `SpaceEngineers-Dedicated.cfg`, each world's
@@ -170,7 +176,7 @@ edits **save automatically**.
 
 Key flags: `-path <dir>` (DS data dir) · `-config <dir>` (Magnetar config dir) ·
 `-magnetar <file>` (launcher to start/stop) · `-ds64 <dir>` (for world
-templates) · `-netdriver` (portable terminal driver) · `-diag` (print a
+templates) · `-netdriver` (accepted for compatibility; already the default) · `-diag` (print a
 headless read-only instance report and exit) · `-help`. Graceful stop and config
 reload use SIGTERM/SIGHUP and are **Linux-only**; on Windows the server can only
 be force-killed (with a data-loss warning). See the
