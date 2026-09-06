@@ -42,12 +42,12 @@ by default) that configures **and operates one** Magnetar-managed Dedicated Serv
 instance: edit the global `SpaceEngineers-Dedicated.cfg`, per-world session
 settings and mod lists, create/delete/activate worlds, manage plugins and
 profiles, start/stop/reload the daemonized server (PID-file status), and read
-the game and Magnetar logs. It ships in both bundles as `MagnetarConfig.exe`
-(Windows) / `MagnetarConfig.bin` (Linux) next to the launchers. See the
+the game and Magnetar logs. Download it separately from
+**[config-tools releases](https://github.com/CometWorks/config-tools/releases)**.
+See the
 **[Config tool user manual](https://github.com/CometWorks/config-tools/blob/main/Docs/MagnetarConfig.md)**.
 Its source, tests, and documentation live in
-[config-tools](https://github.com/CometWorks/config-tools), pinned here as the
-`ConfigTools/` submodule. **Tools → Theme** selects the original Turbo C style
+[config-tools](https://github.com/CometWorks/config-tools). **Tools → Theme** selects the original Turbo C style
 or muted slate, saved in local user settings shared with PulsarConfig.
 
 ## Versioning
@@ -59,7 +59,7 @@ all four components; `-version` prints the first three.
 
 ## Building
 
-Clone with the Pulsar and ConfigTools submodules and build the solution:
+Clone with the Pulsar submodule and build the solution:
 
 ```sh
 git clone --recurse-submodules https://github.com/CometWorks/magnetar

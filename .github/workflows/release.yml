@@ -158,7 +158,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Pulsar supplies the loader; ConfigTools supplies MagnetarConfig.
+          # Pulsar supplies the loader and compiler projects.
           submodules: recursive
 
       - name: Install .NET SDK
@@ -254,26 +254,21 @@ jobs:
           DS64: ${{ github.workspace }}/ds64
           Steamworks: ${{ github.workspace }}/steam-deps
           Magnetar: ${{ github.workspace }}/stage/Magnetar
-          MAGNETAR_SHARED: ${{ github.workspace }}/stage/Magnetar/Libraries/MagnetarInterim/Pulsar.Shared.dll
           VERSION: ${{ needs.version-check.outputs.version }}
         run: |
           set -euo pipefail
           # The Deploy targets stage the complete portable install tree into
-          # $Magnetar: the MagnetarInterim.bin and MagnetarConfig.bin apphosts
-          # and Libraries/ (launcher and config-tool dependencies + the
-          # out-of-process compiler).
+          # $Magnetar: the MagnetarInterim.bin apphost and Libraries/
+          # (launcher dependencies and the out-of-process compiler).
           dotnet build -c Release Magnetar.slnx
           dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
-          dotnet test --no-build -c Release ConfigTools/MagnetarConfigTests/MagnetarConfigTests.csproj
 
           for f in MagnetarInterim.bin MagnetarInterim.dll LICENSE README.md \
                    Libraries/MagnetarInterim/Pulsar.Shared.dll \
                    Libraries/MagnetarInterim/libsteam_api.so \
                    Libraries/MagnetarInterim/Steamworks.NET.dll \
                    Libraries/MagnetarInterim/LICENSES/Steam-NOTICE.txt \
-                   Libraries/Compiler/Compiler.bin \
-                   MagnetarConfig.bin MagnetarConfig.dll \
-                   Libraries/MagnetarConfig/Terminal.Gui.dll; do
+                   Libraries/Compiler/Compiler.bin; do
             test -e "stage/Magnetar/$f" || { echo "missing $f" >&2; exit 1; }
           done
 
@@ -299,7 +294,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Pulsar supplies the loader; ConfigTools supplies MagnetarConfig.
+          # Pulsar supplies the loader and compiler projects.
           submodules: recursive
 
       - name: Install .NET 10 SDK
@@ -357,16 +352,13 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           # The Deploy targets stage the complete portable install tree into
-          # $env:Magnetar: both launchers, the config tool and Libraries/.
+          # $env:Magnetar: both launchers and Libraries/.
           dotnet build -c Release Magnetar.slnx
 
           foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE",
                            "Libraries\MagnetarLegacy\Pulsar.Shared.dll",
                            "Libraries\MagnetarInterim\Pulsar.Shared.dll",
-                           "Libraries\Compiler\Compiler.exe",
-                           "MagnetarConfig.exe", "MagnetarConfig.dll",
-                           "Libraries\MagnetarConfig\Terminal.Gui.dll",
-                           "Libraries\MagnetarConfig\System.Management.dll")) {
+                           "Libraries\Compiler\Compiler.exe")) {
             if (-not (Test-Path "stage\Magnetar\$f")) { throw "missing $f" }
           }
 

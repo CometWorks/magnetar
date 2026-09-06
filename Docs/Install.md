@@ -25,8 +25,12 @@ and extract its `Magnetar/` folder anywhere you like:
 
 | Asset | Contents |
 | ----- | -------- |
-| `MagnetarForLinux-<version>.7z` | `MagnetarInterim.bin` (.NET 10) with `Libraries/` and the `MagnetarConfig.bin` terminal UI. |
-| `MagnetarForWindows-<version>.7z` | `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) with `Libraries/` and `MagnetarConfig.exe`. |
+| `MagnetarForLinux-<version>.7z` | `MagnetarInterim.bin` (.NET 10) with `Libraries/`. |
+| `MagnetarForWindows-<version>.7z` | `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) with `Libraries/`. |
+
+The optional **MagnetarConfig** terminal UI is a separate download from
+[config-tools releases](https://github.com/CometWorks/config-tools/releases).
+See its [user manual](MagnetarConfig.md) for setup and use.
 
 `<version>` has four components: the Pulsar release Magnetar is built on, plus a
 Magnetar build number, as in `2.3.3.0`. See
@@ -37,11 +41,11 @@ keep their shared configuration and logs in the `Magnetar` folder inside the
 install folder, so the whole thing moves as one unit. To uninstall, delete the
 folder.
 
-An update replaces the install folder's binaries (`Libraries/`, the launchers
-and the config tool), so do not keep unrelated files in it. The `Magnetar` configuration
+An update replaces the install folder's binaries (`Libraries/` and the launchers),
+so do not keep unrelated files in it. The `Magnetar` configuration
 folder survives updates.
 
-`MagnetarInterim` and `MagnetarConfig` need the .NET 10 runtime
+`MagnetarInterim` needs the .NET 10 runtime
 (`Microsoft.NETCore.App 10.x`) installed on the host. On Linux the native
 runtime libraries arrive through the linux-compat plugin on first launch, so
 the host also needs outbound HTTPS to GitHub at that point.
