@@ -1,3 +1,6 @@
 [submodule "Pulsar"]
 	path = Pulsar
 	url = https://github.com/SpaceGT/Pulsar/
+[submodule "ConfigTools"]
+	path = ConfigTools
+	url = https://github.com/CometWorks/config-tools.git

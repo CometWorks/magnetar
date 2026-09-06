@@ -39,7 +39,9 @@
           Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')" />
 
   <!-- Default Project Settings.
-       These apply to Magnetar's own projects only. Projects under the Pulsar/
+       These apply to Magnetar's projects and the included ConfigTools projects.
+       ConfigTools has no Directory.Build.props, so it inherits this file.
+       Projects under the Pulsar/
        git submodule use Pulsar's Directory.Build.props; the values they need
        are forwarded on the ProjectReferences in Legacy/Legacy.csproj. -->
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
