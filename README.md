@@ -28,6 +28,23 @@ profile and source files use Pulsar's current formats.
 
 You can register new plugins by making PRs to the [MagnetarHub](https://github.com/CometWorks/magnetar-hub).
 
+## Installation
+
+Install the Space Engineers Dedicated Server game files separately, then either
+use **[MagnetarConfig setup](#install-or-update-the-server)** or extract the
+platform package from **[Magnetar releases](https://github.com/CometWorks/magnetar/releases)**
+into a dedicated server installation folder. Linux uses `MagnetarInterim.bin`;
+Windows provides `MagnetarInterim.exe` and `MagnetarLegacy.exe`.
+
+The server keeps its own prerequisites: Interim requires the **.NET 10 runtime**;
+on Windows, **.NET Framework 4.8** is also required by the plugin compiler and
+Legacy launcher. Linux downloads native compatibility libraries on first launch,
+so outbound HTTPS to GitHub is needed. The configuration tool's bundled runtime
+does not install these prerequisites for the server.
+
+See **[Install & Releases](Docs/Install.md)** for packages and manual setup, then
+**[Usage](Docs/Usage.md)** for launcher arguments, daemon mode and consent.
+
 ## Control plane — Quasar
 
 [**Quasar**](https://github.com/viktor-ferenczi/Quasar/releases) is a separate
@@ -37,14 +54,126 @@ Quasar orchestrates them.
 
 ## Configuration tool — MagnetarConfig
 
-**MagnetarConfig** is a cross-platform terminal UI (Terminal.Gui, Turbo Vision
-look) that configures **and operates one** Magnetar-managed Dedicated Server
-instance: edit the global `SpaceEngineers-Dedicated.cfg`, per-world session
-settings and mod lists, create/delete/activate worlds, manage plugins and
-profiles, start/stop/reload the daemonized server (PID-file status), and read
-the game and Magnetar logs. It ships in both bundles as `MagnetarConfig.exe`
-(Windows) / `MagnetarConfig.bin` (Linux) next to the launchers. See the
-**[Config tool user manual](Docs/MagnetarConfig.md)**.
+**MagnetarConfig** is an optional terminal UI for configuring and operating
+**one** Magnetar-managed Dedicated Server instance. It edits server/world
+settings, mods, plugins, sources and profiles; manages worlds; starts the server;
+and displays status and logs. Graceful stop/reload is supported on Linux;
+Windows offers force-stop with a data-loss warning. Use Quasar for multiple
+instances or remote operation.
+
+Its **source, tests, manuals and releases live in
+[CometWorks/config-tools](https://github.com/CometWorks/config-tools)**.
+Magnetar server bundles no longer include it, and building Magnetar does not
+build or download the configuration tool.
+
+### Download and run
+
+Choose the current **`magnetarconfig-v*`** release from
+**[config-tools releases](https://github.com/CometWorks/config-tools/releases)**:
+
+| Platform | Download |
+| --- | --- |
+| Linux x64 | `MagnetarConfig-linux-x64.bin` |
+| Windows x64 | `MagnetarConfig-win-x64.exe` |
+
+Each is a **single self-contained executable** with .NET and Terminal.Gui
+included. No separate .NET SDK/runtime, Python, NuGet or external 7-Zip is
+needed to run the tool. Linux uses standard `bash`/`stty` utilities. SHA-256
+checksums and license notices accompany the downloads. Select the MagnetarConfig
+release explicitly: this repository also releases PulsarConfig, so its global
+`releases/latest/download` URL is unsuitable for choosing a specific tool.
+
+Keep the tool in a folder of its own, outside the managed server installation;
+this is required for setup changes on Windows. Existing instances can be opened
+with explicit paths, or selected in the startup instance picker:
+
+```sh
+# Linux: use the same configuration and data folders as your server.
+chmod +x MagnetarConfig-linux-x64.bin
+./MagnetarConfig-linux-x64.bin -magnetar "/path/to/Magnetar/MagnetarInterim.bin" \
+  -config "/path/to/Magnetar/Magnetar" -path "/path/to/DS-data"
+```
+
+```powershell
+# Windows PowerShell: Legacy.exe can be selected instead of Interim.exe.
+.\MagnetarConfig-win-x64.exe -magnetar "C:\Servers\Magnetar\MagnetarInterim.exe" -config "C:\Servers\Magnetar\Magnetar" -path "C:\Servers\DS-data"
+```
+
+`-config` is Magnetar's configuration/log/PID directory; `-path` is the Dedicated
+Server data directory containing `SpaceEngineers-Dedicated.cfg` and `Saves`.
+They must match the instance being managed. Pass `-ds64` when the tool cannot
+find `DedicatedServer64` (also needed for world templates). `-diag` prints a
+read-only instance report; `--help` lists the arguments. Placing the tool beside
+a launcher enables adjacent-file discovery, but use an external copy for
+Windows install/update/uninstall operations.
+
+### Install or update the server
+
+Open **File → Install / update / uninstall**, or start setup before an instance
+exists:
+
+```sh
+./MagnetarConfig-linux-x64.bin --setup --target "$HOME/Games/Magnetar"
+```
+
+```powershell
+.\MagnetarConfig-win-x64.exe --setup --target "C:\Servers\Magnetar"
+```
+
+Set the target and DedicatedServer64 location, review prerequisites, then choose
+**Install**, **Update** or **Uninstall**. Setup downloads server packages from
+**CometWorks/magnetar**, not config-tools, and does not install the DS game files
+or system runtimes. Prerequisite reports are advisory; target validation,
+checksums and running-server checks are mandatory. Stop servers using the target
+before an update or uninstall.
+
+For scripts, explicit actions require confirmation through `--yes`:
+
+```sh
+./MagnetarConfig-linux-x64.bin update --target "$HOME/Games/Magnetar" --yes
+./MagnetarConfig-linux-x64.bin uninstall --target "$HOME/Games/Magnetar" --yes
+```
+
+Setup stages updates and retains a backup for rollback. Uninstall removes
+server-owned launcher/library files; instances, worlds, profiles, local plugins,
+unrelated files and the standalone tool are retained. See the
+[setup guide](https://github.com/CometWorks/config-tools/blob/main/Docs/MagnetarConfig.md#installing-and-updating-magnetar)
+for pinned releases and offline archives.
+
+### Moving from the bundled tool
+
+Download the standalone executable and update shortcuts/scripts that previously
+ran `MagnetarConfig.bat`, a `MagnetarConfig` shell launcher, or the bundled
+`Config/` tool. Open the **same `-config` and `-path` directories** and select
+your server launcher with `-magnetar`; no world or profile conversion is needed.
+The old bundled files are not required by the new tool. Keep existing data and
+backups until you have verified the selected instance.
+
+The older Linux `Bin`/shell-wrapper **server** layout is not automatically
+converted by setup. Install the current server into a new folder and explicitly
+select the existing config/data pair; do not run an old uninstall script over
+those folders.
+
+### Tool updates and appearance
+
+Each interactive launch checks in the background for a newer **MagnetarConfig**
+release. The prompt offers **Later** or **Update…**; choose **Update… → Update
+and close**, then reopen the executable. Downloads require that explicit choice;
+offline checks do not block startup. **Tools → Tool updates** checks on demand.
+`--check-update`, `--self-update` and `--tool-version` work without selecting an
+instance. Close other copies before updating; the previous executable is retained
+as `.previous`. See [tool update and recovery details](https://github.com/CometWorks/config-tools#updating-the-tools).
+
+These actions update **only MagnetarConfig**. **Setup → Update** or the CLI
+`update --target ... --yes` updates the **Magnetar server**. Both products have
+independent versions and release schedules.
+
+**Tools → Theme** offers **Sandstone** (default), Graphite, Sage, Plum and the
+original Turbo C / Turbo Vision appearance. The preference is stored for your
+user account on this machine, shared with PulsarConfig and separate from server
+instances. See [theme settings](https://github.com/CometWorks/config-tools#appearance).
+For all screens, editing behavior and server controls, read the
+**[MagnetarConfig manual](https://github.com/CometWorks/config-tools/blob/main/Docs/MagnetarConfig.md)**.
 
 ## Versioning
 

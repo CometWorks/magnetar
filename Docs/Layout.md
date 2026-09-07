@@ -6,10 +6,12 @@
 | `Legacy/`                    | The server launcher (`MagnetarLegacy` / `MagnetarInterim`) — entry point, DS detection, daemon/pid/lifecycle, headless Harmony patches, chat commands, mission screens, Linux native bootstrap. References the submodule's `Shared` and `Compiler`. |
 | `PluginSdk/`                 | Public API surface server plugins compile against                 |
 | `PluginSdkTests/`            | xUnit specifications for every public `PluginSdk` API             |
-| `MagnetarConfig/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](MagnetarConfig.md) · [internals](MagnetarConfigInternals.md)) |
-| `MagnetarConfigTests/`       | xUnit tests for `MagnetarConfig` (registry, documents, process/pid, plugins, workshop resolver) |
 | `MagnetarMod/`               | Companion SE world mod project; Workshop/SE content lives under `MagnetarMod/src/` |
 | `Directory.Build.props`      | Build settings (deploy folder, DS path) and the centralized `<Version>`; override the settings locally with a git-ignored `Directory.Build.props.user` |
+
+MagnetarConfig's source, tests, and manuals live in the separate
+[config-tools repository](https://github.com/CometWorks/config-tools). The tool
+is distributed through [its own releases](https://github.com/CometWorks/config-tools/releases).
 
 There is no forked `Shared/` or `Compiler/` project any more: everything that
 is not server-specific comes from the `Pulsar/` submodule. Namespaces mark the

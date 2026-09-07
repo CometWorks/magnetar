@@ -145,18 +145,27 @@ is not useful.
 
 ## Configuring the server (MagnetarConfig)
 
-**MagnetarConfig** is a terminal UI bundled next to the launcher for editing and
-operating **one** DS instance without hand-editing XML. Run it from the
-install folder; it finds the launcher and the Magnetar config dir next to
-itself:
+**MagnetarConfig** is an optional terminal UI for editing and operating **one**
+DS instance without hand-editing XML. Download it separately from
+[config-tools releases](https://github.com/CometWorks/config-tools/releases).
+When running it outside the Magnetar install folder, specify the launcher,
+Magnetar configuration, and DS data directories explicitly:
 
 ```sh
 # Linux
-<install>/MagnetarConfig.bin
-
-# Windows
-<install>\MagnetarConfig.exe
+./MagnetarConfig-linux-x64.bin -magnetar "/path/to/Magnetar/MagnetarInterim.bin" \
+  -config "/path/to/Magnetar/Magnetar" -path "/path/to/DS-data"
 ```
+
+```powershell
+# Windows PowerShell
+.\MagnetarConfig-win-x64.exe -magnetar "C:\Servers\Magnetar\MagnetarInterim.exe" -config "C:\Servers\Magnetar\Magnetar" -path "C:\Servers\DS-data"
+```
+
+The tool is maintained and released in [config-tools](https://github.com/CometWorks/config-tools).
+It defaults to **Sandstone**.
+**Tools → Theme** also offers Graphite, Sage, Plum and the original Turbo C / Turbo Vision appearance;
+the preference is stored locally for the user and shared with PulsarConfig.
 
 It binds to a `(-config, -path)` folder pair — the same pair Magnetar itself
 runs with — and edits the DS files in place (atomic writes with `.bak`
@@ -170,9 +179,17 @@ edits **save automatically**.
 
 Key flags: `-path <dir>` (DS data dir) · `-config <dir>` (Magnetar config dir) ·
 `-magnetar <file>` (launcher to start/stop) · `-ds64 <dir>` (for world
-templates) · `-netdriver` (portable terminal driver) · `-diag` (print a
+templates) · `-netdriver` (accepted for compatibility; managed terminal driver is now the default) · `-diag` (print a
 headless read-only instance report and exit) · `-help`. Graceful stop and config
 reload use SIGTERM/SIGHUP and are **Linux-only**; on Windows the server can only
 be force-killed (with a data-loss warning). See the
 [Config tool user manual](MagnetarConfig.md) for full usage, and the
 [design and implementation notes](MagnetarConfigInternals.md) for internals.
+
+Use **File → Install / update / uninstall** (or `--setup` at startup) for server
+package management. Run setup outside the server target on Windows. Updating
+the configuration tool is separate: its startup prompt and **Tools → Tool
+updates** offer a verified download followed by **Update and close**; reopen
+the tool afterwards. `--check-update` / `--self-update` work without selecting
+an instance. See the [README](../README.md#tool-updates-and-appearance) for the
+update process and [bundled-tool transition](../README.md#moving-from-the-bundled-tool).
