@@ -28,9 +28,20 @@ and extract its `Magnetar/` folder anywhere you like:
 | `MagnetarForLinux-<version>.7z` | `MagnetarInterim.bin` (.NET 10) with `Libraries/`. |
 | `MagnetarForWindows-<version>.7z` | `MagnetarLegacy.exe` (.NET 4.8) and `MagnetarInterim.exe` (.NET 10) with `Libraries/`. |
 
-The optional **MagnetarConfig** terminal UI is a separate download from
-[config-tools releases](https://github.com/CometWorks/config-tools/releases).
-See its [user manual](MagnetarConfig.md) for setup and use.
+For guided installation, download **MagnetarConfig** separately from the current
+`magnetarconfig-v*` release on
+[config-tools releases](https://github.com/CometWorks/config-tools/releases):
+`MagnetarConfig-linux-x64.bin` on Linux or `MagnetarConfig-win-x64.exe` on Windows.
+It bundles its own .NET runtime, Terminal.Gui and archive reader; the server's
+runtime requirements below still apply. Keep the tool outside the server target
+(required for setup on Windows), make the Linux file executable with `chmod +x`,
+and run it with `--setup --target <install-folder>`.
+
+Setup offers **Check prerequisites**, **Install**, **Update** and **Uninstall**.
+It downloads the server package from CometWorks/magnetar, but does not install
+Dedicated Server game files or system runtimes. See the
+[README quick start](../README.md#install-or-update-the-server) for Linux/Windows
+commands and the [tool manual](MagnetarConfig.md) for offline archives and checksums.
 
 `<version>` has four components: the Pulsar release Magnetar is built on, plus a
 Magnetar build number, as in `2.3.3.0`. See
@@ -38,8 +49,10 @@ Magnetar build number, as in `2.3.3.0`. See
 
 Then run the launcher in place of `SpaceEngineersDedicated.exe`. The launchers
 keep their shared configuration and logs in the `Magnetar` folder inside the
-install folder, so the whole thing moves as one unit. To uninstall, delete the
-folder.
+install folder, so the whole thing moves as one unit. Use the tool's **Uninstall**
+to remove package-owned program files while retaining user data. Deleting the
+whole install folder manually also deletes configuration stored inside it; move
+or back up anything you intend to keep first.
 
 An update replaces the install folder's binaries (`Libraries/` and the launchers),
 so do not keep unrelated files in it. The `Magnetar` configuration
@@ -49,6 +62,17 @@ folder survives updates.
 (`Microsoft.NETCore.App 10.x`) installed on the host. On Linux the native
 runtime libraries arrive through the linux-compat plugin on first launch, so
 the host also needs outbound HTTPS to GitHub at that point.
+
+Keep server and tool updates separate: setup's **Update** changes Magnetar;
+**Tools → Tool updates**, the startup update prompt, or `--self-update` changes
+MagnetarConfig. The latter keeps a `.previous` executable and closes the tool;
+reopen it after replacement. See
+[tool update and recovery details](https://github.com/CometWorks/config-tools#updating-the-tools).
+
+For an existing instance, use the same `-config` and `-path` with the standalone
+tool; [migration from the bundled tool](../README.md#moving-from-the-bundled-tool)
+does not require changing world/profile formats. The older Linux `Bin` server
+layout needs a new installation folder and explicit existing config/data paths.
 
 After installing, see **[Usage](Usage.md)** for how to run the launcher.
 
