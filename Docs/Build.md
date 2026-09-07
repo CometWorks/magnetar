@@ -230,11 +230,14 @@ attached.
 | Trigger | Behaviour |
 | ------- | --------- |
 | Push to `main` | Reads `<Version>` from [Directory.Build.props](../Directory.Build.props). Builds and publishes a public **latest** release `v<version>` only if that version is strictly higher than the latest existing release (the first release ever always counts as newer). Otherwise the whole run is skipped. |
+| Pull request | Compares `<Version>` against the same file on the PR's base commit and, when it changed, builds and publishes a **draft release** tagged `v<version>-pr.<number>`, targeted at the PR head. An unchanged version skips the whole run, so only version bumps cost a build. Each run replaces that PR's previous draft release, and a new push cancels a still-running one, so a PR never accumulates more than one. **Draft pull requests** are skipped entirely and build when they are marked ready for review. Pull requests from forks are skipped too: their `GITHUB_TOKEN` is read-only and could not create a release. |
 | Manual run (`workflow_dispatch`) | Always builds for the current version. A **draft** boolean input (default **true**) decides the outcome: when set it publishes a draft release (tag `v<version>`, or `v<version>-build.<run>` if that tag exists); when cleared it publishes a real, public **latest** release. |
 
 ### Jobs
 
-* **version-check** parses the version, decides `should_build` / `draft`, and
+* **version-check** parses the version, decides `should_build` / `draft`
+  (reading the base branch's version over the API on a pull request, because
+  the PR is checked out as a merge commit whose history may be shallow), and
   probes the DS depot's public build id (via `steamcmd +app_info_print`, no
   depot download) to key the DS cache.
 * **build-linux** and **build-windows** check out the repo with the Pulsar
@@ -265,10 +268,21 @@ secret is needed.
 
 ### Testing the workflow from a branch
 
-The workflow lives on `main`, so `workflow_dispatch` can run it against any
-branch, executing that branch's workflow and code. The default `draft=true`
-keeps such runs on the draft path. A push to a non-`main` branch triggers
-nothing.
+Opening a pull request that bumps `<Version>` is the normal way to get a
+pre-merge build: the draft release `v<version>-pr.<number>` carries both
+bundles, and merging then publishes the real `v<version>` from `main`.
+
+Two unrelated things are called "draft" here. A *draft pull request* is one
+still marked as work in progress on GitHub; the workflow ignores those, so
+opening a PR as a draft is the way to iterate without triggering builds, and
+marking it ready for review starts one. A *draft release* is the unpublished
+GitHub release the workflow produces — that is the output, and a ready PR gets
+one whether or not it was ever a draft PR.
+
+Independently of that, the workflow lives on `main`, so `workflow_dispatch` can
+run it against any branch, executing that branch's workflow and code. The
+default `draft=true` keeps such runs on the draft path. A push to a non-`main`
+branch triggers nothing.
 
 ```sh
 git push origin HEAD:my-branch
@@ -278,4 +292,6 @@ gh run watch -R CometWorks/magnetar \
 ```
 
 Prune leftover draft releases with
-`gh release delete <tag> -R CometWorks/magnetar --yes`.
+`gh release delete <tag> -R CometWorks/magnetar --yes`. Merging or closing a
+pull request leaves its `-pr.<number>` draft behind; drafts publish no git tag,
+so deleting one removes it completely.

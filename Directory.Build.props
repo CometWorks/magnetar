@@ -27,7 +27,7 @@
        it to 0 when the submodule moves to a new Pulsar version.
        See Docs/Build.md ("Versioning"). -->
   <PropertyGroup>
-    <Version>2.4.0.0</Version>
+    <Version>2.4.1.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
