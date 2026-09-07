@@ -8,6 +8,12 @@ name: Release
 #                          version is strictly higher than the latest existing
 #                          release (the first ever release always counts as
 #                          newer). Otherwise the whole run is skipped.
+#   * pull request      -> compare <Version> against the PR's base branch and,
+#                          when it changed, build + publish a DRAFT release
+#                          tagged v<version>-pr.<number>. An unchanged version
+#                          skips the whole run. Pull requests from forks are
+#                          skipped too: their GITHUB_TOKEN is read-only, so the
+#                          run could not create a release anyway.
 #   * manual dispatch   -> always build for the current version,
 #                          regardless of what is already released. The "draft"
 #                          input (default true) decides whether the result is a
@@ -23,6 +29,7 @@ name: Release
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
     inputs:
       draft:
@@ -32,6 +39,12 @@ on:
 
 permissions:
   contents: write
+
+# One release run per pull request: a new push supersedes the draft build of the
+# previous one. Pushes to main and manual dispatches are never cancelled.
+concurrency:
+  group: release-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Steam app id of the Space Engineers Dedicated Server (free, anonymous login).
 env:
@@ -47,6 +60,7 @@ jobs:
       version: ${{ steps.decide.outputs.version }}
       should_build: ${{ steps.decide.outputs.should_build }}
       draft: ${{ steps.decide.outputs.draft }}
+      base_version: ${{ steps.decide.outputs.base_version }}
       ds_buildid: ${{ steps.dsbuild.outputs.buildid }}
     steps:
       - uses: actions/checkout@v6
@@ -66,6 +80,8 @@ jobs:
           fi
           echo "Magnetar version: $version"
 
+          base_version=""
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual run: always build (the operator explicitly asked for it).
             # The "draft" input decides draft vs. real "latest" release; it
@@ -73,6 +89,43 @@ jobs:
             draft="${{ inputs.draft }}"
             echo "Manual dispatch -> unconditional build (draft=$draft)."
             should_build=true
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Pull request: build a DRAFT release when the PR changes <Version>,
+            # so a version bump is packaged and testable before it is merged.
+            draft=true
+
+            # A fork PR runs with a read-only GITHUB_TOKEN, so it could not
+            # create the release; skip instead of failing at the last step.
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" \
+                 != "${{ github.repository }}" ]; then
+              echo "Pull request from a fork -> skip (GITHUB_TOKEN cannot create releases)."
+              should_build=false
+            else
+              # Base version straight from the base commit, not from a local
+              # checkout: the PR is checked out as a merge commit, and its
+              # history is not guaranteed to be fetched.
+              base_version="$(gh api \
+                -H "Accept: application/vnd.github.raw" \
+                "repos/${{ github.repository }}/contents/Directory.Build.props?ref=${{ github.event.pull_request.base.sha }}" \
+                | grep -oPm1 '(?<=<Version>)[^<]+' || true)"
+              if [ -z "$base_version" ]; then
+                echo "ERROR: could not parse <Version> from Directory.Build.props on the base branch (${{ github.event.pull_request.base.ref }})" >&2
+                exit 1
+              fi
+
+              if [ "$version" = "$base_version" ]; then
+                echo "Version $version unchanged vs. base ${{ github.event.pull_request.base.ref }} -> skip."
+                should_build=false
+              else
+                echo "Version changed vs. base ${{ github.event.pull_request.base.ref }}: $base_version -> $version; build a draft."
+                # A downgrade is still built (the draft is never published as
+                # "latest"), but it is almost always a mistake, so say so.
+                if [ "$(printf '%s\n%s\n' "$version" "$base_version" | sort -V | tail -1)" != "$version" ]; then
+                  echo "::warning::Version $version is lower than the base branch's $base_version."
+                fi
+                should_build=true
+              fi
+            fi
           else
             # Push to main: build only if strictly newer than the latest release.
             # /releases/latest returns HTTP 404 (and a JSON error body on stdout)
@@ -103,6 +156,7 @@ jobs:
             echo "version=$version"
             echo "should_build=$should_build"
             echo "draft=$draft"
+            echo "base_version=$base_version"
           } >> "$GITHUB_OUTPUT"
 
       # The DS depot build id keys the cached library set: when Keen ships a new
@@ -403,14 +457,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.version-check.outputs.version }}
+          BASE_VERSION: ${{ needs.version-check.outputs.base_version }}
           DRAFT: ${{ needs.version-check.outputs.draft }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           echo "Artifacts to attach:"
           ls -l dist/*.7z
 
           tag="v$VERSION"
-          if [ "$DRAFT" = "true" ]; then
+          if [ -n "$PR_NUMBER" ]; then
+            # Pull request draft: one refreshed draft per PR, on a tag that can
+            # never collide with the real v<version> release the merge to main
+            # publishes later. Drafts create no git tag, so replacing the
+            # previous one just drops its stale bundles.
+            tag="v$VERSION-pr.$PR_NUMBER"
+            gh release delete "$tag" --repo "${{ github.repository }}" --yes >/dev/null 2>&1 || true
+            gh release create "$tag" \
+              --repo "${{ github.repository }}" \
+              --draft \
+              --target "$PR_HEAD_SHA" \
+              --title "Magnetar $tag" \
+              --notes "Draft build of pull request #$PR_NUMBER, which bumps the version from $BASE_VERSION to $VERSION." \
+              dist/*.7z
+          elif [ "$DRAFT" = "true" ]; then
             # Keep the tag unique so a manual draft never collides with an
             # existing release of the same version.
             if gh release view "$tag" >/dev/null 2>&1; then
