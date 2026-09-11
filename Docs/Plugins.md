@@ -4,6 +4,12 @@ Static plugin `Rewrite` methods are registered before the dedicated server loads
 its initial world. Plugin constructors and `Init` still run at the normal game
 initialization stage; rewriters must not depend on either having run. Prepare
 any compiler references and whitelists in the plugin preloader's `Finish` hook.
+Registration belongs to `PluginInstance` owner creation, not dependency injection;
+an owner disabled by an early rewrite failure is not constructed during later
+initialization.
+
+The shared owner/dispatcher regression check can be run without a game install:
+`dotnet run --project Pulsar/Tests/RewriterLifecycle/RewriterLifecycle.csproj -c Release`.
 
 To regression-test initial-world rewriting on Linux, start a fresh server process
 with the [Sigma Draconis creative save](https://steamcommunity.com/sharedfiles/filedetails/?id=3656416777)

@@ -15,7 +15,6 @@ using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
 using Pulsar.Shared.Config;
 using Pulsar.Shared.Data;
-using Pulsar.Legacy.Patch;
 using Sandbox.Game.World;
 using VRage.Plugins;
 using SharedLoader = Pulsar.Shared.Loader;
@@ -47,16 +46,13 @@ public class PluginLoader : IHandleInputPlugin
             return;
 
         // The dedicated server compiles its initial world's mods before IPlugin.Init.
-        // Register static rewriters now, without constructing or initializing plugins.
+        // Creating owners registers their rewriters without constructing or initializing plugins.
         foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
         {
             if (!PluginInstance.TryGet(data, assembly, out PluginInstance instance))
                 continue;
 
             plugins.Add(instance);
-            Type pluginType = assembly.GetTypes().First(t => typeof(IPlugin).IsAssignableFrom(t));
-            if (AccessTools.DeclaredMethod(pluginType, "Rewrite") is MethodInfo rewrite)
-                Patch_Rewriter.Methods.TryAdd(instance, rewrite);
         }
     }
 
