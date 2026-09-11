@@ -41,6 +41,19 @@ public class PluginLoader : IHandleInputPlugin
     {
         Instance = this;
         AppDomain.CurrentDomain.FirstChanceException += OnException;
+
+        if (ConfigManager.Instance.SafeMode)
+            return;
+
+        // The dedicated server compiles its initial world's mods before IPlugin.Init.
+        // Creating owners registers their rewriters without constructing or initializing plugins.
+        foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
+        {
+            if (!PluginInstance.TryGet(data, assembly, out PluginInstance instance))
+                continue;
+
+            plugins.Add(instance);
+        }
     }
 
     public bool TryGetPluginInstance(string id, out PluginInstance instance)
@@ -217,10 +230,6 @@ public class PluginLoader : IHandleInputPlugin
 
     private void InstantiatePlugins()
     {
-        foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
-            if (PluginInstance.TryGet(data, assembly, out PluginInstance instance))
-                plugins.Add(instance);
-
         for (int i = plugins.Count - 1; i >= 0; i--)
         {
             PluginInstance p = plugins[i];

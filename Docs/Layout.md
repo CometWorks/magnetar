@@ -6,6 +6,7 @@
 | `Legacy/`                    | The server launcher (`MagnetarLegacy` / `MagnetarInterim`) — entry point, DS detection, daemon/pid/lifecycle, headless Harmony patches, chat commands, mission screens, Linux native bootstrap. References the submodule's `Shared` and `Compiler`. |
 | `PluginSdk/`                 | Public API surface server plugins compile against                 |
 | `PluginSdkTests/`            | xUnit specifications for every public `PluginSdk` API             |
+| `Tests/RewriterLifecycle/`   | Standalone regression check for Magnetar's plugin-owner and rewriter lifecycle |
 | `MagnetarConfig/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](MagnetarConfig.md) · [internals](MagnetarConfigInternals.md)) |
 | `MagnetarConfigTests/`       | xUnit tests for `MagnetarConfig` (registry, documents, process/pid, plugins, workshop resolver) |
 | `MagnetarMod/`               | Companion SE world mod project; Workshop/SE content lives under `MagnetarMod/src/` |
@@ -26,3 +27,8 @@ origin of code:
   so the linked files resolve them and diffs against upstream show only real
   divergence. After a submodule bump, diff the forks against their upstream
   counterparts to pick up fixes.
+
+`Legacy/Loader/PluginInstance.cs` is one such server-specific fork: it registers
+static rewriters at owner creation, before initial-world compilation, and keeps
+owners disabled after an early rewrite failure. `Patch_Rewriter.cs` remains
+linked from unmodified Pulsar source.

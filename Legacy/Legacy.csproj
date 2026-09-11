@@ -97,7 +97,6 @@
        without any source edit. A file can be linked here whenever it needs no
        server-specific changes; otherwise it stays a fork under Legacy/. -->
   <ItemGroup>
-    <Compile Include="..\Pulsar\Legacy\Loader\PluginInstance.cs" Link="Loader\PluginInstance.cs" />
     <Compile Include="..\Pulsar\Legacy\Patch\Patch_ComponentRegistered.cs" Link="Patch\Patch_ComponentRegistered.cs" />
     <Compile Include="..\Pulsar\Legacy\Patch\Patch_LoadScripts.cs" Link="Patch\Patch_LoadScripts.cs" />
     <Compile Include="..\Pulsar\Legacy\Patch\Patch_PrepareCrashReport.cs" Link="Patch\Patch_PrepareCrashReport.cs" />
