@@ -8,8 +8,8 @@ Registration belongs to `PluginInstance` owner creation, not dependency injectio
 an owner disabled by an early rewrite failure is not constructed during later
 initialization.
 
-The shared owner/dispatcher regression check can be run without a game install:
-`dotnet run --project Pulsar/Tests/RewriterLifecycle/RewriterLifecycle.csproj -c Release`.
+The Magnetar owner/dispatcher regression check can be run without a game install:
+`dotnet run --project Tests/RewriterLifecycle/RewriterLifecycle.csproj -c Release`.
 
 To regression-test initial-world rewriting on Linux, start a fresh server process
 with the [Sigma Draconis creative save](https://steamcommunity.com/sharedfiles/filedetails/?id=3656416777)
