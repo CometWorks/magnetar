@@ -34,7 +34,7 @@ public static class ConsentManager
         string existingId = ReadInstanceId();
         if (existingId != null)
         {
-            VotesClient.BaseUrl = config.StatsServerBaseUrl ?? votesServer;
+            VotesClient.BaseUrl = votesServer;
             if (VotesClient.Consent(false, DerivePlayerHash(existingId)))
             {
                 LogFile.WriteLine("Consent: withdrawn from the statistics server");

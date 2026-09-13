@@ -6,7 +6,7 @@ using System.Linq;
 using HarmonyLib;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Pulsar.Shared;
+using Pulsar.Legacy.Launcher;
 using VRage.Scripting;
 
 namespace Pulsar.Legacy.Patch;
@@ -50,14 +50,14 @@ public static class Patch_Compile
 
     private static string CleanFilePath(string path)
     {
-        if (path is null || !path.Contains($"{Steam.AppIdSe1}"))
+        if (path is null || !path.Contains($"{Game.SteamId}"))
             return path;
 
         // Split on either path separator so this works for both Windows
         // workshop paths (...\workshop\content\244850\<id>\...) and Linux
         // paths (.../workshop/content/244850/<id>/...). The first 5
         // segments (AppId + 4 workshop tree levels) are dropped.
-        path = path.Substring(path.IndexOf($"{Steam.AppIdSe1}"));
+        path = path.Substring(path.IndexOf($"{Game.SteamId}"));
         path = Path.Combine([.. path.Split('\\', '/').Skip(5)]);
 
         return path;
