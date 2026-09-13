@@ -19,7 +19,7 @@ public static class UsageStats
         if (!ConsentManager.Granted)
             return;
 
-        VotesClient.BaseUrl = ConfigManager.Instance.Core.StatsServerBaseUrl ?? votesServer;
+        VotesClient.BaseUrl = votesServer;
 
         Task.Run(() =>
         {

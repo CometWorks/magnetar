@@ -298,7 +298,7 @@ static class Program
             "..",
             "workshop",
             "content",
-            Steam.AppIdSe1.ToString()
+            Game.SteamId.ToString()
         );
 
         Version seVersion = Game.GetGameVersion(ds64Dir);
