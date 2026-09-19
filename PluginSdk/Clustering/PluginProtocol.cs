@@ -28,6 +28,9 @@ namespace PluginSdk.Clustering
         public long Incarnation { get; set; }
         public string Role { get; set; }
         public bool Available { get; set; }
+        // Observed runtime ownership, not authority to mutate: resolve and pass an OwnerFence for writes.
+        public long WorldAuthorityGeneration { get; set; }
+        public Dictionary<ulong, long> OwnedPartitions { get; set; } = new Dictionary<ulong, long>();
     }
     public sealed class PluginTarget
     {

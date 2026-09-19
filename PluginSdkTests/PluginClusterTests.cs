@@ -12,6 +12,26 @@ namespace PluginSdk.Tests
     public sealed class PluginClusterTests
     {
         [Fact]
+        public void Context_notifications_preserve_provider_when_observer_throws()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "plugin-context-" + Guid.NewGuid());
+            int calls = 0;
+            Action observer = () => { calls++; throw new InvalidOperationException("consumer"); };
+            PluginCluster.ContextChanged += observer;
+            try
+            {
+                using var provider = new StandalonePluginProvider(root);
+                Assert.True(PluginCluster.Register(provider));
+                Assert.Same(provider, PluginCluster.Current);
+                Assert.Equal(1, provider.Context.WorldAuthorityGeneration);
+                Assert.Empty(provider.Context.OwnedPartitions);
+                Assert.True(PluginCluster.Unregister(provider));
+                Assert.Equal(2, calls);
+            }
+            finally { PluginCluster.ContextChanged -= observer; Directory.Delete(root, true); }
+        }
+
+        [Fact]
         public async Task Queued_handlers_recheck_authority_and_disposal_before_execution()
         {
             var handlers = new PluginHandlers();

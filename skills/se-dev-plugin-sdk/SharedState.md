@@ -13,7 +13,7 @@ collide. This is ownership validation, not a sandbox for untrusted native plugin
 
 | API | Contract |
 | --- | --- |
-| `Context`, `ContextChanged` | Physical node, Registry incarnation, role, and availability. Re-read context after notification. |
+| `Context`, `ContextChanged` | Physical node, Registry incarnation, role, availability, observed WA generation and owned partition generations. Re-read after availability/ownership notification. |
 | `ReadAsync(key)` | Authoritative read; missing/tombstoned records return `NotFound` with a version suitable for CAS. |
 | `CompareExchangeAsync(key, expected, schemaVersion, payload, operationId, fence?, deleted?)` | Durable conditional write; `Conflict` returns current data. Optional fence restricts a new mutation to the current owner. |
 | `ResolveOwnerAsync(target)` | Resolve an exact physical node/incarnation, current WA, or current partition owner. |
@@ -66,7 +66,7 @@ use results, rather than connectivity snapshots, to decide whether an operation 
 ## Monitoring and packaging
 
 `cluster-plugin-services` publishes per-incarnation availability, pending work,
-conflicts and failures through PluginStats. Counters are not summed across replicas.
+conflicts, failures, observed ownership generations and ownership changes through PluginStats. Counters are not summed across replicas.
 Registry topology remains authoritative; Agent only observes these statistics.
 The cluster release capability marker includes `pluginServices: 1` and the exact
 PluginSdk SHA-256 used to compile the node/WA plugins. Managed preparation rejects a

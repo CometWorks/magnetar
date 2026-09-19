@@ -12,7 +12,11 @@ namespace PluginSdk.Clustering
         [Gauge(AcrossInstances = StatAggregation.None)] public int Pending { get; set; }
         [Counter(AcrossInstances = StatAggregation.None)] public long Conflicts { get; set; }
         [Counter(AcrossInstances = StatAggregation.None)] public long Failures { get; set; }
-        private long conflicts, failures;
+        [Discrete(AcrossInstances = StatAggregation.None)] public long WorldAuthorityGeneration { get; set; }
+        [Gauge(AcrossInstances = StatAggregation.None)] public int OwnedPartitions { get; set; }
+        [Counter(AcrossInstances = StatAggregation.None)] public long OwnershipChanges { get; set; }
+        private long conflicts, failures, ownershipChanges;
+        public void OwnershipChanged() => Interlocked.Increment(ref ownershipChanges);
         private DateTime next;
         public PluginResult Observe(PluginResult result)
         {
@@ -25,6 +29,8 @@ namespace PluginSdk.Clustering
             if (DateTime.UtcNow < next) return;
             next = DateTime.UtcNow.AddSeconds(1);
             Node = context.Node; Incarnation = context.Incarnation; Available = context.Available; Pending = pending;
+            WorldAuthorityGeneration = context.WorldAuthorityGeneration; OwnedPartitions = context.OwnedPartitions.Count;
+            OwnershipChanges = Interlocked.Read(ref ownershipChanges);
             Conflicts = Interlocked.Read(ref conflicts); Failures = Interlocked.Read(ref failures);
             PluginStats.Publish("cluster-plugin-services", new StatsSnapshot { UtcTimestamp = DateTime.UtcNow,
                 Groups = { StatsSchema.Build(typeof(PluginServiceDiagnostics)).CaptureGroup(new[] { this }) } });

@@ -20,7 +20,7 @@ namespace PluginSdk.Clustering
         private readonly PluginServiceDiagnostics diagnostics = new PluginServiceDiagnostics();
         private readonly PluginHandlers handlers = new PluginHandlers();
         public event Action ContextChanged;
-        public NodeContext Context => new NodeContext { Node = "standalone", Incarnation = 1, Role = "Standalone", Available = !failed };
+        public NodeContext Context => new NodeContext { Node = "standalone", Incarnation = 1, Role = "Standalone", WorldAuthorityGeneration = 1, Available = !failed };
         public StandalonePluginProvider(string directory)
         {
             if (PluginCluster.IsClusterProcess) throw new InvalidOperationException("Standalone provider is forbidden in cluster mode.");
