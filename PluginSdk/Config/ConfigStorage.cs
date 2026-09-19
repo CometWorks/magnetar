@@ -67,6 +67,11 @@ namespace PluginSdk.Config
             if (config == null) throw new ArgumentNullException(nameof(config));
             if (path == null) throw new ArgumentNullException(nameof(path));
 
+            if (ManagedPluginConfiguration.Required)
+            {
+                ManagedPluginConfiguration.ValidateEnvelope(config.GetType(), SaveJson(config));
+                return; // The deployment owns storage; matching plugin saves are harmless no-ops.
+            }
             var dir = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
@@ -88,6 +93,8 @@ namespace PluginSdk.Config
         public static T LoadXml<T>(string path) where T : PluginConfig, new()
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
+            string canonical = ManagedPluginConfiguration.Resolve(typeof(T));
+            if (canonical != null) return LoadCanonical<T>(canonical);
             if (!File.Exists(path)) return new T();
 
             var serializer = new XmlSerializer(typeof(T));
@@ -134,7 +141,19 @@ namespace PluginSdk.Config
         public static T LoadJson<T>(string json) where T : PluginConfig, new()
         {
             if (json == null) throw new ArgumentNullException(nameof(json));
+            string canonical = ManagedPluginConfiguration.Resolve(typeof(T));
+            return canonical == null ? LoadJsonCore<T>(json) : LoadCanonical<T>(canonical);
+        }
 
+        private static T LoadCanonical<T>(string json) where T : PluginConfig, new()
+        {
+            T value = LoadJsonCore<T>(json);
+            ManagedPluginConfiguration.ValidateEnvelope(typeof(T), SaveJson(value));
+            return value;
+        }
+
+        private static T LoadJsonCore<T>(string json) where T : PluginConfig, new()
+        {
             using (var doc = JsonDocument.Parse(json))
             {
                 if (doc.RootElement.ValueKind == JsonValueKind.Object

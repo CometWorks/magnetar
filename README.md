@@ -88,3 +88,5 @@ See **[Building](Docs/Build.md)** for details.
 
 [Discord](https://discord.gg/z8ZczP2YZY) for support and developer discussion.
 GitHub issues and PRs for bug reports and contributions.
+
+Managed clusters can use [canonical plugin configuration](Docs/ManagedPluginConfiguration.md).

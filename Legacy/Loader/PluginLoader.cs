@@ -152,6 +152,7 @@ public class PluginLoader : IHandleInputPlugin
             }
         }
 
+        PluginSdk.Config.ManagedPluginConfiguration.CompleteInitialization();
         init = true;
 
         if (Flags.Current.CheckAllPlugins)

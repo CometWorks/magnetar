@@ -438,7 +438,10 @@ static class Program
         {
             string[] corePlugins = GetCorePlugins();
             Tools.Init(new ExternalTools(), compiler);
+            PluginSdk.Config.ManagedPluginConfiguration.ConfigureFromEnvironment();
             SharedLoader.Instance = new SharedLoader(VotesServer, corePlugins);
+            foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
+                PluginSdk.Config.ManagedPluginConfiguration.BindOwner(data.Id, assembly);
             UsageStats.ReportEnabledPlugins(VotesServer, corePlugins);
         }
 
