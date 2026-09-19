@@ -90,3 +90,7 @@ See **[Building](Docs/Build.md)** for details.
 GitHub issues and PRs for bug reports and contributions.
 
 Managed clusters can use [canonical plugin configuration](Docs/ManagedPluginConfiguration.md).
+
+PluginSdk [shared-state services](skills/se-dev-plugin-sdk/SharedState.md) provide opt-in durable
+records and owner-routed requests. The [example plugin](Examples/ClusterState/Plugin.cs)
+uses the same API in standalone and clustered deployments.

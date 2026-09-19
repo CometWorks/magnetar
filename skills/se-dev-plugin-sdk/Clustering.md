@@ -2,7 +2,8 @@
 
 `PluginSdk.Clustering` is the narrow process-local boundary between the plugin
 that owns Gateway transport and the plugin that owns clustered game behavior.
-Normal server plugins do not need it.
+Normal server plugins do not need this transport boundary. Opt-in shared records and
+owner-routed requests use [SharedState.md](SharedState.md).
 
 The transport provider registers one `IClusterNodeLink` instance:
 
@@ -88,8 +89,12 @@ The acknowledgement identifies the request and reports `Accepted`, `Rejected`,
 `AlreadyApplied`, or locally `Unavailable`, plus a stable reason code, operation
 id, message, and node state. Completion means the Gateway/Registry replied;
 transport enqueue alone is not success. A throwing, disconnected, cancelled, or
-timed-out provider fails closed. With no provider registered, Magnetar keeps
-normal standalone behavior.
+timed-out provider fails closed. With no provider registered in a clustered process, Magnetar fails closed. Standalone
+processes retain local lifecycle behavior. The cluster provider accepts regular-node
+save-first stop/restart through Registry drain and desired-slot policy. WA and no-save
+requests return unsupported; they require an explicit cluster-wide workflow. Lifecycle
+request IDs retain 128 durable outcomes, including across Registry restart. Acceptance
+is a Registry decision, not evidence that drain or replacement has completed.
 
 The provider covers calls through `ServerControl` and Magnetar's built-in
 `!quit`, `!stop`, and `!restart` commands. Built-in commands wait asynchronously

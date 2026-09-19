@@ -172,6 +172,7 @@ public class PluginLoader : IHandleInputPlugin
 
     public void Update()
     {
+        (PluginSdk.Clustering.PluginCluster.Current as PluginSdk.Clustering.StandalonePluginProvider)?.Update();
         if (!init)
             return;
 
@@ -202,6 +203,7 @@ public class PluginLoader : IHandleInputPlugin
             p.Dispose();
         plugins.Clear();
 
+        (PluginSdk.Clustering.PluginCluster.Current as PluginSdk.Clustering.StandalonePluginProvider)?.Dispose();
         ServerCommands.Registrar = null;
         MissionScreens.Bind(null, null, null);
         Commands = null;
