@@ -1,9 +1,17 @@
 # Preparing a managed deployment
 
-`MagnetarInterim -prepareManaged <directory>` compiles and exports a selected plugin
+Introduced in **Magnetar 2.4.2.2**, `MagnetarInterim -prepareManaged <directory>` compiles and exports a selected plugin
 profile without starting a temporary dedicated server. This command currently targets
 Linux/CoreCLR. Use a separate preparation configuration directory; normal source-list
 loading, compiler caches and logs are written there.
+
+Consumers must also check that `-help` advertises `-prepareManaged` before invoking
+it: older launchers ignore unknown options and may start the dedicated server.
+Use the PluginSdk binary shipped in the actual Magnetar release when rebuilding
+the cluster runtime package. Managed admission compares its exact SHA-256; matching
+SDK source or API versions do not imply identical DLL bytes across builds. Rebuild
+the cluster package against that released SDK and refresh its recorded SDK hash
+before activating a deployment prepared with the new release.
 
 ```sh
 ./MagnetarInterim.bin -config /srv/preparation/config \
