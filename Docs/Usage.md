@@ -33,6 +33,12 @@ The plugin-loader flags (`-profile`, `-safeMode`, `-bare`, `-hardened`,
 Pulsar's semantics. Magnetar additionally forces the headless defaults
 (`-noSplash -noPrompt -lazySteam`) internally.
 
+Magnetar parses its server options with the same command-line library as Pulsar.
+Missing option values and invalid consent choices exit with status 1 before native
+startup. `-profile <name-or-file>` supports a supplied profile file as well as a saved
+profile name; path values are preserved literally. Server options accept `-name`,
+`--name` and `/name` spellings and `-name=value` syntax.
+
 The list is deliberately a subset of Pulsar's. Pulsar's parser still accepts
 every other Pulsar flag, but the rest reach no live code path on a dedicated
 server, so Magnetar does not advertise them:
@@ -49,6 +55,13 @@ server, so Magnetar does not advertise them:
   the server never reaches. Use `-ds64` instead.
 
 Passing any of them is harmless — it is collected and ignored, not rejected.
+
+## Managed preparation
+
+For fresh managed clusters, `-prepareManaged <new-directory>` exports compiled plugin
+bundles and SDK configuration defaults without starting the server. See
+[Managed preparation](ManagedPreparation.md) for the output contract and supported
+configuration patterns.
 
 ## GitHub token
 

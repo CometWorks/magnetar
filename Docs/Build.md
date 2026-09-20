@@ -221,6 +221,12 @@ three components looks older and the release run is skipped.
 
 ## Continuous integration / releases
 
+Magnetar 2.4.2.2 introduces managed preparation. Its build-component bump is required
+for this workflow to build the PR bundles and publish the exporter after merge.
+Cluster runtime packages must rebuild against the PluginSdk DLL from the resulting
+release and record that binary's exact SHA-256; unchanged SDK source does not preserve
+binary identity across versioned builds.
+
 [`.github/workflows/release.yml`](../.github/workflows/release.yml) builds
 both platforms and publishes a GitHub release with the two `.7z` bundles
 attached.

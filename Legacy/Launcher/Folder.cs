@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Gameloop.Vdf;
 using Gameloop.Vdf.Linq;
+using Magnetar.Legacy.Arguments;
 using Microsoft.Win32;
 using Pulsar.Shared;
 
@@ -86,16 +87,8 @@ internal class Folder
 
     private static string FromOverride()
     {
-        string[] args = Environment.GetCommandLineArgs();
-        int index = Array.FindIndex(
-            args,
-            arg => arg.Equals("-ds64", StringComparison.OrdinalIgnoreCase)
-        );
-
-        if (index < 0 || index >= args.Length - 1)
-            return null;
-
-        string path = args[index + 1];
+        string path = ServerFlags.DedicatedServerDirectory;
+        if (path is null) return null;
         if (!Path.IsPathRooted(path))
         {
             string currentPath = Assembly.GetExecutingAssembly().Location;

@@ -15,6 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
         <PackageReference Include="xunit" Version="2.9.2" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
@@ -22,6 +23,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+        <Compile Include="..\Legacy\Preparation\ConfigurationDefaults.cs" Link="ConfigurationDefaults.cs" />
+        <Compile Include="..\Legacy\Arguments\ServerArguments.cs" Link="ServerArguments.cs" />
     </ItemGroup>
 
     <ItemGroup>
