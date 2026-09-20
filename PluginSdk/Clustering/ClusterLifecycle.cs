@@ -132,8 +132,10 @@ namespace PluginSdk.Clustering
             IClusterLifecycleProvider provider = Volatile.Read(ref current);
             if (provider == null)
             {
-                acknowledgement = null;
-                return false;
+                acknowledgement = PluginCluster.IsClusterProcess
+                    ? Task.FromResult(ClusterLifecycleAcknowledgement.Unavailable(request.RequestId,
+                        "provider_missing", "Cluster lifecycle provider is unavailable; local termination denied.")) : null;
+                return acknowledgement != null;
             }
 
             acknowledgement = RequestProtected(provider, request, cancellationToken);

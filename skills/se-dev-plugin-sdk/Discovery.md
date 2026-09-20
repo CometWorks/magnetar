@@ -1,13 +1,12 @@
 # Exposing the Config to Quasar
 
-Writing a `PluginConfig`-derived class is necessary but **not sufficient** for
-the config to appear in Quasar. The config object is owned by your plugin; the
-Quasar agent has to be able to *find* it. That happens by reflection over your
-`IPlugin` class, and there is one simple contract you must satisfy.
+The config object belongs to your plugin. Quasar discovers public configuration
+properties and, with current SDKs, live instances returned by `ConfigStorage`.
+The public-property convention below also works with older SDKs and Agents.
 
 ## The rule
 
-Your plugin's `IPlugin` class must expose its live config through a **public,
+For the property-based path, expose the live config through a **public,
 readable, non-indexed instance property whose declared type is — or derives
 from — `PluginSdk.Config.PluginConfig`.**
 
@@ -32,7 +31,7 @@ public class Plugin : IPlugin
 }
 ```
 
-That single property is the whole contract. The Quasar agent runs inside the
+That property is sufficient for discovery. The Quasar agent runs inside the
 dedicated server process, enumerates the loaded plugins, and for each one scans
 its public instance properties for the first whose type is assignable to
 `PluginConfig`. It then serializes that instance with `ConfigStorage.SaveJson`
@@ -63,9 +62,13 @@ editor at all** in Quasar:
   public MyPluginConfig PluginConfig => config; // for Quasar — discovered
   ```
 
-- **Held only in a private or static field.** Discovery uses
-  `BindingFlags.Public | BindingFlags.Instance`. A `private static MyConfig
-  config;` with no public *instance* property is never found.
+- **Held only in a private or static field without an SDK load.** Modern SDKs expose
+  `ConfigStorage.GetLoadedConfigurations(Assembly)` for live objects returned by
+  `LoadXml`/`LoadJson`, including private/static storage and multiple config types.
+  Consumers can reflect this optional method for older SDK compatibility. Results are
+  weakly tracked; take a snapshot without retaining instances. Older Agents and SDKs
+  only discover public instance properties. Arbitrary private objects constructed or
+  deserialized outside `ConfigStorage` still need an explicit adapter.
 
 - **The property returns `null` when Quasar polls.** Construct the config in
   `Init` (before the first snapshot) or have the getter create it lazily.

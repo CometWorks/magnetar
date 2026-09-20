@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><LangVersion>latest</LangVersion></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../PluginSdk/PluginSdk.csproj" />
+    <Reference Include="VRage" HintPath="$(DS64)/VRage.dll" Private="false" />
+  </ItemGroup>
+</Project>

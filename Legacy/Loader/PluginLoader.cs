@@ -152,6 +152,7 @@ public class PluginLoader : IHandleInputPlugin
             }
         }
 
+        PluginSdk.Config.ManagedPluginConfiguration.CompleteInitialization();
         init = true;
 
         if (Flags.Current.CheckAllPlugins)
@@ -171,6 +172,7 @@ public class PluginLoader : IHandleInputPlugin
 
     public void Update()
     {
+        (PluginSdk.Clustering.PluginCluster.Current as PluginSdk.Clustering.StandalonePluginProvider)?.Update();
         if (!init)
             return;
 
@@ -201,6 +203,7 @@ public class PluginLoader : IHandleInputPlugin
             p.Dispose();
         plugins.Clear();
 
+        (PluginSdk.Clustering.PluginCluster.Current as PluginSdk.Clustering.StandalonePluginProvider)?.Dispose();
         ServerCommands.Registrar = null;
         MissionScreens.Bind(null, null, null);
         Commands = null;

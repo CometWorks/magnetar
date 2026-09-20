@@ -86,6 +86,9 @@ expect. See [Platform.md](Platform.md).
 | [Clustering.md](Clustering.md) | Wiring the transport-owned Gateway node link to the cluster runtime through a single process-local provider. |
 | [Platform.md](Platform.md) | Using the `PLATFORM_WINDOWS` / `PLATFORM_LINUX` compile symbols Magnetar defines to branch on the OS the server runs on. |
 
+See also [SharedState.md](SharedState.md) for opt-in durable records, ownership fences,
+and bounded requests in standalone and cluster mode.
+
 ## Minimal example
 
 ```csharp

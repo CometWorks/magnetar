@@ -36,6 +36,7 @@ public class PluginInstance
         this.data = data;
         this.mainAssembly = mainAssembly;
         this.mainType = mainType;
+        PluginSdk.Config.ManagedPluginConfiguration.ExpectInstance(data.Id);
 
         // Magnetar discovers owners before plugin construction so initial-world mods are rewritten.
         if (AccessTools.DeclaredMethod(mainType, "Rewrite") is MethodInfo rewriteFunc)
@@ -165,6 +166,7 @@ public class PluginInstance
         try
         {
             plugin.Init(gameInstance);
+            PluginSdk.Config.ManagedPluginConfiguration.Initialized(data.Id, plugin);
             return true;
         }
         catch (Exception e)
