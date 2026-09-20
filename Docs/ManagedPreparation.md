@@ -41,13 +41,16 @@ binaries, dependencies and native assets. `-prepareManaged` adds that export ste
 and exits without starting the server; `-profile` alone still follows normal startup.
 The two options work together.
 
-Pulsar's shared loader options already use `McMaster.Extensions.CommandLineUtils`.
-Magnetar's active `Legacy/Arguments/ServerFlags.cs` handles server-only options such
-as `-config`, `-ds64` and `-daemon`, then passes shared options to Pulsar's parser.
-The preparation option belongs to this same server layer. Its early detection also
-skips native bootstrap before the shared assembly resolver is installed. Despite
-the directory name, this code is compiled into MagnetarInterim as well as
-MagnetarLegacy; it is not a retired copy of Pulsar's parser.
+Both Magnetar's server options and Pulsar's shared loader options use the existing
+`McMaster.Extensions.CommandLineUtils` library. Magnetar's `ServerArguments` parses
+server options once, then forwards shared options to Pulsar's parser. Profile path
+values remain literal across both parsers, including paths with spaces or names such
+as `/debug`. Dedicated-server arguments still reach the game unchanged.
+
+The assembly resolver is installed before parsing. Invalid server options fail with
+exit status 1 before native bootstrap; help, version and preparation also skip native
+initialization. The `Legacy` directory contains the shared source for both
+MagnetarInterim and MagnetarLegacy.
 
 Preparation uses the existing source compiler, NuGet restore and asset resolver.
 It does not invoke Steam initialization, native-library bootstrap, preloader

@@ -56,20 +56,6 @@ static class Program
         string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarInterim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
-        // Help, version and managed preparation need no native bootstrap
-        // (its libraries register process lifecycle handlers that emit noise).
-        // ServerFlags lives in this assembly and its detection path
-        // references no Pulsar.Shared type, so it is safe to consult before
-        // the resolver below is installed.
-        bool fastPath = ServerFlags.Help || ServerFlags.Version || ServerFlags.PrepareManaged;
-
-        // On Linux, preload every bundled native .so and register a single
-        // DllImport resolver covering every present and future ALC. Must run
-        // before any [DllImport] site fires (Steamworks.NET, etc.). On Windows
-        // the native dependencies resolve through the normal DLL search path.
-        if (OperatingSystem.IsLinux() && !fastPath)
-            NativeLibraryPreloader.Initialize(libraryDir, baseDir);
-
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver(
             [libraryDir, runtimeDir, baseDir]
         );
@@ -80,6 +66,14 @@ static class Program
     static void MagnetarMain(string[] args)
     {
 #endif
+        try { ServerFlags.Initialize(args); }
+        catch (ArgumentException error)
+        {
+            Console.Error.WriteLine(error.Message);
+            Environment.ExitCode = 1;
+            return;
+        }
+
         if (ServerFlags.Help)
         {
             ServerFlags.PrintHelp();
@@ -92,22 +86,17 @@ static class Program
             return;
         }
 
-        // A misspelled consent choice is a configuration error: refuse to start
-        // rather than silently picking one of the three meanings.
-        if (ServerFlags.ConsentError != null)
-        {
-            Console.Error.WriteLine(ServerFlags.ConsentError);
-            Environment.Exit(1);
-        }
+        Parser.Initialize(ServerFlags.PulsarArguments, se1: true);
 
-        // Populate Pulsar's flags from a filtered argv: value-taking
-        // Magnetar/DS option pairs are stripped (so Pulsar's parser never sees
-        // dedicated-server options, and its normalizer cannot rewrite a
-        // '/'-rooted value into a Pulsar flag) and the appended defaults force
-        // headless behaviour (no splash, no dialogs, never launch or block on
-        // the Steam client). The dedicated server itself still receives the
-        // original args.
-        Parser.Initialize(ServerFlags.PulsarParserArgs(args), se1: true);
+#if NETCOREAPP
+        // Parse managed options only after installing the resolver. Help, invalid
+        // arguments and preparation never initialize native libraries or the game.
+        if (OperatingSystem.IsLinux() && !ServerFlags.PrepareManaged)
+        {
+            string launcherDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            NativeLibraryPreloader.Initialize(Path.Combine(launcherDirectory, "Libraries", "MagnetarInterim"), launcherDirectory);
+        }
+#endif
 
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         if (!ServerFlags.PrepareManaged)
@@ -232,16 +221,8 @@ static class Program
 
     private static string GetConfigOverride(string baseDir)
     {
-        string[] args = Environment.GetCommandLineArgs();
-        int index = Array.FindIndex(
-            args,
-            arg => arg.Equals("-config", StringComparison.OrdinalIgnoreCase)
-        );
-
-        if (index < 0 || index >= args.Length - 1)
-            return null;
-
-        string path = args[index + 1];
+        string path = ServerFlags.ConfigDirectory;
+        if (path is null) return null;
         if (!Path.IsPathRooted(path))
             path = Path.Combine(baseDir, path);
 
