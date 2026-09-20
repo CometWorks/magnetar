@@ -50,6 +50,13 @@ server, so Magnetar does not advertise them:
 
 Passing any of them is harmless — it is collected and ignored, not rejected.
 
+## Managed preparation
+
+For fresh managed clusters, `-prepareManaged <new-directory>` exports compiled plugin
+bundles and SDK configuration defaults without starting the server. See
+[Managed preparation](ManagedPreparation.md) for the output contract and supported
+configuration patterns.
+
 ## GitHub token
 
 Set `PULSAR_GITHUB_TOKEN` to a GitHub personal access token. Pulsar's network

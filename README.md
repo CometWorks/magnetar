@@ -81,6 +81,7 @@ See **[Building](Docs/Build.md)** for details.
 | [Config tool](Docs/MagnetarConfig.md) | `MagnetarConfig` user manual: edit config/worlds/mods/plugins, start/stop, logs. |
 | [Config tool internals](Docs/MagnetarConfigInternals.md) | Design and implementation of `MagnetarConfig`: file formats, architecture, state machines, testing. |
 | [Plugins](Docs/Plugins.md) | Plugin hubs and the trust boundary. |
+| [Managed preparation](Docs/ManagedPreparation.md) | Compile and export managed plugin bundles and SDK defaults without starting a server. |
 | [Building](Docs/Build.md) | Per-platform build, dependency staging, packaging, releases. |
 | [Repository layout](Docs/Layout.md) | What lives where in the source tree. |
 

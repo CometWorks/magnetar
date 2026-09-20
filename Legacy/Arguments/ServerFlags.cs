@@ -41,6 +41,8 @@ public static class ServerFlags
 
     public static bool Help { get; private set; }
     public static bool Version { get; private set; }
+    public static bool PrepareManaged { get; private set; }
+    public static string PreparationDirectory { get; private set; }
 
     // Warnings about retired flags, collected while parsing and emitted from
     // LogFlags once the log file exists (parsing runs before LogFile.Init).
@@ -62,6 +64,8 @@ public static class ServerFlags
         // -h/-help/-?/--help, plus the /h //help style Pulsar also accepts.
         Help = HasArg("h") || HasArg("help") || HasArg("?");
         Version = HasArg("v") || HasArg("version");
+        PrepareManaged = HasArg("prepareManaged");
+        PreparationDirectory = GetArgValue("prepareManaged");
     }
 
     // Whether -consent was followed by its value, so PulsarParserArgs knows
@@ -142,6 +146,7 @@ public static class ServerFlags
     [
         "config",
         "ds64",
+        "prepareManaged",
         // Retired in 2.1.0, still stripped for one release so a legacy
         // invocation cannot leak its token into Pulsar's parser or the log.
         "github-token",
@@ -241,6 +246,8 @@ public static class ServerFlags
         Console.WriteLine("                      (overrides auto-detection)");
         Console.WriteLine("  -daemon             Detach from the parent process and console so the");
         Console.WriteLine("                      server keeps running after the parent exits");
+        Console.WriteLine("  -prepareManaged <dir> Compile and export managed plugin bundles and SDK defaults");
+        Console.WriteLine("                      without starting the server (Linux/CoreCLR; new output directory)");
         Console.WriteLine("  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod");
         Console.WriteLine();
         // Only the Pulsar flags that change something on a dedicated server are

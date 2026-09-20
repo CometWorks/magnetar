@@ -1,5 +1,9 @@
 # Managed plugin configuration
 
+Fresh deployments can obtain frozen plugin bundles and default configuration envelopes
+with [the managed preparation command](ManagedPreparation.md), without running a
+temporary dedicated server. Runtime readiness remains the final configuration check.
+
 Managed clusters install one canonical configuration revision before plugin construction
 or preload hooks. Existing plugins keep using `ConfigStorage.LoadXml<T>` or `LoadJson<T>`;
 both return the approved values, including when called from a constructor. Standalone

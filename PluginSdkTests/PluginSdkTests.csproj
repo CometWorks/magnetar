@@ -22,6 +22,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+        <Compile Include="..\Legacy\Preparation\ConfigurationDefaults.cs" Link="ConfigurationDefaults.cs" />
     </ItemGroup>
 
     <ItemGroup>

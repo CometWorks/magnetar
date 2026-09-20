@@ -10,6 +10,7 @@ using HarmonyLib;
 using Magnetar.Legacy.Arguments;
 using Magnetar.Legacy.Launcher;
 using Magnetar.Legacy.Loader;
+using Magnetar.Legacy.Preparation;
 using Magnetar.Legacy.Patch;
 using Magnetar.Legacy.Stats;
 using Magnetar.Legacy;
@@ -55,12 +56,12 @@ static class Program
         string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarInterim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
-        // -help/-version just print and exit, so skip loading the bundled
-        // native libraries (which register process lifecycle handlers that emit
-        // noise). ServerFlags lives in this assembly and its detection path
+        // Help, version and managed preparation need no native bootstrap
+        // (its libraries register process lifecycle handlers that emit noise).
+        // ServerFlags lives in this assembly and its detection path
         // references no Pulsar.Shared type, so it is safe to consult before
         // the resolver below is installed.
-        bool fastPath = ServerFlags.Help || ServerFlags.Version;
+        bool fastPath = ServerFlags.Help || ServerFlags.Version || ServerFlags.PrepareManaged;
 
         // On Linux, preload every bundled native .so and register a single
         // DllImport resolver covering every present and future ALC. Must run
@@ -109,7 +110,8 @@ static class Program
         Parser.Initialize(ServerFlags.PulsarParserArgs(args), se1: true);
 
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
-        CrashHandler.InstallNative("Magnetar");
+        if (!ServerFlags.PrepareManaged)
+            CrashHandler.InstallNative("Magnetar");
 
         if (Flags.Current.ExternalDebug)
             Debugger.Launch();
@@ -134,7 +136,26 @@ static class Program
         // mutex: multi-server hosts run several Magnetar processes, each on
         // its own -path/-config pair, and the pid file identifies each one.
 
+        string preparationDirectory = null;
+        if (ServerFlags.PrepareManaged)
+        {
+            if (string.IsNullOrWhiteSpace(ServerFlags.PreparationDirectory)
+                || ServerFlags.PreparationDirectory.StartsWith("-")
+                || ServerFlags.Daemon || Flags.Current.Bare || Flags.Current.SafeMode || Flags.Current.CheckAllPlugins)
+                throw new ArgumentException("-prepareManaged requires an output directory and cannot combine with daemon, bare, safeMode or debugCompileAll.");
+            preparationDirectory = Path.GetFullPath(ServerFlags.PreparationDirectory);
+            if (Directory.Exists(preparationDirectory) || File.Exists(preparationDirectory))
+                throw new IOException("Preparation output must not already exist: " + preparationDirectory);
+        }
+
         SetupCoreData(baseDir);
+
+        if (ServerFlags.PrepareManaged)
+        {
+            SetupGameData(TryUpdate(baseDir));
+            SetupPlugins(baseDir, preparationDirectory);
+            return;
+        }
 
         // -consent withdraw is a one-shot maintenance action: erase server-side
         // data, record the denial, and exit without starting the server.
@@ -408,7 +429,7 @@ static class Program
         };
     }
 
-    private static void SetupPlugins(string baseDir)
+    private static void SetupPlugins(string baseDir, string preparationDirectory = null)
     {
         var asmName = Assembly.GetExecutingAssembly().GetName();
         string dependencyDir = Path.Combine(baseDir, "Libraries", asmName.Name);
@@ -438,6 +459,12 @@ static class Program
         {
             string[] corePlugins = GetCorePlugins();
             Tools.Init(new ExternalTools(), compiler);
+            if (preparationDirectory != null)
+            {
+                SetupGameResolver();
+                ManagedPreparation.Export(preparationDirectory, corePlugins);
+                return;
+            }
             PluginSdk.Config.ManagedPluginConfiguration.ConfigureFromEnvironment();
             if (!PluginSdk.Clustering.PluginCluster.IsClusterProcess)
                 PluginSdk.Clustering.PluginCluster.ConfigureStandalone(
