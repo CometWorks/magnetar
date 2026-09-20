@@ -27,6 +27,28 @@ abort the export. Workshop mods, development source folders, cluster role plugin
 and unpinned source references are unsupported. `-daemon`, `-bare`, `-safeMode`,
 `-debugCompileAll`, and execution inside a managed cluster process are refused.
 
+### Existing profiles and argument parsing
+
+`-profile <name-or-file>` remains the existing Pulsar profile selector. Preparation
+uses that selected profile through `ConfigManager.Instance.Profiles.Current`; when
+the option is omitted, it uses `Profiles/Current.xml` under the chosen `-config`
+directory. A caller can therefore supply its own profile file or write `Current.xml`
+in an isolated configuration directory. No additional profile format is introduced.
+
+A loader profile selects plugin IDs and alternate source versions. It does not
+contain the plugins' SDK configuration schemas/defaults or export their compiled
+binaries, dependencies and native assets. `-prepareManaged` adds that export step
+and exits without starting the server; `-profile` alone still follows normal startup.
+The two options work together.
+
+Pulsar's shared loader options already use `McMaster.Extensions.CommandLineUtils`.
+Magnetar's active `Legacy/Arguments/ServerFlags.cs` handles server-only options such
+as `-config`, `-ds64` and `-daemon`, then passes shared options to Pulsar's parser.
+The preparation option belongs to this same server layer. Its early detection also
+skips native bootstrap before the shared assembly resolver is installed. Despite
+the directory name, this code is compiled into MagnetarInterim as well as
+MagnetarLegacy; it is not a retired copy of Pulsar's parser.
+
 Preparation uses the existing source compiler, NuGet restore and asset resolver.
 It does not invoke Steam initialization, native-library bootstrap, preloader
 constructors/hooks, `IPlugin` constructors or `Init`, or the game entry point. Plugin
