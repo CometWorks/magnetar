@@ -159,6 +159,9 @@ internal static class ManagedPreparation
         {
             string path = Path.ChangeExtension(local.Dll, ".xml");
             if (!File.Exists(path)) path = local.Dll + ".xml";
+            // RefuseLink reads the file's attributes; a missing file must name the plugin, not crash.
+            if (!File.Exists(path))
+                throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id);
             RefuseLink(path);
             using var reader = XmlReader.Create(path, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
                 XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 });
