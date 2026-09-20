@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Globalization;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -42,24 +44,42 @@ namespace PluginSdk.Config
                 using (var document = JsonDocument.Parse(bytes))
                 {
                     var root = document.RootElement;
-                    if (root.GetProperty("schemaVersion").GetInt32() != 1) throw new InvalidDataException("Unsupported canonical configuration schema.");
+                    int schema = root.GetProperty("schemaVersion").GetInt32();
+                    if (schema != 1 && schema != 2) throw new InvalidDataException("Unsupported canonical configuration schema.");
                     Revision = root.GetProperty("revision").GetString();
                     if (string.IsNullOrWhiteSpace(Revision)) throw new InvalidDataException("Canonical revision is required.");
                     foreach (var plugin in root.GetProperty("plugins").EnumerateArray())
                     {
                         string id = plugin.GetProperty("id").GetString();
                         string assemblyHash = plugin.GetProperty("assemblySha256").GetString();
-                        string type = plugin.TryGetProperty("configType", out var typeElement) ? typeElement.GetString() : null;
-                        string json = plugin.TryGetProperty("configuration", out var config) && config.ValueKind != JsonValueKind.Null
-                            ? config.GetRawText() : null;
-                        if (string.IsNullOrWhiteSpace(id) || assemblyHash?.Length != 64
-                            || json != null && string.IsNullOrWhiteSpace(type) || Entries.ContainsKey(id))
+                        if (string.IsNullOrWhiteSpace(id) || assemblyHash?.Length != 64 || Entries.ContainsKey(id))
                             throw new InvalidDataException("Invalid or duplicate canonical plugin entry.");
-                        Entries.Add(id, new Entry(assemblyHash, type, json));
+                        var entry = new Entry(assemblyHash);
+                        if (plugin.TryGetProperty("configurations", out var configurations))
+                        {
+                            if (schema != 2 || plugin.TryGetProperty("configType", out _) || plugin.TryGetProperty("configuration", out _))
+                                throw new InvalidDataException("Multiple configurations require schema 2 without singular fields.");
+                            foreach (var config in configurations.EnumerateArray()) AddConfiguration(entry, config, required: true);
+                        }
+                        else AddConfiguration(entry, plugin);
+                        Entries.Add(id, entry);
                     }
                 }
                 configured = true;
             }
+        }
+
+        private static void AddConfiguration(Entry entry, JsonElement config, bool required = false)
+        {
+            string type = config.TryGetProperty("configType", out var typeElement) ? typeElement.GetString() : null;
+            if (!config.TryGetProperty("configuration", out var value) || value.ValueKind == JsonValueKind.Null)
+            {
+                if (required || !string.IsNullOrWhiteSpace(type)) throw new InvalidDataException("Canonical configuration values are required.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(type) || entry.Configurations.ContainsKey(type))
+                throw new InvalidDataException("Invalid or duplicate canonical configuration type.");
+            entry.Configurations.Add(type, value.GetRawText());
         }
 
         /// <summary>Bind all owners before any plugin constructor, static injection or preload hook runs.</summary>
@@ -89,9 +109,9 @@ namespace PluginSdk.Config
                 if (!Owners.TryGetValue(type.Assembly, out var id))
                     throw new InvalidOperationException("Configuration type has no managed plugin owner: " + type.FullName);
                 var entry = Entries[id];
-                if (entry.Json == null || entry.Type != type.FullName)
+                if (!entry.Configurations.TryGetValue(type.FullName, out var json))
                     throw new InvalidOperationException("No canonical configuration for " + id + ":" + type.FullName);
-                return entry.Json;
+                return json;
             }
         }
 
@@ -100,6 +120,16 @@ namespace PluginSdk.Config
             string expected = Resolve(type);
             if (expected != null && !Equivalent(expected, actual))
                 throw new InvalidDataException("Canonical schema, defaults or values differ for " + type.FullName);
+        }
+
+        private static bool ValidateLoaded(string id, string type = null)
+        {
+            bool found = false;
+            foreach (var owner in Owners.Where(pair => pair.Value.Equals(id, StringComparison.OrdinalIgnoreCase)))
+                foreach (var value in ConfigStorage.GetLoadedConfigurations(owner.Key))
+                    if (type == null || value.GetType().FullName == type)
+                    { ValidateValue(id, value); found = true; }
+            return found;
         }
 
         /// <summary>Declare a runtime plugin instance before construction; preloader-only assemblies need none.</summary>
@@ -131,7 +161,7 @@ namespace PluginSdk.Config
                 RequireConfigured();
                 if (Entries.Keys.Any(id => !Owners.Values.Contains(id, StringComparer.OrdinalIgnoreCase))
                     || ExpectedInstances.Any(id => !Instances.ContainsKey(id))
-                    || Entries.Any(pair => pair.Value.Json != null && !Instances.ContainsKey(pair.Key)))
+                    || Entries.Any(pair => pair.Value.Configurations.Count > 0 && !Instances.ContainsKey(pair.Key)))
                     throw new InvalidDataException("Managed plugin inventory is incomplete.");
                 initialized = true;
             }
@@ -147,7 +177,7 @@ namespace PluginSdk.Config
                 if (!configured || !initialized || failure != null) return false;
                 try
                 {
-                    foreach (var pair in Instances) ValidateInstance(pair.Key, pair.Value);
+                    foreach (var pair in Instances) { ValidateInstance(pair.Key, pair.Value); ValidateLoaded(pair.Key); }
                     return true;
                 }
                 catch (Exception error) { failure = error.GetBaseException().Message; return false; }
@@ -157,16 +187,23 @@ namespace PluginSdk.Config
         private static void ValidateInstance(string id, object instance)
         {
             var entry = Entries[id];
-            var property = instance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0 && typeof(PluginConfig).IsAssignableFrom(p.PropertyType))
-                .OrderBy(p => p.Name == "PluginConfig" ? 0 : 1).ThenBy(p => p.Name, StringComparer.Ordinal).FirstOrDefault();
-            if (entry.Json == null)
+            var properties = instance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0 && typeof(PluginConfig).IsAssignableFrom(p.PropertyType));
+            var observed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in properties)
             {
-                if (property != null) throw new InvalidDataException("Canonical configuration missing for " + id);
-                return;
+                var value = property.GetValue(instance) as PluginConfig;
+                ValidateValue(id, value);
+                observed.Add(value.GetType().FullName);
             }
-            var value = property?.GetValue(instance) as PluginConfig;
-            if (value == null || value.GetType().FullName != entry.Type)
+            foreach (var type in entry.Configurations.Keys)
+                if (!observed.Contains(type) && !ValidateLoaded(id, type))
+                    throw new InvalidDataException("Canonical configuration has no live instance for " + id + ":" + type);
+        }
+
+        private static void ValidateValue(string id, PluginConfig value)
+        {
+            if (value == null || !Entries[id].Configurations.ContainsKey(value.GetType().FullName))
                 throw new InvalidDataException("Canonical configuration type mismatch for " + id);
             string json = (string)typeof(ConfigStorage).GetMethod(nameof(ConfigStorage.SaveJson))
                 .MakeGenericMethod(value.GetType()).Invoke(null, new object[] { value });
@@ -196,16 +233,36 @@ namespace PluginSdk.Config
                 case JsonValueKind.Array:
                     return a.GetArrayLength() == b.GetArrayLength() && a.EnumerateArray().Select((e, i) => Equal(e, b[i])).All(v => v);
                 case JsonValueKind.String: return a.GetString() == b.GetString();
-                case JsonValueKind.Number: return a.GetRawText() == b.GetRawText();
+                case JsonValueKind.Number: return NormalizeNumber(a.GetRawText()) == NormalizeNumber(b.GetRawText());
                 default: return true;
             }
+        }
+
+        // Compare exact decimal values, without floating-point rounding or exponent overflow.
+        private static string NormalizeNumber(string text)
+        {
+            int exponentAt = text.IndexOfAny(new[] { 'e', 'E' });
+            BigInteger exponent = exponentAt < 0 ? BigInteger.Zero
+                : BigInteger.Parse(text.Substring(exponentAt + 1), CultureInfo.InvariantCulture);
+            string digits = exponentAt < 0 ? text : text.Substring(0, exponentAt);
+            bool negative = digits[0] == '-';
+            if (negative) digits = digits.Substring(1);
+            int point = digits.IndexOf('.');
+            if (point >= 0) { exponent -= digits.Length - point - 1; digits = digits.Remove(point, 1); }
+            digits = digits.TrimStart('0');
+            if (digits.Length == 0) return "0";
+            int length = digits.Length;
+            digits = digits.TrimEnd('0');
+            exponent += length - digits.Length;
+            return (negative ? "-" : "") + digits + "e" + exponent.ToString(CultureInfo.InvariantCulture);
         }
 
         private static string Hex(byte[] bytes) => BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
         private sealed class Entry
         {
-            public readonly string AssemblyHash, Type, Json;
-            public Entry(string assemblyHash, string type, string json) { AssemblyHash = assemblyHash; Type = type; Json = json; }
+            public readonly string AssemblyHash;
+            public readonly Dictionary<string, string> Configurations = new Dictionary<string, string>(StringComparer.Ordinal);
+            public Entry(string assemblyHash) { AssemblyHash = assemblyHash; }
         }
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
@@ -55,6 +57,43 @@ namespace PluginSdk.Config
             return options;
         }
 
+        private static readonly Dictionary<Assembly, List<WeakReference>> LoadedConfigurations = new Dictionary<Assembly, List<WeakReference>>();
+
+        /// <summary>Live configurations loaded through this SDK, including private/static plugin storage.
+        /// Returned instances belong to the plugin; observers must not retain them beyond a snapshot.</summary>
+        public static IReadOnlyList<PluginConfig> GetLoadedConfigurations(Assembly assembly)
+        {
+            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+            lock (LoadedConfigurations)
+            {
+                var result = new List<PluginConfig>();
+                if (!LoadedConfigurations.TryGetValue(assembly, out var values)) return result;
+                for (int index = values.Count - 1; index >= 0; index--)
+                {
+                    if (values[index].Target is PluginConfig value)
+                    {
+                        if (!result.Exists(existing => ReferenceEquals(existing, value))) result.Add(value);
+                    }
+                    else values.RemoveAt(index);
+                }
+                return result;
+            }
+        }
+
+        private static T Loaded<T>(T value) where T : PluginConfig
+        {
+            if (value == null) return value;
+            lock (LoadedConfigurations)
+            {
+                var assembly = value.GetType().Assembly;
+                if (!LoadedConfigurations.TryGetValue(assembly, out var values))
+                    LoadedConfigurations[assembly] = values = new List<WeakReference>();
+                values.RemoveAll(reference => !reference.IsAlive);
+                if (!values.Exists(reference => ReferenceEquals(reference.Target, value))) values.Add(new WeakReference(value));
+            }
+            return value;
+        }
+
         // -------- XML ---------------------------------------------------
 
         /// <summary>
@@ -94,12 +133,12 @@ namespace PluginSdk.Config
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
             string canonical = ManagedPluginConfiguration.Resolve(typeof(T));
-            if (canonical != null) return LoadCanonical<T>(canonical);
-            if (!File.Exists(path)) return new T();
+            if (canonical != null) return Loaded(LoadCanonical<T>(canonical));
+            if (!File.Exists(path)) return Loaded(new T());
 
             var serializer = new XmlSerializer(typeof(T));
             using (var fs = File.OpenRead(path))
-                return (T)serializer.Deserialize(fs);
+                return Loaded((T)serializer.Deserialize(fs));
         }
 
         // -------- JSON --------------------------------------------------
@@ -142,7 +181,7 @@ namespace PluginSdk.Config
         {
             if (json == null) throw new ArgumentNullException(nameof(json));
             string canonical = ManagedPluginConfiguration.Resolve(typeof(T));
-            return canonical == null ? LoadJsonCore<T>(json) : LoadCanonical<T>(canonical);
+            return Loaded(canonical == null ? LoadJsonCore<T>(json) : LoadCanonical<T>(canonical));
         }
 
         private static T LoadCanonical<T>(string json) where T : PluginConfig, new()

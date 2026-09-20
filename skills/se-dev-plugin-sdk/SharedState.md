@@ -40,10 +40,20 @@ After replay eviction the old expected revision conflicts instead of applying tw
 
 ## Bounds and execution
 
-Values and message payloads are limited to 64 KiB. Stores hold at most 4096 records
-(including tombstones) with an 8 MiB combined current/replay payload ceiling. Replay
-keeps at most 128 recent writes with approximately 1 MiB of payload. These are small
-coordination records, not a bulk world-data store. Names have at most 200 characters.
+Values and message payloads are limited to 64 KiB. Each plugin namespace has at most
+512 records (including tombstones), 1 MiB of combined current/replay payload, and
+32 replay outcomes holding at most 256 KiB. The whole store additionally limits
+records to 4096, current/replay payload to 8 MiB, and replay to 128 outcomes / 1 MiB.
+One plugin cannot fill the entire shared store. Global limits still bound aggregate
+usage across plugins. Existing larger namespaces remain readable and may delete or
+shrink records without growing their total payload; no stored records are discarded during
+upgrade. Deletions retain revision-bearing tombstones to prevent stale CAS/ABA; quota
+exhaustion returns `Capacity` for new keys, while existing keys remain reusable.
+Upgrading a legacy store already at the global key ceiling does not reclaim its
+keys automatically; retaining them preserves CAS history.
+These are small
+coordination records, not a bulk world-data store. Names have at most 200 characters;
+ordinary spaces in loader identities are supported, while control characters remain forbidden.
 
 Messaging queues/correlation tables are bounded at 128 entries, timeouts at 30 seconds.
 There is no automatic retry, reroute, broadcast or exactly-once side-effect promise.
@@ -58,6 +68,13 @@ and a 250 ms freshness bound, measured monotonically from request start. A stall
 queue fails fenced. Ownership can change after dispatch: use the supplied destination
 fence on authoritative CAS writes, and never treat a routed message as a lock over
 arbitrary game or external effects.
+
+Standalone creates durable storage only when a plugin calls `PluginCluster.ForPlugin`.
+Ordinary launches neither open nor lock `PluginState`. A storage failure or another
+process holding its lease logs an error and leaves shared-state services unavailable
+until restart; no in-memory replacement silently accepts non-durable writes. Namespace
+ownership still requires the calling assembly's exact loader identity. Plugins should
+handle `Unavailable` results; handler registration requires an available provider.
 
 Standalone maps logical targets to one local owner and rejects remote physical
 targets as unsupported. Provider disposal fences queued work. Consumers should

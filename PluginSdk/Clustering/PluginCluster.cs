@@ -22,6 +22,35 @@ namespace PluginSdk.Clustering
     public static class PluginCluster
     {
         private static IPluginClusterProvider current;
+        private static readonly object StandaloneSync = new object();
+        private static Func<IPluginClusterProvider> standaloneFactory;
+        private static Action<Exception> standaloneFailure;
+
+        /// <summary>Configure storage without opening it. Only explicit plugin opt-in acquires the lease.</summary>
+        public static void ConfigureStandalone(Func<IPluginClusterProvider> factory, Action<Exception> failure)
+        {
+            if (IsClusterProcess) throw new InvalidOperationException("Standalone provider is forbidden in cluster mode.");
+            lock (StandaloneSync) { standaloneFactory = factory; standaloneFailure = failure; }
+        }
+
+        private static void EnsureStandalone()
+        {
+            lock (StandaloneSync)
+            {
+                if (Current != null || IsClusterProcess || standaloneFactory == null) return;
+                var factory = standaloneFactory;
+                standaloneFactory = null; // A failed durable store stays unavailable until restart.
+                try
+                {
+                    var provider = factory();
+                    if (!Register(provider)) (provider as IDisposable)?.Dispose();
+                }
+                catch (Exception error)
+                {
+                    try { standaloneFailure?.Invoke(error); } catch { /* Logging cannot break ordinary startup. */ }
+                }
+            }
+        }
         private static readonly Dictionary<Assembly, string> Owners = new Dictionary<Assembly, string>();
         public static bool IsClusterProcess => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLUSTER_GATEWAY_REGISTRY"))
             || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLUSTER_NODE_ID"));
@@ -29,7 +58,7 @@ namespace PluginSdk.Clustering
         public static event Action ContextChanged;
         public static void BindOwner(string pluginId, Assembly assembly)
         {
-            if (!PluginRecordStore.ValidName(pluginId) || assembly == null) throw new ArgumentException("Invalid plugin owner.");
+            if (string.IsNullOrWhiteSpace(pluginId) || assembly == null) throw new ArgumentException("Invalid plugin owner.");
             lock (Owners) {
                 if (Owners.TryGetValue(assembly, out var existing) && existing != pluginId)
                     throw new InvalidOperationException("Assembly already belongs to another plugin.");
@@ -42,6 +71,9 @@ namespace PluginSdk.Clustering
             lock (Owners)
                 if (!Owners.TryGetValue(Assembly.GetCallingAssembly(), out var owner) || owner != pluginId)
                     throw new InvalidOperationException("Plugin namespace does not match its loader identity.");
+            if (!PluginRecordStore.ValidName(pluginId))
+                throw new ArgumentException("Plugin identity cannot be used as a shared-state namespace.", nameof(pluginId));
+            EnsureStandalone();
             return new PluginClusterClient(pluginId);
         }
         public static bool Register(IPluginClusterProvider provider)

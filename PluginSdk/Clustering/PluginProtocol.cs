@@ -94,12 +94,16 @@ namespace PluginSdk.Clustering
     public sealed class PluginRecordStore
     {
         public const int MaxPayload = 64 * 1024;
+        public const int MaxPluginRecords = 512;
+        public const int MaxPluginBytes = 1024 * 1024;
+        public const int MaxPluginReplays = 32;
+        public const int MaxPluginReplayBytes = 256 * 1024;
         public Guid StoreId { get; set; } = Guid.NewGuid();
         public long ReplaySequence { get; set; }
         public Dictionary<string, PluginRecord> Records { get; set; } = new Dictionary<string, PluginRecord>();
         public Dictionary<string, PluginReplay> Replays { get; set; } = new Dictionary<string, PluginReplay>();
         public static bool ValidName(string text) => !string.IsNullOrWhiteSpace(text) && text.Length <= 200
-            && text.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '/' || c == ':');
+            && text.All(c => char.IsLetterOrDigit(c) || c == ' ' || c == '.' || c == '-' || c == '_' || c == '/' || c == ':');
 
         public void Validate()
         {
@@ -151,12 +155,35 @@ namespace PluginSdk.Clustering
             if (replayResult != null) return replayResult;
             if (request.Expected.Revision != (current?.Version.Revision ?? 0))
                 return new PluginResult { Code = PluginResultCode.Conflict, Record = Copy(current) };
-            // Bound both current data and retained outcomes below Registry's recovery bound.
-            while (Replays.Count >= 128 || Replays.Count > 0 && Replays.Values.Sum(r => (long)(r.Record.Payload?.Length ?? 0)) > 1024 * 1024)
-                Replays.Remove(Replays.OrderBy(r => r.Value.Sequence).First().Key);
-            if (Records.Count >= 4096 && current == null
-                || Records.Values.Sum(r => (long)(r.Payload?.Length ?? 0)) + Replays.Values.Sum(r => (long)(r.Record.Payload?.Length ?? 0))
-                    + 2L * (request.Payload?.Length ?? 0) > 8 * 1024 * 1024)
+            // Namespace limits prevent one plugin consuming the entire shared budget. Tombstones
+            // retain revisions permanently: collecting them would allow stale revision-zero CAS.
+            string prefix = request.Plugin + "\n";
+            var ownedRecords = Records.Where(pair => pair.Key.StartsWith(prefix, StringComparison.Ordinal)).ToArray();
+            int incomingBytes = request.Payload?.Length ?? 0;
+            long ownBefore = ownedRecords.Sum(pair => (long)(pair.Value.Payload?.Length ?? 0))
+                + Replays.Where(pair => pair.Key.StartsWith(prefix, StringComparison.Ordinal)).Sum(pair => (long)(pair.Value.Record.Payload?.Length ?? 0));
+            long allBefore = Records.Values.Sum(record => (long)(record.Payload?.Length ?? 0))
+                + Replays.Values.Sum(replay => (long)(replay.Record.Payload?.Length ?? 0));
+            var ownedReplays = Replays.Where(pair => pair.Key.StartsWith(prefix, StringComparison.Ordinal))
+                .OrderBy(pair => pair.Value.Sequence).ToList();
+            long replayBytes = ownedReplays.Sum(pair => (long)(pair.Value.Record.Payload?.Length ?? 0));
+            while (ownedReplays.Count >= MaxPluginReplays || ownedReplays.Count > 0 && replayBytes + incomingBytes > MaxPluginReplayBytes)
+            {
+                var oldest = ownedReplays[0];
+                Replays.Remove(oldest.Key); ownedReplays.RemoveAt(0);
+                replayBytes -= oldest.Value.Record.Payload?.Length ?? 0;
+            }
+            while (Replays.Count >= 128 || Replays.Count > 0
+                && Replays.Values.Sum(replay => (long)(replay.Record.Payload?.Length ?? 0)) + incomingBytes > 1024 * 1024)
+                Replays.Remove(Replays.OrderBy(pair => pair.Value.Sequence).First().Key);
+            long currentBytes = current?.Payload?.Length ?? 0;
+            long ownAfter = ownedRecords.Sum(pair => (long)(pair.Value.Payload?.Length ?? 0)) - currentBytes
+                + Replays.Where(pair => pair.Key.StartsWith(prefix, StringComparison.Ordinal)).Sum(pair => (long)(pair.Value.Record.Payload?.Length ?? 0)) + 2L * incomingBytes;
+            long allAfter = Records.Values.Sum(record => (long)(record.Payload?.Length ?? 0)) - currentBytes
+                + Replays.Values.Sum(replay => (long)(replay.Record.Payload?.Length ?? 0)) + 2L * incomingBytes;
+            if (current == null && (Records.Count >= 4096 || ownedRecords.Length >= MaxPluginRecords)
+                || ownAfter > MaxPluginBytes && ownAfter > ownBefore
+                || allAfter > 8 * 1024 * 1024 && allAfter > allBefore)
                 return PluginResult.Failure(PluginResultCode.Capacity);
             var next = new PluginRecord { Version = new RecordVersion { StoreId = StoreId, Revision = checked((current?.Version.Revision ?? 0) + 1) },
                 SchemaVersion = request.SchemaVersion, Payload = request.Payload?.ToArray(), Deleted = request.Deleted };

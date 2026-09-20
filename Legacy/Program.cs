@@ -440,8 +440,9 @@ static class Program
             Tools.Init(new ExternalTools(), compiler);
             PluginSdk.Config.ManagedPluginConfiguration.ConfigureFromEnvironment();
             if (!PluginSdk.Clustering.PluginCluster.IsClusterProcess)
-                PluginSdk.Clustering.PluginCluster.Register(new PluginSdk.Clustering.StandalonePluginProvider(
-                    Path.Combine(magnetarDir, "PluginState")));
+                PluginSdk.Clustering.PluginCluster.ConfigureStandalone(
+                    () => new PluginSdk.Clustering.StandalonePluginProvider(Path.Combine(magnetarDir, "PluginState")),
+                    error => Console.Error.WriteLine("Plugin shared state is unavailable: " + error.Message));
             SharedLoader.Instance = new SharedLoader(VotesServer, corePlugins);
             foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
             {
