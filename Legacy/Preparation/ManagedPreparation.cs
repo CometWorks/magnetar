@@ -159,11 +159,17 @@ internal static class ManagedPreparation
         {
             string path = Path.ChangeExtension(local.Dll, ".xml");
             if (!File.Exists(path)) path = local.Dll + ".xml";
+            // RefuseLink reads the file's attributes; a missing file must name the plugin and where
+            // its metadata was expected, not crash.
+            if (!File.Exists(path))
+                throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id
+                    + " (no metadata file at " + Path.ChangeExtension(local.Dll, ".xml") + " or " + path + ")");
             RefuseLink(path);
             using var reader = XmlReader.Create(path, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
                 XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 });
             metadata = new XmlSerializer(typeof(PluginData)).Deserialize(reader) as GitHubPlugin
-                ?? throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id);
+                ?? throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id
+                    + " (" + path + " does not describe a GitHubPlugin)");
         }
         else throw new InvalidDataException("Managed preparation requires pinned GitHub source or a metadata-backed local binary: " + data.Id);
         if (metadata.Id != data.Id || metadata.Commit?.Length != 40 || !metadata.Commit.All(Uri.IsHexDigit)
