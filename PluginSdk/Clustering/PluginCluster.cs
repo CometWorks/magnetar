@@ -175,6 +175,16 @@ namespace PluginSdk.Clustering
             // A plain server's views need no provider: the durable store failing must not blind them.
             return PluginCluster.IsClusterProcess ? null : local();
         }
+        /// <summary>
+        /// Receive this plugin's grid handover hooks (one handler per plugin; dispose to stop). On a plain server
+        /// the registration succeeds and never fires. Null when this cluster build offers no hooks.
+        /// </summary>
+        public IDisposable RegisterGridHandover(IPluginGridHandover handler)
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            if (PluginCluster.Current is IPluginClusterHandoverProvider provider) return provider.RegisterGridHandover(PluginId, handler);
+            return PluginCluster.IsClusterProcess ? null : PluginGridHandover.NoRegistration.Instance;
+        }
         public IDisposable RegisterHandler(string topic, Func<PluginMessage, Task<byte[]>> handler) =>
             (PluginCluster.Current ?? throw new InvalidOperationException("Plugin services are unavailable."))
                 .RegisterHandler(PluginId, topic, handler);
