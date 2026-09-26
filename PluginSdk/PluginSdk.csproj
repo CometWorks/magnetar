@@ -21,6 +21,9 @@
         <!-- VRage.Game provides MyPromoteLevel (permission levels) and MyFontEnum
              (chat font/color constants) used by the chat-command API. -->
         <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="False" />
+        <!-- Sandbox.Common provides MyAPIGateway (the ModAPI), which the plain-server cluster views read
+             (PluginSdk.Clustering.PluginLocalViews, T-0256). -->
+        <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
     </ItemGroup>
 
 </Project>

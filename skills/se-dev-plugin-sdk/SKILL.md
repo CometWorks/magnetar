@@ -92,6 +92,8 @@ and bounded requests in standalone and cluster mode.
 the server - local on a plain server, cluster-wide on every node and the World Authority.
 [Broadcast.md](Broadcast.md) sends one message to a plugin's topic handler on every node and the
 World Authority - delivered once, locally, on a plain server.
+[ClusterViews.md](ClusterViews.md) lists online players and their positions cluster-wide and says
+whether this process may change an entity (`LocateEntity`).
 
 ## Minimal example
 
