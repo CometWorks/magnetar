@@ -94,6 +94,8 @@ the server - local on a plain server, cluster-wide on every node and the World A
 World Authority - delivered once, locally, on a plain server.
 [ClusterViews.md](ClusterViews.md) lists online players and their positions cluster-wide and says
 whether this process may change an entity (`LocateEntity`).
+[GridHandover.md](GridHandover.md) tells a plugin when a grid moves between cluster nodes and carries
+a per-grid state blob across the move.
 
 ## Minimal example
 
