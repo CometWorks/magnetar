@@ -169,6 +169,14 @@ namespace PluginSdk.Clustering
         /// </summary>
         public PluginEntityPlacement LocateEntity(long entityId) =>
             View(provider => provider.LocateEntity(entityId), () => PluginLocalViews.LocateEntity(entityId));
+        /// <summary>
+        /// The server's time: game time (the same on every node), a never-stepping clock shared by the nodes,
+        /// and whether this process is synchronized / authoritative. Plain server: local game time, the process
+        /// uptime clock, both flags true. Null when this cluster build offers no clock. Call on the game thread.
+        /// </summary>
+        public PluginClusterTime Time() =>
+            PluginCluster.Current is IPluginClusterClockProvider provider ? provider.Time()
+                : PluginCluster.IsClusterProcess ? null : PluginLocalClock.Time();
         private static T View<T>(Func<IPluginClusterViewProvider, T> cluster, Func<T> local) where T : class
         {
             if (PluginCluster.Current is IPluginClusterViewProvider provider) return cluster(provider);

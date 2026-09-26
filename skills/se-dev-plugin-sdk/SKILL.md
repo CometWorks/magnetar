@@ -96,6 +96,8 @@ World Authority - delivered once, locally, on a plain server.
 whether this process may change an entity (`LocateEntity`).
 [GridHandover.md](GridHandover.md) tells a plugin when a grid moves between cluster nodes and carries
 a per-grid state blob across the move.
+[ClusterClock.md](ClusterClock.md) gives the cluster-wide game time and a never-stepping clock that
+compares across nodes.
 
 ## Minimal example
 
