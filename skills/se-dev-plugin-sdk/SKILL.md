@@ -98,6 +98,8 @@ whether this process may change an entity (`LocateEntity`).
 a per-grid state blob across the move.
 [ClusterClock.md](ClusterClock.md) gives the cluster-wide game time and a never-stepping clock that
 compares across nodes.
+[ClusterEvents.md](ClusterEvents.md) raises node up/down, World Authority change and partition
+acquired/lost events, and lists the live nodes.
 
 ## Minimal example
 

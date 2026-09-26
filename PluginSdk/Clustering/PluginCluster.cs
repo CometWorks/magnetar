@@ -56,6 +56,8 @@ namespace PluginSdk.Clustering
             || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLUSTER_NODE_ID"));
         public static IPluginClusterProvider Current => Volatile.Read(ref current);
         public static event Action ContextChanged;
+        /// <summary>Cluster events from the current provider (T-0256); never raised on a plain server.</summary>
+        public static event Action<PluginClusterEvent> ClusterEvent;
         public static void BindOwner(string pluginId, Assembly assembly)
         {
             if (string.IsNullOrWhiteSpace(pluginId) || assembly == null) throw new ArgumentException("Invalid plugin owner.");
@@ -88,12 +90,20 @@ namespace PluginSdk.Clustering
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (Interlocked.CompareExchange(ref current, provider, null) != null) return false;
             provider.ContextChanged += Changed;
+            if (provider is IPluginClusterEventProvider events) events.ClusterEvent += Relay;
             Changed(); return true;
         }
         public static bool Unregister(IPluginClusterProvider provider)
         {
             if (provider == null || Interlocked.CompareExchange(ref current, null, provider) != provider) return false;
-            provider.ContextChanged -= Changed; Changed(); return true;
+            provider.ContextChanged -= Changed;
+            if (provider is IPluginClusterEventProvider events) events.ClusterEvent -= Relay;
+            Changed(); return true;
+        }
+        private static void Relay(PluginClusterEvent change)
+        {
+            foreach (Action<PluginClusterEvent> handler in ClusterEvent?.GetInvocationList() ?? Array.Empty<Delegate>())
+                try { handler(change); } catch { /* One plugin's observer cannot starve the others. */ }
         }
         private static void Changed()
         {
@@ -177,6 +187,26 @@ namespace PluginSdk.Clustering
         public PluginClusterTime Time() =>
             PluginCluster.Current is IPluginClusterClockProvider provider ? provider.Time()
                 : PluginCluster.IsClusterProcess ? null : PluginLocalClock.Time();
+        /// <summary>
+        /// Node up/down, World Authority change and this node's partition acquired/lost, on the game thread.
+        /// Node events come from polling the registry (a few seconds late) and only while someone subscribes;
+        /// a node restart is a NodeDown of the old incarnation and a NodeUp of the new. Never raised on a plain server.
+        /// </summary>
+        public event Action<PluginClusterEvent> ClusterEvent
+        { add { PluginCluster.ClusterEvent += value; } remove { PluginCluster.ClusterEvent -= value; } }
+        /// <summary>
+        /// The ready nodes and the World Authority now. Plain server: the one "standalone" node. Null when no
+        /// provider can answer (a cluster build without events, or the registry unreachable).
+        /// </summary>
+        public async Task<IReadOnlyList<PluginNodeInfo>> NodesAsync(CancellationToken cancellationToken = default)
+        {
+            if (PluginCluster.Current is IPluginClusterEventProvider provider)
+                try { return await provider.NodesAsync(cancellationToken).ConfigureAwait(false); }
+                catch (OperationCanceledException) { throw; }
+                catch { return null; }
+            if (PluginCluster.IsClusterProcess) return null;
+            return new[] { new PluginNodeInfo { Node = PluginLocalViews.Node, Incarnation = 1, Role = "Standalone" } };
+        }
         private static T View<T>(Func<IPluginClusterViewProvider, T> cluster, Func<T> local) where T : class
         {
             if (PluginCluster.Current is IPluginClusterViewProvider provider) return cluster(provider);
