@@ -126,6 +126,27 @@ namespace PluginSdk.Clustering
             TimeSpan timeout, CancellationToken cancellationToken = default) => Protected(() =>
                 PluginCluster.Current?.RequestAsync(PluginId, target, topic, payload, operationId, timeout, cancellationToken)
                     ?? Task.FromResult(PluginResult.Failure(PluginResultCode.Unavailable)));
+        /// <summary>
+        /// Send one message to this plugin's <paramref name="topic"/> handler on every live node (and the World
+        /// Authority unless excluded), this node included; each handler's reply lands in the result per node.
+        /// All copies carry the same <paramref name="operationId"/>, so a handler can drop a repeat. Standalone
+        /// it is delivered once, locally. Subscribing is <see cref="RegisterHandler"/>, as for requests.
+        /// </summary>
+        public Task<PluginBroadcastResult> BroadcastAsync(string topic, byte[] payload, Guid operationId, TimeSpan timeout,
+            bool includeWorldAuthority = true, CancellationToken cancellationToken = default)
+        {
+            if (!(PluginCluster.Current is IPluginClusterBroadcastProvider provider))
+                return Task.FromResult(PluginBroadcastResult.Failure(PluginCluster.Current == null
+                    ? PluginResultCode.Unavailable : PluginResultCode.Unsupported));
+            return ProtectedBroadcast(() => provider.BroadcastAsync(PluginId, topic, payload, operationId, includeWorldAuthority,
+                timeout, cancellationToken));
+        }
+        private static async Task<PluginBroadcastResult> ProtectedBroadcast(Func<Task<PluginBroadcastResult>> action)
+        {
+            try { return await action().ConfigureAwait(false) ?? PluginBroadcastResult.Failure(PluginResultCode.Unavailable); }
+            catch (OperationCanceledException) { return PluginBroadcastResult.Failure(PluginResultCode.Timeout); }
+            catch { return PluginBroadcastResult.Failure(PluginResultCode.Unavailable); }
+        }
         public IDisposable RegisterHandler(string topic, Func<PluginMessage, Task<byte[]>> handler) =>
             (PluginCluster.Current ?? throw new InvalidOperationException("Plugin services are unavailable."))
                 .RegisterHandler(PluginId, topic, handler);
