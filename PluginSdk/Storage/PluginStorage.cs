@@ -1,6 +1,10 @@
 #nullable disable
 using System;
 using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using PluginSdk.Clustering;
@@ -20,7 +24,7 @@ namespace PluginSdk.Storage
         /// <summary>The cluster launcher's shared storage root, the same path on every node and the WA.</summary>
         public const string SharedRootVariable = "CLUSTER_SHARED_ROOT";
 
-        private static readonly Regex PluginIdPattern = new Regex("^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$");
+        private static readonly Regex PlainFolderName = new Regex("^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$");
         private static string standaloneRoot;
 
         /// <summary>
@@ -56,29 +60,55 @@ namespace PluginSdk.Storage
         }
 
         /// <summary>
-        /// The plugin's own directory, <c>&lt;root&gt;/plugins/&lt;pluginId&gt;</c>, created if missing.
+        /// The plugin's own directory, <c>&lt;root&gt;/plugins/&lt;folder&gt;</c>, created if missing. The folder is
+        /// the plugin id itself when that is a plain file name, else the id made file-safe plus a short hash of
+        /// it, so two ids never share a folder.
+        ///
+        /// Call it from the plugin's own assembly with the id Magnetar loaded it under: the same identity rule
+        /// as <see cref="PluginCluster.ForPlugin"/>, so a plugin cannot take another plugin's folder.
         ///
         /// In a cluster every node and the World Authority get the same directory with the same content, and
         /// they write it concurrently: nothing locks it. Write a file under a temporary name in the same
         /// directory and rename it into place, and give each file one writer (e.g. name it by the node id
         /// in <see cref="PluginCluster"/>'s context) or coordinate through the plugin's own messages.
         /// </summary>
-        /// <param name="pluginId">1-64 letters, digits, '.', '_' or '-', starting with a letter or digit.</param>
-        /// <exception cref="InvalidOperationException">A cluster process without configured shared storage:
-        /// handing out a directory only this node sees would split the plugin's state silently.</exception>
+        /// <exception cref="InvalidOperationException">The id is not the calling assembly's loader identity, or
+        /// a cluster process has no configured shared storage (handing out a directory only this node sees would
+        /// split the plugin's state silently).</exception>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static string GetSharedDirectory(string pluginId)
         {
-            if (pluginId == null || !PluginIdPattern.IsMatch(pluginId) || pluginId.Contains(".."))
-                throw new ArgumentException("pluginId must be 1-64 letters, digits, '.', '_' or '-', starting with a letter or digit",
-                    nameof(pluginId));
+            if (!PluginRecordStore.ValidName(pluginId))
+                throw new ArgumentException("Plugin identity cannot be used as a storage folder.", nameof(pluginId));
+            if (!PluginCluster.IsBoundOwner(Assembly.GetCallingAssembly(), pluginId))
+                throw new InvalidOperationException("Plugin namespace does not match its loader identity.");
             string root = Root;
             if (root == null)
                 throw new InvalidOperationException(PluginCluster.IsClusterProcess
                     ? "This cluster has no shared storage configured (" + SharedRootVariable + ")"
                     : "No local storage directory is available");
-            string directory = Path.Combine(root, "plugins", pluginId);
+            string directory = Path.Combine(root, "plugins", FolderName(pluginId));
             Directory.CreateDirectory(directory);
             return directory;
+        }
+
+        /// <summary>The folder name of a plugin id under <c>&lt;root&gt;/plugins</c>.</summary>
+        public static string FolderName(string pluginId)
+        {
+            if (PlainFolderName.IsMatch(pluginId) && !pluginId.Contains("..")) return pluginId;
+            var safe = new StringBuilder();
+            foreach (char c in pluginId)
+            {
+                bool dot = c == '.' && (safe.Length == 0 || safe[safe.Length - 1] != '.');
+                safe.Append(char.IsLetterOrDigit(c) && c < 128 || dot || c == '_' || c == '-' ? c : '_');
+            }
+            string prefix = safe.ToString().Trim('.');
+            if (prefix.Length > 48) prefix = prefix.Substring(0, 48);
+            using (var sha = SHA256.Create())
+            {
+                byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(pluginId));
+                return (prefix.Length == 0 ? "plugin" : prefix) + "-" + BitConverter.ToString(hash, 0, 4).Replace("-", "").ToLowerInvariant();
+            }
         }
     }
 }

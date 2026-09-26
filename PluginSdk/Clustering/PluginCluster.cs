@@ -65,6 +65,13 @@ namespace PluginSdk.Clustering
                 Owners[assembly] = pluginId;
             }
         }
+        /// <summary>True when the loader bound <paramref name="assembly"/> to <paramref name="pluginId"/>; the
+        /// identity rule of <see cref="ForPlugin"/>, shared with PluginStorage's per-plugin directory.</summary>
+        internal static bool IsBoundOwner(Assembly assembly, string pluginId)
+        {
+            lock (Owners)
+                return assembly != null && Owners.TryGetValue(assembly, out var owner) && owner == pluginId;
+        }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static PluginClusterClient ForPlugin(string pluginId)
         {
