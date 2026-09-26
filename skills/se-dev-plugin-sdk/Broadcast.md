@@ -52,6 +52,8 @@ subscribed, or the plugin is not loaded there), and `Timeout` means no reply arr
 - **Retry with the same operation id.** A retry re-sends to everyone, so a handler that must not act
   twice keeps the recent `message.OperationId`s and ignores a repeat. Every copy of one broadcast
   carries the same operation id.
+- **Right after a node starts** (the first seconds after it begins serving) the registry does not yet count
+  it as ready: calls from it answer `Unavailable` or `Fenced`, and broadcasts from others leave it out. Retry.
 - **No ordering** between broadcasts, or between the copies of one broadcast.
 - **Handlers run on the game thread**, a few per frame, like request handlers; a slow handler delays
   the others, so hand heavy work to a task.

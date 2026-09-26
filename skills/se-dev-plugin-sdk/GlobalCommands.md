@@ -38,6 +38,8 @@ switch (result.Code)
 - **How long it remembers:** the most recent 4096 global operations of the whole cluster (all plugins
   share the ledger with the cluster's own commands), saved in the World Authority's checkpoint, so it
   survives a WA restart that restores that checkpoint. A retry after that window runs again.
+- **Right after a node starts** (the first seconds after it begins serving) the registry does not yet count
+  it as ready: calls from it answer `Unavailable` or `Fenced`, and broadcasts from others leave it out. Retry.
 - **Results are acknowledgements:** at most 4096 bytes (`MaxResultBytes`); a larger result fails the
   command. Put bulk data in [SharedState.md](SharedState.md) records.
 - **Payload** up to 64 KB, as for requests. Topics that start with `global/` are reserved.
