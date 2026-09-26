@@ -147,6 +147,34 @@ namespace PluginSdk.Clustering
             catch (OperationCanceledException) { return PluginBroadcastResult.Failure(PluginResultCode.Timeout); }
             catch { return PluginBroadcastResult.Failure(PluginResultCode.Unavailable); }
         }
+        /// <summary>
+        /// Every player online anywhere in the server, with the node each is attached to. Cluster: the World
+        /// Authority's merged list as this node last received it (about 1-2 s behind). Plain server: this
+        /// process's players. Null when this cluster build offers no views. Call on the game thread.
+        /// </summary>
+        public IReadOnlyList<PluginPlayerInfo> OnlinePlayers() =>
+            View(provider => provider.OnlinePlayers(), PluginLocalViews.OnlinePlayers);
+        /// <summary>
+        /// Every online player's position, cluster-wide, as the World Authority last merged them (about 1-2 s
+        /// behind); join with <see cref="OnlinePlayers"/> on IdentityId for the node. Plain server: local players.
+        /// Null when this cluster build offers no views. Call on the game thread.
+        /// </summary>
+        public IReadOnlyList<PluginPlayerPosition> PlayerPositions() =>
+            View(provider => provider.PlayerPositions(), PluginLocalViews.PlayerPositions);
+        /// <summary>
+        /// Whether this process may change <paramref name="entityId"/> (any entity of a grid or a character):
+        /// <see cref="PluginEntityResidence.Local"/> only on the node that owns and simulates it. The partition it
+        /// names resolves to its owner with <see cref="ResolveOwnerAsync"/>. An entity on another node is Absent
+        /// here. Null when this cluster build offers no views. Call on the game thread.
+        /// </summary>
+        public PluginEntityPlacement LocateEntity(long entityId) =>
+            View(provider => provider.LocateEntity(entityId), () => PluginLocalViews.LocateEntity(entityId));
+        private static T View<T>(Func<IPluginClusterViewProvider, T> cluster, Func<T> local) where T : class
+        {
+            if (PluginCluster.Current is IPluginClusterViewProvider provider) return cluster(provider);
+            // A plain server's views need no provider: the durable store failing must not blind them.
+            return PluginCluster.IsClusterProcess ? null : local();
+        }
         public IDisposable RegisterHandler(string topic, Func<PluginMessage, Task<byte[]>> handler) =>
             (PluginCluster.Current ?? throw new InvalidOperationException("Plugin services are unavailable."))
                 .RegisterHandler(PluginId, topic, handler);
