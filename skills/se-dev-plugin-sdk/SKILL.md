@@ -90,6 +90,8 @@ See also [SharedState.md](SharedState.md) for opt-in durable records, ownership 
 and bounded requests in standalone and cluster mode.
 [SharedDirectory.md](SharedDirectory.md) gives each plugin a folder shared by every process of
 the server - local on a plain server, cluster-wide on every node and the World Authority.
+[Broadcast.md](Broadcast.md) sends one message to a plugin's topic handler on every node and the
+World Authority - delivered once, locally, on a plain server.
 
 ## Minimal example
 

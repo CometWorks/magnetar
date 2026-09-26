@@ -7,7 +7,7 @@ state for small, fenced records and this directory for files and bulk data.
 ```csharp
 using PluginSdk.Storage;
 
-string dir = PluginStorage.GetSharedDirectory("my.plugin");   // <root>/plugins/my.plugin, created
+string dir = PluginStorage.GetSharedDirectory("my.plugin");   // your own id; <root>/plugins/my.plugin, created
 string tmp = Path.Combine(dir, "index.json.tmp");
 File.WriteAllText(tmp, json);
 File.Move(tmp, Path.Combine(dir, "index.json"), overwrite: true);   // atomic replace
@@ -28,8 +28,11 @@ code and loads on a plain server unchanged.
 
 ## Rules
 
-- **The plugin id** is 1-64 letters, digits, `.`, `_` or `-`, starting with a letter or digit. It
-  cannot leave its folder (`..`, `/` are refused).
+- **The plugin id is your own.** Pass the id the loader bound your assembly to, the same one
+  `PluginCluster.ForPlugin` takes; any other id throws `InvalidOperationException`, so a plugin cannot
+  open another plugin's folder. A plain id (1-64 letters, digits, `.`, `_`, `-`, no `..`) is its folder
+  name; any other valid id becomes a file-safe prefix plus `-` and 8 hex digits of its SHA-256
+  (`PluginStorage.FolderName(id)`), so the folder never leaves `<root>/plugins`.
 - **Nothing locks the folder.** In a cluster, the nodes and the World Authority are separate
   processes writing the same files. Write under a temporary name in the same directory and rename
   into place. Give each file one writer, e.g. name it by the node id from `PluginCluster.Current.Context`,
