@@ -100,6 +100,8 @@ a per-grid state blob across the move.
 compares across nodes.
 [ClusterEvents.md](ClusterEvents.md) raises node up/down, World Authority change and partition
 acquired/lost events, and lists the live nodes.
+[GlobalCommands.md](GlobalCommands.md) runs a plugin command on the World Authority exactly once per
+operation id, from any node.
 
 ## Minimal example
 

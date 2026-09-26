@@ -207,6 +207,40 @@ namespace PluginSdk.Clustering
             if (PluginCluster.IsClusterProcess) return null;
             return new[] { new PluginNodeInfo { Node = PluginLocalViews.Node, Incarnation = 1, Role = "Standalone" } };
         }
+        /// <summary>
+        /// Run <paramref name="command"/> on the World Authority exactly once for <paramref name="operationId"/>:
+        /// a retry with the same id and payload returns the first outcome without running it again. The plugin
+        /// must be loaded on the WA and have called <see cref="RegisterGlobalCommand"/> there. Plain server:
+        /// runs locally, once.
+        /// </summary>
+        public async Task<PluginGlobalCommandResult> ExecuteGlobalAsync(string command, byte[] payload, Guid operationId, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            if (!PluginRecordStore.ValidName(PluginGlobalCommands.Topic(command ?? string.Empty)) || string.IsNullOrEmpty(command))
+                return new PluginGlobalCommandResult { Code = PluginResultCode.Invalid, Error = "Invalid command name." };
+            var reply = await RequestAsync(new PluginTarget { Kind = PluginTargetKind.WorldAuthority }, PluginGlobalCommands.Topic(command),
+                payload, operationId, timeout, cancellationToken).ConfigureAwait(false);
+            return PluginGlobalCommands.Decode(reply);
+        }
+        /// <summary>
+        /// Serve <paramref name="command"/> on this process; register it on the World Authority (and on a plain
+        /// server). The handler runs on the game thread, at most once per operation id while the ledger remembers
+        /// it. Null when this cluster build has no ledger: a command that might run twice is not offered.
+        /// Topics starting "global/" are reserved for this.
+        /// </summary>
+        public IDisposable RegisterGlobalCommand(string command, Func<byte[], byte[]> handler)
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            if (string.IsNullOrEmpty(command) || !PluginRecordStore.ValidName(PluginGlobalCommands.Topic(command)))
+                throw new ArgumentException("Invalid command name.", nameof(command));
+            var provider = PluginCluster.Current ?? throw new InvalidOperationException("Plugin services are unavailable.");
+            var ledger = provider as IPluginGlobalCommandLedger ?? (PluginCluster.IsClusterProcess ? null : PluginLocalGlobalLedger.Instance);
+            if (ledger == null) return null;
+            string plugin = PluginId;
+            var bounded = PluginGlobalCommands.Bounded(handler);
+            return provider.RegisterHandler(plugin, PluginGlobalCommands.Topic(command), message => Task.FromResult(
+                PluginGlobalCommands.Encode(ledger.Execute(plugin, command, message.OperationId, message.Payload, bounded))));
+        }
         private static T View<T>(Func<IPluginClusterViewProvider, T> cluster, Func<T> local) where T : class
         {
             if (PluginCluster.Current is IPluginClusterViewProvider provider) return cluster(provider);
