@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using PluginSdk.Clustering;
 
@@ -24,7 +23,6 @@ namespace PluginSdk.Storage
         /// <summary>The cluster launcher's shared storage root, the same path on every node and the WA.</summary>
         public const string SharedRootVariable = "CLUSTER_SHARED_ROOT";
 
-        private static readonly Regex PlainFolderName = new Regex("^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$");
         private static string standaloneRoot;
 
         /// <summary>
@@ -61,8 +59,8 @@ namespace PluginSdk.Storage
 
         /// <summary>
         /// The plugin's own directory, <c>&lt;root&gt;/plugins/&lt;folder&gt;</c>, created if missing. The folder is
-        /// the plugin id itself when that is a plain file name, else the id made file-safe plus a short hash of
-        /// it, so two ids never share a folder.
+        /// <see cref="FolderName"/> of the id: a file-safe prefix of it plus a hash of the exact id, so two ids
+        /// never share a folder, not even ids that differ only in case on a case-insensitive filesystem.
         ///
         /// Call it from the plugin's own assembly with the id Magnetar loaded it under: the same identity rule
         /// as <see cref="PluginCluster.ForPlugin"/>, so a plugin cannot take another plugin's folder.
@@ -92,10 +90,18 @@ namespace PluginSdk.Storage
             return directory;
         }
 
-        /// <summary>The folder name of a plugin id under <c>&lt;root&gt;/plugins</c>.</summary>
+        /// <summary>
+        /// The folder name of a plugin id under <c>&lt;root&gt;/plugins</c>: a readable, file-safe prefix of the id,
+        /// <c>-</c>, and 16 hex digits of the SHA-256 of the exact id.
+        ///
+        /// Every id goes through the same rule. Passing a plain id through unchanged let it spell another id's
+        /// hashed folder ("Cluster_State.dll-6a7d851f" was also the folder of "Cluster State.dll"), and ids that
+        /// differ only in case shared a folder on a case-insensitive filesystem. Here the hash is taken over the
+        /// exact, case-sensitive id and written in lower case, so distinct ids differ in the hash part itself.
+        /// </summary>
         public static string FolderName(string pluginId)
         {
-            if (PlainFolderName.IsMatch(pluginId) && !pluginId.Contains("..")) return pluginId;
+            if (pluginId == null) throw new ArgumentNullException(nameof(pluginId));
             var safe = new StringBuilder();
             foreach (char c in pluginId)
             {
@@ -103,11 +109,11 @@ namespace PluginSdk.Storage
                 safe.Append(char.IsLetterOrDigit(c) && c < 128 || dot || c == '_' || c == '-' ? c : '_');
             }
             string prefix = safe.ToString().Trim('.');
-            if (prefix.Length > 48) prefix = prefix.Substring(0, 48);
+            if (prefix.Length > 48) prefix = prefix.Substring(0, 48).TrimEnd('.');
             using (var sha = SHA256.Create())
             {
                 byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(pluginId));
-                return (prefix.Length == 0 ? "plugin" : prefix) + "-" + BitConverter.ToString(hash, 0, 4).Replace("-", "").ToLowerInvariant();
+                return (prefix.Length == 0 ? "plugin" : prefix) + "-" + BitConverter.ToString(hash, 0, 8).Replace("-", "").ToLowerInvariant();
             }
         }
     }

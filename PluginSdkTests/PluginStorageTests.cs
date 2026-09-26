@@ -123,22 +123,34 @@ namespace PluginSdkTests
         }
 
         [Theory]
-        [InlineData("my.plugin", "my.plugin")]
-        [InlineData("cluster-test-node", "cluster-test-node")]
-        public void PlainIdsAreTheirOwnFolder(string pluginId, string folder) => Assert.Equal(folder, PluginStorage.FolderName(pluginId));
-
-        [Theory]
+        [InlineData("my.plugin")]
+        [InlineData("cluster-test-node")]
         [InlineData("Cluster State.dll")]
         [InlineData("Owner/Repo")]
         [InlineData("../escape")]
         [InlineData("a:b")]
         [InlineData("x..y")]
-        public void OtherIdsBecomeASafeUniqueFolder(string pluginId)
+        public void EveryIdBecomesASafePrefixPlusItsHash(string pluginId)
         {
             string folder = PluginStorage.FolderName(pluginId);
-            Assert.Matches("^[A-Za-z0-9._-]+-[0-9a-f]{8}$", folder);
+            Assert.Matches("^[A-Za-z0-9._-]+-[0-9a-f]{16}$", folder);
             Assert.DoesNotContain("..", folder);
+            Assert.Equal(folder, PluginStorage.FolderName(pluginId));
             Assert.NotEqual(folder, PluginStorage.FolderName(pluginId + " "));
+        }
+
+        // Gap analysis: a plain id passed through unchanged could spell another id's hashed folder, and
+        // ids differing only in case shared one folder on a case-insensitive filesystem (Windows).
+        [Theory]
+        [InlineData("Cluster State.dll", "Cluster_State.dll-6a7d851f")]
+        [InlineData("my.plugin", "My.Plugin")]
+        [InlineData("my.plugin", "MY.PLUGIN")]
+        [InlineData("a b", "a_b")]
+        [InlineData("plugin", "...")]   // an all-dot id falls back to the "plugin" prefix
+        public void DistinctIdsNeverShareAFolderEvenIgnoringCase(string first, string second)
+        {
+            string a = PluginStorage.FolderName(first), b = PluginStorage.FolderName(second);
+            Assert.False(string.Equals(a, b, StringComparison.OrdinalIgnoreCase), a + " == " + b);
         }
     }
 }
