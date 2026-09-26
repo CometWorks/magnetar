@@ -47,6 +47,32 @@ namespace PluginSdk.Tests
         }
 
         [Fact]
+        public void The_provider_sees_a_subscriber_only_while_a_plugin_subscribes()
+        {
+            var client = Client();
+            var provider = new EventProvider();
+            Assert.True(PluginCluster.Register(provider));
+            try
+            {
+                Assert.False(provider.Subscribed);                       // registered, nobody listening: no roster poll
+                Action<PluginClusterEvent> observer = _ => { };
+                client.ClusterEvent += observer;
+                Assert.True(provider.Subscribed);
+                client.ClusterEvent -= observer;
+                Assert.False(provider.Subscribed);
+                client.ClusterEvent += observer;
+                Assert.True(PluginCluster.Unregister(provider));
+                Assert.False(provider.Subscribed);
+                var next = new EventProvider();
+                Assert.True(PluginCluster.Register(next));                  // an existing subscriber attaches at registration
+                Assert.True(next.Subscribed);
+                client.ClusterEvent -= observer;
+                PluginCluster.Unregister(next);
+            }
+            finally { PluginCluster.Unregister(provider); }
+        }
+
+        [Fact]
         public async Task Plain_server_has_one_standalone_node_and_a_cluster_without_events_has_none_known()
         {
             var client = Client();
@@ -60,6 +86,7 @@ namespace PluginSdk.Tests
         private sealed class EventProvider : IPluginClusterProvider, IPluginClusterEventProvider
         {
             public event Action<PluginClusterEvent> ClusterEvent;
+            public bool Subscribed => ClusterEvent != null;
             public void Raise(PluginClusterEvent change) => ClusterEvent?.Invoke(change);
             public Task<IReadOnlyList<PluginNodeInfo>> NodesAsync(CancellationToken cancellationToken) =>
                 Task.FromResult<IReadOnlyList<PluginNodeInfo>>(new[] { new PluginNodeInfo { Node = "node-9" } });

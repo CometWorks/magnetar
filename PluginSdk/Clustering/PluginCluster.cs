@@ -56,8 +56,25 @@ namespace PluginSdk.Clustering
             || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLUSTER_NODE_ID"));
         public static IPluginClusterProvider Current => Volatile.Read(ref current);
         public static event Action ContextChanged;
-        /// <summary>Cluster events from the current provider (T-0256); never raised on a plain server.</summary>
-        public static event Action<PluginClusterEvent> ClusterEvent;
+        private static readonly object EventSync = new object();
+        private static Action<PluginClusterEvent> clusterEvent;
+        /// <summary>
+        /// Cluster events from the current provider (T-0256); never raised on a plain server. The relay is attached to
+        /// the provider only while someone subscribes, so a provider can skip the work (the roster poll) otherwise.
+        /// </summary>
+        public static event Action<PluginClusterEvent> ClusterEvent
+        {
+            add { lock (EventSync) { bool first = clusterEvent == null; clusterEvent += value; if (first && clusterEvent != null) Attach(Current); } }
+            remove { lock (EventSync) { clusterEvent -= value; if (clusterEvent == null) Detach(Current); } }
+        }
+        private static void Attach(IPluginClusterProvider provider)
+        {
+            if (provider is IPluginClusterEventProvider events) { events.ClusterEvent -= Relay; events.ClusterEvent += Relay; }
+        }
+        private static void Detach(IPluginClusterProvider provider)
+        {
+            if (provider is IPluginClusterEventProvider events) events.ClusterEvent -= Relay;
+        }
         public static void BindOwner(string pluginId, Assembly assembly)
         {
             if (string.IsNullOrWhiteSpace(pluginId) || assembly == null) throw new ArgumentException("Invalid plugin owner.");
@@ -90,19 +107,21 @@ namespace PluginSdk.Clustering
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (Interlocked.CompareExchange(ref current, provider, null) != null) return false;
             provider.ContextChanged += Changed;
-            if (provider is IPluginClusterEventProvider events) events.ClusterEvent += Relay;
+            lock (EventSync) if (clusterEvent != null) Attach(provider);
             Changed(); return true;
         }
         public static bool Unregister(IPluginClusterProvider provider)
         {
             if (provider == null || Interlocked.CompareExchange(ref current, null, provider) != provider) return false;
             provider.ContextChanged -= Changed;
-            if (provider is IPluginClusterEventProvider events) events.ClusterEvent -= Relay;
+            lock (EventSync) Detach(provider);
             Changed(); return true;
         }
         private static void Relay(PluginClusterEvent change)
         {
-            foreach (Action<PluginClusterEvent> handler in ClusterEvent?.GetInvocationList() ?? Array.Empty<Delegate>())
+            Action<PluginClusterEvent> handlers;
+            lock (EventSync) handlers = clusterEvent;
+            foreach (Action<PluginClusterEvent> handler in handlers?.GetInvocationList() ?? Array.Empty<Delegate>())
                 try { handler(change); } catch { /* One plugin's observer cannot starve the others. */ }
         }
         private static void Changed()
