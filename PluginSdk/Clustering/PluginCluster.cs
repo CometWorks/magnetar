@@ -56,6 +56,25 @@ namespace PluginSdk.Clustering
             || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLUSTER_NODE_ID"));
         public static IPluginClusterProvider Current => Volatile.Read(ref current);
         public static event Action ContextChanged;
+        private static readonly object EventSync = new object();
+        private static Action<PluginClusterEvent> clusterEvent;
+        /// <summary>
+        /// Cluster events from the current provider (T-0256); never raised on a plain server. The relay is attached to
+        /// the provider only while someone subscribes, so a provider can skip the work (the roster poll) otherwise.
+        /// </summary>
+        public static event Action<PluginClusterEvent> ClusterEvent
+        {
+            add { lock (EventSync) { bool first = clusterEvent == null; clusterEvent += value; if (first && clusterEvent != null) Attach(Current); } }
+            remove { lock (EventSync) { clusterEvent -= value; if (clusterEvent == null) Detach(Current); } }
+        }
+        private static void Attach(IPluginClusterProvider provider)
+        {
+            if (provider is IPluginClusterEventProvider events) { events.ClusterEvent -= Relay; events.ClusterEvent += Relay; }
+        }
+        private static void Detach(IPluginClusterProvider provider)
+        {
+            if (provider is IPluginClusterEventProvider events) events.ClusterEvent -= Relay;
+        }
         public static void BindOwner(string pluginId, Assembly assembly)
         {
             if (string.IsNullOrWhiteSpace(pluginId) || assembly == null) throw new ArgumentException("Invalid plugin owner.");
@@ -64,6 +83,13 @@ namespace PluginSdk.Clustering
                     throw new InvalidOperationException("Assembly already belongs to another plugin.");
                 Owners[assembly] = pluginId;
             }
+        }
+        /// <summary>True when the loader bound <paramref name="assembly"/> to <paramref name="pluginId"/>; the
+        /// identity rule of <see cref="ForPlugin"/>, shared with PluginStorage's per-plugin directory.</summary>
+        internal static bool IsBoundOwner(Assembly assembly, string pluginId)
+        {
+            lock (Owners)
+                return assembly != null && Owners.TryGetValue(assembly, out var owner) && owner == pluginId;
         }
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static PluginClusterClient ForPlugin(string pluginId)
@@ -81,12 +107,22 @@ namespace PluginSdk.Clustering
             if (provider == null) throw new ArgumentNullException(nameof(provider));
             if (Interlocked.CompareExchange(ref current, provider, null) != null) return false;
             provider.ContextChanged += Changed;
+            lock (EventSync) if (clusterEvent != null) Attach(provider);
             Changed(); return true;
         }
         public static bool Unregister(IPluginClusterProvider provider)
         {
             if (provider == null || Interlocked.CompareExchange(ref current, null, provider) != provider) return false;
-            provider.ContextChanged -= Changed; Changed(); return true;
+            provider.ContextChanged -= Changed;
+            lock (EventSync) Detach(provider);
+            Changed(); return true;
+        }
+        private static void Relay(PluginClusterEvent change)
+        {
+            Action<PluginClusterEvent> handlers;
+            lock (EventSync) handlers = clusterEvent;
+            foreach (Action<PluginClusterEvent> handler in handlers?.GetInvocationList() ?? Array.Empty<Delegate>())
+                try { handler(change); } catch { /* One plugin's observer cannot starve the others. */ }
         }
         private static void Changed()
         {
@@ -119,6 +155,127 @@ namespace PluginSdk.Clustering
             TimeSpan timeout, CancellationToken cancellationToken = default) => Protected(() =>
                 PluginCluster.Current?.RequestAsync(PluginId, target, topic, payload, operationId, timeout, cancellationToken)
                     ?? Task.FromResult(PluginResult.Failure(PluginResultCode.Unavailable)));
+        /// <summary>
+        /// Send one message to this plugin's <paramref name="topic"/> handler on every live node (and the World
+        /// Authority unless excluded), this node included; each handler's reply lands in the result per node.
+        /// All copies carry the same <paramref name="operationId"/>, so a handler can drop a repeat. Standalone
+        /// it is delivered once, locally. Subscribing is <see cref="RegisterHandler"/>, as for requests.
+        /// </summary>
+        public Task<PluginBroadcastResult> BroadcastAsync(string topic, byte[] payload, Guid operationId, TimeSpan timeout,
+            bool includeWorldAuthority = true, CancellationToken cancellationToken = default)
+        {
+            if (!(PluginCluster.Current is IPluginClusterBroadcastProvider provider))
+                return Task.FromResult(PluginBroadcastResult.Failure(PluginCluster.Current == null
+                    ? PluginResultCode.Unavailable : PluginResultCode.Unsupported));
+            return ProtectedBroadcast(() => provider.BroadcastAsync(PluginId, topic, payload, operationId, includeWorldAuthority,
+                timeout, cancellationToken));
+        }
+        private static async Task<PluginBroadcastResult> ProtectedBroadcast(Func<Task<PluginBroadcastResult>> action)
+        {
+            try { return await action().ConfigureAwait(false) ?? PluginBroadcastResult.Failure(PluginResultCode.Unavailable); }
+            catch (OperationCanceledException) { return PluginBroadcastResult.Failure(PluginResultCode.Timeout); }
+            catch { return PluginBroadcastResult.Failure(PluginResultCode.Unavailable); }
+        }
+        /// <summary>
+        /// Every player online anywhere in the server, with the node each is attached to. Cluster: the World
+        /// Authority's merged list as this node last received it (about 1-2 s behind). Plain server: this
+        /// process's players. Null when this cluster build offers no views. Call on the game thread.
+        /// </summary>
+        public IReadOnlyList<PluginPlayerInfo> OnlinePlayers() =>
+            View(provider => provider.OnlinePlayers(), PluginLocalViews.OnlinePlayers);
+        /// <summary>
+        /// Every online player's position, cluster-wide, as the World Authority last merged them (about 1-2 s
+        /// behind); join with <see cref="OnlinePlayers"/> on IdentityId for the node. Plain server: local players.
+        /// Null when this cluster build offers no views. Call on the game thread.
+        /// </summary>
+        public IReadOnlyList<PluginPlayerPosition> PlayerPositions() =>
+            View(provider => provider.PlayerPositions(), PluginLocalViews.PlayerPositions);
+        /// <summary>
+        /// Whether this process may change <paramref name="entityId"/> (any entity of a grid or a character):
+        /// <see cref="PluginEntityResidence.Local"/> only on the node that owns and simulates it. The partition it
+        /// names resolves to its owner with <see cref="ResolveOwnerAsync"/>. An entity on another node is Absent
+        /// here. Null when this cluster build offers no views. Call on the game thread.
+        /// </summary>
+        public PluginEntityPlacement LocateEntity(long entityId) =>
+            View(provider => provider.LocateEntity(entityId), () => PluginLocalViews.LocateEntity(entityId));
+        /// <summary>
+        /// The server's time: game time (the same on every node), a never-stepping clock shared by the nodes,
+        /// and whether this process is synchronized / authoritative. Plain server: local game time, the process
+        /// uptime clock, both flags true. Null when this cluster build offers no clock. Call on the game thread.
+        /// </summary>
+        public PluginClusterTime Time() =>
+            PluginCluster.Current is IPluginClusterClockProvider provider ? provider.Time()
+                : PluginCluster.IsClusterProcess ? null : PluginLocalClock.Time();
+        /// <summary>
+        /// Node up/down, World Authority change and this node's partition acquired/lost, on the game thread.
+        /// Node events come from polling the registry (a few seconds late) and only while someone subscribes;
+        /// a node restart is a NodeDown of the old incarnation and a NodeUp of the new. Never raised on a plain server.
+        /// </summary>
+        public event Action<PluginClusterEvent> ClusterEvent
+        { add { PluginCluster.ClusterEvent += value; } remove { PluginCluster.ClusterEvent -= value; } }
+        /// <summary>
+        /// The ready nodes and the World Authority now. Plain server: the one "standalone" node. Null when no
+        /// provider can answer (a cluster build without events, or the registry unreachable).
+        /// </summary>
+        public async Task<IReadOnlyList<PluginNodeInfo>> NodesAsync(CancellationToken cancellationToken = default)
+        {
+            if (PluginCluster.Current is IPluginClusterEventProvider provider)
+                try { return await provider.NodesAsync(cancellationToken).ConfigureAwait(false); }
+                catch (OperationCanceledException) { throw; }
+                catch { return null; }
+            if (PluginCluster.IsClusterProcess) return null;
+            return new[] { new PluginNodeInfo { Node = PluginLocalViews.Node, Incarnation = 1, Role = "Standalone" } };
+        }
+        /// <summary>
+        /// Run <paramref name="command"/> on the World Authority exactly once for <paramref name="operationId"/>:
+        /// a retry with the same id and payload returns the first outcome without running it again. The plugin
+        /// must be loaded on the WA and have called <see cref="RegisterGlobalCommand"/> there. Plain server:
+        /// runs locally, once.
+        /// </summary>
+        public async Task<PluginGlobalCommandResult> ExecuteGlobalAsync(string command, byte[] payload, Guid operationId, TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            if (!PluginRecordStore.ValidName(PluginGlobalCommands.Topic(command ?? string.Empty)) || string.IsNullOrEmpty(command))
+                return new PluginGlobalCommandResult { Code = PluginResultCode.Invalid, Error = "Invalid command name." };
+            var reply = await RequestAsync(new PluginTarget { Kind = PluginTargetKind.WorldAuthority }, PluginGlobalCommands.Topic(command),
+                payload, operationId, timeout, cancellationToken).ConfigureAwait(false);
+            return PluginGlobalCommands.Decode(reply);
+        }
+        /// <summary>
+        /// Serve <paramref name="command"/> on this process; register it on the World Authority (and on a plain
+        /// server). The handler runs on the game thread, at most once per operation id while the ledger remembers
+        /// it. Null when this cluster build has no ledger: a command that might run twice is not offered.
+        /// Topics starting "global/" are reserved for this.
+        /// </summary>
+        public IDisposable RegisterGlobalCommand(string command, Func<byte[], byte[]> handler)
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            if (string.IsNullOrEmpty(command) || !PluginRecordStore.ValidName(PluginGlobalCommands.Topic(command)))
+                throw new ArgumentException("Invalid command name.", nameof(command));
+            var provider = PluginCluster.Current ?? throw new InvalidOperationException("Plugin services are unavailable.");
+            var ledger = provider as IPluginGlobalCommandLedger ?? (PluginCluster.IsClusterProcess ? null : PluginLocalGlobalLedger.Instance);
+            if (ledger == null) return null;
+            string plugin = PluginId;
+            var bounded = PluginGlobalCommands.Bounded(handler);
+            return provider.RegisterHandler(plugin, PluginGlobalCommands.Topic(command), message => Task.FromResult(
+                PluginGlobalCommands.Encode(ledger.Execute(plugin, command, message.OperationId, message.Payload, bounded))));
+        }
+        private static T View<T>(Func<IPluginClusterViewProvider, T> cluster, Func<T> local) where T : class
+        {
+            if (PluginCluster.Current is IPluginClusterViewProvider provider) return cluster(provider);
+            // A plain server's views need no provider: the durable store failing must not blind them.
+            return PluginCluster.IsClusterProcess ? null : local();
+        }
+        /// <summary>
+        /// Receive this plugin's grid handover hooks (one handler per plugin; dispose to stop). On a plain server
+        /// the registration succeeds and never fires. Null when this cluster build offers no hooks.
+        /// </summary>
+        public IDisposable RegisterGridHandover(IPluginGridHandover handler)
+        {
+            if (handler == null) throw new ArgumentNullException(nameof(handler));
+            if (PluginCluster.Current is IPluginClusterHandoverProvider provider) return provider.RegisterGridHandover(PluginId, handler);
+            return PluginCluster.IsClusterProcess ? null : PluginGridHandover.NoRegistration.Instance;
+        }
         public IDisposable RegisterHandler(string topic, Func<PluginMessage, Task<byte[]>> handler) =>
             (PluginCluster.Current ?? throw new InvalidOperationException("Plugin services are unavailable."))
                 .RegisterHandler(PluginId, topic, handler);

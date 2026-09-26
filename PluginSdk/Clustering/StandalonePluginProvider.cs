@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace PluginSdk.Clustering
 {
     /// <summary>Launcher-owned, single-process durable provider. Cluster processes must never use this fallback.</summary>
-    public sealed class StandalonePluginProvider : IPluginClusterProvider, IDisposable
+    public sealed class StandalonePluginProvider : IPluginClusterProvider, IPluginClusterBroadcastProvider, IDisposable
     {
         private readonly object sync = new object();
         private readonly string path;
@@ -111,6 +111,16 @@ namespace PluginSdk.Clustering
                 () => !failed && !cancellationToken.IsCancellationRequested && DateTime.UtcNow < expires);
             if (await Task.WhenAny(task, Task.Delay(timeout, cancellationToken)) != task) return PluginResult.Failure(PluginResultCode.Timeout);
             return await task;
+        }
+        /// <summary>Standalone broadcast: the one process is every node, so the message is delivered once, locally.</summary>
+        public async Task<PluginBroadcastResult> BroadcastAsync(string plugin, string topic, byte[] payload, Guid operationId,
+            bool includeWorldAuthority, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            var result = await RequestAsync(plugin, new PluginTarget { Kind = PluginTargetKind.Node, Node = "standalone", Incarnation = 1 }, topic, payload,
+                operationId, timeout, cancellationToken).ConfigureAwait(false);
+            if (result.Code == PluginResultCode.Invalid) return PluginBroadcastResult.Failure(result.Code);
+            return new PluginBroadcastResult { Code = result.Code,
+                Nodes = new System.Collections.Generic.Dictionary<string, PluginResult> { [Context.Node] = result } };
         }
         public void Update() { diagnostics.Publish(Context, 0); handlers.Update(); }
         public void Dispose()

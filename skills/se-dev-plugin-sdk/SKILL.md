@@ -88,6 +88,20 @@ expect. See [Platform.md](Platform.md).
 
 See also [SharedState.md](SharedState.md) for opt-in durable records, ownership fences,
 and bounded requests in standalone and cluster mode.
+[SharedDirectory.md](SharedDirectory.md) gives each plugin a folder shared by every process of
+the server - local on a plain server, cluster-wide on every node and the World Authority.
+[Broadcast.md](Broadcast.md) sends one message to a plugin's topic handler on every node and the
+World Authority - delivered once, locally, on a plain server.
+[ClusterViews.md](ClusterViews.md) lists online players and their positions cluster-wide and says
+whether this process may change an entity (`LocateEntity`).
+[GridHandover.md](GridHandover.md) tells a plugin when a grid moves between cluster nodes and carries
+a per-grid state blob across the move.
+[ClusterClock.md](ClusterClock.md) gives the cluster-wide game time and a never-stepping clock that
+compares across nodes.
+[ClusterEvents.md](ClusterEvents.md) raises node up/down, World Authority change and partition
+acquired/lost events, and lists the live nodes.
+[GlobalCommands.md](GlobalCommands.md) runs a plugin command on the World Authority exactly once per
+operation id, from any node.
 
 ## Minimal example
 

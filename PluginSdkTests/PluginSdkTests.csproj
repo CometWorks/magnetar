@@ -34,6 +34,7 @@
         <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="True" />
         <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="True" />
         <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="True" />
+        <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="True" />
     </ItemGroup>
 
 </Project>

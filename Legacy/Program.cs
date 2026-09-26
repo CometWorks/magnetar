@@ -447,6 +447,9 @@ static class Program
                 return;
             }
             PluginSdk.Config.ManagedPluginConfiguration.ConfigureFromEnvironment();
+            // A plain server keeps plugin shared storage next to its own state; a cluster process reads
+            // the cluster's shared root (CLUSTER_SHARED_ROOT) instead.
+            PluginSdk.Storage.PluginStorage.ConfigureStandalone(Path.Combine(magnetarDir, "PluginShared"));
             if (!PluginSdk.Clustering.PluginCluster.IsClusterProcess)
                 PluginSdk.Clustering.PluginCluster.ConfigureStandalone(
                     () => new PluginSdk.Clustering.StandalonePluginProvider(Path.Combine(magnetarDir, "PluginState")),
