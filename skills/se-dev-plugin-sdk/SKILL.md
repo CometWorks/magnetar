@@ -88,6 +88,8 @@ expect. See [Platform.md](Platform.md).
 
 See also [SharedState.md](SharedState.md) for opt-in durable records, ownership fences,
 and bounded requests in standalone and cluster mode.
+[SharedDirectory.md](SharedDirectory.md) gives each plugin a folder shared by every process of
+the server - local on a plain server, cluster-wide on every node and the World Authority.
 
 ## Minimal example
 
