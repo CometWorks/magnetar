@@ -1,7 +1,8 @@
 name: Release
 
 # Builds Magnetar for Linux and Windows and publishes a GitHub release with
-# both .7z bundles attached.
+# both .7z bundles attached, then builds the container image from the Linux
+# bundle and pushes it to ghcr.io/cometworks/magnetar for public releases.
 #
 #   * push to main      -> read the version from Directory.Build.props, and only
 #                          build + publish a public "latest" release when that
@@ -519,3 +520,56 @@ jobs:
               --notes "Automated release of Magnetar $VERSION." \
               dist/*.7z
           fi
+
+  # ---------------------------------------------------------------------------
+  # Container image from the Linux bundle of this run. Every build verifies
+  # the image; only a public release pushes it, as :<version> and :latest.
+  # ---------------------------------------------------------------------------
+  container:
+    needs: [version-check, release]
+    if: needs.version-check.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Pushing the image to the GitHub Container Registry.
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: Docker
+
+      - name: Download Linux bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: magnetar-linux
+          path: dist
+
+      - name: Build and smoke test
+        env:
+          VERSION: ${{ needs.version-check.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir bundle
+          7z x -bso0 -obundle dist/MagnetarForLinux-*.7z
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+          docker build \
+            --build-arg MAGNETAR_SOURCE=local \
+            --build-arg MAGNETAR_VERSION="$VERSION" \
+            --build-context magnetar=bundle/Magnetar \
+            -t "$image:$VERSION" -t "$image:latest" \
+            Docker
+          # -help needs neither the dedicated server nor a data volume, but it
+          # does start the .NET apphost, so a broken bundle or runtime shows.
+          docker run --rm "$image:$VERSION" -help
+
+      - name: Push to GitHub Container Registry
+        if: needs.version-check.outputs.draft == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version-check.outputs.version }}
+        run: |
+          set -euo pipefail
+          echo "$GH_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE:$VERSION"
+          docker push "$IMAGE:latest"

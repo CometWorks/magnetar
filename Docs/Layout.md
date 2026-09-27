@@ -10,6 +10,7 @@
 | `MagnetarConfig/`            | `MagnetarConfig` — Terminal.Gui TUI to configure and operate one DS instance ([manual](MagnetarConfig.md) · [internals](MagnetarConfigInternals.md)) |
 | `MagnetarConfigTests/`       | xUnit tests for `MagnetarConfig` (registry, documents, process/pid, plugins, workshop resolver) |
 | `MagnetarMod/`               | Companion SE world mod project; Workshop/SE content lives under `MagnetarMod/src/` |
+| `Docker/`                    | Container image: Dockerfile, entrypoint and a Compose file ([Docker](Docker.md)) |
 | `Directory.Build.props`      | Build settings (deploy folder, DS path) and the centralized `<Version>`; override the settings locally with a git-ignored `Directory.Build.props.user` |
 
 There is no forked `Shared/` or `Compiler/` project any more: everything that

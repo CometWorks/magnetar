@@ -1,0 +1,19 @@
+# Runs Magnetar with everything it keeps (dedicated server install, world,
+# configs, logs) in ./data next to this file. Start with:
+#   docker compose up -d
+services:
+  magnetar:
+    image: ghcr.io/cometworks/magnetar:latest
+    build: .
+    restart: unless-stopped
+    # Magnetar saves the world on SIGTERM; give it time before a hard kill.
+    stop_grace_period: 2m
+    ports:
+      - "27016:27016/udp"
+      - "8766:8766/udp"
+    volumes:
+      - ./data:/data
+    environment:
+      SERVER_NAME: Magnetar
+      WORLD_TEMPLATE: Star System
+      # PULSAR_GITHUB_TOKEN: <token>  # lifts the GitHub API rate limit for plugin downloads

@@ -48,6 +48,8 @@ the host also needs outbound HTTPS to GitHub at that point.
 
 After installing, see **[Usage](Usage.md)** for how to run the launcher.
 
+To run the server in a container instead, see **[Docker](Docker.md)**.
+
 ## How releases are produced
 
 Releases are produced automatically by the

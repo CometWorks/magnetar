@@ -1,0 +1,2 @@
+# compose.yaml keeps the server data here; never send it to the build.
+data/

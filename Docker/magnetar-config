@@ -1,0 +1,11 @@
+#!/bin/bash
+# Runs the MagnetarConfig terminal UI on the container's instance:
+#   docker exec -it <container> magnetar-config
+DATA_DIR="${DATA_DIR:-/data}"
+DS_DIR="${DS_DIR:-$DATA_DIR/DedicatedServer}"
+exec /opt/magnetar/MagnetarConfig.bin \
+  -config "${CONFIG_DIR:-$DATA_DIR/Magnetar}" \
+  -path "${INSTANCE_DIR:-$DATA_DIR/Instance}" \
+  -ds64 "$DS_DIR/DedicatedServer64" \
+  -magnetar /opt/magnetar/MagnetarInterim.bin \
+  "$@"
