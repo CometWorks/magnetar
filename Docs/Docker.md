@@ -79,7 +79,8 @@ first start.
 | `SERVER_NAME` | `Magnetar` | Server name written into the first-start config. |
 | `WORLD_NAME` | the template name | World name written into the first-start config. |
 | `PULSAR_GITHUB_TOKEN` | | GitHub token for plugin downloads, see [Usage](Usage.md#github-token). |
-| `DS_DIR`, `INSTANCE_DIR`, `CONFIG_DIR` | under `/data` | Move one of the three folders elsewhere, for example onto its own volume. |
+| `DS_DIR`, `INSTANCE_DIR`, `CONFIG_DIR` | under `DATA_DIR` | Move one of the three folders elsewhere, for example onto its own volume. |
+| `DATA_DIR` | `/data` | The folder the three above default to. |
 
 The first-start variables only matter while no config exists.
 
