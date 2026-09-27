@@ -76,6 +76,7 @@ See **[Building](Docs/Build.md)** for details.
 | Page | What's in it |
 | ---- | ------------ |
 | [Install & Releases](Docs/Install.md) | Prebuilt bundles, what to download, installing. |
+| [Docker](Docs/Docker.md) | Running the dedicated server in a container, building the image. |
 | [Usage](Docs/Usage.md) | Running the launcher, daemon mode, handoff to the DS. |
 | [Configuration](Docs/Configuration.md) | Config/install dirs, DS detection, environment variables. |
 | [Config tool](Docs/MagnetarConfig.md) | `MagnetarConfig` user manual: edit config/worlds/mods/plugins, start/stop, logs. |

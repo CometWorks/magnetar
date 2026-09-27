@@ -229,7 +229,8 @@ binary identity across versioned builds.
 
 [`.github/workflows/release.yml`](../.github/workflows/release.yml) builds
 both platforms and publishes a GitHub release with the two `.7z` bundles
-attached.
+attached. It also builds the [container image](Docker.md) from the Linux
+bundle.
 
 ### Triggers
 
@@ -253,6 +254,10 @@ attached.
   (Linux job), verify the staged tree, and pack it with 7-Zip as
   `MagnetarFor<OS>-<version>.7z`.
 * **release** downloads both bundles and creates the release with `gh`.
+* **container** builds the image from the Linux bundle with
+  `MAGNETAR_SOURCE=local` and runs `-help` in it. For a public **latest**
+  release it also pushes `ghcr.io/cometworks/magnetar:<version>` and
+  `:latest`; draft builds push nothing.
 
 ### Dedicated Server cache
 

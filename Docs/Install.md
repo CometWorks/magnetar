@@ -48,6 +48,8 @@ the host also needs outbound HTTPS to GitHub at that point.
 
 After installing, see **[Usage](Usage.md)** for how to run the launcher.
 
+To run the server in a container instead, see **[Docker](Docker.md)**.
+
 ## How releases are produced
 
 Releases are produced automatically by the
@@ -57,5 +59,7 @@ builds both platforms with `dotnet build` (pulling the dedicated server via
 push to `main` publishes a new public release when the version in
 `Directory.Build.props` is higher than the latest release; a pull request that
 changes that version produces a draft release for review; a manual run produces
-a draft by default, or a public release if you clear its **draft** option. See [Build.md](Build.md#continuous-integration--releases) for the full
+a draft by default, or a public release if you clear its **draft** option.
+Public releases also push the [container image](Docker.md) to
+`ghcr.io/cometworks/magnetar`. See [Build.md](Build.md#continuous-integration--releases) for the full
 release process.
