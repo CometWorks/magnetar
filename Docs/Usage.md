@@ -103,6 +103,14 @@ download/update into the same mod folder before the dedicated server loads
 definitions or scripts. The expanded files live under the DS Workshop cache
 selected by `-path` (`content/244850/<workshop-id>`).
 
+## Local mod sources and initial worlds
+
+Enabled Pulsar `ModSources` are injected while the initial world is loading, before the normal
+plugin initialization phase. Both definitions and session scripts therefore participate in the
+first world load; a server restart or world reload is not required. The mod package must already be
+present in the Steam-shaped Workshop cache derived from the `-ds64` install path. Keep that path
+topology intact when the dedicated-server directory is provided through a symlink.
+
 ## Telemetry and consent
 
 Magnetar can send **anonymous** plugin usage statistics (the list of enabled
