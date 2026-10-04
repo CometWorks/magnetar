@@ -14,7 +14,12 @@ using VRage.Scripting;
 
 namespace Pulsar.Legacy.Patch;
 
-[HarmonyPatchCategory("Late")]
+// The dedicated server loads the initial world's scripts before IPlugin.Init,
+// where Magnetar installs its Late patch category. This hook must therefore be
+// active with the other initial-world loader patches; otherwise locally staged
+// ModPlugins contribute definitions but their session scripts are silently
+// skipped on the first world.
+[HarmonyPatchCategory("Early")]
 [HarmonyPatch(typeof(MyScriptManager), "LoadData")]
 public static class Patch_MyScriptManager
 {
@@ -52,23 +57,27 @@ public static class Patch_MyScriptManager
             else
                 currentMods = [];
 
-            HashSet<string> conditionalSymbols = ConditionalSymbols;
-            conditionalSymbols.Add(ConditionalSymbol);
-
             PluginList list = ConfigManager.Instance.List;
             Profile current = ConfigManager.Instance.Profiles.Current;
+            HashSet<string> conditionalSymbols = ConditionalSymbols;
+            var symbolAdded = conditionalSymbols.Add(ConditionalSymbol);
 
-            Patch_MyDefinitionErrors.RedirectModLogging(true);
-
-            foreach (ModPlugin mod in list.GetModPlugins(current, currentMods))
+            try
             {
-                LogFile.WriteLine("Loading client mod scripts for " + mod.WorkshopId);
-                loadScripts(__instance, mod.ModLocation, mod.GetModContext());
+                Patch_MyDefinitionErrors.RedirectModLogging(true);
+
+                foreach (ModPlugin mod in list.GetModPlugins(current, currentMods))
+                {
+                    LogFile.WriteLine("Loading client mod scripts for " + mod.WorkshopId);
+                    loadScripts(__instance, mod.ModLocation, mod.GetModContext());
+                }
             }
-
-            Patch_MyDefinitionErrors.RedirectModLogging(false);
-
-            conditionalSymbols.Remove(ConditionalSymbol);
+            finally
+            {
+                Patch_MyDefinitionErrors.RedirectModLogging(false);
+                if (symbolAdded)
+                    conditionalSymbols.Remove(ConditionalSymbol);
+            }
         }
         catch (Exception e)
         {
