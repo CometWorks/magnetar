@@ -6,6 +6,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -80,7 +82,9 @@ namespace PluginSdk.Config
     ///         properties whose current value differs from the default value
     ///         (as produced by the parameterless constructor) are written.
     ///         Defaults are reapplied implicitly when a missing element is
-    ///         loaded back into a fresh instance.</description></item>
+    ///         loaded back into a fresh instance. Every option is preceded by
+    ///         comments holding its description and its default as a
+    ///         commented-out element, for admins who edit the file by hand.</description></item>
     ///   <item><description><b>JSON</b> — remote management wire format.
     ///         Includes the full layout schema, the default values and the
     ///         current values; every option is present even when its value
@@ -151,7 +155,8 @@ namespace PluginSdk.Config
             return true;
         }
 
-        // ----- IXmlSerializable: sparse "only non-default values" format ----
+        // ----- IXmlSerializable: sparse "only non-default values" format,
+        // with each option's description and default in comments before it -
 
         XmlSchema IXmlSerializable.GetSchema() => null;
 
@@ -179,21 +184,81 @@ namespace PluginSdk.Config
             var ns = new XmlSerializerNamespaces();
             ns.Add(string.Empty, string.Empty);
 
+            // Whitespace written here turns off the writer's own indentation,
+            // so the layout is all ours: options one level below the root,
+            // each followed by a blank line.
+            var indent = Environment.NewLine + "  ";
             foreach (var prop in GetConfigProperties(type))
             {
                 var value = prop.GetValue(this);
                 var defaultValue = prop.GetValue(defaults);
-                if (ValuesEqual(value, defaultValue)) continue;
-
-                if (TypeSerialization.IsHandled(prop.PropertyType))
+                var description = prop.GetCustomAttribute<ConfigOptionAttribute>().Description;
+                if (!string.IsNullOrWhiteSpace(description))
                 {
-                    TypeSerialization.WriteXml(writer, prop.Name, value);
-                    continue;
+                    writer.WriteWhitespace(indent);
+                    writer.WriteComment(" " + Regex.Replace(description.Trim(), "-(?=-)", "- ") + " ");
                 }
-
-                var serializer = GetXmlSerializer(prop.PropertyType, prop.Name);
-                serializer.Serialize(writer, value, ns);
+                writer.WriteWhitespace(indent);
+                writer.WriteComment(DefaultComment(prop, defaultValue, ns, indent));
+                if (!ValuesEqual(value, defaultValue))
+                {
+                    writer.WriteWhitespace(indent);
+                    writer.WriteRaw(Render(prop, value, ns).Replace(LayoutNewLine, indent));
+                }
+                writer.WriteWhitespace(Environment.NewLine);
             }
+            writer.WriteWhitespace(Environment.NewLine);
+        }
+
+        private static void WriteOption(XmlWriter writer, PropertyInfo prop, object value, XmlSerializerNamespaces ns)
+        {
+            if (TypeSerialization.IsHandled(prop.PropertyType))
+                TypeSerialization.WriteXml(writer, prop.Name, value);
+            else
+                GetXmlSerializer(prop.PropertyType, prop.Name).Serialize(writer, value, ns);
+        }
+
+        // Stands for a newline of the layout while an option is rendered. XML
+        // text can't contain it, so it never comes from a value.
+        private const string LayoutNewLine = "\u0001";
+
+        /// <summary>
+        /// The option as an indented element, with <see cref="LayoutNewLine"/>
+        /// for its line breaks. Newlines in values are written as character
+        /// references, so they stay apart from the layout.
+        /// </summary>
+        private static string Render(PropertyInfo prop, object value, XmlSerializerNamespaces ns)
+        {
+            var settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true,
+                Indent = true,
+                IndentChars = "  ",
+                NewLineChars = LayoutNewLine,
+                NewLineHandling = NewLineHandling.None,
+            };
+            var xml = new StringBuilder();
+            using (var writer = XmlWriter.Create(xml, settings))
+                WriteOption(writer, prop, value, ns);
+            return xml.ToString().Replace("\r", "&#xD;").Replace("\n", "&#xA;");
+        }
+
+        /// <summary>
+        /// The option's default as a commented-out element, so an admin
+        /// editing the file by hand can see it and uncomment it as a start.
+        /// One line for a simple value, the indented element on lines of its
+        /// own for a list, dictionary or struct.
+        /// </summary>
+        private static string DefaultComment(PropertyInfo prop, object defaultValue, XmlSerializerNamespaces ns, string indent)
+        {
+            if (defaultValue == null) return $" {prop.Name} has no default value ";
+
+            // A comment must not contain "--". Element names never have a "-",
+            // and &#45; reads back as "-" once the element is uncommented.
+            var text = Render(prop, defaultValue, ns).Replace("--", "-&#45;");
+            return text.Contains(LayoutNewLine)
+                ? indent + text.Replace(LayoutNewLine, indent) + indent
+                : " " + text + " ";
         }
 
         void IXmlSerializable.ReadXml(XmlReader reader)

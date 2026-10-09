@@ -426,6 +426,10 @@ namespace PluginSdk.Tests
     /// </summary>
     public class SparseXmlTests
     {
+        // Names of the written option elements; the default comments do not count.
+        internal static string[] OptionElements(string xml)
+            => System.Xml.Linq.XDocument.Parse(xml).Root.Elements().Select(e => e.Name.LocalName).ToArray();
+
         [Fact]
         public void SaveXml_EmptyConfigWritesNoPropertyElements()
         {
@@ -436,12 +440,7 @@ namespace PluginSdk.Tests
                 var text = System.IO.File.ReadAllText(path);
 
                 // Root element only, no child <Flag>, <Integer>, etc.
-                Assert.DoesNotContain("<Flag>", text);
-                Assert.DoesNotContain("<Integer>", text);
-                Assert.DoesNotContain("<Text>", text);
-                Assert.DoesNotContain("<IntList>", text);
-                Assert.DoesNotContain("<DictStringInt>", text);
-                Assert.DoesNotContain("<StructValue>", text);
+                Assert.Empty(OptionElements(text));
                 Assert.Contains("<TestConfig", text);
             }
             finally
@@ -470,11 +469,11 @@ namespace PluginSdk.Tests
                 Assert.Contains("<IntList>", text);
 
                 // Unchanged properties stay out.
-                Assert.DoesNotContain("<Flag>", text);
-                Assert.DoesNotContain("<LongInteger>", text);
-                Assert.DoesNotContain("<BoolList>", text);
-                Assert.DoesNotContain("<DictStringInt>", text);
-                Assert.DoesNotContain("<StructValue>", text);
+                Assert.DoesNotContain("Flag", OptionElements(text));
+                Assert.DoesNotContain("LongInteger", OptionElements(text));
+                Assert.DoesNotContain("BoolList", OptionElements(text));
+                Assert.DoesNotContain("DictStringInt", OptionElements(text));
+                Assert.DoesNotContain("StructValue", OptionElements(text));
             }
             finally
             {
