@@ -170,6 +170,32 @@ namespace PluginSdk.Tests
         }
 
         [Fact]
+        public void Options_AreSeparatedByBlankLines()
+        {
+            var xml = Save(
+                new CommentedConfig
+                {
+                    Count = 7,
+                    Numbers = new List<int> { 9 },
+                }
+            );
+            var nl = System.Environment.NewLine;
+
+            Assert.Contains(
+                $"<CommentedConfig>{nl}  <!-- How many -->{nl}  <!-- <Count>5</Count> -->{nl}  <Count>7</Count>{nl}{nl}  <!-- Dashes",
+                xml
+            );
+            Assert.Contains(
+                $"  <!-- <Numbers><int>1</int><int>2</int></Numbers> -->{nl}  <Numbers><int>9</int></Numbers>{nl}{nl}",
+                xml
+            );
+            Assert.EndsWith(
+                $"  <!-- Missing has no default value -->{nl}{nl}</CommentedConfig>",
+                xml
+            );
+        }
+
+        [Fact]
         public void TestConfig_CommentsDoNotChangeTheLoadedValues()
         {
             var original = new TestConfig

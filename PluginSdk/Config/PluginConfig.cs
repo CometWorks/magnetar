@@ -184,17 +184,30 @@ namespace PluginSdk.Config
             var ns = new XmlSerializerNamespaces();
             ns.Add(string.Empty, string.Empty);
 
+            // Whitespace written here turns off the writer's own indentation,
+            // so the layout is all ours: options one level below the root,
+            // each followed by a blank line. Values go on one line.
+            var indent = Environment.NewLine + "  ";
             foreach (var prop in GetConfigProperties(type))
             {
                 var value = prop.GetValue(this);
                 var defaultValue = prop.GetValue(defaults);
                 var description = prop.GetCustomAttribute<ConfigOptionAttribute>().Description;
                 if (!string.IsNullOrWhiteSpace(description))
+                {
+                    writer.WriteWhitespace(indent);
                     writer.WriteComment(" " + Regex.Replace(description.Trim(), "-(?=-)", "- ") + " ");
+                }
+                writer.WriteWhitespace(indent);
                 writer.WriteComment(DefaultComment(prop, defaultValue, ns));
-                if (ValuesEqual(value, defaultValue)) continue;
-                WriteOption(writer, prop, value, ns);
+                if (!ValuesEqual(value, defaultValue))
+                {
+                    writer.WriteWhitespace(indent);
+                    WriteOption(writer, prop, value, ns);
+                }
+                writer.WriteWhitespace(Environment.NewLine);
             }
+            writer.WriteWhitespace(Environment.NewLine);
         }
 
         private static void WriteOption(XmlWriter writer, PropertyInfo prop, object value, XmlSerializerNamespaces ns)

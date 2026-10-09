@@ -20,15 +20,18 @@ Properties of the XML format:
   comments: the description from its option attribute (skipped when empty)
   and its default as a commented-out element on one line. Admins who edit
   the file by hand can see the defaults and uncomment one to start from.
-  Loading ignores comments.
+  A blank line follows each option, and written values are on one line too.
+  Loading ignores comments and whitespace.
 
   ```xml
   <TestPluginConfig>
     <!-- Simulation ticks per second -->
     <!-- <TickRate>60</TickRate> -->
     <TickRate>30</TickRate>
+
     <!-- Whitelisted UDP ports -->
     <!-- <Ports><int>27016</int><int>27017</int></Ports> -->
+
   </TestPluginConfig>
   ```
 
