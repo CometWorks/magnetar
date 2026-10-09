@@ -353,7 +353,7 @@ namespace PluginSdk.Tests
             var defaults = new TestConfig();
             var c = new TestConfig { SpawnPose = defaults.SpawnPose };
             var text = WriteXml(c);
-            Assert.DoesNotContain("<SpawnPose>", text);
+            Assert.DoesNotContain("SpawnPose", SparseXmlTests.OptionElements(text));
         }
 
         [Fact]

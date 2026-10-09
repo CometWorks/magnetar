@@ -6,6 +6,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -80,7 +82,9 @@ namespace PluginSdk.Config
     ///         properties whose current value differs from the default value
     ///         (as produced by the parameterless constructor) are written.
     ///         Defaults are reapplied implicitly when a missing element is
-    ///         loaded back into a fresh instance.</description></item>
+    ///         loaded back into a fresh instance. Every option is preceded by
+    ///         comments holding its description and its default as a
+    ///         commented-out element, for admins who edit the file by hand.</description></item>
     ///   <item><description><b>JSON</b> — remote management wire format.
     ///         Includes the full layout schema, the default values and the
     ///         current values; every option is present even when its value
@@ -151,7 +155,8 @@ namespace PluginSdk.Config
             return true;
         }
 
-        // ----- IXmlSerializable: sparse "only non-default values" format ----
+        // ----- IXmlSerializable: sparse "only non-default values" format,
+        // with each option's description and default in comments before it -
 
         XmlSchema IXmlSerializable.GetSchema() => null;
 
@@ -183,17 +188,41 @@ namespace PluginSdk.Config
             {
                 var value = prop.GetValue(this);
                 var defaultValue = prop.GetValue(defaults);
+                var description = prop.GetCustomAttribute<ConfigOptionAttribute>().Description;
+                if (!string.IsNullOrWhiteSpace(description))
+                    writer.WriteComment(" " + Regex.Replace(description.Trim(), "-(?=-)", "- ") + " ");
+                writer.WriteComment(DefaultComment(prop, defaultValue, ns));
                 if (ValuesEqual(value, defaultValue)) continue;
-
-                if (TypeSerialization.IsHandled(prop.PropertyType))
-                {
-                    TypeSerialization.WriteXml(writer, prop.Name, value);
-                    continue;
-                }
-
-                var serializer = GetXmlSerializer(prop.PropertyType, prop.Name);
-                serializer.Serialize(writer, value, ns);
+                WriteOption(writer, prop, value, ns);
             }
+        }
+
+        private static void WriteOption(XmlWriter writer, PropertyInfo prop, object value, XmlSerializerNamespaces ns)
+        {
+            if (TypeSerialization.IsHandled(prop.PropertyType))
+                TypeSerialization.WriteXml(writer, prop.Name, value);
+            else
+                GetXmlSerializer(prop.PropertyType, prop.Name).Serialize(writer, value, ns);
+        }
+
+        /// <summary>
+        /// The option's default as a commented-out element, so an admin
+        /// editing the file by hand can see it and uncomment it as a start.
+        /// </summary>
+        private static string DefaultComment(PropertyInfo prop, object defaultValue, XmlSerializerNamespaces ns)
+        {
+            if (defaultValue == null) return $" {prop.Name} has no default value ";
+
+            // One line, so every newline left is part of a value and can be escaped.
+            var xml = new StringBuilder();
+            using (var writer = XmlWriter.Create(xml, new XmlWriterSettings { OmitXmlDeclaration = true, NewLineHandling = NewLineHandling.None }))
+                WriteOption(writer, prop, defaultValue, ns);
+
+            // A comment must not contain "--". Element names never have a "-",
+            // and these character references read back as the original
+            // characters once the element is uncommented.
+            var text = xml.ToString().Replace("\r", "&#xD;").Replace("\n", "&#xA;").Replace("--", "-&#45;");
+            return " " + text + " ";
         }
 
         void IXmlSerializable.ReadXml(XmlReader reader)

@@ -16,6 +16,26 @@ Properties of the XML format:
   (per a deep value comparison) are written. The result is a small,
   human-friendly file that does not churn when defaults change in a new
   plugin version.
+- **Commented defaults.** Every option, written or not, is preceded by two
+  comments: the description from its option attribute (skipped when empty)
+  and its default as a commented-out element on one line. Admins who edit
+  the file by hand can see the defaults and uncomment one to start from.
+  Loading ignores comments.
+
+  ```xml
+  <TestPluginConfig>
+    <!-- Simulation ticks per second -->
+    <!-- <TickRate>60</TickRate> -->
+    <TickRate>30</TickRate>
+    <!-- Whitelisted UDP ports -->
+    <!-- <Ports><int>27016</int><int>27017</int></Ports> -->
+  </TestPluginConfig>
+  ```
+
+  A comment can't contain `--`, so in the default a `-` of such a pair is
+  written as `&#45;`, and newlines as `&#xD;`/`&#xA;`. These read back as the
+  original characters once the element is uncommented. An option whose
+  default is `null` gets `<!-- Name has no default value -->` instead.
 - **Atomic write.** The serializer writes to `path + ".tmp"` and renames over
   `path`. A crash mid-write cannot leave a truncated config behind.
 - **Forgiving load.** Missing elements leave the corresponding property at

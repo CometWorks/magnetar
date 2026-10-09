@@ -16,7 +16,8 @@ license: MIT
 `PluginSdk` is the small .NET Standard 2.0 library a Magnetar plugin uses to
 declare its configuration. The same declaration drives three things at once:
 
-1. **Local XML config** — sparse, on-disk, only non-default values.
+1. **Local XML config** — sparse, on-disk, only non-default values, with
+   each option's description and default in comments.
 2. **Remote JSON envelope** — schema + defaults + current values, consumed by
    the Quasar control plane.
 3. **Web UI layout** — Quasar renders the editor from the schema; the plugin

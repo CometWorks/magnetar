@@ -15,7 +15,9 @@ namespace PluginSdk.Config
     /// Only properties whose value differs from the default are written
     /// (driven by <see cref="PluginConfig"/>'s
     /// <see cref="System.Xml.Serialization.IXmlSerializable"/> impl).
-    /// Missing properties stay at their defaults when loaded back.</para>
+    /// Missing properties stay at their defaults when loaded back. Comments
+    /// before each option show its description and its default as a
+    /// commented-out element.</para>
     ///
     /// <para><b>JSON</b> — remote management wire format. The document is a
     /// three-part envelope:</para>
@@ -99,7 +101,8 @@ namespace PluginSdk.Config
         /// <summary>
         /// Writes <paramref name="config"/> to <paramref name="path"/> as XML
         /// via a temporary file + rename, so a crash mid-write cannot leave
-        /// a truncated config behind. Only non-default values are emitted.
+        /// a truncated config behind. Only non-default values are emitted;
+        /// each option's description and default go into comments.
         /// </summary>
         public static void SaveXml<T>(T config, string path) where T : PluginConfig
         {
