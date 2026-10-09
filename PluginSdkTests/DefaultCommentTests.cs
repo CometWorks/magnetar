@@ -151,7 +151,7 @@ namespace PluginSdk.Tests
                     " Two lines ",
                     " <Multiline>one&#xD;&#xA;two</Multiline> ",
                     " Some numbers ",
-                    " <Numbers><int>1</int><int>2</int></Numbers> ",
+                    $"{System.Environment.NewLine}  <Numbers>{System.Environment.NewLine}    <int>1</int>{System.Environment.NewLine}    <int>2</int>{System.Environment.NewLine}  </Numbers>{System.Environment.NewLine}  ",
                     " Missing has no default value ",
                 },
                 comments
@@ -186,7 +186,8 @@ namespace PluginSdk.Tests
                 xml
             );
             Assert.Contains(
-                $"  <!-- <Numbers><int>1</int><int>2</int></Numbers> -->{nl}  <Numbers><int>9</int></Numbers>{nl}{nl}",
+                $"  <!--{nl}  <Numbers>{nl}    <int>1</int>{nl}    <int>2</int>{nl}  </Numbers>{nl}  -->{nl}"
+                    + $"  <Numbers>{nl}    <int>9</int>{nl}  </Numbers>{nl}{nl}",
                 xml
             );
             Assert.EndsWith(
@@ -201,14 +202,14 @@ namespace PluginSdk.Tests
             var original = new TestConfig
             {
                 Integer = 42,
-                Text = "x--y",
+                Text = "x--y\r\nz",
                 IntList = new List<int> { 3 },
             };
             var xml = Save(original);
             var loaded = Load<TestConfig>(xml);
 
             Assert.Equal(42, loaded.Integer);
-            Assert.Equal("x--y", loaded.Text);
+            Assert.Equal("x--y\r\nz", loaded.Text);
             Assert.Equal(new[] { 3 }, loaded.IntList);
             Assert.Equal(xml, Save(loaded));
         }
@@ -220,7 +221,7 @@ namespace PluginSdk.Tests
             // load it into a type with the same options but other defaults.
             var xml = Save(new CommentedConfig());
             xml = Regex
-                .Replace(xml, "<!-- (<.*?>) -->", "$1")
+                .Replace(xml, @"<!--\s*(<.*?>)\s*-->", "$1", RegexOptions.Singleline)
                 .Replace("CommentedConfig", "BlankConfig");
 
             var loaded = Load<BlankConfig>(xml);

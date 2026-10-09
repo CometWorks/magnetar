@@ -18,10 +18,11 @@ Properties of the XML format:
   plugin version.
 - **Commented defaults.** Every option, written or not, is preceded by two
   comments: the description from its option attribute (skipped when empty)
-  and its default as a commented-out element on one line. Admins who edit
-  the file by hand can see the defaults and uncomment one to start from.
-  A blank line follows each option, and written values are on one line too.
-  Loading ignores comments and whitespace.
+  and its default as a commented-out element. A simple default stays on the
+  comment's line; a list, dictionary or struct gets the indented element on
+  lines of its own. A blank line follows each option. Admins who edit the
+  file by hand can see the defaults and uncomment one to start from. Loading
+  ignores comments and whitespace.
 
   ```xml
   <TestPluginConfig>
@@ -30,15 +31,21 @@ Properties of the XML format:
     <TickRate>30</TickRate>
 
     <!-- Whitelisted UDP ports -->
-    <!-- <Ports><int>27016</int><int>27017</int></Ports> -->
+    <!--
+    <Ports>
+      <int>27016</int>
+      <int>27017</int>
+    </Ports>
+    -->
 
   </TestPluginConfig>
   ```
 
   A comment can't contain `--`, so in the default a `-` of such a pair is
-  written as `&#45;`, and newlines as `&#xD;`/`&#xA;`. These read back as the
-  original characters once the element is uncommented. An option whose
-  default is `null` gets `<!-- Name has no default value -->` instead.
+  written as `&#45;`. Newlines inside values, in comments and written
+  elements alike, are written as `&#xD;`/`&#xA;`. These read back as the
+  original characters. An option whose default is `null` gets
+  `<!-- Name has no default value -->` instead.
 - **Atomic write.** The serializer writes to `path + ".tmp"` and renames over
   `path`. A crash mid-write cannot leave a truncated config behind.
 - **Forgiving load.** Missing elements leave the corresponding property at

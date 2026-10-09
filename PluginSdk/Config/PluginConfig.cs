@@ -186,7 +186,7 @@ namespace PluginSdk.Config
 
             // Whitespace written here turns off the writer's own indentation,
             // so the layout is all ours: options one level below the root,
-            // each followed by a blank line. Values go on one line.
+            // each followed by a blank line.
             var indent = Environment.NewLine + "  ";
             foreach (var prop in GetConfigProperties(type))
             {
@@ -199,11 +199,11 @@ namespace PluginSdk.Config
                     writer.WriteComment(" " + Regex.Replace(description.Trim(), "-(?=-)", "- ") + " ");
                 }
                 writer.WriteWhitespace(indent);
-                writer.WriteComment(DefaultComment(prop, defaultValue, ns));
+                writer.WriteComment(DefaultComment(prop, defaultValue, ns, indent));
                 if (!ValuesEqual(value, defaultValue))
                 {
                     writer.WriteWhitespace(indent);
-                    WriteOption(writer, prop, value, ns);
+                    writer.WriteRaw(Render(prop, value, ns).Replace(LayoutNewLine, indent));
                 }
                 writer.WriteWhitespace(Environment.NewLine);
             }
@@ -218,24 +218,47 @@ namespace PluginSdk.Config
                 GetXmlSerializer(prop.PropertyType, prop.Name).Serialize(writer, value, ns);
         }
 
+        // Stands for a newline of the layout while an option is rendered. XML
+        // text can't contain it, so it never comes from a value.
+        private const string LayoutNewLine = "\u0001";
+
+        /// <summary>
+        /// The option as an indented element, with <see cref="LayoutNewLine"/>
+        /// for its line breaks. Newlines in values are written as character
+        /// references, so they stay apart from the layout.
+        /// </summary>
+        private static string Render(PropertyInfo prop, object value, XmlSerializerNamespaces ns)
+        {
+            var settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true,
+                Indent = true,
+                IndentChars = "  ",
+                NewLineChars = LayoutNewLine,
+                NewLineHandling = NewLineHandling.None,
+            };
+            var xml = new StringBuilder();
+            using (var writer = XmlWriter.Create(xml, settings))
+                WriteOption(writer, prop, value, ns);
+            return xml.ToString().Replace("\r", "&#xD;").Replace("\n", "&#xA;");
+        }
+
         /// <summary>
         /// The option's default as a commented-out element, so an admin
         /// editing the file by hand can see it and uncomment it as a start.
+        /// One line for a simple value, the indented element on lines of its
+        /// own for a list, dictionary or struct.
         /// </summary>
-        private static string DefaultComment(PropertyInfo prop, object defaultValue, XmlSerializerNamespaces ns)
+        private static string DefaultComment(PropertyInfo prop, object defaultValue, XmlSerializerNamespaces ns, string indent)
         {
             if (defaultValue == null) return $" {prop.Name} has no default value ";
 
-            // One line, so every newline left is part of a value and can be escaped.
-            var xml = new StringBuilder();
-            using (var writer = XmlWriter.Create(xml, new XmlWriterSettings { OmitXmlDeclaration = true, NewLineHandling = NewLineHandling.None }))
-                WriteOption(writer, prop, defaultValue, ns);
-
             // A comment must not contain "--". Element names never have a "-",
-            // and these character references read back as the original
-            // characters once the element is uncommented.
-            var text = xml.ToString().Replace("\r", "&#xD;").Replace("\n", "&#xA;").Replace("--", "-&#45;");
-            return " " + text + " ";
+            // and &#45; reads back as "-" once the element is uncommented.
+            var text = Render(prop, defaultValue, ns).Replace("--", "-&#45;");
+            return text.Contains(LayoutNewLine)
+                ? indent + text.Replace(LayoutNewLine, indent) + indent
+                : " " + text + " ";
         }
 
         void IXmlSerializable.ReadXml(XmlReader reader)
