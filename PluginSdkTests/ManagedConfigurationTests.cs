@@ -45,6 +45,12 @@ namespace PluginSdk.Tests
             public void ChangeSecond() { second.Number++; }
         }
 
+        private static string Hash(byte[] bytes)
+        {
+            using (var sha = SHA256.Create())
+                return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "");
+        }
+
         private static void WithCanonical(object document, Action test)
         {
             string path = Path.GetTempFileName();
@@ -55,7 +61,7 @@ namespace PluginSdk.Tests
                 byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(document);
                 File.WriteAllBytes(path, bytes);
                 Environment.SetEnvironmentVariable("CLUSTER_PLUGIN_CONFIGURATION", path);
-                Environment.SetEnvironmentVariable("CLUSTER_PLUGIN_CONFIGURATION_SHA256", Convert.ToHexString(SHA256.HashData(bytes)));
+                Environment.SetEnvironmentVariable("CLUSTER_PLUGIN_CONFIGURATION_SHA256", Hash(bytes));
                 test();
             }
             finally
@@ -69,7 +75,7 @@ namespace PluginSdk.Tests
         [Fact]
         public void Schema_two_applies_and_observes_private_and_static_configurations()
         {
-            string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(TestConfig).Assembly.Location)));
+            string hash = Hash(File.ReadAllBytes(typeof(TestConfig).Assembly.Location));
             var first = JsonDocument.Parse(ConfigStorage.SaveJson(new TestConfig { Integer = 42 })).RootElement.Clone();
             var second = JsonDocument.Parse(ConfigStorage.SaveJson(new SecondConfig { Number = 7 })).RootElement.Clone();
             WithCanonical(new { schemaVersion = 2, revision = "two", plugins = new[] { new { id = "ordinary", assemblySha256 = hash,
@@ -156,13 +162,13 @@ namespace PluginSdk.Tests
             {
                 var canonical = new TestConfig { Integer = 42 };
                 var envelope = JsonDocument.Parse(ConfigStorage.SaveJson(canonical)).RootElement.Clone();
-                string assemblyHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(TestConfig).Assembly.Location)));
+                string assemblyHash = Hash(File.ReadAllBytes(typeof(TestConfig).Assembly.Location));
                 byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(new { schemaVersion = 1, revision = "revision-1",
                     plugins = new[] { new { id = "ordinary", assemblySha256 = assemblyHash,
                         configType = typeof(TestConfig).FullName, configuration = envelope } } });
                 File.WriteAllBytes(path, bytes);
                 Environment.SetEnvironmentVariable(variable, path);
-                Environment.SetEnvironmentVariable(hashVariable, Convert.ToHexString(SHA256.HashData(bytes)));
+                Environment.SetEnvironmentVariable(hashVariable, Hash(bytes));
                 Assert.False(ManagedPluginConfiguration.Observe());
                 ManagedPluginConfiguration.ConfigureFromEnvironment();
                 Assert.Throws<InvalidOperationException>(() => ConfigStorage.LoadXml<TestConfig>("ignored"));
