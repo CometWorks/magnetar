@@ -151,7 +151,8 @@ namespace PluginSdk.Tests
                     " Two lines ",
                     " <Multiline>one&#xD;&#xA;two</Multiline> ",
                     " Some numbers ",
-                    $"{System.Environment.NewLine}  <Numbers>{System.Environment.NewLine}    <int>1</int>{System.Environment.NewLine}    <int>2</int>{System.Environment.NewLine}  </Numbers>{System.Environment.NewLine}  ",
+                    // XML parsing normalizes CRLF inside comments to LF on every platform.
+                    "\n  <Numbers>\n    <int>1</int>\n    <int>2</int>\n  </Numbers>\n  ",
                     " Missing has no default value ",
                 },
                 comments
