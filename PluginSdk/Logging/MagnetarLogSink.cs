@@ -14,7 +14,7 @@ namespace PluginSdk.Logging
     ///
     /// <para>
     /// Safe to call before the game log exists: when <c>MyLog.Default</c> is
-    /// null or disabled the call is a no-op.
+    /// not yet available, the line is written to stderr.
     /// </para>
     /// </summary>
     public sealed class MagnetarLogSink : ILogSink
@@ -22,7 +22,11 @@ namespace PluginSdk.Logging
         public void Write(in LogEntry entry)
         {
             var log = MyLog.Default;
-            if (log is null) return;
+            if (log is null)
+            {
+                Console.Error.WriteLine(Format(in entry));
+                return;
+            }
 
             // Pass the rendered line as a format argument (not as the format
             // string) so any '{' or '}' in the message cannot break the

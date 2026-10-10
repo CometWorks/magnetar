@@ -25,22 +25,22 @@ internal static class CrashHandler
     public static void InstallNative(string label)
     {
         // SEH is a Windows kernel concept; the dedicated server on Linux
-        // surfaces native faults via SIGSEGV/etc. that the CoreCLR signal
-        // handler already turns into managed exceptions, so we no-op here.
+        // surfaces native faults via SIGSEGV/etc. Leave the CoreCLR and OS
+        // signal handlers intact so they can produce configured crash dumps.
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return;
 
         nativeFilterDelegate = exceptionInfo =>
         {
-            Console.Error.WriteLine($"[{label}] Native crash detected (unhandled SEH exception)");
-            Console.Error.Flush();
-            LogFile.Error("Native crash detected (unhandled SEH exception)");
-
-            // Same gap as the managed handler: this exit skips the quit
-            // sequence, so drop the pid file here rather than leave a stale one.
-            ServerControl.FlushOnFatalExit();
-
-            Environment.Exit(-1);
+            try
+            {
+                Console.Error.WriteLine($"[{label}] Native crash detected (unhandled SEH exception)");
+                Console.Error.Flush();
+                LogFile.Error("Native crash detected (unhandled SEH exception)");
+            }
+            catch { }
+            finally { try { ServerControl.FlushOnFatalExit(); } catch { } }
+            // EXCEPTION_CONTINUE_SEARCH: preserve Windows/runtime crash and dump handling.
             return 0;
         };
         SetUnhandledExceptionFilter(nativeFilterDelegate);

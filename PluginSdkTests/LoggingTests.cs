@@ -22,6 +22,36 @@ namespace PluginSdk.Tests
         }
 
         [Fact]
+        public void EntryObservers_AreIsolatedAndDoNotRecurse()
+        {
+            var sink = new CapturingSink();
+            var log = new Logger("observer-test", sink);
+            int observed = 0;
+            Action<LogEntry> broken = e => { if (e.PluginName == "observer-test") throw new InvalidOperationException(); };
+            Action<LogEntry> recursive = e =>
+            {
+                if (e.PluginName != "observer-test") return;
+                observed++;
+                log.Error("nested");
+            };
+            Logger.EntryEmitted += broken;
+            Logger.EntryEmitted += recursive;
+            try
+            {
+                log.Error("outer");
+                Assert.Equal(1, observed);
+                Assert.Equal(2, sink.Entries.Count);
+                Assert.Contains(sink.Entries, e => e.Message == "outer");
+                Assert.Contains(sink.Entries, e => e.Message == "nested");
+            }
+            finally
+            {
+                Logger.EntryEmitted -= broken;
+                Logger.EntryEmitted -= recursive;
+            }
+        }
+
+        [Fact]
         public void Logger_StampsPluginNameLevelThreadAndUtcTime()
         {
             var sink = new CapturingSink();

@@ -96,3 +96,29 @@ Managed clusters can use [canonical plugin configuration](Docs/ManagedPluginConf
 PluginSdk [shared-state services](skills/se-dev-plugin-sdk/SharedState.md) provide opt-in durable
 records and owner-routed requests. The [example plugin](Examples/ClusterState/Plugin.cs)
 uses the same API in standalone and clustered deployments.
+
+### Diagnostic capture
+
+Validate the plugin against this checkout's SDK without deploying it:
+`bash Build/validate-error-reporting.sh /path/to/error-reporting` compiles both
+`net48` and `net10.0`, recording source state and exact artifact hashes under
+`Build/validation/plugin/`. Linux can compile the Framework target using NuGet
+reference assemblies; Windows runtime validation remains a separate check.
+
+Release symbol collection takes the staged runtime explicitly:
+`python3 Build/collect-symbols.py symbols stage/Magnetar`. Only PDBs whose adjacent
+binary exactly matches a shipped binary are collected. Recheck extracted assets
+with `python3 Build/collect-symbols.py --verify symbols stage/Magnetar`.
+The symbol manifest records source commit, uncommitted state and shipped paths.
+
+`error-reporting` is a required core plugin on every server runtime. It captures local structured
+Error/Critical and fatal incidents before game startup. Offline deployments must include its
+compiled plugin alongside the compatible PluginSdk. Quasar.Host supplies
+`ERROR_REPORTING_DIRECTORY` and `ERROR_REPORTING_CONTEXT` for per-run collection; standalone
+capture remains local. Required installation does not grant external sharing consent.
+
+Fatal handlers clean up the PID record and then return to runtime/OS exception handling, allowing
+configured native and managed crash dumps to be produced. Dump capture policy is supplied by the
+supervisor; the plugin never forces process exit. Release builds publish separate
+`MagnetarSymbolsForLinux-*.7z` and `MagnetarSymbolsForWindows-*.7z` archives with matching binary
+hashes and the source commit. Keep these with each deployed release for crash symbolication.
