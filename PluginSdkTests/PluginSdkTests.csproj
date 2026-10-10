@@ -21,6 +21,11 @@
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+        <!-- DispatchProxy is built into CoreCLR, but Framework test doubles need its compatibility package. -->
+        <PackageReference Include="System.Reflection.DispatchProxy" Version="4.8.2" />
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
         <Compile Include="..\Legacy\Preparation\ConfigurationDefaults.cs" Link="ConfigurationDefaults.cs" />
