@@ -20,6 +20,7 @@ internal static class References
         "Mono.Cecil",
         "NLog",
         "PluginSdk",
+        "System.Text.Json",
     ];
 
     private static readonly string[] game =

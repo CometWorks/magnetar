@@ -455,6 +455,20 @@ static class Program
                     () => new PluginSdk.Clustering.StandalonePluginProvider(Path.Combine(magnetarDir, "PluginState")),
                     error => Console.Error.WriteLine("Plugin shared state is unavailable: " + error.Message));
             SharedLoader.Instance = new SharedLoader(VotesServer, corePlugins);
+            // Pulsar's -bare suppresses its force-enable list. Diagnostic capture remains required;
+            // other plugin/preloader safe-mode behavior is unchanged.
+            if (!SharedLoader.Instance.Plugins.Any(item => item.Key.Id == "error-reporting"))
+            {
+                if (!ConfigManager.Instance.List.TryGetPlugin("error-reporting", out var reportingData)
+                    || !reportingData.TryLoadAssembly(out var reportingAssembly))
+                    throw new InvalidOperationException("Required error-reporting plugin could not be loaded.");
+                SharedLoader.Instance.Plugins.Insert(0, new(reportingData, reportingAssembly));
+            }
+            var reporting = SharedLoader.Instance.Plugins.First(item => item.Key.Id == "error-reporting").Value;
+            var initializeReporting = reporting.GetType("Preloader")?.GetMethod("Initialize", BindingFlags.Public | BindingFlags.Static);
+            if (initializeReporting == null)
+                throw new InvalidOperationException("Required error-reporting plugin does not support early capture. Update the plugin.");
+            initializeReporting.Invoke(null, null);
             foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
             {
                 PluginSdk.Config.ManagedPluginConfiguration.BindOwner(data.Id, assembly);
@@ -480,19 +494,15 @@ static class Program
     private static string[] GetCorePlugins()
     {
 #if NETFRAMEWORK
-        return [];
+        return ["error-reporting"];
 #else
         string ds64Dir = ConfigManager.Instance.GameDir;
-
-        // Recompiled dedicated server builds have built-in compatibility
         bool isGameFramework = Tools.GetFiles(ds64Dir, ["*.config"], []).Any();
         if (!isGameFramework)
-            return [];
-
-        // dotnet-compat lets the .NET Framework dedicated server run under
-        // CoreCLR (the Interim/.NET 10 launcher). linux-compat additionally
-        // wraps the Windows-native libraries with their Linux .so equivalents.
-        return Tools.IsWindows() ? ["dotnet-compat"] : ["dotnet-compat", "linux-compat"];
+            return ["error-reporting"];
+        return Tools.IsWindows()
+            ? ["error-reporting", "dotnet-compat"]
+            : ["error-reporting", "dotnet-compat", "linux-compat"];
 #endif
     }
 
@@ -504,18 +514,20 @@ static class Program
 
     private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
-        string message = $"Unhandled exception: {e.ExceptionObject}";
-        Console.Error.WriteLine($"[Magnetar] {message}");
-        LogFile.Error(message);
+        try
+        {
+            string message = $"Unhandled exception: {e.ExceptionObject}";
+            Console.Error.WriteLine($"[Magnetar] {message}");
+            LogFile.Error(message);
+        }
+        catch { /* Fatal logging must not prevent remaining exception handlers. */ }
+        finally
+        {
+            try { ServerControl.FlushOnFatalExit(); } catch { }
+        }
+        // Let remaining handlers capture evidence and the runtime terminate naturally.
+        // Environment.Exit here suppresses runtime-created crash dumps.
 
-        // Exiting here bypasses ServerControl's quit sequence, so the pid file
-        // published by SetupGame would survive the crash. Left behind, it makes
-        // MagnetarConfig report the instance as RUNNING the moment the recorded
-        // pid is recycled by an unrelated process — and a crash is exactly when
-        // an operator reaches for MagnetarConfig.
-        ServerControl.FlushOnFatalExit();
-
-        Environment.Exit(1);
     }
 
     private static void ShowStartupError(string message)

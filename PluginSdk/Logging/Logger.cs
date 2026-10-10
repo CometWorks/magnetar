@@ -36,6 +36,26 @@ namespace PluginSdk.Logging
     /// </summary>
     public sealed class Logger(string pluginName, ILogSink sink)
     {
+        /// <summary>Observes every record in all environments. Handlers must be fast; exceptions are isolated.
+        /// Nested logging from a handler is delivered to its sink without notifying observers again.</summary>
+        public static event Action<LogEntry> EntryEmitted;
+
+        [ThreadStatic] private static bool notifying;
+
+        private static void Observe(LogEntry entry)
+        {
+            if (notifying) return;
+            var handlers = EntryEmitted;
+            if (handlers == null) return;
+            notifying = true;
+            try
+            {
+                foreach (Action<LogEntry> handler in handlers.GetInvocationList())
+                    try { handler(entry); } catch { /* Diagnostics must never break the game. */ }
+            }
+            finally { notifying = false; }
+        }
+
         private readonly string pluginName = pluginName ?? throw new ArgumentNullException(nameof(pluginName));
         private readonly ILogSink sink = sink ?? throw new ArgumentNullException(nameof(sink));
 
@@ -78,6 +98,7 @@ namespace PluginSdk.Logging
                 message ?? string.Empty,
                 exception,
                 data);
+            Observe(entry);
             sink.Write(in entry);
         }
     }

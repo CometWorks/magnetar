@@ -350,6 +350,8 @@ jobs:
           done
 
           mkdir -p dist
+          python3 Build/collect-symbols.py symbols stage/Magnetar
+          7z a -t7z -mx=9 -bso0 "dist/MagnetarSymbolsForLinux-${VERSION}.7z" symbols
           ( cd stage && 7z a -t7z -mx=9 -bso0 "../dist/MagnetarForLinux-${VERSION}.7z" Magnetar )
           ls -l "dist/MagnetarForLinux-${VERSION}.7z"
 
@@ -357,7 +359,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: magnetar-linux
-          path: dist/MagnetarForLinux-*.7z
+          path: |
+            dist/MagnetarForLinux-*.7z
+            dist/MagnetarSymbolsForLinux-*.7z
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------
@@ -421,7 +425,7 @@ jobs:
           Copy-Item -Path (Join-Path $dsfull "DedicatedServer64\*") -Destination $ds64 -Recurse -Force
           Remove-Item -Recurse -Force $dsfull
 
-      - name: Build and package
+      - name: Build, test and package
         shell: pwsh
         env:
           DS64: ${{ github.workspace }}\ds64
@@ -432,6 +436,12 @@ jobs:
           # The Deploy targets stage the complete portable install tree into
           # $env:Magnetar: both launchers, the config tool and Libraries/.
           dotnet build -c Release Magnetar.slnx
+          if ($LASTEXITCODE -ne 0) { throw "Release build failed" }
+          # PluginSdkTests targets both net48 and net10.0 on Windows.
+          dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
+          if ($LASTEXITCODE -ne 0) { throw "PluginSdk platform tests failed" }
+          dotnet test --no-build -c Release MagnetarConfigTests/MagnetarConfigTests.csproj
+          if ($LASTEXITCODE -ne 0) { throw "Configuration tests failed" }
 
           foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE",
                            "Libraries\MagnetarLegacy\Pulsar.Shared.dll",
@@ -445,6 +455,9 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $sevenzip = "C:\Program Files\7-Zip\7z.exe"
+          python Build/collect-symbols.py symbols stage/Magnetar
+          if ($LASTEXITCODE -ne 0) { throw "Symbol collection failed" }
+          & $sevenzip a -t7z -mx=9 "dist\MagnetarSymbolsForWindows-$env:VERSION.7z" "symbols"
           Push-Location stage
           & $sevenzip a -t7z -mx=9 "..\dist\MagnetarForWindows-$env:VERSION.7z" "Magnetar"
           Pop-Location
@@ -454,7 +467,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: magnetar-windows
-          path: dist/MagnetarForWindows-*.7z
+          path: |
+            dist/MagnetarForWindows-*.7z
+            dist/MagnetarSymbolsForWindows-*.7z
           if-no-files-found: error
 
   # ---------------------------------------------------------------------------

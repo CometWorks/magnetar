@@ -187,3 +187,13 @@ for the entry itself.
   own flushing; the Quasar sink writes a line per entry (the agent does the
   buffering/batching for network delivery — see [How the line reaches
   Quasar](#how-the-line-reaches-quasar)).
+
+### Local diagnostic observers
+
+`Logger.EntryEmitted` observes every structured `LogEntry`, including standalone logs and logs
+sent to custom sinks. It runs before the sink; one subscriber throwing cannot prevent another
+subscriber or the sink from receiving the record. Nested logging from an observer still reaches
+its sink but does not recursively notify observers. Handlers must return quickly. The required
+ErrorReporting server plugin uses this event for bounded local Error/Critical incident files;
+external sharing is owned by Quasar. `LogEnvironment.LineEmitted` remains the formatted managed
+transport stream, not the diagnostic observation API.

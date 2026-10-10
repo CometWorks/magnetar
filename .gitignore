@@ -370,6 +370,7 @@ MigrationBackup/
 # Release staging output (dotnet build with -p:Magnetar=... in CI)
 /stage/
 /dist/
+/Build/validation/
 
 # Docker Compose data folder (Docker/compose.yaml)
 Docker/data/
