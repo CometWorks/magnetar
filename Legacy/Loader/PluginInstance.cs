@@ -176,7 +176,16 @@ public class PluginInstance
         }
     }
 
-    public void RegisterSessionComponents(MySession session)
+    private static readonly AccessTools.FieldRef<MySession, List<MySessionComponentBase>> LoadOrder =
+        AccessTools.FieldRefAccess<MySession, List<MySessionComponentBase>>("m_loadOrder");
+
+    /// <summary>
+    /// Registers the plugin's session components. With sessionLoaded the session
+    /// has already loaded and started its components: the dedicated server loads
+    /// its world before it initializes plugins. The components are then taken
+    /// through the same steps the session took its own through.
+    /// </summary>
+    public void RegisterSessionComponents(MySession session, bool sessionLoaded = false)
     {
         if (plugin is null)
             return;
@@ -190,6 +199,8 @@ public class PluginInstance
             {
                 MySessionComponentBase comp = (MySessionComponentBase)Activator.CreateInstance(t);
                 session.RegisterComponent(comp, comp.UpdateOrder, comp.Priority);
+                if (sessionLoaded)
+                    StartSessionComponent(session, comp);
                 count++;
             }
 
@@ -200,6 +211,21 @@ public class PluginInstance
         {
             ThrowError($"Failed to register {data} session components because of an error: {e}");
         }
+    }
+
+    private static void StartSessionComponent(MySession session, MySessionComponentBase comp)
+    {
+        // In the load order the session unloads it with its own components
+        LoadOrder(session).Add(comp);
+        comp.LoadData();
+        comp.AfterLoadData();
+
+        MyObjectBuilder_SessionComponent builder = null;
+        if (comp.ObjectBuilderType != MyObjectBuilderType.Invalid)
+            builder = (MyObjectBuilder_SessionComponent)Activator.CreateInstance(comp.ObjectBuilderType);
+        comp.Init(builder);
+
+        comp.BeforeStart();
     }
 
     public void RegisterEntityComponents(MyScriptManager sm)

@@ -8,6 +8,14 @@ Registration belongs to `PluginInstance` owner creation, not dependency injectio
 an owner disabled by an early rewrite failure is not constructed during later
 initialization.
 
+A plugin's `[MySessionComponentDescriptor]` classes are session components as in
+a client plugin. The dedicated server loads its initial world before plugin
+`Init`, so Magnetar registers them right after the plugins' `Init` and takes them
+through the steps the session already took its own components through:
+`LoadData`, `AfterLoadData`, `Init` with a new object builder (nothing is restored
+from the save) and `BeforeStart`. They unload with the session. Worlds loaded
+later register them the usual way, when the game registers its own.
+
 The Magnetar owner/dispatcher regression check can be run without a game install:
 `dotnet run --project Tests/RewriterLifecycle/RewriterLifecycle.csproj -c Release`.
 

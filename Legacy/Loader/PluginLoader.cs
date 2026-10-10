@@ -152,6 +152,14 @@ public class PluginLoader : IHandleInputPlugin
             }
         }
 
+        // The dedicated server loads its world before IPlugin.Init, when the plugins
+        // were not instantiated yet, so their session components were not registered
+        if (MySession.Static is not null)
+        {
+            foreach (PluginInstance plugin in plugins)
+                plugin.RegisterSessionComponents(MySession.Static, sessionLoaded: true);
+        }
+
         PluginSdk.Config.ManagedPluginConfiguration.CompleteInitialization();
         init = true;
 
