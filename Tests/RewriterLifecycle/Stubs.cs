@@ -145,3 +145,13 @@ namespace Sandbox.Game.World
         public readonly Dictionary<Tuple<Type, string>, HashSet<Type>> SubEntityScripts = new();
     }
 }
+
+namespace PluginSdk.Config
+{
+    public static class ManagedPluginConfiguration
+    {
+        public static void ExpectInstance(string id) { }
+
+        public static void Initialized(string id, object instance) { }
+    }
+}
