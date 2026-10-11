@@ -61,7 +61,8 @@ Windows.
 Workshop downloads for dedicated-server world mods also use this data root. Steam
 stores them under `content/244850/<workshop-id>`; if Steam returns an early
 `*_legacy.bin` package, Magnetar expands it in that folder before the server
-loads definitions.
+loads definitions. When Steam fails to download such a package, Magnetar fetches it
+over HTTPS from the Steam CDN into the same folder (see [Legacy Workshop mods](Usage.md#legacy-workshop-mods)).
 
 ```sh
 MagnetarInterim -path "D:\SE\MyServerInstance"
