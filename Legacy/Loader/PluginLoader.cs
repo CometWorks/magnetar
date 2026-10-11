@@ -45,7 +45,7 @@ public class PluginLoader : IHandleInputPlugin
         if (ConfigManager.Instance.SafeMode)
             return;
 
-        // The dedicated server compiles its initial world's mods before IPlugin.Init.
+        // Rewriters must be in place before any world's mods compile, so register them now.
         // Creating owners registers their rewriters without constructing or initializing plugins.
         foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
         {
@@ -168,6 +168,8 @@ public class PluginLoader : IHandleInputPlugin
         IEnumerable<ulong> steamIDs = MagnetarClientMod.GetWorkshopIdsForUpdate(
             list.GetModPlugins(current, []).Select(x => x.WorkshopId));
         SteamMods.Update(steamIDs);
+
+        Magnetar.Legacy.Patch.Patch_DeferInitialWorld.LoadInitialWorld();
     }
 
     public void Update()
