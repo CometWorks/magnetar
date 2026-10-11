@@ -34,12 +34,17 @@ internal static class Patch_DeferInitialWorld
         if (!deferred || MySession.Static is not null)
             return;
 
-        bool loaded = Traverse.Create(MySandboxGame.Static).Method("InitQuickLaunch").GetValue<bool>();
+        bool loaded = Traverse
+            .Create(MySandboxGame.Static)
+            .Method("InitQuickLaunch")
+            .GetValue<bool>();
         if (loaded || MySession.Static is not null)
             return;
 
         // What MySandboxGame.Run does when Initialize fails to start a session
-        MyLog.Default.WriteLineAndConsole("Session can not start. Save is corrupted or not valid. See log file for more information.");
+        MyLog.Default.WriteLineAndConsole(
+            "Session can not start. Save is corrupted or not valid. See log file for more information."
+        );
         ServerControl.QuitWithoutSaving();
     }
 }
