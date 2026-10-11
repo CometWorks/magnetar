@@ -103,6 +103,12 @@ download/update into the same mod folder before the dedicated server loads
 definitions or scripts. The expanded files live under the DS Workshop cache
 selected by `-path` (`content/244850/<workshop-id>`).
 
+If Steam fails to download such an item (some Windows servers get
+`k_EResultTimeout` for them), Magnetar fetches the archive over HTTPS from
+the Steam CDN address that the public Steam Web API lists for the item, saves
+it where Steam would have put it, and lets the server load it. Newer Workshop
+items have no such address, so their download errors stop the server as before.
+
 ## Telemetry and consent
 
 Magnetar can send **anonymous** plugin usage statistics (the list of enabled

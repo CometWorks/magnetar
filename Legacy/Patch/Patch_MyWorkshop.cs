@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using Magnetar.Legacy.Integration;
 using Magnetar.Legacy.Loader;
 using Pulsar.Legacy.Loader;
 using Sandbox.Engine.Networking;
@@ -24,5 +25,19 @@ internal static class Patch_MyWorkshop
     {
         if (__result.Result == MyGameServiceCallResult.OK)
             SteamMods.RepairLegacyArchives(mods);
+    }
+}
+
+[HarmonyPatchCategory("Early")]
+[HarmonyPatch(typeof(MyWorkshop), "UpdateMod")]
+internal static class Patch_MyWorkshop_UpdateMod
+{
+    public static void Postfix(MyWorkshopItem mod, ref MyGameServiceCallResult __result)
+    {
+        if (
+            __result != MyGameServiceCallResult.OK
+            && LegacyWorkshopDownload.TryDownload(mod, __result)
+        )
+            __result = MyGameServiceCallResult.OK;
     }
 }
