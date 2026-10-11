@@ -1,12 +1,18 @@
 # Plugins
 
-Static plugin `Rewrite` methods are registered before the dedicated server loads
-its initial world. Plugin constructors and `Init` still run at the normal game
-initialization stage; rewriters must not depend on either having run. Prepare
-any compiler references and whitelists in the plugin preloader's `Finish` hook.
-Registration belongs to `PluginInstance` owner creation, not dependency injection;
-an owner disabled by an early rewrite failure is not constructed during later
-initialization.
+The dedicated server loads its initial world in `MySandboxGame.Initialize`, before
+it initializes plugins. Magnetar defers that world load until after the plugins'
+`Init`, so server plugins see the order a client plugin does: `Init` runs with no
+world loaded, and the world loads with the plugins' patches applied and their
+session components (`[MySessionComponentDescriptor]` classes) registered the
+usual way, restored from the save.
+
+Static plugin `Rewrite` methods are registered earlier still, when Magnetar
+creates the plugin owners; rewriters must not depend on the plugin's constructor
+or `Init` having run. Prepare any compiler references and whitelists in the
+plugin preloader's `Finish` hook. Registration belongs to `PluginInstance` owner
+creation, not dependency injection; an owner disabled by an early rewrite failure
+is not constructed during later initialization.
 
 The Magnetar owner/dispatcher regression check can be run without a game install:
 `dotnet run --project Tests/RewriterLifecycle/RewriterLifecycle.csproj -c Release`.
