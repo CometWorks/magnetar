@@ -65,6 +65,18 @@ static class Program
 
     static void MagnetarMain(string[] args)
     {
+#else
+
+        // .NET Framework binds strong-named references by exact version, and there
+        // are no binding redirects (see Legacy.csproj). PluginSdk and its packages
+        // reference older System.Text.Json, System.Memory and so on than the ones
+        // shipped in Libraries, so resolve those from Libraries by name.
+        string libraryDir = Path.Combine(
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+            "Libraries",
+            "MagnetarLegacy"
+        );
+        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir]);
 #endif
         try { ServerFlags.Initialize(args); }
         catch (ArgumentException error)
@@ -469,10 +481,12 @@ static class Program
             if (initializeReporting == null)
                 throw new InvalidOperationException("Required error-reporting plugin does not support early capture. Update the plugin.");
             initializeReporting.Invoke(null, null);
-            foreach (var (data, assembly) in SharedLoader.Instance.Plugins)
+            // No deconstruction here: on net48 it binds to VRage.Library's KeyValuePair
+            // Deconstruct, which cannot load before SetupGameResolver and fails the JIT.
+            foreach (var plugin in SharedLoader.Instance.Plugins)
             {
-                PluginSdk.Config.ManagedPluginConfiguration.BindOwner(data.Id, assembly);
-                PluginSdk.Clustering.PluginCluster.BindOwner(data.Id, assembly);
+                PluginSdk.Config.ManagedPluginConfiguration.BindOwner(plugin.Key.Id, plugin.Value);
+                PluginSdk.Clustering.PluginCluster.BindOwner(plugin.Key.Id, plugin.Value);
             }
             UsageStats.ReportEnabledPlugins(VotesServer, corePlugins);
         }
