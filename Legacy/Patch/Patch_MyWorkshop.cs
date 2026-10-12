@@ -28,7 +28,10 @@ internal static class Patch_MyWorkshop
     }
 }
 
-[HarmonyPatchCategory("Early")]
+// Late: on .NET Framework, patching UpdateMod runs MyWorkshop's static
+// initializer, which needs MyFileSystem to be initialized. Plugin mod updates
+// and the initial world load both happen after the Late patches are applied.
+[HarmonyPatchCategory("Late")]
 [HarmonyPatch(typeof(MyWorkshop), "UpdateMod")]
 internal static class Patch_MyWorkshop_UpdateMod
 {
