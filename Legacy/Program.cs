@@ -76,7 +76,8 @@ static class Program
             "Libraries",
             "MagnetarLegacy"
         );
-        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([libraryDir]);
+        libraryResolver = AssemblyResolver([libraryDir]);
+        AppDomain.CurrentDomain.AssemblyResolve += libraryResolver;
 #endif
         try { ServerFlags.Initialize(args); }
         catch (ArgumentException error)
@@ -524,7 +525,17 @@ static class Program
     {
         string ds64Dir = ConfigManager.Instance.GameDir;
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([ds64Dir]);
+#if NETFRAMEWORK
+        // Let the game's own copies win from here on, so Libraries never shadows
+        // the System.* versions the DS assemblies bind against (see Legacy.csproj).
+        AppDomain.CurrentDomain.AssemblyResolve -= libraryResolver;
+        AppDomain.CurrentDomain.AssemblyResolve += libraryResolver;
+#endif
     }
+
+#if NETFRAMEWORK
+    private static ResolveEventHandler libraryResolver;
+#endif
 
     private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
