@@ -64,6 +64,9 @@ docker exec -it magnetar magnetar-config
 ```
 
 `magnetar-config` is `MagnetarConfig` with the container's folders filled in.
+The image takes the tool from the
+[config-tools releases](https://github.com/CometWorks/config-tools/releases);
+its self-update can't write into the image, so rebuild the image to update it.
 Restart the container after editing so the server picks the changes up.
 
 To bring an existing world instead, put the DS data folder (the one with
@@ -119,6 +122,9 @@ docker build -t magnetar Docker
 docker build -t magnetar:2.4.2.3 --build-arg MAGNETAR_VERSION=2.4.2.3 Docker
 ```
 
+The config tool comes from the newest MagnetarConfig release of config-tools,
+checked the same way. Pin it with `--build-arg MAGNETARCONFIG_VERSION=1.0.4`.
+
 To package your own build instead, point the `magnetar` build context at the
 deployed install tree, the folder with `MagnetarInterim.bin`:
 
@@ -132,8 +138,9 @@ docker build -t magnetar:dev \
 ## Published images
 
 The [`Release`](../.github/workflows/release.yml) workflow builds the image
-from the Linux bundle of each release build and runs `-help` in it as a smoke
-test. Public releases also push it to the GitHub Container Registry as
+from the Linux bundle of each release build and runs `-help` and
+`magnetar-config --tool-version` in it as a smoke test. Public releases also
+push it to the GitHub Container Registry as
 `ghcr.io/cometworks/magnetar:<version>` and `:latest`. Draft and pull request
 builds only build the image.
 

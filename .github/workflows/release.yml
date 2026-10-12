@@ -434,8 +434,6 @@ jobs:
           # PluginSdkTests targets both net48 and net10.0 on Windows.
           dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
           if ($LASTEXITCODE -ne 0) { throw "PluginSdk platform tests failed" }
-          dotnet test --no-build -c Release MagnetarConfigTests/MagnetarConfigTests.csproj
-          if ($LASTEXITCODE -ne 0) { throw "Configuration tests failed" }
 
           foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE",
                            "Libraries\MagnetarLegacy\Pulsar.Shared.dll",
@@ -568,6 +566,7 @@ jobs:
           # -help needs neither the dedicated server nor a data volume, but it
           # does start the .NET apphost, so a broken bundle or runtime shows.
           docker run --rm "$image:$VERSION" -help
+          docker run --rm "$image:$VERSION" magnetar-config --tool-version
 
       - name: Push to GitHub Container Registry
         if: needs.version-check.outputs.draft == 'false'
