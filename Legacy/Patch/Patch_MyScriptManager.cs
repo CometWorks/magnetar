@@ -52,23 +52,27 @@ public static class Patch_MyScriptManager
             else
                 currentMods = [];
 
-            HashSet<string> conditionalSymbols = ConditionalSymbols;
-            conditionalSymbols.Add(ConditionalSymbol);
-
             PluginList list = ConfigManager.Instance.List;
             Profile current = ConfigManager.Instance.Profiles.Current;
+            HashSet<string> conditionalSymbols = ConditionalSymbols;
+            bool symbolAdded = conditionalSymbols.Add(ConditionalSymbol);
 
-            Patch_MyDefinitionErrors.RedirectModLogging(true);
-
-            foreach (ModPlugin mod in list.GetModPlugins(current, currentMods))
+            try
             {
-                LogFile.WriteLine("Loading client mod scripts for " + mod.WorkshopId);
-                loadScripts(__instance, mod.ModLocation, mod.GetModContext());
+                Patch_MyDefinitionErrors.RedirectModLogging(true);
+
+                foreach (ModPlugin mod in list.GetModPlugins(current, currentMods))
+                {
+                    LogFile.WriteLine("Loading client mod scripts for " + mod.WorkshopId);
+                    loadScripts(__instance, mod.ModLocation, mod.GetModContext());
+                }
             }
-
-            Patch_MyDefinitionErrors.RedirectModLogging(false);
-
-            conditionalSymbols.Remove(ConditionalSymbol);
+            finally
+            {
+                Patch_MyDefinitionErrors.RedirectModLogging(false);
+                if (symbolAdded)
+                    conditionalSymbols.Remove(ConditionalSymbol);
+            }
         }
         catch (Exception e)
         {
