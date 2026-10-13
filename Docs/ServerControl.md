@@ -58,8 +58,9 @@ a cluster, Magnetar's `!restart` asks for a coordinated node restart instead.
 The dedicated server's timed auto-restart is on when `AutoRestartEnabled` is
 true and `AutoRestatTimeInMin` (spelled that way in
 `SpaceEngineers-Dedicated.cfg`) is above 0. The server announces it 10, 5 and
-1 minutes ahead, then exits through `MySandboxGame.ExitThreadSafe`, which
-Magnetar turns into a restart.
+1 minutes ahead and would then just exit. Magnetar replaces that exit with
+`PluginSdk.ServerControl.SaveAndRestart`, the same call plugins make, so a
+lifecycle provider such as a cluster handles it when one is registered.
 
 ### Stop
 
