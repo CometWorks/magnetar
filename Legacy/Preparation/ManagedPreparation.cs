@@ -176,9 +176,9 @@ internal static class ManagedPreparation
                 .LastOrDefault(source => source.Enabled && source.Folder != null && Path.GetFullPath(source.Folder) == folder.Folder)?.File;
             string path = file == null ? null : Path.IsPathRooted(file) ? file : Path.Combine(folder.Folder, file);
             if (path == null || !File.Exists(path))
-                throw new InvalidDataException("Dev folder needs a GitHubPlugin manifest with its RepoId: " + data.Id
+                throw new InvalidDataException("Dev folder needs a GitHubPlugin manifest with its RepoId: " + Name(data)
                     + " (no manifest file" + (path == null ? " in its source" : " at " + path) + ")");
-            metadata = ReadGitHubPlugin(path, "Dev folder needs a GitHubPlugin manifest with its RepoId: " + data.Id);
+            metadata = ReadGitHubPlugin(path, "Dev folder needs a GitHubPlugin manifest with its RepoId: " + Name(data));
             metadata.Commit = DevFolderProvenance.CleanHead(Name(data), folder.Folder);
         }
         else throw new InvalidDataException("Managed preparation requires pinned GitHub source, a metadata-backed local binary or a clean dev folder: " + data.Id);
