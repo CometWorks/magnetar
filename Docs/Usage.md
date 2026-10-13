@@ -162,6 +162,13 @@ server to survive its parent, the other to shut down when the parent exits.
 Magnetar does not reject the combination, but the result depends on timing and
 is not useful.
 
+## Stopping and restarting
+
+`!stop`, `!quit` and `!restart` in chat, SIGTERM and SIGINT on Linux, Ctrl+C
+in the console and plugins such as Essentials all stop or restart the server
+through the same code. See **[Stopping and restarting](ServerControl.md)** for
+what each one does on Linux, on Windows and under Quasar.
+
 ## Configuring the server (MagnetarConfig)
 
 **MagnetarConfig** is a terminal UI bundled next to the launcher for editing and
