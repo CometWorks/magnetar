@@ -77,9 +77,9 @@ next to the DLL. The DLL must be named `plugin.dll` or match its directory name
 metadata's ID is the profile's `Local` entry. Local provenance is the supplied metadata's assertion; preparation
 does not reconstruct or attest the original local build.
 
-A development source folder (a `LocalPlugin` entry in `Sources/sources.xml` enabled
-by the profile's `DevFolder` list) is compiled as usual and pinned to its git
-checkout. The repository holding the folder must be clean: `git status --porcelain`
+Since Magnetar 2.4.3.4, a development source folder (a `LocalPlugin` entry in
+`Sources/sources.xml` enabled by the profile's `DevFolder` list) is compiled as usual
+and pinned to its git checkout. Earlier releases refuse it. The repository holding the folder must be clean: `git status --porcelain`
 lists nothing, so no modified, staged or untracked files anywhere in the repository,
 not just in the plugin folder. Ignored files don't count. The exported metadata is
 the dev folder's manifest (its `<File>`), with `RepoId` taken from the manifest and
