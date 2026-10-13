@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -70,7 +72,7 @@ internal static class ServerControl
     /// </summary>
     public static void CaptureLaunchState(string[] argv, string cwd, IDictionary env)
     {
-        originalArgv = argv ?? Array.Empty<string>();
+        originalArgv = HostArgv(argv ?? Array.Empty<string>());
         originalCwd = cwd;
 
         var list = new List<string>();
@@ -312,8 +314,8 @@ internal static class ServerControl
         PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Restart);
         LogFile.WriteLine("Saving world before restart");
         SaveWorld();
+        LogFile.WriteLine($"Restarting: {originalArgv.FirstOrDefault()}");
         DisposePlugins();
-        FlushAll();
         RestartProcess();
     }
 
@@ -324,9 +326,8 @@ internal static class ServerControl
             return;
 
         PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Restart);
-        LogFile.WriteLine("Restarting without saving");
+        LogFile.WriteLine($"Restarting without saving: {originalArgv.FirstOrDefault()}");
         DisposePlugins();
-        FlushAll();
         RestartProcess();
     }
 
@@ -395,11 +396,34 @@ internal static class ServerControl
         Environment.Exit(code);
     }
 
+    // On .NET, element 0 of Environment.GetCommandLineArgs() is the managed
+    // MagnetarInterim.dll, not the apphost that was launched, and neither execve
+    // nor CreateProcess can start a .dll. Restart through the host binary, and
+    // keep the .dll as its first argument when the dotnet muxer ran it.
+    private static string[] HostArgv(string[] argv)
+    {
+#if NETCOREAPP
+        string host = Environment.ProcessPath;
+        if (argv.Length > 0 && !string.IsNullOrEmpty(host))
+        {
+            bool muxer = Path.GetFileNameWithoutExtension(host) == "dotnet";
+            var hostArgv = new List<string> { host };
+            hostArgv.AddRange(muxer ? argv : argv.Skip(1));
+            return hostArgv.ToArray();
+        }
+#endif
+        return argv;
+    }
+
+    // Disposing the plugins has closed the log file by now, so failures go to
+    // stderr.
     private static void RestartProcess()
     {
+        FlushAll();
+
         if (originalArgv.Length == 0)
         {
-            LogFile.Error("Cannot restart: original launch state was not captured");
+            Console.Error.WriteLine("Cannot restart: original launch state was not captured");
             ExitProcess(1);
             return;
         }
@@ -428,7 +452,7 @@ internal static class ServerControl
             execve(path, argv, envp);
 
             // Only reached if execve failed.
-            LogFile.Error($"execve failed: {Marshal.GetLastWin32Error()}");
+            Console.Error.WriteLine($"Restart failed: execve {path}: errno {Marshal.GetLastWin32Error()}");
             ExitProcess(1);
             return;
         }
@@ -464,7 +488,7 @@ internal static class ServerControl
         }
         catch (Exception e)
         {
-            LogFile.Error($"Failed to restart process: {e}");
+            Console.Error.WriteLine($"Restart failed: {path}: {e}");
             Environment.Exit(1);
             return;
         }
