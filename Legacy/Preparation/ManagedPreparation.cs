@@ -47,6 +47,9 @@ internal static class ManagedPreparation
         {
             GitHubPlugin metadata = ReadMetadata(data, manager.Profiles.Current);
             if (!data.TryLoadAssembly(out var assembly)) throw new InvalidDataException("Failed to prepare plugin: " + data.Id);
+            // The checkout may have moved while the build read it.
+            if (data is LocalFolderPlugin folder && DevFolderProvenance.CleanHead(Name(data), folder.Folder) != metadata.Commit)
+                throw new InvalidDataException("Dev folder " + Name(data) + " moved off commit " + metadata.Commit + " during preparation.");
             if (loaded.Any(item => item.Assembly == assembly)) throw new InvalidDataException("Ambiguous assembly ownership: " + data.Id);
             loaded.Add((data, assembly, metadata));
         }
@@ -116,7 +119,7 @@ internal static class ManagedPreparation
                     new XmlSerializer(typeof(PluginData)).Serialize(file, metadata);
                 if (transport) File.Copy(Path.Combine(bundle, name + ".xml"), Path.Combine(bundle, name + ".dll.xml"), true);
                 provenance.Add(new { id = data.Id, repository = metadata.RepoId, commit = metadata.Commit,
-                    source = data is LocalPlugin ? "local-metadata" : "github", assemblySha256 = Tools.GetFileHash(assembly.Location) });
+                    source = data switch { LocalPlugin => "local-metadata", LocalFolderPlugin => "dev-folder", _ => "github" }, assemblySha256 = Tools.GetFileHash(assembly.Location) });
             }
             var version = manager.GameVersion;
             string gameVersion = checked(version.Major * 1000000 + version.Minor * 1000 + version.Build).ToString(CultureInfo.InvariantCulture);
@@ -164,18 +167,37 @@ internal static class ManagedPreparation
             if (!File.Exists(path))
                 throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id
                     + " (no metadata file at " + Path.ChangeExtension(local.Dll, ".xml") + " or " + path + ")");
-            RefuseLink(path);
-            using var reader = XmlReader.Create(path, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
-                XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 });
-            metadata = new XmlSerializer(typeof(PluginData)).Deserialize(reader) as GitHubPlugin
-                ?? throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id
-                    + " (" + path + " does not describe a GitHubPlugin)");
+            metadata = ReadGitHubPlugin(path, "Local plugin needs GitHubPlugin provenance metadata: " + data.Id);
         }
-        else throw new InvalidDataException("Managed preparation requires pinned GitHub source or a metadata-backed local binary: " + data.Id);
+        else if (data is LocalFolderPlugin folder)
+        {
+            // Same lookup as PluginList.AddLocalPlugin: the last enabled source for the folder wins.
+            string file = ConfigManager.Instance.Sources.LocalPluginSources
+                .LastOrDefault(source => source.Enabled && source.Folder != null && Path.GetFullPath(source.Folder) == folder.Folder)?.File;
+            string path = file == null ? null : Path.IsPathRooted(file) ? file : Path.Combine(folder.Folder, file);
+            if (path == null || !File.Exists(path))
+                throw new InvalidDataException("Dev folder needs a GitHubPlugin manifest with its RepoId: " + Name(data)
+                    + " (no manifest file" + (path == null ? " in its source" : " at " + path) + ")");
+            metadata = ReadGitHubPlugin(path, "Dev folder needs a GitHubPlugin manifest with its RepoId: " + Name(data));
+            metadata.Commit = DevFolderProvenance.CleanHead(Name(data), folder.Folder);
+        }
+        else throw new InvalidDataException("Managed preparation requires pinned GitHub source, a metadata-backed local binary or a clean dev folder: " + data.Id);
         if (metadata.Id != data.Id || metadata.Commit?.Length != 40 || !metadata.Commit.All(Uri.IsHexDigit)
             || string.IsNullOrWhiteSpace(metadata.RepoId) || metadata.RepoId.Split('/').Length != 2)
             throw new InvalidDataException("Plugin provenance requires its exact ID, repository and 40-character commit: " + data.Id);
         return metadata;
+    }
+
+    private static string Name(PluginData data) =>
+        string.IsNullOrEmpty(data.FriendlyName) || data.FriendlyName == data.Id ? data.Id : data.FriendlyName + " (" + data.Id + ")";
+
+    private static GitHubPlugin ReadGitHubPlugin(string path, string error)
+    {
+        RefuseLink(path);
+        using var reader = XmlReader.Create(path, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 });
+        return new XmlSerializer(typeof(PluginData)).Deserialize(reader) as GitHubPlugin
+            ?? throw new InvalidDataException(error + " (" + path + " does not describe a GitHubPlugin)");
     }
 
     private static void SafeName(string name)

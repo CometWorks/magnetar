@@ -29,6 +29,7 @@
     <ItemGroup>
         <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
         <Compile Include="..\Legacy\Preparation\ConfigurationDefaults.cs" Link="ConfigurationDefaults.cs" />
+        <Compile Include="..\Legacy\Preparation\DevFolderProvenance.cs" Link="DevFolderProvenance.cs" />
         <Compile Include="..\Legacy\Arguments\ServerArguments.cs" Link="ServerArguments.cs" />
     </ItemGroup>
 
