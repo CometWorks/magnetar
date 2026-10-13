@@ -8,13 +8,23 @@ namespace Pulsar.Legacy.Patch;
 [HarmonyPatch(typeof(MySandboxGame), "ExitThreadSafe")]
 public class Patch_ExitThreadSafe
 {
+    // LinuxCompat prefixes ExitThreadSafe with a plain process kill (the
+    // client's exit can hang on Linux), which skips the save. Run first: both
+    // paths below end the process before that prefix gets its turn.
+    [HarmonyPriority(Priority.First)]
     public static bool Prefix()
     {
         // SE's normal unload path hangs in this in-process hosting setup and
         // does not save anyway, so route in-game/admin exit through the same
         // graceful save+quit used for SIGTERM. SaveWorld's update-thread fast
         // path keeps this safe when the prefix runs on the update thread.
-        ServerControl.SaveAndQuit();
+        // The DS's timed auto-restart (AutoRestartTimeInMin) also ends here;
+        // without Keen's configurator nothing would start the server again,
+        // so restart Magnetar. A stop for Keen's auto-update still quits.
+        if (MySandboxGame.IsAutoRestarting && MySandboxGame.Static?.IsGoingToUpdate != true)
+            ServerControl.SaveAndRestart();
+        else
+            ServerControl.SaveAndQuit();
         return false;
     }
 }
