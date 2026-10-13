@@ -459,6 +459,7 @@ internal static class ServerControl
 
         try
         {
+#if NETCOREAPP
             var startInfo = new ProcessStartInfo
             {
                 FileName = path,
@@ -466,14 +467,8 @@ internal static class ServerControl
                 UseShellExecute = false,
             };
 
-#if NETCOREAPP
             for (int i = 1; i < originalArgv.Length; i++)
                 startInfo.ArgumentList.Add(originalArgv[i]);
-#else
-            // .NET Framework's ProcessStartInfo has no ArgumentList, so paste
-            // the args into the legacy Arguments string with the same quoting.
-            startInfo.Arguments = PasteArguments(originalArgv);
-#endif
 
             startInfo.EnvironmentVariables.Clear();
             foreach (string entry in originalEnv)
@@ -485,6 +480,9 @@ internal static class ServerControl
             }
 
             Process.Start(startInfo);
+#else
+            StartWithoutInheritedHandles(path);
+#endif
         }
         catch (Exception e)
         {
@@ -508,17 +506,57 @@ internal static class ServerControl
 
     private static readonly char[] ArgumentDelimiters = { ' ', '\t', '\n', '\v', '"' };
 
-    // Reproduces the Windows command-line quoting that ProcessStartInfo's
-    // ArgumentList applies on .NET (Core), skipping argv[0] (the executable
-    // path, passed separately via FileName).
-    private static string PasteArguments(string[] argv)
+    private const int CreateUnicodeEnvironment = 0x400;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct StartupInfo
     {
-        var sb = new StringBuilder();
-        for (int i = 1; i < argv.Length; i++)
-            AppendArgument(sb, argv[i]);
-        return sb.ToString();
+        public int cb;
+        public string lpReserved, lpDesktop, lpTitle;
+        public int dwX, dwY, dwXSize, dwYSize, dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;
+        public short wShowWindow, cbReserved2;
+        public IntPtr lpReserved2, hStdInput, hStdOutput, hStdError;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessInformation
+    {
+        public IntPtr hProcess, hThread;
+        public int dwProcessId, dwThreadId;
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool CreateProcess(string applicationName, StringBuilder commandLine,
+        IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, int creationFlags,
+        string environment, string currentDirectory, ref StartupInfo startupInfo,
+        out ProcessInformation processInformation);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
+
+    // .NET Framework creates sockets inheritable, and Process.Start passes every
+    // inheritable handle to the child. The new server then holds the old one's
+    // game port and fails to bind it ("Error binding server endpoint", 0x2740).
+    // CreateProcess without handle inheritance avoids that; the child still
+    // attaches to the same console.
+    private static void StartWithoutInheritedHandles(string path)
+    {
+        var commandLine = new StringBuilder();
+        foreach (string argument in originalArgv)
+            AppendArgument(commandLine, argument);
+
+        string environment = string.Join("\0", originalEnv) + "\0\0";
+        var startupInfo = new StartupInfo { cb = Marshal.SizeOf(typeof(StartupInfo)) };
+        if (!CreateProcess(path, commandLine, IntPtr.Zero, IntPtr.Zero, false, CreateUnicodeEnvironment,
+                environment, originalCwd, ref startupInfo, out ProcessInformation process))
+            throw new System.ComponentModel.Win32Exception();
+
+        CloseHandle(process.hThread);
+        CloseHandle(process.hProcess);
+    }
+
+    // The Windows command-line quoting that ProcessStartInfo's ArgumentList
+    // applies on .NET (Core).
     private static void AppendArgument(StringBuilder sb, string argument)
     {
         if (sb.Length != 0)
