@@ -22,7 +22,9 @@ the quasar repository (`Tests/Lifecycle`) and uses this folder's rig and probe.
   server console), `sdk <ServerControl method>`, `exit`
   (`MySandboxGame.ExitThreadSafe`), `slowsave <seconds>` (the next saves take
   that long, so a command can arrive during one), `hang <seconds>` (blocks the
-  game thread) and `crash` (an unhandled exception).
+  game thread) and `crash` (an unhandled exception). A `probe-hold-init.txt`
+  holding a number of seconds in the data folder keeps the server in plugin
+  initialization that long, once.
 - `rig.py` sets up, starts, observes and stops one server.
 - `cases.py` is the matrix, `run.py` runs it, `cleanup.py <work>` kills what
   an interrupted run left behind.

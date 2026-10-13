@@ -33,6 +33,7 @@ public class Plugin : IPlugin
         dir =
             Environment.GetEnvironmentVariable("LIFECYCLE_PROBE_DIR") ?? MyFileSystem.UserDataPath;
         Log($"init run={RunId}");
+        HoldInit();
         ServerControl.Terminating += kind => Log($"terminating {kind}");
         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
             Log($"process-exit code={Environment.ExitCode}");
@@ -53,6 +54,20 @@ public class Plugin : IPlugin
             ),
             prefix: new HarmonyMethod(typeof(Plugin), nameof(LogSave))
         );
+    }
+
+    // probe-hold-init.txt holds the server in Init for that many seconds, once, so a
+    // supervisor sees it starting for a while.
+    private void HoldInit()
+    {
+        string hold = Path.Combine(dir, "probe-hold-init.txt");
+        if (!File.Exists(hold))
+            return;
+
+        int seconds = int.Parse(File.ReadAllText(hold).Trim());
+        File.Delete(hold);
+        Log($"holding init {seconds}s");
+        Thread.Sleep(seconds * 1000);
     }
 
     public void Update()
