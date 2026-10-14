@@ -173,6 +173,11 @@ def run_case(case, platform, args, port, gate):
             failures.append(f"{len(runs) - 1} restarts, expected {case.restarts}")
         if case.saved is not None and marked and result["saved"] != case.saved:
             failures.append(f"saved={result['saved']}, expected {case.saved}")
+        replies = [m[len("reply ") :] for _, _, m in server.events() if m.startswith("reply ")]
+        result["replies"] = replies
+        for text in case.replies:
+            if not any(text in reply for reply in replies):
+                failures.append(f"no reply with {text!r}, got {replies}")
         if case.terminating is not None and terminating != case.terminating:
             failures.append(f"terminating {terminating}, expected {case.terminating}")
         if platform.windows:

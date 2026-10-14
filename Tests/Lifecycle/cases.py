@@ -14,6 +14,7 @@ Expectations:
   saved      whether the world file was written after the command; None = not checked
   terminating  ServerControl.Terminating kinds the plugins saw, in order; None = not checked
   reload     start the server again afterwards and expect the world to load
+  replies    text each of which some reply to the probe's chat commands contains
 """
 
 from dataclasses import dataclass, field
@@ -33,6 +34,7 @@ class Case:
     saved: object = None
     terminating: object = None
     reload: bool = False
+    replies: list = field(default_factory=list)
     platforms: tuple = ALL
     essentials: str = "none"
     auto_restart: bool = False
@@ -487,4 +489,32 @@ def _hung():
     ]
 
 
-CASES = _running() + _starting() + _saving() + _restarting() + _stopping() + _double() + _hung()
+def _command_lines():
+    # How the dispatcher reads a command line (DIS-0017, SE1-0187): a root's default
+    # command takes arguments only when it has parameters for them.
+    return [
+        Case(
+            "cmd-restart-help",
+            "running",
+            "Magnetar `!restart help`",
+            [READY, ("probe", "chat !restart help")],
+            replies=["Usage: !restart"],
+        ),
+        Case(
+            "cmd-restart-seconds",
+            "running",
+            "Magnetar `!restart 30` (Magnetar's `!restart` takes no delay)",
+            [READY, ("probe", "chat !restart 30")],
+            replies=["Unknown command"],
+        ),
+        Case(
+            "cmd-stop-typo",
+            "running",
+            "Magnetar `!stop` with a stray word",
+            [READY, ("probe", "chat !stop nwo")],
+            replies=["Unknown command"],
+        ),
+    ]
+
+
+CASES = _command_lines() + _running() + _starting() + _saving() + _restarting() + _stopping() + _double() + _hung()
