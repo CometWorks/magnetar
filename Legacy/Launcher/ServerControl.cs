@@ -60,6 +60,9 @@ internal static class ServerControl
     private static PosixSignalRegistration sigHup;
 #endif
 
+    // Rooted so the GC does not collect the delegate native code calls.
+    private static ConsoleCtrlHandler consoleCtrlHandler;
+
     private static volatile bool terminating;
     private static readonly object terminateLock = new object();
 
@@ -79,6 +82,14 @@ internal static class ServerControl
 
     [DllImport("kernel32.dll")]
     private static extern bool CloseHandle(IntPtr handle);
+
+    private const int CtrlCloseEvent = 2;
+    private const int CtrlShutdownEvent = 6;
+
+    private delegate bool ConsoleCtrlHandler(int ctrlType);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandler handler, bool add);
 
     /// <summary>
     /// Records the original command line, working directory and environment so
@@ -121,10 +132,11 @@ internal static class ServerControl
     }
 
     /// <summary>
-    /// Binds the plugin SDK facade and, on .NET (Core), installs the POSIX
-    /// signal handlers. Safe to call before a session exists — the handlers
-    /// tolerate a null <see cref="MySession.Static"/>. The .NET Framework
-    /// (Legacy) build has no POSIX signals, so it only binds the facade.
+    /// Binds the plugin SDK facade, installs the POSIX signal handlers on .NET
+    /// (Core) and the console close and shutdown handler on Windows. Safe to
+    /// call before a session exists — the handlers tolerate a null
+    /// <see cref="MySession.Static"/>. The .NET Framework (Legacy) build has no
+    /// POSIX signals.
     /// </summary>
     public static void InstallSignalHandlers()
     {
@@ -144,6 +156,33 @@ internal static class ServerControl
         if (OperatingSystem.IsLinux())
             sigHup = PosixSignalRegistration.Create(PosixSignal.SIGHUP, OnReload);
 #endif
+
+        // Registered after SIGTERM, which .NET maps to the shutdown event on
+        // Windows, because Windows calls the last registered handler first.
+        if (!IsLinux)
+        {
+            consoleCtrlHandler = OnConsoleCtrl;
+            SetConsoleCtrlHandler(consoleCtrlHandler, true);
+        }
+    }
+
+    // Windows ends the process when the handler returns after the console
+    // window was closed or Windows is shutting down, or when its time runs
+    // out (5 s for a closed window). So save and quit, and hold the handler
+    // until that exits the process. The logoff event is left alone: a server
+    // running as a service gets it whenever any user logs off.
+    private static bool OnConsoleCtrl(int ctrlType)
+    {
+        // Ctrl+C and Ctrl+Break go on to the dedicated server's own handler.
+        if (ctrlType != CtrlCloseEvent && ctrlType != CtrlShutdownEvent)
+            return false;
+
+        LogFile.WriteLine(ctrlType == CtrlCloseEvent
+            ? "Console window closed: saving world and quitting"
+            : "Windows is shutting down: saving world and quitting");
+        Task.Run(SaveAndQuit);
+        Thread.Sleep(Timeout.Infinite);
+        return true;
     }
 
 #if NETCOREAPP
