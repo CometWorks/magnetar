@@ -277,6 +277,26 @@ namespace PluginSdk.Tests
             public string Root() => "admin-default-ran";
         }
 
+        [CommandRoot("delay", "Delay Plugin", "a default command with an argument")]
+        public sealed class DefaultWithArgCommands : CommandModule
+        {
+            [Command("", "waits", "Usage: !delay [seconds]")]
+            [Permission(MyPromoteLevel.None)]
+            public string Root(int seconds = 10) => $"delay-{seconds}";
+
+            [Command("cancel", "cancels")]
+            [Permission(MyPromoteLevel.None)]
+            public string Cancel() => "cancel-ran";
+        }
+
+        [CommandRoot("say", "Say Plugin", "a default command with a params array")]
+        public sealed class DefaultWithParamsCommands : CommandModule
+        {
+            [Command("", "says the words")]
+            [Permission(MyPromoteLevel.None)]
+            public string Root(params string[] words) => "said " + string.Join(" ", words);
+        }
+
         [CommandRoot("help", "Help Plugin", "tries to hijack help")]
         public sealed class HelpPrefixCommands : CommandModule
         {
@@ -326,16 +346,129 @@ namespace PluginSdk.Tests
         }
 
         [Fact]
-        public void Handle_BarePrefix_DefaultAboveCallerLevel_ShowsOverview()
+        public void Handle_DefaultWithArgument_BareUsesParameterDefault()
         {
-            // The default needs Admin; a non-admin bare call falls back to the
-            // overview instead of running it.
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            Assert.True(d.Handle("!delay", Caller(MyPromoteLevel.None), r));
+            Assert.Equal("delay-10", Assert.Single(r.Replies).Text);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithArgument_GetsTheArgument()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            Assert.True(d.Handle("!delay 30", Caller(MyPromoteLevel.None), r));
+            Assert.Equal("delay-30", Assert.Single(r.Replies).Text);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithArgument_SubcommandNameWins()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            d.Handle("!delay cancel", Caller(MyPromoteLevel.None), r);
+            Assert.Equal("cancel-ran", Assert.Single(r.Replies).Text);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithArgument_BadValue_RepliesUsage()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            d.Handle("!delay soon", Caller(MyPromoteLevel.None), r);
+            Assert.Contains("'soon' is not a valid integer", r.LastText);
+            Assert.Contains("!delay [seconds]", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithArgument_TooManyWords_IsUnknown()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            d.Handle("!delay 30 40", Caller(MyPromoteLevel.None), r);
+            Assert.DoesNotContain("delay-", r.LastText);
+            Assert.Contains("Unknown command", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithoutArguments_DoesNotRunOnExtraWords()
+        {
+            // "!def typo" must not run the default: a typo after !stop would
+            // otherwise stop the server.
+            var d = BuildDispatcherFor(typeof(DefaultCommands), out var r);
+            d.Handle("!def typo", Caller(MyPromoteLevel.None), r);
+            Assert.DoesNotContain("default-ran", r.LastText);
+            Assert.Contains("Unknown command", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithParams_TakesAllWords()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithParamsCommands), out var r);
+            d.Handle("!say hello there", Caller(MyPromoteLevel.None), r);
+            Assert.Equal("said hello there", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_DefaultWithArgument_AboveCallerLevel_IsDenied()
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle("!admdelay 30", Caller(MyPromoteLevel.None), r);
+            Assert.DoesNotContain("admin-delay", r.LastText);
+            Assert.Contains("permission", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_Help_RootWithOnlyADefault_ShowsItsUsage()
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle("!admdelay help", Caller(MyPromoteLevel.Admin), r);
+            Assert.Equal("Usage: !admdelay [seconds]", r.Replies[0].Text);
+        }
+
+        [Theory]
+        [InlineData("!admdelay")]
+        [InlineData("!admdelay help")]
+        [InlineData("!help admdelay")]
+        public void Handle_RootWithOnlyADefault_AboveCallerLevel_IsDenied(string line)
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle(line, Caller(MyPromoteLevel.None), r);
+            Assert.Single(r.Replies);
+            Assert.Equal("You do not have permission to use that command.", r.LastText);
+        }
+
+        [Fact]
+        public void GlobalHelp_RootWithOnlyADefault_ShowsItsUsage()
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle("!help admdelay", Caller(MyPromoteLevel.Admin), r);
+            Assert.Equal("Usage: !admdelay [seconds]", r.Replies[0].Text);
+        }
+
+        [Fact]
+        public void Handle_Help_RootWithDefaultAndSubcommands_ShowsOverview()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            d.Handle("!delay help", Caller(MyPromoteLevel.None), r);
+            Assert.Contains("!delay cancel", string.Join("\n", r.Texts));
+        }
+
+        [CommandRoot("admdelay", "Admin Delay Plugin", "admin default command with an argument")]
+        public sealed class AdminDefaultWithArgCommands : CommandModule
+        {
+            [Command("", "waits")]
+            public string Root(int seconds = 10) => $"admin-delay-{seconds}";
+        }
+
+        [Fact]
+        public void Handle_BarePrefix_DefaultAboveCallerLevel_IsDenied()
+        {
+            // The default needs Admin and the root has nothing else, so a
+            // non-admin bare call gets "no permission", not an empty overview.
             var d = BuildDispatcherFor(typeof(AdminDefaultCommands), out var r);
             d.Handle("!adm", Caller(MyPromoteLevel.None), r);
 
-            string all = string.Join("\n", r.Texts);
-            Assert.DoesNotContain("admin-default-ran", all);
-            Assert.Contains("Admin Default Plugin", all);
+            Assert.Single(r.Replies);
+            Assert.Equal("Admin Default Plugin", r.Replies[0].Author);
+            Assert.Contains("permission", r.LastText);
         }
 
         [Fact]

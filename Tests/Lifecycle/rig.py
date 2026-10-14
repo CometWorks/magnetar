@@ -19,6 +19,9 @@ HERE = Path(__file__).resolve().parent
 PROBE = HERE / "Probe"
 WORLD = "LifecycleTest"
 ESSENTIALS_ID = "DF09925B-6D53-41F2-899C-CA6214B5DD6F"
+# An Essentials working copy to compile as a DevFolder instead of the MagnetarHub
+# version (run.py --essentials-src), for cases that need an unreleased Essentials.
+ESSENTIALS_SRC = None
 LAUNCHERS = ("magnetarinterim.bin", "magnetarinterim.exe", "magnetarlegacy.exe")
 
 
@@ -144,12 +147,27 @@ class Server:
         # the DevFolder: give it a copy that holds nothing else.
         probe = self.root / "probe"
         shutil.copytree(PROBE, probe, ignore=shutil.ignore_patterns("bin", "obj"))
-        sources = self.config / "Sources" / "sources.xml"
         local = (
-            "<LocalPluginSources><LocalPlugin><Name>lifecycle-probe</Name>"
+            "<LocalPlugin><Name>lifecycle-probe</Name>"
             f"<Folder>{self.platform.path(probe)}</Folder><File>LifecycleProbe.xml</File>"
-            "<Enabled>true</Enabled></LocalPlugin></LocalPluginSources>"
+            "<Enabled>true</Enabled></LocalPlugin>"
         )
+        essentials_hub = f"<GitHubPluginConfig><Id>{ESSENTIALS_ID}</Id></GitHubPluginConfig>"
+        essentials_dev = ""
+        if ESSENTIALS_SRC:
+            essentials = self.root / "essentials"
+            shutil.copytree(ESSENTIALS_SRC, essentials, ignore=shutil.ignore_patterns("bin", "obj", ".git*", "*.user"))
+            local += (
+                "<LocalPlugin><Name>essentials</Name>"
+                f"<Folder>{self.platform.path(essentials)}</Folder><File>Essentials.xml</File>"
+                "<Enabled>true</Enabled></LocalPlugin>"
+            )
+            essentials_hub = ""
+            essentials_dev = (
+                f"<LocalFolderConfig><Id>{ESSENTIALS_ID}</Id><DebugBuild>false</DebugBuild></LocalFolderConfig>"
+            )
+        sources = self.config / "Sources" / "sources.xml"
+        local = f"<LocalPluginSources>{local}</LocalPluginSources>"
         text = re.sub(
             r"<LocalPluginSources\s*/>|<LocalPluginSources>.*?</LocalPluginSources>",
             lambda _: local,
@@ -163,9 +181,9 @@ class Server:
             '<?xml version="1.0" encoding="utf-8"?>\n'
             '<Profile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
             'xmlns:xsd="http://www.w3.org/2001/XMLSchema"><Name>Current</Name>'
-            f"<GitHub><GitHubPluginConfig><Id>{ESSENTIALS_ID}</Id></GitHubPluginConfig></GitHub>"
+            f"<GitHub>{essentials_hub}</GitHub>"
             "<DevFolder><LocalFolderConfig><Id>lifecycle-probe</Id><DebugBuild>false</DebugBuild>"
-            "</LocalFolderConfig></DevFolder><Local /><Mods /></Profile>",
+            f"</LocalFolderConfig>{essentials_dev}</DevFolder><Local /><Mods /></Profile>",
             encoding="utf-8",
         )
 

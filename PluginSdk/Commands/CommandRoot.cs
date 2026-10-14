@@ -17,9 +17,10 @@ namespace PluginSdk.Commands
         public string OwnerId { get; }
 
         /// <summary>
-        /// The root-level (default) command, run for a bare <c>!prefix</c> with
-        /// no sub-path. Null when the root has none, in which case a bare
-        /// <c>!prefix</c> prints the overview instead. Registered via an empty
+        /// The root-level (default) command, run for a bare <c>!prefix</c> and
+        /// for <c>!prefix args</c> when no subcommand matches. Null when the
+        /// root has none, in which case a bare <c>!prefix</c> prints the
+        /// overview instead. Registered via an empty
         /// <see cref="CommandAttribute.Command"/> path.
         /// </summary>
         public RegisteredCommand Default { get; private set; }
@@ -64,9 +65,25 @@ namespace PluginSdk.Commands
         /// <summary>
         /// Walks <paramref name="tokens"/> from the root and returns the
         /// deepest command reached, along with how many tokens its path
-        /// consumed (the remainder are arguments).
+        /// consumed (the remainder are arguments). When no subcommand matches,
+        /// the root's default command takes all tokens as its arguments, so
+        /// <c>!restart 30</c> works. It does so only if it can take that many,
+        /// otherwise a typo like <c>!stop nwo</c> would run <c>!stop</c>.
         /// </summary>
         public bool TryResolve(IReadOnlyList<string> tokens, out RegisteredCommand command, out int consumed)
+        {
+            if (TryResolvePath(tokens, out command, out consumed))
+                return true;
+
+            if (Default == null || !Default.CanTake(tokens.Count))
+                return false;
+
+            command = Default;
+            consumed = 0;
+            return true;
+        }
+
+        private bool TryResolvePath(IReadOnlyList<string> tokens, out RegisteredCommand command, out int consumed)
         {
             command = null;
             consumed = 0;

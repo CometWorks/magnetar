@@ -10,7 +10,8 @@ namespace PluginSdk.Commands
     /// <c>[Command("grid list")]</c> in a module rooted at <c>"adm"</c> is
     /// invoked as <c>!adm grid list</c>. An empty command string
     /// (<c>[Command("")]</c>) denotes the root-level (default) command, run for
-    /// a bare <c>!adm</c> with no sub-path.
+    /// a bare <c>!adm</c>, and for <c>!adm 30</c> when <c>30</c> names no
+    /// subcommand and the handler has a parameter for it.
     ///
     /// <para><b>Handler signature</b></para>
     /// <para>

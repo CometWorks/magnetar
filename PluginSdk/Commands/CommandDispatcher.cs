@@ -72,7 +72,8 @@ namespace PluginSdk.Commands
             if (rest.Count == 0)
             {
                 // A bare '!prefix' runs the root's default command when it has
-                // one the caller may use; otherwise it prints the overview.
+                // one the caller may use; otherwise it prints the overview (for a
+                // root with only a default, the permission reply).
                 if (root.Default != null && root.Default.IsVisibleTo(caller.PromoteLevel))
                     ExecuteCommand(root, root.Default, rest, caller, responder);
                 else
@@ -209,6 +210,18 @@ namespace PluginSdk.Commands
         {
             var visible = root.EnumerateCommands().Where(c => c.IsVisibleTo(caller.PromoteLevel)).ToList();
 
+            // A root with nothing but its default command, like !restart, has no
+            // overview: show its usage, or tell a caller who may not use it.
+            if (visible.Count == 0 && root.Default != null)
+            {
+                if (root.Default.IsVisibleTo(caller.PromoteLevel))
+                    SendUsage(root, root.Default, caller, responder);
+                else
+                    Reply(responder, caller, CommandReply.Error(
+                        "You do not have permission to use that command.").WithAuthor(root.Title));
+                return;
+            }
+
             string header = string.IsNullOrEmpty(root.Description)
                 ? $"=== {root.Title} ==="
                 : $"=== {root.Title} - {root.Description} ===";
@@ -257,6 +270,11 @@ namespace PluginSdk.Commands
                 return;
             }
 
+            SendUsage(root, command, caller, responder);
+        }
+
+        private static void SendUsage(CommandRoot root, RegisteredCommand command, CommandCaller caller, ICommandResponder responder)
+        {
             var lines = new List<string>
             {
                 $"Usage: {command.Syntax}"
