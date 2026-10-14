@@ -434,10 +434,23 @@ internal static class ServerControl
 
     private static void DisposePlugins()
     {
+        PluginLoader loader = PluginLoader.Instance;
+        if (loader == null)
+            return;
+
         try
         {
-            // Bound the wait so a misbehaving plugin cannot hang shutdown.
-            Task dispose = Task.Run(() => PluginLoader.Instance?.Dispose());
+            // The loader's Update and HandleInput drop disposed plugins from the
+            // list Dispose walks, so Dispose must not run while the game thread
+            // updates plugins: run it there, or on a worker while the game
+            // thread waits here. Without a session the game loop isn't running
+            // yet: the world loads at the end of the loader's Init. Bound the
+            // wait so a misbehaving plugin cannot hang shutdown.
+            Task dispose = new Task(loader.Dispose);
+            if (OnUpdateThread() || MySandboxGame.Static == null || MySession.Static == null)
+                dispose.Start();
+            else
+                Game.RunOnGameThread(dispose.RunSynchronously);
             if (!dispose.Wait(DisposeTimeout))
                 LogFile.Warn("Plugin disposal timed out");
         }
