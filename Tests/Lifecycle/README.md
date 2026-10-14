@@ -59,7 +59,10 @@ Tests/Lifecycle/run.py --platform linux --install <Magnetar install> \
 Build the branch into an install folder of your own
 (`dotnet build Legacy/Legacy.csproj -c Release -p:Magnetar=<folder>`). Job
 `i` uses DS port `port-base + i` and Steam port `port-base + 1000 + i`.
-`--cases` takes comma separated globs of case ids. The results are in
+`--cases` takes comma separated globs of case ids. `--essentials-src <Essentials
+working copy>` compiles Essentials from there as a DevFolder instead of taking
+MagnetarHub's; the cases that need an unreleased Essentials (`cmd-reload`,
+`cmd-fixship`, `cmd-fixshipmodid`) run only with it. The results are in
 `<work>/results.md` and `results.json`, and each case folder keeps its logs.
 A full run takes about 1.5 minutes per case and job.
 

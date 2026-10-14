@@ -237,7 +237,8 @@ yours to send to the players. It returns `false` when the line names no
 registered command. A host older than this method (Magnetar 2.4.3.4 and
 earlier) has no `ServerCommands.Execute`, so the call throws
 `MissingMethodException` there; call it from a separate non-inlined method and
-catch that.
+catch that. A plugin built against an older PluginSdk looks it up by reflection
+instead, as Quasar.Agent does.
 
 ## Notes and limits
 

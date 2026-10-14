@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cases import CASES  # noqa: E402
+import rig  # noqa: E402
 from rig import Platform, Server  # noqa: E402
 
 READY_TIMEOUT = 300
@@ -259,7 +260,13 @@ def main():
         "because parallel servers in one prefix share its wineserver",
     )
     ap.add_argument("--display", default=":1")
+    ap.add_argument(
+        "--essentials-src",
+        help="Essentials working copy to compile as a DevFolder instead of the MagnetarHub version; "
+        "the cases marked essentials_src need it",
+    )
     args = ap.parse_args()
+    rig.ESSENTIALS_SRC = Path(args.essentials_src).expanduser() if args.essentials_src else None
 
     platform = Platform(
         args.platform,
@@ -275,6 +282,11 @@ def main():
         ap.error("--prefix needs one prefix per job")
     patterns = args.cases.split(",")
     cases = [c for c in CASES if platform.name in c.platforms and any(fnmatch.fnmatch(c.id, p) for p in patterns)]
+    if not args.essentials_src:
+        skipped = [c.id for c in cases if c.essentials_src]
+        if skipped:
+            print(f"skipped without --essentials-src: {', '.join(skipped)}", flush=True)
+        cases = [c for c in cases if not c.essentials_src]
     Path(args.work).mkdir(parents=True, exist_ok=True)
 
     slots = queue.Queue()

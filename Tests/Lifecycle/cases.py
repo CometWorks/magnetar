@@ -15,6 +15,7 @@ Expectations:
   terminating  ServerControl.Terminating kinds the plugins saw, in order; None = not checked
   reload     start the server again afterwards and expect the world to load
   replies    text each of which some reply to the probe's chat commands contains
+  essentials_src  the case needs an Essentials newer than MagnetarHub's (run.py --essentials-src)
 """
 
 from dataclasses import dataclass, field
@@ -35,6 +36,7 @@ class Case:
     terminating: object = None
     reload: bool = False
     replies: list = field(default_factory=list)
+    essentials_src: bool = False
     platforms: tuple = ALL
     essentials: str = "none"
     auto_restart: bool = False
@@ -513,6 +515,31 @@ def _command_lines():
             "Magnetar `!stop` with a stray word",
             [READY, ("probe", "chat !stop nwo")],
             replies=["Unknown command"],
+        ),
+        # Essentials' top-level short forms (DIS-0017), as the console
+        Case(
+            "cmd-reload",
+            "running",
+            "Essentials `!reload`",
+            [READY, ("probe", "chat !reload")],
+            replies=["Configuration reloaded."],
+            essentials_src=True,
+        ),
+        Case(
+            "cmd-fixship",
+            "running",
+            "Essentials `!fixship` (the console has no grids)",
+            [READY, ("probe", "chat !fixship")],
+            replies=["Console has no Grids"],
+            essentials_src=True,
+        ),
+        Case(
+            "cmd-fixshipmodid",
+            "running",
+            "Essentials `!fixshipmodid 123` (an argument to a short form)",
+            [READY, ("probe", "chat !fixshipmodid 123")],
+            replies=["Grid not found"],
+            essentials_src=True,
         ),
     ]
 
