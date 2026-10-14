@@ -169,6 +169,67 @@ in the console and plugins such as Essentials all stop or restart the server
 through the same code. See **[Stopping and restarting](ServerControl.md)** for
 what each one does on Linux, on Windows and under Quasar.
 
+## Running under Proton or Wine
+
+The Windows launchers also run on Linux under Proton, which is useful for
+checking Windows behavior there. To run a server on Linux, use
+`MagnetarInterim.bin` instead. Magnetar detects Wine, so it logs
+`Platform: Proton` whether or not `STEAM_COMPAT_PROTON` is set, and it skips
+plugins whose hub entry lists `<Platforms>` without `Proton`. Tested with
+Proton Experimental 11 on Linux.
+
+The prefix needs a few things a new one lacks:
+
+* **A runtime.** MagnetarInterim needs the x64 .NET 10 runtime in
+  `C:\Program Files\dotnet`. Copy that folder from a Windows machine or another
+  prefix. Without it the launcher exits at once with code `0x80008083`
+  (-2147450749) and prints nothing. MagnetarLegacy needs .NET Framework 4.8. A
+  new prefix only has Wine Mono, and MagnetarLegacy refuses to start on Mono.
+* **The VC++ 2015-2019 redistributable registry key.** The dedicated server only
+  checks for the key; Wine already has the DLLs. Add it with
+  `reg add "HKLM\SOFTWARE\Classes\Installer\Dependencies\Microsoft.VS.VC_RuntimeMinimumVSU_amd64,v14" /f`,
+  run in the prefix with `wine` or `proton run`. Magnetar checks for the key at
+  startup and stops with this command in the error when it is missing.
+* **A display.** Wine needs an X display even for console programs. Without
+  one, "The explorer process failed to start" and nothing runs. On a headless
+  machine, `weston --backend=headless --renderer=noop --xwayland` provides one;
+  pass it in `DISPLAY`.
+
+The .NET Framework 4.8 installer fails inside a Proton prefix (error 1603). It
+installs with system Wine (9.0 tested) into a new prefix, which Proton then
+takes over as the `pfx` folder of its compat data folder. The .NET Framework 4.0
+installer has to run first, because it puts the native `mscoree.dll` in place,
+and Wine Mono has to stay out: with it in the registry, the 4.8 installer thinks
+.NET Framework is already installed. Wait for `wineserver -w` after each step;
+without those waits the 4.0 installer failed here with exit code 67. Both
+installers are Microsoft's offline installers (winetricks keeps copies in
+`~/.cache/winetricks`), and Wine needs `DISPLAY` set while they run.
+
+```bash
+export WINEPREFIX=<compat data folder>/pfx WINEARCH=win64
+WINEDLLOVERRIDES="mscoree,mshtml=" wineboot -i; wineserver -w
+wine reg add 'HKCU\Software\Wine\DllOverrides' /v mscoree /t REG_SZ /d native /f
+wine reg add 'HKCU\Software\Wine' /v Version /t REG_SZ /d winxp64 /f; wineserver -w
+wine dotNetFx40_Full_x86_x64.exe /q /norestart; wineserver -w
+wine reg add 'HKCU\Software\Wine' /v Version /t REG_SZ /d win7 /f; wineserver -w
+wine ndp48-x86-x64-allos-enu.exe /q /norestart; wineserver -w
+wine reg add 'HKCU\Software\Wine' /v Version /t REG_SZ /d win10 /f; wineserver -w
+```
+
+Then start Magnetar through Proton, with Linux paths written as `Z:\...`.
+`setsid -w` keeps Proton from killing the calling shell's process group:
+
+```bash
+STEAM_COMPAT_DATA_PATH=<compat data folder> \
+STEAM_COMPAT_CLIENT_INSTALL_PATH=~/.steam/steam \
+SteamAppId=298740 SteamGameId=298740 DISPLAY=:1 \
+setsid -w "<Proton folder>/proton" run 'Z:\srv\magnetar\MagnetarInterim.exe' \
+    -ds64 'Z:\srv\ds\DedicatedServer64' -path 'Z:\srv\ds-data'
+```
+
+Only the Linux build handles SIGTERM and SIGINT, so stop a server under Proton
+with the commands in [Stopping and restarting](ServerControl.md).
+
 ## Configuring the server (MagnetarConfig)
 
 **MagnetarConfig** is a terminal UI bundled next to the launcher for editing and

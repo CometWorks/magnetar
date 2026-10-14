@@ -254,6 +254,11 @@ def main():
         "because parallel servers in one prefix share its wineserver",
     )
     ap.add_argument("--display", default=":1")
+    ap.add_argument(
+        "--steam-compat-proton",
+        action="store_true",
+        help="set STEAM_COMPAT_PROTON for the server, as Steam does; left out by default",
+    )
     args = ap.parse_args()
 
     platform = Platform(
@@ -264,6 +269,7 @@ def main():
         Path(args.proton),
         None,
         args.display,
+        args.steam_compat_proton,
     )
     prefixes = [Path(p).expanduser() for p in args.prefix.split(",")] if args.prefix else [None]
     if platform.windows and len(prefixes) < args.jobs:
