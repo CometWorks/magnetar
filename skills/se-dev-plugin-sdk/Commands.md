@@ -219,9 +219,27 @@ Levels are Keen's `MyPromoteLevel`: `None`, `Scripter`, `Moderator`,
   the **last registration wins** (it overwrites the earlier one), so a plugin
   can deliberately override another's command.
 
+## Running a command from your own console
+
+A plugin with a console of its own (Quasar.Agent runs the lines typed into
+Quasar's Chat page) runs a line through every registered command with
+`ServerCommands.Execute`, on the game thread:
+
+```csharp
+var console = new CommandCaller(0UL, 0L, "Quasar", MyPromoteLevel.Owner, isConsole: true);
+bool handled = ServerCommands.Execute("!ess playerlist", console, myResponder);
+```
+
+Replies go to `myResponder`, not chat; a reply with `Broadcast` set is still
+yours to send to the players. It returns `false` when the line names no
+registered command. A host older than this method (Magnetar 2.4.3.4 and
+earlier) has no `ServerCommands.Execute`, so the call throws
+`MissingMethodException` there; call it from a separate non-inlined method and
+catch that.
+
 ## Notes and limits
 
-- Commands are accepted on the **global** chat channel only.
+- Commands are accepted on the global, faction and private chat channels.
 - Modules are instantiated per invocation; persistent state belongs in your
   plugin, reachable via static members the plugin sets up.
 - The whole pipeline (`CommandRegistry` → `CommandDispatcher`) is independent of

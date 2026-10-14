@@ -415,6 +415,22 @@ namespace PluginSdk.Tests
             Assert.Contains("permission", r.LastText);
         }
 
+        [Fact]
+        public void Handle_Help_RootWithOnlyADefault_ShowsItsUsage()
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle("!admdelay help", Caller(MyPromoteLevel.Admin), r);
+            Assert.Equal("Usage: !admdelay [seconds]", r.Replies[0].Text);
+        }
+
+        [Fact]
+        public void Handle_Help_RootWithDefaultAndSubcommands_ShowsOverview()
+        {
+            var d = BuildDispatcherFor(typeof(DefaultWithArgCommands), out var r);
+            d.Handle("!delay help", Caller(MyPromoteLevel.None), r);
+            Assert.Contains("!delay cancel", string.Join("\n", r.Texts));
+        }
+
         [CommandRoot("admdelay", "Admin Delay Plugin", "admin default command with an argument")]
         public sealed class AdminDefaultWithArgCommands : CommandModule
         {

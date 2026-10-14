@@ -244,13 +244,21 @@ namespace PluginSdk.Commands
 
         private static void SendHelp(CommandRoot root, List<string> path, CommandCaller caller, ICommandResponder responder)
         {
+            RegisteredCommand command;
             if (path.Count == 0)
             {
-                SendOverview(root, caller, responder);
-                return;
+                // A root with nothing but its default command, like !restart, has no
+                // overview to show; its help is the default's usage.
+                bool onlyDefault = root.Default != null && root.Default.IsVisibleTo(caller.PromoteLevel)
+                    && !root.EnumerateCommands().Any(c => c.IsVisibleTo(caller.PromoteLevel));
+                if (!onlyDefault)
+                {
+                    SendOverview(root, caller, responder);
+                    return;
+                }
+                command = root.Default;
             }
-
-            if (!root.TryResolve(path, out RegisteredCommand command, out _) || !command.IsVisibleTo(caller.PromoteLevel))
+            else if (!root.TryResolve(path, out command, out _) || !command.IsVisibleTo(caller.PromoteLevel))
             {
                 Reply(responder, caller, CommandReply.Error(
                     $"No such command: !{root.Prefix} {string.Join(" ", path)}").WithAuthor(root.Title));

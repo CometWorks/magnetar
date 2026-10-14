@@ -15,7 +15,7 @@ namespace Magnetar.Legacy.Commands;
 /// host's <see cref="ICommandRegistrar"/>; ownership of each command is taken
 /// from the registering plugin's assembly.
 /// </summary>
-public sealed class CommandService : ICommandRegistrar
+public sealed class CommandService : ICommandRegistrar, ICommandExecutor
 {
     private readonly CommandRegistry registry = new();
     private readonly CommandDispatcher dispatcher;
@@ -99,6 +99,11 @@ public sealed class CommandService : ICommandRegistrar
             return false;
         }
     }
+
+    /// <summary>Runs a command line for a plugin's own console, see
+    /// <see cref="ServerCommands.Execute"/>.</summary>
+    public bool Execute(string commandLine, in CommandCaller caller, ICommandResponder responder)
+        => dispatcher.Handle(commandLine, caller, responder ?? throw new ArgumentNullException(nameof(responder)));
 
     private static CommandCaller BuildCaller(ulong steamId)
     {

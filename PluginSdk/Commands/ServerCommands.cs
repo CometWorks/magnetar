@@ -41,6 +41,24 @@ namespace PluginSdk.Commands
         public static void Register(Assembly assembly, params Type[] moduleTypes)
             => Require().Register(assembly, moduleTypes);
 
+        /// <summary>
+        /// Runs <paramref name="commandLine"/>, including its <c>!</c>, through
+        /// every registered command as if <paramref name="caller"/> had typed it
+        /// in chat, with the replies going to <paramref name="responder"/>
+        /// instead of chat. For a console of the plugin's own, like Quasar's
+        /// chat page: pass a caller with <c>isConsole: true</c>. Call it on the
+        /// game thread. Returns <c>false</c> when the line names no registered
+        /// command; the caller then decides what to do with it.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The host can't run
+        /// commands.</exception>
+        public static bool Execute(string commandLine, in CommandCaller caller, ICommandResponder responder)
+        {
+            if (!(Require() is ICommandExecutor executor))
+                throw new InvalidOperationException("This host can't run chat commands for plugins.");
+            return executor.Execute(commandLine, caller, responder);
+        }
+
         private static ICommandRegistrar Require()
             => Registrar ?? throw new InvalidOperationException(
                 "No command registrar is available. ServerCommands.Register requires a host " +
