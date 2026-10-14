@@ -44,9 +44,9 @@ Magnetar config folder). Each case gets a copy, so keep it small:
   once, so the cases don't download and compile the hub plugins again. The
   rig writes the profile (Essentials and the probe) and the probe's
   DevFolder source.
-- For Proton, also `NuGet/` copied from a Linux Magnetar folder, and
-  `magnetar/GitHub/` from a Windows run: with `Platform: Windows`, NuGet checks
-  package signatures, which fails under Wine.
+- For Proton, `magnetar/GitHub/` from a run of the same launcher under Proton,
+  because the plugin cache is per runtime, and optionally `NuGet/` from such a
+  run to skip the NuGet restore.
 
 ## Running on Linux
 
@@ -69,21 +69,9 @@ A full run takes about 1.5 minutes per case and job.
 a Windows package (`MagnetarInterim.exe`, `MagnetarLegacy.exe`, `Libraries`)
 and `--prefix` at one Proton prefix per job (comma separated):
 servers in one prefix share its wineserver, and stopping one case could take
-the others down. The prefixes need, besides a Proton run once:
-
-- `HKLM\SOFTWARE\Classes\Installer\Dependencies\Microsoft.VS.VC_RuntimeMinimumVSU_amd64,v14`,
-  which the DS checks for. Wine has the DLLs.
-- For MagnetarInterim, the .NET 10 runtime in `C:\Program Files\dotnet`.
-- For MagnetarLegacy, .NET Framework 4.8 instead of Wine Mono. Its installer
-  fails inside a Proton prefix (1603). It installs with system Wine 9 into a
-  fresh prefix made with `WINEDLLOVERRIDES="mscoree,mshtml=" wineboot -i`, an
-  `mscoree=native` override, Windows version `winxp64` for
-  `dotNetFx40_Full_x86_x64.exe /q` and then `win7` for
-  `ndp48-x86-x64-allos-enu.exe /q`. Proton adopts that prefix as `pfx/` of a
-  compat data folder without reinstalling Mono.
-
-A display is needed even for console programs: run a headless Weston with
-Xwayland (`weston --backend=headless --renderer=noop --xwayland`) and pass
-its X display with `--display`. `STEAM_COMPAT_PROTON` stays out of the
-environment, or Magnetar reports `Platform: Proton` and stops (SE1-0186).
-Signals don't apply to Windows, so those cases only run on Linux.
+the others down. Set the prefixes up as "Running under Proton or Wine" in
+`Docs/Usage.md` describes: a runtime for the launcher, the VC++ registry key
+and a display. Run a headless Weston with Xwayland and pass its X display with
+`--display`. `STEAM_COMPAT_PROTON` stays out of the environment unless
+`--steam-compat-proton` is given; Magnetar reports `Platform: Proton` either
+way. Signals don't apply to Windows, so those cases only run on Linux.
