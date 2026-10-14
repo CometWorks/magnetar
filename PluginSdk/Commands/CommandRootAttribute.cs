@@ -10,10 +10,12 @@ namespace PluginSdk.Commands
     /// <c>!ess save</c>.
     ///
     /// <para>
-    /// The bare <c>!{prefix}</c> shows an overview of the root's commands and
-    /// <c>!{prefix} help [command]</c> shows usage, both filtered by the
-    /// caller's permission level. These are generated automatically and need
-    /// no handler.
+    /// The bare <c>!{prefix}</c> runs the root's default command
+    /// (<c>[Command("")]</c>) when it has one the caller may use, and
+    /// otherwise shows an overview of the root's commands;
+    /// <c>!{prefix} help [command]</c> shows usage. Both are filtered by the
+    /// caller's permission level, are generated automatically and need no
+    /// handler.
     /// </para>
     /// <para>
     /// Several modules — even from different plugins — may share one prefix;

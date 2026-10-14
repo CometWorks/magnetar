@@ -163,7 +163,9 @@ class Server:
                 "<Enabled>true</Enabled></LocalPlugin>"
             )
             essentials_hub = ""
-            essentials_dev = f"<LocalFolderConfig><Id>{ESSENTIALS_ID}</Id><DebugBuild>false</DebugBuild></LocalFolderConfig>"
+            essentials_dev = (
+                f"<LocalFolderConfig><Id>{ESSENTIALS_ID}</Id><DebugBuild>false</DebugBuild></LocalFolderConfig>"
+            )
         sources = self.config / "Sources" / "sources.xml"
         local = f"<LocalPluginSources>{local}</LocalPluginSources>"
         text = re.sub(

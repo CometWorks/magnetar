@@ -72,7 +72,8 @@ namespace PluginSdk.Commands
             if (rest.Count == 0)
             {
                 // A bare '!prefix' runs the root's default command when it has
-                // one the caller may use; otherwise it prints the overview.
+                // one the caller may use; otherwise it prints the overview (for a
+                // root with only a default, the permission reply).
                 if (root.Default != null && root.Default.IsVisibleTo(caller.PromoteLevel))
                     ExecuteCommand(root, root.Default, rest, caller, responder);
                 else
