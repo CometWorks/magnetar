@@ -27,7 +27,10 @@ it again as the first argument.
   stderr and terminal stay the same, which suits systemd and tmux. The pid
   file is written again and a new `info.log` starts.
 - **Windows (both launchers).** Magnetar starts a new process and the old one
-  exits with code 0. The new process has a new PID. MagnetarLegacy starts it
+  exits with code 0. The new process has a new PID. It waits for the old one
+  to be gone before it starts up (60 s at most), because the old process keeps
+  the patched game assemblies in `<config>\Preloader` open while it exits, and
+  the new one's preloader writes them again. MagnetarLegacy starts it
   without passing on its handles: on .NET Framework the dedicated server's game
   socket is inheritable, and a new server holding the old one's socket can't
   bind the game port.
