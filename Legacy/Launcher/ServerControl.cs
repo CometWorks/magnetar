@@ -41,6 +41,10 @@ internal static class ServerControl
 {
     private static readonly TimeSpan SaveTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan PreviousProcessTimeout = TimeSpan.FromSeconds(60);
+
+    // Set by a Windows restart for the new process: the PID of the old one.
+    private const string RestartWaitPidVariable = "MAGNETAR_RESTART_WAIT_PID";
 
     // Faithful reproduction of the original launch, captured at the very top of
     // Main before the launcher mutates the working directory and environment.
@@ -56,6 +60,9 @@ internal static class ServerControl
     private static PosixSignalRegistration sigHup;
 #endif
 
+    // Rooted so the GC does not collect the delegate native code calls.
+    private static ConsoleCtrlHandler consoleCtrlHandler;
+
     private static volatile bool terminating;
     private static readonly object terminateLock = new object();
 
@@ -64,6 +71,25 @@ internal static class ServerControl
 
     [DllImport("libc", SetLastError = true)]
     private static extern int execve(string path, string[] argv, string[] envp);
+
+    private const int Synchronize = 0x100000;
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr OpenProcess(int access, bool inheritHandle, int processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern int WaitForSingleObject(IntPtr handle, int milliseconds);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
+
+    private const int CtrlCloseEvent = 2;
+    private const int CtrlShutdownEvent = 6;
+
+    private delegate bool ConsoleCtrlHandler(int ctrlType);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandler handler, bool add);
 
     /// <summary>
     /// Records the original command line, working directory and environment so
@@ -78,15 +104,39 @@ internal static class ServerControl
         var list = new List<string>();
         if (env != null)
             foreach (DictionaryEntry e in env)
-                list.Add($"{e.Key}={e.Value}");
+                if ((string)e.Key != RestartWaitPidVariable)
+                    list.Add($"{e.Key}={e.Value}");
         originalEnv = list.ToArray();
     }
 
     /// <summary>
-    /// Binds the plugin SDK facade and, on .NET (Core), installs the POSIX
-    /// signal handlers. Safe to call before a session exists — the handlers
-    /// tolerate a null <see cref="MySession.Static"/>. The .NET Framework
-    /// (Legacy) build has no POSIX signals, so it only binds the facade.
+    /// After a Windows restart, waits for the old process to be gone. It may
+    /// still be exiting and holding the patched game assemblies, which the
+    /// preloader rewrites on startup. Call at the top of <c>Main</c>.
+    /// </summary>
+    public static void WaitForPreviousProcess()
+    {
+        string pid = Environment.GetEnvironmentVariable(RestartWaitPidVariable);
+        if (pid == null)
+            return;
+
+        Environment.SetEnvironmentVariable(RestartWaitPidVariable, null);
+
+        // Not Process.GetProcessById: it treats a process as gone once its exit
+        // code is set, while the DS's native teardown still runs.
+        IntPtr previous = OpenProcess(Synchronize, false, int.Parse(pid));
+        if (previous == IntPtr.Zero)
+            return;
+        WaitForSingleObject(previous, (int)PreviousProcessTimeout.TotalMilliseconds);
+        CloseHandle(previous);
+    }
+
+    /// <summary>
+    /// Binds the plugin SDK facade, installs the POSIX signal handlers on .NET
+    /// (Core) and the console close and shutdown handler on Windows. Safe to
+    /// call before a session exists — the handlers tolerate a null
+    /// <see cref="MySession.Static"/>. The .NET Framework (Legacy) build has no
+    /// POSIX signals.
     /// </summary>
     public static void InstallSignalHandlers()
     {
@@ -106,6 +156,33 @@ internal static class ServerControl
         if (OperatingSystem.IsLinux())
             sigHup = PosixSignalRegistration.Create(PosixSignal.SIGHUP, OnReload);
 #endif
+
+        // Registered after SIGTERM, which .NET maps to the shutdown event on
+        // Windows, because Windows calls the last registered handler first.
+        if (!IsLinux)
+        {
+            consoleCtrlHandler = OnConsoleCtrl;
+            SetConsoleCtrlHandler(consoleCtrlHandler, true);
+        }
+    }
+
+    // Windows ends the process when the handler returns after the console
+    // window was closed or Windows is shutting down, or when its time runs
+    // out (5 s for a closed window). So save and quit, and hold the handler
+    // until that exits the process. The logoff event is left alone: a server
+    // running as a service gets it whenever any user logs off.
+    private static bool OnConsoleCtrl(int ctrlType)
+    {
+        // Ctrl+C and Ctrl+Break go on to the dedicated server's own handler.
+        if (ctrlType != CtrlCloseEvent && ctrlType != CtrlShutdownEvent)
+            return false;
+
+        LogFile.WriteLine(ctrlType == CtrlCloseEvent
+            ? "Console window closed: saving world and quitting"
+            : "Windows is shutting down: saving world and quitting");
+        Task.Run(SaveAndQuit);
+        Thread.Sleep(Timeout.Infinite);
+        return true;
     }
 
 #if NETCOREAPP
@@ -457,6 +534,11 @@ internal static class ServerControl
             return;
         }
 
+        // The new process starts while this one is still exiting.
+        originalEnv = originalEnv
+            .Append($"{RestartWaitPidVariable}={Process.GetCurrentProcess().Id}")
+            .ToArray();
+
         try
         {
 #if NETCOREAPP
@@ -530,9 +612,6 @@ internal static class ServerControl
         IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, int creationFlags,
         string environment, string currentDirectory, ref StartupInfo startupInfo,
         out ProcessInformation processInformation);
-
-    [DllImport("kernel32.dll")]
-    private static extern bool CloseHandle(IntPtr handle);
 
     // .NET Framework creates sockets inheritable, and Process.Start passes every
     // inheritable handle to the child. The new server then holds the old one's

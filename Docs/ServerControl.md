@@ -27,7 +27,10 @@ it again as the first argument.
   stderr and terminal stay the same, which suits systemd and tmux. The pid
   file is written again and a new `info.log` starts.
 - **Windows (both launchers).** Magnetar starts a new process and the old one
-  exits with code 0. The new process has a new PID. MagnetarLegacy starts it
+  exits with code 0. The new process has a new PID. It waits for the old one
+  to be gone before it starts up (60 s at most), because the old process keeps
+  the patched game assemblies in `<config>\Preloader` open while it exits, and
+  the new one's preloader writes them again. MagnetarLegacy starts it
   without passing on its handles: on .NET Framework the dedicated server's game
   socket is inheritable, and a new server holding the old one's socket can't
   bind the game port.
@@ -77,13 +80,26 @@ lifecycle provider such as a cluster handles it when one is registered.
 | `QuitWithoutSaving` from a plugin | Exits 0 without saving *(tested)* | Quasar.Agent tells Quasar to keep the server off *(tested)* | Exits 0 without saving *(tested)* |
 | SIGTERM, SIGINT (`SaveAndQuit`) | Exits 0 *(tested)* | Quasar sends no signals; one from outside exits 0 and Quasar starts it again *(tested)* | n/a |
 | Ctrl+C in the console | Same as SIGINT | Same as SIGINT | Saves and exits 0, through the dedicated server's own exit |
-| Closing the console window | n/a | n/a | Nothing handles it: Windows ends the process without a save |
+| Closing the console window, Windows shutting down (`SaveAndQuit`) | n/a | n/a | Saves and exits 0, if that fits in the 5 s Windows allows, see below *(tested in a conhost window)* |
 | The dedicated server's own exit (`MySandboxGame.ExitThreadSafe`) other than its timed auto-restart, such as its stop for Keen's auto-update | Saves and exits 0 *(tested)* | Exits 0, and Quasar starts it again as crash recovery *(tested)* | Saves and exits 0 *(tested)* |
 
 A second stop or restart while one is under way is ignored: the first one
 wins, also against a signal *(tested)*. A stop or restart while the game thread
 hangs waits for it, then saves *(tested)*. SIGTERM while the world is still
 loading saves once the load is done, then exits 0 *(tested)*.
+
+Windows ends a console program 5 s after its window is closed, and there is
+no way to ask for more. Magnetar saves first, then disposes the plugins and
+exits. A world with a 141 MB `SANDBOX_0_0_0_.sbs` took 3.3 s to save with
+MagnetarInterim and 4.4 s with MagnetarLegacy, which Windows then ended at
+the 5 s mark with the save already on disk. A bigger world may not make it. A
+save cut short while it writes leaves the previous save in place, because the
+dedicated server writes the files into the world's `.new` folder first. Only
+the last step, copying them over the old files one by one, can leave a mix of
+old and new files when it is cut off. Stop a server with a big world some other
+way. The same handler runs when Windows shuts down *(not tested)*. Logging off
+isn't handled: a server running as a service gets that event whenever any user
+logs off. Windows ends the process without a save then.
 
 `SIGHUP` on Linux saves the world and reloads the dedicated server config
 without stopping.
