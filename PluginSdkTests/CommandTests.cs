@@ -423,6 +423,26 @@ namespace PluginSdk.Tests
             Assert.Equal("Usage: !admdelay [seconds]", r.Replies[0].Text);
         }
 
+        [Theory]
+        [InlineData("!admdelay")]
+        [InlineData("!admdelay help")]
+        [InlineData("!help admdelay")]
+        public void Handle_RootWithOnlyADefault_AboveCallerLevel_IsDenied(string line)
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle(line, Caller(MyPromoteLevel.None), r);
+            Assert.Single(r.Replies);
+            Assert.Equal("You do not have permission to use that command.", r.LastText);
+        }
+
+        [Fact]
+        public void GlobalHelp_RootWithOnlyADefault_ShowsItsUsage()
+        {
+            var d = BuildDispatcherFor(typeof(AdminDefaultWithArgCommands), out var r);
+            d.Handle("!help admdelay", Caller(MyPromoteLevel.Admin), r);
+            Assert.Equal("Usage: !admdelay [seconds]", r.Replies[0].Text);
+        }
+
         [Fact]
         public void Handle_Help_RootWithDefaultAndSubcommands_ShowsOverview()
         {
@@ -439,16 +459,16 @@ namespace PluginSdk.Tests
         }
 
         [Fact]
-        public void Handle_BarePrefix_DefaultAboveCallerLevel_ShowsOverview()
+        public void Handle_BarePrefix_DefaultAboveCallerLevel_IsDenied()
         {
-            // The default needs Admin; a non-admin bare call falls back to the
-            // overview instead of running it.
+            // The default needs Admin and the root has nothing else, so a
+            // non-admin bare call gets "no permission", not an empty overview.
             var d = BuildDispatcherFor(typeof(AdminDefaultCommands), out var r);
             d.Handle("!adm", Caller(MyPromoteLevel.None), r);
 
-            string all = string.Join("\n", r.Texts);
-            Assert.DoesNotContain("admin-default-ran", all);
-            Assert.Contains("Admin Default Plugin", all);
+            Assert.Single(r.Replies);
+            Assert.Equal("Admin Default Plugin", r.Replies[0].Author);
+            Assert.Contains("permission", r.LastText);
         }
 
         [Fact]

@@ -131,7 +131,9 @@ and `!restart 30`. Subcommand names win over arguments. The default only takes
 as many words as it has parameters (any number with a trailing `params`
 array); with more, the caller gets "Unknown command", so `!stop typo` does
 not run a parameterless `!stop`. A root without a default shows its overview
-for a bare `!prefix`.
+for a bare `!prefix`. A root with nothing but a default has no overview:
+`!prefix help` and `!help prefix` show the default's usage, and a caller below
+its level gets the "no permission" reply for those and for a bare `!prefix`.
 
 ## Arguments
 
