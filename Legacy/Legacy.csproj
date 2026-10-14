@@ -26,13 +26,19 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <AssemblyName>MagnetarLegacy</AssemblyName>
-    <!-- Binding redirects are deliberately off (above): Magnetar is the host
-         process itself — it loads the Space Engineers DS assemblies and runs the
-         server inside its own process, so this app's config governs assembly
-         resolution for the game. Auto-generated redirects to newer transitive
-         versions (Roslyn, System.*) would then shadow the versions the game
-         expects and could break it. The resulting MSB3276 conflict warning is
-         therefore expected noise here. -->
+    <!-- Auto-generated binding redirects are deliberately off (above): Magnetar
+         is the host process itself — it loads the Space Engineers DS assemblies
+         and runs the server inside its own process, so this app's config governs
+         assembly resolution for the game. Auto-generated redirects to newer
+         transitive versions (Roslyn, System.*) would then shadow the versions the
+         game expects and could break it. app.config redirects by hand only the
+         System.* assemblies the game also ships, the way
+         SpaceEngineersDedicated.exe.config does, but to the versions in
+         Libraries (System.ValueTuple, not staged, stays at the game's). Without
+         them the game and the plugins load a second copy of System.Memory and
+         friends, and Span-based APIs fail with MissingMethodException. Keep the
+         versions in step with Libraries. The resulting MSB3276 conflict warning
+         is therefore expected noise here. -->
     <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3276</MSBuildWarningsAsMessages>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>

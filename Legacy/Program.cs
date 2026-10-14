@@ -68,10 +68,11 @@ static class Program
     {
 #else
 
-        // .NET Framework binds strong-named references by exact version, and there
-        // are no binding redirects (see Legacy.csproj). PluginSdk and its packages
-        // reference older System.Text.Json, System.Memory and so on than the ones
-        // shipped in Libraries, so resolve those from Libraries by name.
+        // .NET Framework binds strong-named references by exact version, and
+        // app.config redirects only the System.* assemblies the game shares (see
+        // Legacy.csproj). PluginSdk and its packages may reference other older
+        // versions than the ones shipped in Libraries, so resolve those from
+        // Libraries by name.
         string libraryDir = Path.Combine(
             Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
             "Libraries",
@@ -527,8 +528,8 @@ static class Program
         string ds64Dir = ConfigManager.Instance.GameDir;
         AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([ds64Dir]);
 #if NETFRAMEWORK
-        // Let the game's own copies win from here on, so Libraries never shadows
-        // the System.* versions the DS assemblies bind against (see Legacy.csproj).
+        // Let the game's own copies win from here on, so Libraries doesn't shadow
+        // the DS assemblies that app.config leaves unredirected (see Legacy.csproj).
         AppDomain.CurrentDomain.AssemblyResolve -= libraryResolver;
         AppDomain.CurrentDomain.AssemblyResolve += libraryResolver;
 #endif
