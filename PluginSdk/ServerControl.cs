@@ -40,8 +40,11 @@ namespace PluginSdk
     /// </summary>
     public enum ServerTerminationKind
     {
-        /// <summary>An admin asked the server to stop and stay down, via the
-        /// in-game <c>!quit</c> / <c>!stop</c> command.</summary>
+        /// <summary>Someone asked the server to stop and stay down: the
+        /// <c>!quit</c> / <c>!stop</c> commands, a plugin's
+        /// <see cref="ServerControl.SaveAndQuit"/> or
+        /// <see cref="ServerControl.QuitWithoutSaving"/>, or the dedicated
+        /// server's own exit (its <c>/stop</c>, the Remote API stop).</summary>
         Shutdown,
 
         /// <summary>The server is restarting and will come back up
@@ -59,12 +62,13 @@ namespace PluginSdk
         private static Action restartWithoutSaving = () => { };
 
         /// <summary>
-        /// Raised once when an admin drives the server's lifecycle from in-game —
-        /// the <c>!quit</c>/<c>!stop</c> and <c>!restart</c> commands — carrying
+        /// Raised once when the server stops or restarts on request — chat
+        /// commands, plugin calls, the dedicated server's own exit — carrying
         /// the intent (<see cref="ServerTerminationKind.Shutdown"/> vs
         /// <see cref="ServerTerminationKind.Restart"/>). It does NOT fire for OS
-        /// signals (SIGTERM/SIGINT) or SE's internal exit path, which are not
-        /// admin lifecycle intents. It fires on the thread performing the
+        /// signals (SIGTERM/SIGINT): they come from outside, mostly from a host
+        /// shutting down, and a supervisor should start the server again
+        /// afterwards. It fires on the thread performing the
         /// termination, while plugins are still loaded and the session is intact,
         /// and before any save or plugin disposal — so a handler may run a short
         /// blocking task (e.g. flush a network message) to convey the intent
@@ -127,6 +131,24 @@ namespace PluginSdk
             }
 
             _ = ObserveClusterAcknowledgement(acknowledgement);
+        }
+
+        /// <summary>Host-only: asks a registered lifecycle provider to save and
+        /// restart the server, for a stop the host would otherwise make on its
+        /// own. Returns <c>false</c> without asking when no provider is
+        /// registered or the process is a cluster node.</summary>
+        internal static bool TryRequestRestart(string reason)
+        {
+            if (PluginCluster.IsClusterProcess)
+                return false;
+
+            var request = new ClusterLifecycleRequest(Guid.NewGuid(), ServerTerminationKind.Restart,
+                ClusterLifecycleOrigin.Plugin, saveFirst: true, reason: reason);
+            if (!ClusterLifecycle.TryRequest(request, out Task<ClusterLifecycleAcknowledgement> acknowledgement))
+                return false;
+
+            _ = ObserveClusterAcknowledgement(acknowledgement);
+            return true;
         }
 
         private static async Task ObserveClusterAcknowledgement(
