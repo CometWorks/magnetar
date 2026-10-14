@@ -49,6 +49,7 @@ static class Program
             Environment.CurrentDirectory,
             Environment.GetEnvironmentVariables()
         );
+        ServerControl.WaitForPreviousProcess();
 
 #if NETCOREAPP
 

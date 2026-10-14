@@ -41,6 +41,10 @@ internal static class ServerControl
 {
     private static readonly TimeSpan SaveTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan PreviousProcessTimeout = TimeSpan.FromSeconds(60);
+
+    // Set by a Windows restart for the new process: the PID of the old one.
+    private const string RestartWaitPidVariable = "MAGNETAR_RESTART_WAIT_PID";
 
     // Faithful reproduction of the original launch, captured at the very top of
     // Main before the launcher mutates the working directory and environment.
@@ -65,6 +69,17 @@ internal static class ServerControl
     [DllImport("libc", SetLastError = true)]
     private static extern int execve(string path, string[] argv, string[] envp);
 
+    private const int Synchronize = 0x100000;
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr OpenProcess(int access, bool inheritHandle, int processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern int WaitForSingleObject(IntPtr handle, int milliseconds);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
+
     /// <summary>
     /// Records the original command line, working directory and environment so
     /// a restart can reproduce the launch exactly. Call once at the top of
@@ -78,8 +93,31 @@ internal static class ServerControl
         var list = new List<string>();
         if (env != null)
             foreach (DictionaryEntry e in env)
-                list.Add($"{e.Key}={e.Value}");
+                if ((string)e.Key != RestartWaitPidVariable)
+                    list.Add($"{e.Key}={e.Value}");
         originalEnv = list.ToArray();
+    }
+
+    /// <summary>
+    /// After a Windows restart, waits for the old process to be gone. It may
+    /// still be exiting and holding the patched game assemblies, which the
+    /// preloader rewrites on startup. Call at the top of <c>Main</c>.
+    /// </summary>
+    public static void WaitForPreviousProcess()
+    {
+        string pid = Environment.GetEnvironmentVariable(RestartWaitPidVariable);
+        if (pid == null)
+            return;
+
+        Environment.SetEnvironmentVariable(RestartWaitPidVariable, null);
+
+        // Not Process.GetProcessById: it treats a process as gone once its exit
+        // code is set, while the DS's native teardown still runs.
+        IntPtr previous = OpenProcess(Synchronize, false, int.Parse(pid));
+        if (previous == IntPtr.Zero)
+            return;
+        WaitForSingleObject(previous, (int)PreviousProcessTimeout.TotalMilliseconds);
+        CloseHandle(previous);
     }
 
     /// <summary>
@@ -457,6 +495,11 @@ internal static class ServerControl
             return;
         }
 
+        // The new process starts while this one is still exiting.
+        originalEnv = originalEnv
+            .Append($"{RestartWaitPidVariable}={Process.GetCurrentProcess().Id}")
+            .ToArray();
+
         try
         {
 #if NETCOREAPP
@@ -530,9 +573,6 @@ internal static class ServerControl
         IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, int creationFlags,
         string environment, string currentDirectory, ref StartupInfo startupInfo,
         out ProcessInformation processInformation);
-
-    [DllImport("kernel32.dll")]
-    private static extern bool CloseHandle(IntPtr handle);
 
     // .NET Framework creates sockets inheritable, and Process.Start passes every
     // inheritable handle to the child. The new server then holds the old one's
