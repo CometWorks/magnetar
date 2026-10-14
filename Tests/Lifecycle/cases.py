@@ -144,7 +144,7 @@ def _running():
             [READY, ("probe", "chat !ess stop")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
         ),
         Case(
             "run-stop-ess-auto",
@@ -153,7 +153,7 @@ def _running():
             [READY],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
             essentials="stop",
         ),
         Case(
@@ -163,7 +163,7 @@ def _running():
             [READY, ("probe", "worker sdk SaveAndQuit")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
         ),
         Case(
             "run-quit-sdk",
@@ -181,7 +181,17 @@ def _running():
             [READY, ("probe", "exit")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
+        ),
+        Case(
+            "run-update-ds",
+            "running",
+            "DS's own stop for Keen's auto-update",
+            [READY, ("probe", "update")],
+            exit=0,
+            saved=True,
+            terminating=["Shutdown"],
+            notes="Without a lifecycle provider it exits, so an updater can run",
         ),
         Case(
             "run-sigterm",
@@ -409,7 +419,7 @@ def _stopping():
             [READY, *STOPPING, ("probe", "worker sdk SaveAndRestart")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
         ),
         Case(
             "stop-sigterm",

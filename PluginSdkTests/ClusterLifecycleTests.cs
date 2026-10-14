@@ -75,6 +75,45 @@ namespace PluginSdk.Tests
             Assert.Null(pending);
         }
 
+        [Fact]
+        public void Host_restart_request_goes_to_a_registered_provider()
+        {
+            var provider = new RecordingProvider();
+            Assert.False(ServerControl.TryRequestRestart("Dedicated server update"));
+
+            Assert.True(ClusterLifecycle.Register(provider));
+            try
+            {
+                Assert.True(ServerControl.TryRequestRestart("Dedicated server update"));
+                ClusterLifecycleRequest request = Assert.Single(provider.Requests);
+                AssertRequest(request, ServerTerminationKind.Restart, true);
+                Assert.Equal("Dedicated server update", request.Reason);
+            }
+            finally
+            {
+                Assert.True(ClusterLifecycle.Unregister(provider));
+            }
+        }
+
+        [Fact]
+        public void Host_restart_request_is_not_made_on_a_cluster_node()
+        {
+            var provider = new RecordingProvider();
+            string previous = Environment.GetEnvironmentVariable("CLUSTER_NODE_ID");
+            Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", "node-1");
+            Assert.True(ClusterLifecycle.Register(provider));
+            try
+            {
+                Assert.False(ServerControl.TryRequestRestart("Dedicated server update"));
+                Assert.Empty(provider.Requests);
+            }
+            finally
+            {
+                Assert.True(ClusterLifecycle.Unregister(provider));
+                Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous);
+            }
+        }
+
         private static void AssertRequest(ClusterLifecycleRequest request,
             ServerTerminationKind kind, bool saveFirst)
         {

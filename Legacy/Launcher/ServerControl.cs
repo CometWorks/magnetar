@@ -180,7 +180,9 @@ internal static class ServerControl
         LogFile.WriteLine(ctrlType == CtrlCloseEvent
             ? "Console window closed: saving world and quitting"
             : "Windows is shutting down: saving world and quitting");
-        Task.Run(SaveAndQuit);
+        // Closing the window asks for a stop; a shutdown is the host going
+        // down, which, like a signal, a supervisor should recover from.
+        Task.Run(() => SaveAndQuit(requested: ctrlType == CtrlCloseEvent));
         Thread.Sleep(Timeout.Infinite);
         return true;
     }
@@ -191,8 +193,7 @@ internal static class ServerControl
         // Cancel the default disposition (process termination) so the save can
         // finish, and keep the signal-dispatch thread fast by handing off.
         context.Cancel = true;
-        LogFile.WriteLine($"Received {context.Signal}: saving world and quitting");
-        Task.Run(SaveAndQuit);
+        QuitOnSignal(context.Signal.ToString());
     }
 
     private static void OnReload(PosixSignalContext context)
@@ -353,15 +354,27 @@ internal static class ServerControl
         return ok;
     }
 
+    /// <summary>Saves the world, then quits with exit code 0, for a signal:
+    /// on a worker thread and without Terminating.</summary>
+    public static void QuitOnSignal(string signal)
+    {
+        LogFile.WriteLine($"Received {signal}: saving world and quitting");
+        Task.Run(() => SaveAndQuit(requested: false));
+    }
+
     /// <summary>Saves the world, then quits with exit code 0.</summary>
-    public static void SaveAndQuit()
+    public static void SaveAndQuit() => SaveAndQuit(requested: true);
+
+    // A signal comes from outside the server, under a supervisor mostly
+    // because the host shuts down, so it raises no Terminating: a supervisor
+    // that keeps a server off after a requested stop must start it again.
+    private static void SaveAndQuit(bool requested)
     {
         if (!BeginTerminate())
             return;
 
-        // Deliberately does NOT raise Terminating: this backs SIGTERM/SIGINT and
-        // SE's internal ExitThreadSafe path, neither of which is an admin stop
-        // intent. Only the in-game !quit/!stop command (QuitWithoutSaving) does.
+        if (requested)
+            PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Shutdown);
         LogFile.WriteLine("Saving world before shutdown");
         SaveWorld();
         DisposePlugins();
