@@ -48,6 +48,12 @@ namespace PluginSdk.Commands
 
         public bool IsVisibleTo(MyPromoteLevel level) => level >= MinPromoteLevel;
 
+        /// <summary>True when the handler has a parameter for each of
+        /// <paramref name="count"/> arguments, or a <c>params</c> array.</summary>
+        public bool CanTake(int count)
+            => count <= Parameters.Length
+               || (Parameters.Length > 0 && ArgumentBinder.IsParamsArray(Parameters[Parameters.Length - 1]));
+
         public object Invoke(CommandContext context, object[] values)
         {
             var module = (CommandModule)Activator.CreateInstance(ModuleType);

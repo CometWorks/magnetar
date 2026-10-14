@@ -122,6 +122,17 @@ sub-namespace automatically. `!ess grid list` resolves the deepest matching
 path; remaining words become arguments. Intermediate words with no handler of
 their own simply act as grouping.
 
+## Default command
+
+`[Command("")]` is the root's default command. A bare `!prefix` runs it, and
+so does `!prefix <args>` when the first word names no subcommand, so a module
+rooted at `restart` with `Restart(int seconds = 10)` answers both `!restart`
+and `!restart 30`. Subcommand names win over arguments. The default only takes
+as many words as it has parameters (any number with a trailing `params`
+array); with more, the caller gets "Unknown command", so `!stop typo` does
+not run a parameterless `!stop`. A root without a default shows its overview
+for a bare `!prefix`.
+
 ## Arguments
 
 Handler parameters are bound positionally from the words after the command
