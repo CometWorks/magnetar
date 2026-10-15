@@ -250,7 +250,9 @@ it), and mark removed API there with `*REMOVED*`.
 [Build/check-plugin-sdk-contract.py](../Build/check-plugin-sdk-contract.py)
 compares the API files with the latest release tag and fails when the contract
 didn't move with them: added lines need a higher minor, removed or changed lines
-a higher major. Run it locally with the release tags fetched. Signature-preserving
+a higher major. Run it locally with the release tags fetched. The release workflow's
+`plugin-sdk` job builds PluginSdk and runs this check on every pull request and push,
+also when no release is built. Signature-preserving
 behavior changes are not detected; the PR author and the reviewer decide those,
 as they decide Magnetar version bumps.
 
