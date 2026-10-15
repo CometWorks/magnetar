@@ -46,7 +46,7 @@ folder survives updates.
 runtime libraries arrive through the linux-compat plugin on first launch, so
 the host also needs outbound HTTPS to GitHub at that point.
 
-On Linux, Magnetar checks a few per-user system limits at startup and logs a
+On Linux, Magnetar checks a few system limits at startup and logs a
 warning for each one below what a busy host needs: open files (65536),
 processes and threads (16384), inotify instances (1024) and inotify watches
 (524288). The warning names the `limits.conf`, systemd or `sysctl` line that
