@@ -61,6 +61,21 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # PluginSdkContract must move with the public PluginSdk API (Docs/Build.md,
+  # "PluginSdk contract version"). Runs on every trigger, building or not.
+  # ---------------------------------------------------------------------------
+  plugin-sdk-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The check compares with the latest release tag.
+          fetch-depth: 0
+
+      - name: Check PluginSdkContract against the public API files
+        run: python3 Build/check-plugin-sdk-contract.py
+
+  # ---------------------------------------------------------------------------
   # Gate: decide whether to build, what tag to use, and draft vs latest.
   # ---------------------------------------------------------------------------
   version-check:
@@ -476,7 +491,7 @@ jobs:
   # Release: attach both bundles to a GitHub release.
   # ---------------------------------------------------------------------------
   release:
-    needs: [version-check, build-linux, build-windows]
+    needs: [version-check, plugin-sdk-contract, build-linux, build-windows]
     if: needs.version-check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:

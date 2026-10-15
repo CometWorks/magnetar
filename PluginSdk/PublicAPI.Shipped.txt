@@ -1,0 +1,885 @@
+abstract PluginSdk.Config.LayoutContainerAttribute.Kind.get -> string
+abstract PluginSdk.Stats.StatAttribute.Kind.get -> string
+const PluginSdk.Clustering.PluginGridHandover.MaxStateBytes = 16384 -> int
+const PluginSdk.Clustering.PluginRecordStore.MaxPayload = 65536 -> int
+const PluginSdk.Clustering.PluginRecordStore.MaxPluginBytes = 1048576 -> int
+const PluginSdk.Clustering.PluginRecordStore.MaxPluginRecords = 512 -> int
+const PluginSdk.Clustering.PluginRecordStore.MaxPluginReplayBytes = 262144 -> int
+const PluginSdk.Clustering.PluginRecordStore.MaxPluginReplays = 32 -> int
+const PluginSdk.Logging.LogEnvironment.QuasarEnvironmentVariable = "QUASAR_AGENT" -> string
+const PluginSdk.MissionScreens.ChannelId = 48731 -> ushort
+const PluginSdk.MissionScreens.ProtocolVersion = 1 -> byte
+const PluginSdk.MissionScreens.ShowMissionScreenPacket = 1 -> byte
+const PluginSdk.Storage.PluginStorage.SharedRootVariable = "CLUSTER_SHARED_ROOT" -> string
+override PluginSdk.Clustering.PluginClusterEvent.ToString() -> string
+override PluginSdk.Config.ColumnAttribute.Kind.get -> string
+override PluginSdk.Config.SectionAttribute.Kind.get -> string
+override PluginSdk.Config.TabAttribute.Kind.get -> string
+override PluginSdk.Stats.CounterAttribute.Kind.get -> string
+override PluginSdk.Stats.DiscreteAttribute.Kind.get -> string
+override PluginSdk.Stats.GaugeAttribute.Kind.get -> string
+PluginSdk.Clustering.ClusterLifecycle
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.ClusterLifecycleAcknowledgement(System.Guid requestId, PluginSdk.Clustering.ClusterLifecycleDisposition disposition, System.Guid operationId, string reasonCode, string message, string nodeState = "") -> void
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.Disposition.get -> PluginSdk.Clustering.ClusterLifecycleDisposition
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.Message.get -> string
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.NodeState.get -> string
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.OperationId.get -> System.Guid
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.ReasonCode.get -> string
+PluginSdk.Clustering.ClusterLifecycleAcknowledgement.RequestId.get -> System.Guid
+PluginSdk.Clustering.ClusterLifecycleDisposition
+PluginSdk.Clustering.ClusterLifecycleDisposition.Accepted = 0 -> PluginSdk.Clustering.ClusterLifecycleDisposition
+PluginSdk.Clustering.ClusterLifecycleDisposition.AlreadyApplied = 2 -> PluginSdk.Clustering.ClusterLifecycleDisposition
+PluginSdk.Clustering.ClusterLifecycleDisposition.Rejected = 1 -> PluginSdk.Clustering.ClusterLifecycleDisposition
+PluginSdk.Clustering.ClusterLifecycleDisposition.Unavailable = 3 -> PluginSdk.Clustering.ClusterLifecycleDisposition
+PluginSdk.Clustering.ClusterLifecycleOrigin
+PluginSdk.Clustering.ClusterLifecycleOrigin.ChatCommand = 1 -> PluginSdk.Clustering.ClusterLifecycleOrigin
+PluginSdk.Clustering.ClusterLifecycleOrigin.Plugin = 0 -> PluginSdk.Clustering.ClusterLifecycleOrigin
+PluginSdk.Clustering.ClusterLifecycleRequest
+PluginSdk.Clustering.ClusterLifecycleRequest.CallerId.get -> ulong
+PluginSdk.Clustering.ClusterLifecycleRequest.ClusterLifecycleRequest(System.Guid requestId, PluginSdk.ServerTerminationKind kind, PluginSdk.Clustering.ClusterLifecycleOrigin origin, bool saveFirst, ulong callerId = 0, string reason = "") -> void
+PluginSdk.Clustering.ClusterLifecycleRequest.Kind.get -> PluginSdk.ServerTerminationKind
+PluginSdk.Clustering.ClusterLifecycleRequest.Origin.get -> PluginSdk.Clustering.ClusterLifecycleOrigin
+PluginSdk.Clustering.ClusterLifecycleRequest.Reason.get -> string
+PluginSdk.Clustering.ClusterLifecycleRequest.RequestId.get -> System.Guid
+PluginSdk.Clustering.ClusterLifecycleRequest.SaveFirst.get -> bool
+PluginSdk.Clustering.ClusterNodeLink
+PluginSdk.Clustering.IClusterLifecycleProvider
+PluginSdk.Clustering.IClusterLifecycleProvider.RequestAsync(PluginSdk.Clustering.ClusterLifecycleRequest request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.ClusterLifecycleAcknowledgement>
+PluginSdk.Clustering.IClusterNodeLink
+PluginSdk.Clustering.IClusterNodeLink.AttachValidator.get -> System.Func<ulong, byte[], bool>
+PluginSdk.Clustering.IClusterNodeLink.AttachValidator.set -> void
+PluginSdk.Clustering.IClusterNodeLink.ClientDetached -> System.Action<ulong>
+PluginSdk.Clustering.IClusterNodeLink.ConnectionChanged -> System.Action<bool>
+PluginSdk.Clustering.IClusterNodeLink.IsConnected.get -> bool
+PluginSdk.Clustering.IClusterNodeLink.LifecycleAcknowledged -> System.Action<PluginSdk.Clustering.ClusterLifecycleAcknowledgement>
+PluginSdk.Clustering.IClusterNodeLink.MessageReceived -> System.Action<byte[]>
+PluginSdk.Clustering.IClusterNodeLink.Send(byte[] payload) -> bool
+PluginSdk.Clustering.IClusterNodeLink.SendLifecycleRequest(PluginSdk.Clustering.ClusterLifecycleRequest request) -> bool
+PluginSdk.Clustering.IPluginClusterBroadcastProvider
+PluginSdk.Clustering.IPluginClusterBroadcastProvider.BroadcastAsync(string plugin, string topic, byte[] payload, System.Guid operationId, bool includeWorldAuthority, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginBroadcastResult>
+PluginSdk.Clustering.IPluginClusterClockProvider
+PluginSdk.Clustering.IPluginClusterClockProvider.Time() -> PluginSdk.Clustering.PluginClusterTime
+PluginSdk.Clustering.IPluginClusterEventProvider
+PluginSdk.Clustering.IPluginClusterEventProvider.ClusterEvent -> System.Action<PluginSdk.Clustering.PluginClusterEvent>
+PluginSdk.Clustering.IPluginClusterEventProvider.NodesAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<PluginSdk.Clustering.PluginNodeInfo>>
+PluginSdk.Clustering.IPluginClusterHandoverProvider
+PluginSdk.Clustering.IPluginClusterHandoverProvider.RegisterGridHandover(string plugin, PluginSdk.Clustering.IPluginGridHandover handler) -> System.IDisposable
+PluginSdk.Clustering.IPluginClusterProvider
+PluginSdk.Clustering.IPluginClusterProvider.Context.get -> PluginSdk.Clustering.NodeContext
+PluginSdk.Clustering.IPluginClusterProvider.ContextChanged -> System.Action
+PluginSdk.Clustering.IPluginClusterProvider.ExecuteAsync(PluginSdk.Clustering.PluginRequest request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.IPluginClusterProvider.RegisterHandler(string plugin, string topic, System.Func<PluginSdk.Clustering.PluginMessage, System.Threading.Tasks.Task<byte[]>> handler) -> System.IDisposable
+PluginSdk.Clustering.IPluginClusterProvider.RequestAsync(string plugin, PluginSdk.Clustering.PluginTarget target, string topic, byte[] payload, System.Guid operationId, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.IPluginClusterViewProvider
+PluginSdk.Clustering.IPluginClusterViewProvider.LocateEntity(long entityId) -> PluginSdk.Clustering.PluginEntityPlacement
+PluginSdk.Clustering.IPluginClusterViewProvider.OnlinePlayers() -> System.Collections.Generic.IReadOnlyList<PluginSdk.Clustering.PluginPlayerInfo>
+PluginSdk.Clustering.IPluginClusterViewProvider.PlayerPositions() -> System.Collections.Generic.IReadOnlyList<PluginSdk.Clustering.PluginPlayerPosition>
+PluginSdk.Clustering.IPluginGlobalCommandLedger
+PluginSdk.Clustering.IPluginGlobalCommandLedger.Execute(string plugin, string command, System.Guid operationId, byte[] payload, System.Func<byte[], byte[]> handler) -> PluginSdk.Clustering.PluginGlobalCommandResult
+PluginSdk.Clustering.IPluginGridHandover
+PluginSdk.Clustering.IPluginGridHandover.Arrived(long gridId, byte[] state) -> void
+PluginSdk.Clustering.IPluginGridHandover.Leaving(long gridId) -> byte[]
+PluginSdk.Clustering.IPluginGridHandover.Left(long gridId) -> void
+PluginSdk.Clustering.IPluginGridHandover.Stayed(long gridId) -> void
+PluginSdk.Clustering.NodeContext
+PluginSdk.Clustering.NodeContext.Available.get -> bool
+PluginSdk.Clustering.NodeContext.Available.set -> void
+PluginSdk.Clustering.NodeContext.ClusterId.get -> string
+PluginSdk.Clustering.NodeContext.ClusterId.set -> void
+PluginSdk.Clustering.NodeContext.Incarnation.get -> long
+PluginSdk.Clustering.NodeContext.Incarnation.set -> void
+PluginSdk.Clustering.NodeContext.Node.get -> string
+PluginSdk.Clustering.NodeContext.Node.set -> void
+PluginSdk.Clustering.NodeContext.NodeContext() -> void
+PluginSdk.Clustering.NodeContext.OwnedPartitions.get -> System.Collections.Generic.Dictionary<ulong, long>
+PluginSdk.Clustering.NodeContext.OwnedPartitions.set -> void
+PluginSdk.Clustering.NodeContext.Role.get -> string
+PluginSdk.Clustering.NodeContext.Role.set -> void
+PluginSdk.Clustering.NodeContext.WorldAuthorityGeneration.get -> long
+PluginSdk.Clustering.NodeContext.WorldAuthorityGeneration.set -> void
+PluginSdk.Clustering.OwnerFence
+PluginSdk.Clustering.OwnerFence.Generation.get -> long
+PluginSdk.Clustering.OwnerFence.Generation.set -> void
+PluginSdk.Clustering.OwnerFence.Incarnation.get -> long
+PluginSdk.Clustering.OwnerFence.Incarnation.set -> void
+PluginSdk.Clustering.OwnerFence.Node.get -> string
+PluginSdk.Clustering.OwnerFence.Node.set -> void
+PluginSdk.Clustering.OwnerFence.OwnerFence() -> void
+PluginSdk.Clustering.OwnerFence.StoreId.get -> System.Guid
+PluginSdk.Clustering.OwnerFence.StoreId.set -> void
+PluginSdk.Clustering.OwnerFence.Target.get -> PluginSdk.Clustering.PluginTarget
+PluginSdk.Clustering.OwnerFence.Target.set -> void
+PluginSdk.Clustering.PluginBroadcastResult
+PluginSdk.Clustering.PluginBroadcastResult.Code.get -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginBroadcastResult.Code.set -> void
+PluginSdk.Clustering.PluginBroadcastResult.Nodes.get -> System.Collections.Generic.IReadOnlyDictionary<string, PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.PluginBroadcastResult.Nodes.set -> void
+PluginSdk.Clustering.PluginBroadcastResult.PluginBroadcastResult() -> void
+PluginSdk.Clustering.PluginCluster
+PluginSdk.Clustering.PluginClusterClient
+PluginSdk.Clustering.PluginClusterClient.BroadcastAsync(string topic, byte[] payload, System.Guid operationId, System.TimeSpan timeout, bool includeWorldAuthority = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginBroadcastResult>
+PluginSdk.Clustering.PluginClusterClient.ClusterEvent -> System.Action<PluginSdk.Clustering.PluginClusterEvent>
+PluginSdk.Clustering.PluginClusterClient.CompareExchangeAsync(string key, PluginSdk.Clustering.RecordVersion expected, int schemaVersion, byte[] payload, System.Guid operationId, PluginSdk.Clustering.OwnerFence fence = null, bool deleted = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.PluginClusterClient.Context.get -> PluginSdk.Clustering.NodeContext
+PluginSdk.Clustering.PluginClusterClient.ContextChanged -> System.Action
+PluginSdk.Clustering.PluginClusterClient.ExecuteGlobalAsync(string command, byte[] payload, System.Guid operationId, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginGlobalCommandResult>
+PluginSdk.Clustering.PluginClusterClient.LocateEntity(long entityId) -> PluginSdk.Clustering.PluginEntityPlacement
+PluginSdk.Clustering.PluginClusterClient.NodesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<PluginSdk.Clustering.PluginNodeInfo>>
+PluginSdk.Clustering.PluginClusterClient.OnlinePlayers() -> System.Collections.Generic.IReadOnlyList<PluginSdk.Clustering.PluginPlayerInfo>
+PluginSdk.Clustering.PluginClusterClient.PlayerPositions() -> System.Collections.Generic.IReadOnlyList<PluginSdk.Clustering.PluginPlayerPosition>
+PluginSdk.Clustering.PluginClusterClient.PluginId.get -> string
+PluginSdk.Clustering.PluginClusterClient.ReadAsync(string key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.PluginClusterClient.RegisterGlobalCommand(string command, System.Func<byte[], byte[]> handler) -> System.IDisposable
+PluginSdk.Clustering.PluginClusterClient.RegisterGridHandover(PluginSdk.Clustering.IPluginGridHandover handler) -> System.IDisposable
+PluginSdk.Clustering.PluginClusterClient.RegisterHandler(string topic, System.Func<PluginSdk.Clustering.PluginMessage, System.Threading.Tasks.Task<byte[]>> handler) -> System.IDisposable
+PluginSdk.Clustering.PluginClusterClient.RequestAsync(PluginSdk.Clustering.PluginTarget target, string topic, byte[] payload, System.Guid operationId, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.PluginClusterClient.ResolveOwnerAsync(PluginSdk.Clustering.PluginTarget target, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.PluginClusterClient.Time() -> PluginSdk.Clustering.PluginClusterTime
+PluginSdk.Clustering.PluginClusterEvent
+PluginSdk.Clustering.PluginClusterEvent.Generation.get -> long
+PluginSdk.Clustering.PluginClusterEvent.Generation.set -> void
+PluginSdk.Clustering.PluginClusterEvent.Incarnation.get -> long
+PluginSdk.Clustering.PluginClusterEvent.Incarnation.set -> void
+PluginSdk.Clustering.PluginClusterEvent.Kind.get -> PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterEvent.Kind.set -> void
+PluginSdk.Clustering.PluginClusterEvent.Node.get -> string
+PluginSdk.Clustering.PluginClusterEvent.Node.set -> void
+PluginSdk.Clustering.PluginClusterEvent.Partition.get -> ulong
+PluginSdk.Clustering.PluginClusterEvent.Partition.set -> void
+PluginSdk.Clustering.PluginClusterEvent.PluginClusterEvent() -> void
+PluginSdk.Clustering.PluginClusterEvent.Role.get -> string
+PluginSdk.Clustering.PluginClusterEvent.Role.set -> void
+PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterEventKind.NodeDown = 1 -> PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterEventKind.NodeUp = 0 -> PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterEventKind.PartitionAcquired = 3 -> PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterEventKind.PartitionLost = 4 -> PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterEventKind.WorldAuthorityChanged = 2 -> PluginSdk.Clustering.PluginClusterEventKind
+PluginSdk.Clustering.PluginClusterTime
+PluginSdk.Clustering.PluginClusterTime.Authoritative.get -> bool
+PluginSdk.Clustering.PluginClusterTime.Authoritative.set -> void
+PluginSdk.Clustering.PluginClusterTime.ClockMilliseconds.get -> double
+PluginSdk.Clustering.PluginClusterTime.ClockMilliseconds.set -> void
+PluginSdk.Clustering.PluginClusterTime.GameDateTime.get -> System.DateTime
+PluginSdk.Clustering.PluginClusterTime.GameTime.get -> System.TimeSpan
+PluginSdk.Clustering.PluginClusterTime.GameTime.set -> void
+PluginSdk.Clustering.PluginClusterTime.PluginClusterTime() -> void
+PluginSdk.Clustering.PluginClusterTime.Synchronized.get -> bool
+PluginSdk.Clustering.PluginClusterTime.Synchronized.set -> void
+PluginSdk.Clustering.PluginEntityPlacement
+PluginSdk.Clustering.PluginEntityPlacement.EntityId.get -> long
+PluginSdk.Clustering.PluginEntityPlacement.EntityId.set -> void
+PluginSdk.Clustering.PluginEntityPlacement.Node.get -> string
+PluginSdk.Clustering.PluginEntityPlacement.Node.set -> void
+PluginSdk.Clustering.PluginEntityPlacement.Partition.get -> ulong
+PluginSdk.Clustering.PluginEntityPlacement.Partition.set -> void
+PluginSdk.Clustering.PluginEntityPlacement.PluginEntityPlacement() -> void
+PluginSdk.Clustering.PluginEntityPlacement.Residence.get -> PluginSdk.Clustering.PluginEntityResidence
+PluginSdk.Clustering.PluginEntityPlacement.Residence.set -> void
+PluginSdk.Clustering.PluginEntityResidence
+PluginSdk.Clustering.PluginEntityResidence.Absent = 0 -> PluginSdk.Clustering.PluginEntityResidence
+PluginSdk.Clustering.PluginEntityResidence.Frozen = 2 -> PluginSdk.Clustering.PluginEntityResidence
+PluginSdk.Clustering.PluginEntityResidence.Local = 1 -> PluginSdk.Clustering.PluginEntityResidence
+PluginSdk.Clustering.PluginEntityResidence.Unowned = 3 -> PluginSdk.Clustering.PluginEntityResidence
+PluginSdk.Clustering.PluginGlobalCommandResult
+PluginSdk.Clustering.PluginGlobalCommandResult.Code.get -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginGlobalCommandResult.Code.set -> void
+PluginSdk.Clustering.PluginGlobalCommandResult.Error.get -> string
+PluginSdk.Clustering.PluginGlobalCommandResult.Error.set -> void
+PluginSdk.Clustering.PluginGlobalCommandResult.Payload.get -> byte[]
+PluginSdk.Clustering.PluginGlobalCommandResult.Payload.set -> void
+PluginSdk.Clustering.PluginGlobalCommandResult.PluginGlobalCommandResult() -> void
+PluginSdk.Clustering.PluginGridHandover
+PluginSdk.Clustering.PluginHandlers
+PluginSdk.Clustering.PluginHandlers.Dispose() -> void
+PluginSdk.Clustering.PluginHandlers.Enqueue(PluginSdk.Clustering.PluginMessage message, System.Func<bool> stillValid) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.PluginHandlers.PluginHandlers() -> void
+PluginSdk.Clustering.PluginHandlers.Register(string plugin, string topic, System.Func<PluginSdk.Clustering.PluginMessage, System.Threading.Tasks.Task<byte[]>> handler) -> System.IDisposable
+PluginSdk.Clustering.PluginHandlers.Update() -> void
+PluginSdk.Clustering.PluginMessage
+PluginSdk.Clustering.PluginMessage.Code.get -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginMessage.Code.set -> void
+PluginSdk.Clustering.PluginMessage.Destination.get -> PluginSdk.Clustering.OwnerFence
+PluginSdk.Clustering.PluginMessage.Destination.set -> void
+PluginSdk.Clustering.PluginMessage.Id.get -> System.Guid
+PluginSdk.Clustering.PluginMessage.Id.set -> void
+PluginSdk.Clustering.PluginMessage.Incarnation.get -> long
+PluginSdk.Clustering.PluginMessage.Incarnation.set -> void
+PluginSdk.Clustering.PluginMessage.OperationId.get -> System.Guid
+PluginSdk.Clustering.PluginMessage.OperationId.set -> void
+PluginSdk.Clustering.PluginMessage.Payload.get -> byte[]
+PluginSdk.Clustering.PluginMessage.Payload.set -> void
+PluginSdk.Clustering.PluginMessage.Plugin.get -> string
+PluginSdk.Clustering.PluginMessage.Plugin.set -> void
+PluginSdk.Clustering.PluginMessage.PluginMessage() -> void
+PluginSdk.Clustering.PluginMessage.Protocol.get -> int
+PluginSdk.Clustering.PluginMessage.Protocol.set -> void
+PluginSdk.Clustering.PluginMessage.Reply.get -> bool
+PluginSdk.Clustering.PluginMessage.Reply.set -> void
+PluginSdk.Clustering.PluginMessage.Source.get -> string
+PluginSdk.Clustering.PluginMessage.Source.set -> void
+PluginSdk.Clustering.PluginMessage.Topic.get -> string
+PluginSdk.Clustering.PluginMessage.Topic.set -> void
+PluginSdk.Clustering.PluginNodeInfo
+PluginSdk.Clustering.PluginNodeInfo.Fence.get -> PluginSdk.Clustering.OwnerFence
+PluginSdk.Clustering.PluginNodeInfo.Fence.set -> void
+PluginSdk.Clustering.PluginNodeInfo.Incarnation.get -> long
+PluginSdk.Clustering.PluginNodeInfo.Incarnation.set -> void
+PluginSdk.Clustering.PluginNodeInfo.Node.get -> string
+PluginSdk.Clustering.PluginNodeInfo.Node.set -> void
+PluginSdk.Clustering.PluginNodeInfo.PluginNodeInfo() -> void
+PluginSdk.Clustering.PluginNodeInfo.Role.get -> string
+PluginSdk.Clustering.PluginNodeInfo.Role.set -> void
+PluginSdk.Clustering.PluginPlayerInfo
+PluginSdk.Clustering.PluginPlayerInfo.IdentityId.get -> long
+PluginSdk.Clustering.PluginPlayerInfo.IdentityId.set -> void
+PluginSdk.Clustering.PluginPlayerInfo.IsAdmin.get -> bool
+PluginSdk.Clustering.PluginPlayerInfo.IsAdmin.set -> void
+PluginSdk.Clustering.PluginPlayerInfo.Name.get -> string
+PluginSdk.Clustering.PluginPlayerInfo.Name.set -> void
+PluginSdk.Clustering.PluginPlayerInfo.Node.get -> string
+PluginSdk.Clustering.PluginPlayerInfo.Node.set -> void
+PluginSdk.Clustering.PluginPlayerInfo.PluginPlayerInfo() -> void
+PluginSdk.Clustering.PluginPlayerInfo.SerialId.get -> int
+PluginSdk.Clustering.PluginPlayerInfo.SerialId.set -> void
+PluginSdk.Clustering.PluginPlayerInfo.SteamId.get -> ulong
+PluginSdk.Clustering.PluginPlayerInfo.SteamId.set -> void
+PluginSdk.Clustering.PluginPlayerPosition
+PluginSdk.Clustering.PluginPlayerPosition.EntityId.get -> long
+PluginSdk.Clustering.PluginPlayerPosition.EntityId.set -> void
+PluginSdk.Clustering.PluginPlayerPosition.IdentityId.get -> long
+PluginSdk.Clustering.PluginPlayerPosition.IdentityId.set -> void
+PluginSdk.Clustering.PluginPlayerPosition.PluginPlayerPosition() -> void
+PluginSdk.Clustering.PluginPlayerPosition.Position.get -> VRageMath.Vector3D
+PluginSdk.Clustering.PluginPlayerPosition.Position.set -> void
+PluginSdk.Clustering.PluginPlayerPosition.SteamId.get -> ulong
+PluginSdk.Clustering.PluginPlayerPosition.SteamId.set -> void
+PluginSdk.Clustering.PluginRecord
+PluginSdk.Clustering.PluginRecord.Deleted.get -> bool
+PluginSdk.Clustering.PluginRecord.Deleted.set -> void
+PluginSdk.Clustering.PluginRecord.Payload.get -> byte[]
+PluginSdk.Clustering.PluginRecord.Payload.set -> void
+PluginSdk.Clustering.PluginRecord.PluginRecord() -> void
+PluginSdk.Clustering.PluginRecord.SchemaVersion.get -> int
+PluginSdk.Clustering.PluginRecord.SchemaVersion.set -> void
+PluginSdk.Clustering.PluginRecord.Version.get -> PluginSdk.Clustering.RecordVersion
+PluginSdk.Clustering.PluginRecord.Version.set -> void
+PluginSdk.Clustering.PluginRecordStore
+PluginSdk.Clustering.PluginRecordStore.Execute(PluginSdk.Clustering.PluginRequest request) -> PluginSdk.Clustering.PluginResult
+PluginSdk.Clustering.PluginRecordStore.PluginRecordStore() -> void
+PluginSdk.Clustering.PluginRecordStore.Records.get -> System.Collections.Generic.Dictionary<string, PluginSdk.Clustering.PluginRecord>
+PluginSdk.Clustering.PluginRecordStore.Records.set -> void
+PluginSdk.Clustering.PluginRecordStore.Replay(PluginSdk.Clustering.PluginRequest request) -> PluginSdk.Clustering.PluginResult
+PluginSdk.Clustering.PluginRecordStore.Replays.get -> System.Collections.Generic.Dictionary<string, PluginSdk.Clustering.PluginReplay>
+PluginSdk.Clustering.PluginRecordStore.Replays.set -> void
+PluginSdk.Clustering.PluginRecordStore.ReplaySequence.get -> long
+PluginSdk.Clustering.PluginRecordStore.ReplaySequence.set -> void
+PluginSdk.Clustering.PluginRecordStore.Restored() -> void
+PluginSdk.Clustering.PluginRecordStore.StoreId.get -> System.Guid
+PluginSdk.Clustering.PluginRecordStore.StoreId.set -> void
+PluginSdk.Clustering.PluginRecordStore.Validate() -> void
+PluginSdk.Clustering.PluginReplay
+PluginSdk.Clustering.PluginReplay.Fingerprint.get -> string
+PluginSdk.Clustering.PluginReplay.Fingerprint.set -> void
+PluginSdk.Clustering.PluginReplay.PluginReplay() -> void
+PluginSdk.Clustering.PluginReplay.Record.get -> PluginSdk.Clustering.PluginRecord
+PluginSdk.Clustering.PluginReplay.Record.set -> void
+PluginSdk.Clustering.PluginReplay.Sequence.get -> long
+PluginSdk.Clustering.PluginReplay.Sequence.set -> void
+PluginSdk.Clustering.PluginRequest
+PluginSdk.Clustering.PluginRequest.Action.get -> string
+PluginSdk.Clustering.PluginRequest.Action.set -> void
+PluginSdk.Clustering.PluginRequest.Deleted.get -> bool
+PluginSdk.Clustering.PluginRequest.Deleted.set -> void
+PluginSdk.Clustering.PluginRequest.Expected.get -> PluginSdk.Clustering.RecordVersion
+PluginSdk.Clustering.PluginRequest.Expected.set -> void
+PluginSdk.Clustering.PluginRequest.Fence.get -> PluginSdk.Clustering.OwnerFence
+PluginSdk.Clustering.PluginRequest.Fence.set -> void
+PluginSdk.Clustering.PluginRequest.Incarnation.get -> long
+PluginSdk.Clustering.PluginRequest.Incarnation.set -> void
+PluginSdk.Clustering.PluginRequest.Key.get -> string
+PluginSdk.Clustering.PluginRequest.Key.set -> void
+PluginSdk.Clustering.PluginRequest.Node.get -> string
+PluginSdk.Clustering.PluginRequest.Node.set -> void
+PluginSdk.Clustering.PluginRequest.OperationId.get -> System.Guid
+PluginSdk.Clustering.PluginRequest.OperationId.set -> void
+PluginSdk.Clustering.PluginRequest.Payload.get -> byte[]
+PluginSdk.Clustering.PluginRequest.Payload.set -> void
+PluginSdk.Clustering.PluginRequest.Plugin.get -> string
+PluginSdk.Clustering.PluginRequest.Plugin.set -> void
+PluginSdk.Clustering.PluginRequest.PluginRequest() -> void
+PluginSdk.Clustering.PluginRequest.Protocol.get -> int
+PluginSdk.Clustering.PluginRequest.Protocol.set -> void
+PluginSdk.Clustering.PluginRequest.SaveFirst.get -> bool
+PluginSdk.Clustering.PluginRequest.SaveFirst.set -> void
+PluginSdk.Clustering.PluginRequest.SchemaVersion.get -> int
+PluginSdk.Clustering.PluginRequest.SchemaVersion.set -> void
+PluginSdk.Clustering.PluginRequest.Target.get -> PluginSdk.Clustering.PluginTarget
+PluginSdk.Clustering.PluginRequest.Target.set -> void
+PluginSdk.Clustering.PluginResult
+PluginSdk.Clustering.PluginResult.Code.get -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResult.Code.set -> void
+PluginSdk.Clustering.PluginResult.Owner.get -> PluginSdk.Clustering.OwnerFence
+PluginSdk.Clustering.PluginResult.Owner.set -> void
+PluginSdk.Clustering.PluginResult.Payload.get -> byte[]
+PluginSdk.Clustering.PluginResult.Payload.set -> void
+PluginSdk.Clustering.PluginResult.PluginResult() -> void
+PluginSdk.Clustering.PluginResult.Record.get -> PluginSdk.Clustering.PluginRecord
+PluginSdk.Clustering.PluginResult.Record.set -> void
+PluginSdk.Clustering.PluginResult.ValidForMilliseconds.get -> double
+PluginSdk.Clustering.PluginResult.ValidForMilliseconds.set -> void
+PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Capacity = 7 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Conflict = 2 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Fenced = 3 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Invalid = 8 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.NotFound = 1 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Success = 0 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Timeout = 5 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Unavailable = 4 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginResultCode.Unsupported = 6 -> PluginSdk.Clustering.PluginResultCode
+PluginSdk.Clustering.PluginServiceDiagnostics
+PluginSdk.Clustering.PluginServiceDiagnostics.Available.get -> bool
+PluginSdk.Clustering.PluginServiceDiagnostics.Available.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Conflicts.get -> long
+PluginSdk.Clustering.PluginServiceDiagnostics.Conflicts.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Failures.get -> long
+PluginSdk.Clustering.PluginServiceDiagnostics.Failures.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Incarnation.get -> long
+PluginSdk.Clustering.PluginServiceDiagnostics.Incarnation.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Node.get -> string
+PluginSdk.Clustering.PluginServiceDiagnostics.Node.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Observe(PluginSdk.Clustering.PluginResult result) -> PluginSdk.Clustering.PluginResult
+PluginSdk.Clustering.PluginServiceDiagnostics.OwnedPartitions.get -> int
+PluginSdk.Clustering.PluginServiceDiagnostics.OwnedPartitions.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.OwnershipChanged() -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.OwnershipChanges.get -> long
+PluginSdk.Clustering.PluginServiceDiagnostics.OwnershipChanges.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Pending.get -> int
+PluginSdk.Clustering.PluginServiceDiagnostics.Pending.set -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.PluginServiceDiagnostics() -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.Publish(PluginSdk.Clustering.NodeContext context, int pending) -> void
+PluginSdk.Clustering.PluginServiceDiagnostics.WorldAuthorityGeneration.get -> long
+PluginSdk.Clustering.PluginServiceDiagnostics.WorldAuthorityGeneration.set -> void
+PluginSdk.Clustering.PluginTarget
+PluginSdk.Clustering.PluginTarget.Incarnation.get -> long
+PluginSdk.Clustering.PluginTarget.Incarnation.set -> void
+PluginSdk.Clustering.PluginTarget.Kind.get -> PluginSdk.Clustering.PluginTargetKind
+PluginSdk.Clustering.PluginTarget.Kind.set -> void
+PluginSdk.Clustering.PluginTarget.Node.get -> string
+PluginSdk.Clustering.PluginTarget.Node.set -> void
+PluginSdk.Clustering.PluginTarget.Partition.get -> ulong
+PluginSdk.Clustering.PluginTarget.Partition.set -> void
+PluginSdk.Clustering.PluginTarget.PluginTarget() -> void
+PluginSdk.Clustering.PluginTargetKind
+PluginSdk.Clustering.PluginTargetKind.Node = 0 -> PluginSdk.Clustering.PluginTargetKind
+PluginSdk.Clustering.PluginTargetKind.Partition = 2 -> PluginSdk.Clustering.PluginTargetKind
+PluginSdk.Clustering.PluginTargetKind.WorldAuthority = 1 -> PluginSdk.Clustering.PluginTargetKind
+PluginSdk.Clustering.RecordVersion
+PluginSdk.Clustering.RecordVersion.RecordVersion() -> void
+PluginSdk.Clustering.RecordVersion.Revision.get -> long
+PluginSdk.Clustering.RecordVersion.Revision.set -> void
+PluginSdk.Clustering.RecordVersion.StoreId.get -> System.Guid
+PluginSdk.Clustering.RecordVersion.StoreId.set -> void
+PluginSdk.Clustering.StandalonePluginProvider
+PluginSdk.Clustering.StandalonePluginProvider.BroadcastAsync(string plugin, string topic, byte[] payload, System.Guid operationId, bool includeWorldAuthority, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginBroadcastResult>
+PluginSdk.Clustering.StandalonePluginProvider.Context.get -> PluginSdk.Clustering.NodeContext
+PluginSdk.Clustering.StandalonePluginProvider.ContextChanged -> System.Action
+PluginSdk.Clustering.StandalonePluginProvider.Dispose() -> void
+PluginSdk.Clustering.StandalonePluginProvider.ExecuteAsync(PluginSdk.Clustering.PluginRequest request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.StandalonePluginProvider.RegisterHandler(string plugin, string topic, System.Func<PluginSdk.Clustering.PluginMessage, System.Threading.Tasks.Task<byte[]>> handler) -> System.IDisposable
+PluginSdk.Clustering.StandalonePluginProvider.RequestAsync(string plugin, PluginSdk.Clustering.PluginTarget target, string topic, byte[] payload, System.Guid operationId, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<PluginSdk.Clustering.PluginResult>
+PluginSdk.Clustering.StandalonePluginProvider.StandalonePluginProvider(string directory) -> void
+PluginSdk.Clustering.StandalonePluginProvider.Update() -> void
+PluginSdk.Commands.CommandAttribute
+PluginSdk.Commands.CommandAttribute.Command.get -> string
+PluginSdk.Commands.CommandAttribute.CommandAttribute(string command, string description = null, string helpText = null) -> void
+PluginSdk.Commands.CommandAttribute.Description.get -> string
+PluginSdk.Commands.CommandAttribute.HelpText.get -> string
+PluginSdk.Commands.CommandCaller
+PluginSdk.Commands.CommandCaller.CommandCaller() -> void
+PluginSdk.Commands.CommandCaller.CommandCaller(ulong steamId, long identityId, string name, VRage.Game.ModAPI.MyPromoteLevel promoteLevel, bool isConsole = false) -> void
+PluginSdk.Commands.CommandCaller.IdentityId.get -> long
+PluginSdk.Commands.CommandCaller.IsConsole.get -> bool
+PluginSdk.Commands.CommandCaller.Name.get -> string
+PluginSdk.Commands.CommandCaller.PromoteLevel.get -> VRage.Game.ModAPI.MyPromoteLevel
+PluginSdk.Commands.CommandCaller.SteamId.get -> ulong
+PluginSdk.Commands.CommandContext
+PluginSdk.Commands.CommandContext.Args.get -> System.Collections.Generic.IReadOnlyList<string>
+PluginSdk.Commands.CommandContext.Caller.get -> PluginSdk.Commands.CommandCaller
+PluginSdk.Commands.CommandContext.CommandContext(in PluginSdk.Commands.CommandCaller caller, string prefix, System.Collections.Generic.IReadOnlyList<string> args, string rawArgs, PluginSdk.Commands.ICommandResponder responder) -> void
+PluginSdk.Commands.CommandContext.Prefix.get -> string
+PluginSdk.Commands.CommandContext.RawArgs.get -> string
+PluginSdk.Commands.CommandContext.Respond(in PluginSdk.Commands.CommandReply reply) -> void
+PluginSdk.Commands.CommandContext.Respond(string text) -> void
+PluginSdk.Commands.CommandContext.Respond(string text, VRageMath.Color color, string font = "White") -> void
+PluginSdk.Commands.CommandDispatcher
+PluginSdk.Commands.CommandDispatcher.CommandDispatcher(PluginSdk.Commands.CommandRegistry registry, System.Action<string, System.Exception> onError = null) -> void
+PluginSdk.Commands.CommandDispatcher.Handle(string message, in PluginSdk.Commands.CommandCaller caller, PluginSdk.Commands.ICommandResponder responder) -> bool
+PluginSdk.Commands.CommandDispatcher.Prefix.get -> char
+PluginSdk.Commands.CommandDispatcher.Prefix.set -> void
+PluginSdk.Commands.CommandModule
+PluginSdk.Commands.CommandModule.CommandModule() -> void
+PluginSdk.Commands.CommandModule.Context.get -> PluginSdk.Commands.CommandContext
+PluginSdk.Commands.CommandRegistrationException
+PluginSdk.Commands.CommandRegistrationException.CommandRegistrationException(string message) -> void
+PluginSdk.Commands.CommandRegistry
+PluginSdk.Commands.CommandRegistry.CommandRegistry() -> void
+PluginSdk.Commands.CommandRegistry.Prefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
+PluginSdk.Commands.CommandRegistry.RegisterAssembly(System.Reflection.Assembly assembly) -> int
+PluginSdk.Commands.CommandRegistry.RegisterModule(System.Type moduleType, string ownerId) -> void
+PluginSdk.Commands.CommandReply
+PluginSdk.Commands.CommandReply.AsBroadcast(bool broadcast = true) -> PluginSdk.Commands.CommandReply
+PluginSdk.Commands.CommandReply.Author.get -> string
+PluginSdk.Commands.CommandReply.Broadcast.get -> bool
+PluginSdk.Commands.CommandReply.Color.get -> VRageMath.Color?
+PluginSdk.Commands.CommandReply.CommandReply() -> void
+PluginSdk.Commands.CommandReply.CommandReply(string text, VRageMath.Color? color = null, string font = "White", string author = null, bool broadcast = false) -> void
+PluginSdk.Commands.CommandReply.Font.get -> string
+PluginSdk.Commands.CommandReply.HasContent.get -> bool
+PluginSdk.Commands.CommandReply.Text.get -> string
+PluginSdk.Commands.CommandReply.WithAuthor(string author) -> PluginSdk.Commands.CommandReply
+PluginSdk.Commands.CommandReply.WithColor(VRageMath.Color color) -> PluginSdk.Commands.CommandReply
+PluginSdk.Commands.CommandReply.WithFont(string font) -> PluginSdk.Commands.CommandReply
+PluginSdk.Commands.CommandRootAttribute
+PluginSdk.Commands.CommandRootAttribute.CommandRootAttribute(string prefix, string title = null, string description = null) -> void
+PluginSdk.Commands.CommandRootAttribute.Description.get -> string
+PluginSdk.Commands.CommandRootAttribute.Prefix.get -> string
+PluginSdk.Commands.CommandRootAttribute.Title.get -> string
+PluginSdk.Commands.ICommandExecutor
+PluginSdk.Commands.ICommandExecutor.Execute(string commandLine, in PluginSdk.Commands.CommandCaller caller, PluginSdk.Commands.ICommandResponder responder) -> bool
+PluginSdk.Commands.ICommandRegistrar
+PluginSdk.Commands.ICommandRegistrar.Register(System.Reflection.Assembly assembly) -> void
+PluginSdk.Commands.ICommandRegistrar.Register(System.Reflection.Assembly assembly, params System.Type[] moduleTypes) -> void
+PluginSdk.Commands.ICommandResponder
+PluginSdk.Commands.ICommandResponder.Send(in PluginSdk.Commands.CommandReply reply, in PluginSdk.Commands.CommandCaller caller) -> void
+PluginSdk.Commands.PermissionAttribute
+PluginSdk.Commands.PermissionAttribute.Level.get -> VRage.Game.ModAPI.MyPromoteLevel
+PluginSdk.Commands.PermissionAttribute.PermissionAttribute(VRage.Game.ModAPI.MyPromoteLevel level) -> void
+PluginSdk.Commands.ServerCommands
+PluginSdk.Config.BoolOptionAttribute
+PluginSdk.Config.BoolOptionAttribute.BoolOptionAttribute(string description = null) -> void
+PluginSdk.Config.ColorFormat
+PluginSdk.Config.ColorFormat.Rgb = 0 -> PluginSdk.Config.ColorFormat
+PluginSdk.Config.ColorFormat.Rgba = 1 -> PluginSdk.Config.ColorFormat
+PluginSdk.Config.ColorOptionAttribute
+PluginSdk.Config.ColorOptionAttribute.ColorOptionAttribute(PluginSdk.Config.ColorFormat format = PluginSdk.Config.ColorFormat.Rgba, string description = null) -> void
+PluginSdk.Config.ColorOptionAttribute.Format.get -> PluginSdk.Config.ColorFormat
+PluginSdk.Config.ColumnAttribute
+PluginSdk.Config.ColumnAttribute.ColumnAttribute(string id, string parent = null, string caption = null) -> void
+PluginSdk.Config.ConfigAttributes
+PluginSdk.Config.ConfigOptionAttribute
+PluginSdk.Config.ConfigOptionAttribute.ConfigOptionAttribute(string description) -> void
+PluginSdk.Config.ConfigOptionAttribute.Description.get -> string
+PluginSdk.Config.ConfigOptionAttribute.Parent.get -> string
+PluginSdk.Config.ConfigOptionAttribute.Parent.set -> void
+PluginSdk.Config.ConfigPropertyInfo
+PluginSdk.Config.ConfigPropertyInfo.ConfigPropertyInfo() -> void
+PluginSdk.Config.ConfigPropertyInfo.Description.get -> string
+PluginSdk.Config.ConfigPropertyInfo.Description.set -> void
+PluginSdk.Config.ConfigPropertyInfo.ElementEnum.get -> string
+PluginSdk.Config.ConfigPropertyInfo.ElementEnum.set -> void
+PluginSdk.Config.ConfigPropertyInfo.ElementStruct.get -> string
+PluginSdk.Config.ConfigPropertyInfo.ElementStruct.set -> void
+PluginSdk.Config.ConfigPropertyInfo.ElementType.get -> string
+PluginSdk.Config.ConfigPropertyInfo.ElementType.set -> void
+PluginSdk.Config.ConfigPropertyInfo.EnumName.get -> string
+PluginSdk.Config.ConfigPropertyInfo.EnumName.set -> void
+PluginSdk.Config.ConfigPropertyInfo.HasAlpha.get -> bool?
+PluginSdk.Config.ConfigPropertyInfo.HasAlpha.set -> void
+PluginSdk.Config.ConfigPropertyInfo.KeyType.get -> string
+PluginSdk.Config.ConfigPropertyInfo.KeyType.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Max.get -> double?
+PluginSdk.Config.ConfigPropertyInfo.Max.set -> void
+PluginSdk.Config.ConfigPropertyInfo.MaxCount.get -> int?
+PluginSdk.Config.ConfigPropertyInfo.MaxCount.set -> void
+PluginSdk.Config.ConfigPropertyInfo.MaxLength.get -> int?
+PluginSdk.Config.ConfigPropertyInfo.MaxLength.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Min.get -> double?
+PluginSdk.Config.ConfigPropertyInfo.Min.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Multiline.get -> bool?
+PluginSdk.Config.ConfigPropertyInfo.Multiline.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Name.get -> string
+PluginSdk.Config.ConfigPropertyInfo.Name.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Parent.get -> string
+PluginSdk.Config.ConfigPropertyInfo.Parent.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Pattern.get -> string
+PluginSdk.Config.ConfigPropertyInfo.Pattern.set -> void
+PluginSdk.Config.ConfigPropertyInfo.StructName.get -> string
+PluginSdk.Config.ConfigPropertyInfo.StructName.set -> void
+PluginSdk.Config.ConfigPropertyInfo.TreeParentField.get -> string
+PluginSdk.Config.ConfigPropertyInfo.TreeParentField.set -> void
+PluginSdk.Config.ConfigPropertyInfo.Type.get -> string
+PluginSdk.Config.ConfigPropertyInfo.Type.set -> void
+PluginSdk.Config.ConfigPropertyInfo.ValueEnum.get -> string
+PluginSdk.Config.ConfigPropertyInfo.ValueEnum.set -> void
+PluginSdk.Config.ConfigPropertyInfo.ValueStruct.get -> string
+PluginSdk.Config.ConfigPropertyInfo.ValueStruct.set -> void
+PluginSdk.Config.ConfigPropertyInfo.ValueType.get -> string
+PluginSdk.Config.ConfigPropertyInfo.ValueType.set -> void
+PluginSdk.Config.ConfigSchema
+PluginSdk.Config.ConfigSchemaData
+PluginSdk.Config.ConfigSchemaData.ConfigSchemaData() -> void
+PluginSdk.Config.ConfigSchemaData.Enums.get -> System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<PluginSdk.Config.EnumValueInfo>>
+PluginSdk.Config.ConfigSchemaData.Enums.set -> void
+PluginSdk.Config.ConfigSchemaData.Layout.get -> System.Collections.Generic.List<PluginSdk.Config.LayoutContainerInfo>
+PluginSdk.Config.ConfigSchemaData.Layout.set -> void
+PluginSdk.Config.ConfigSchemaData.Properties.get -> System.Collections.Generic.List<PluginSdk.Config.ConfigPropertyInfo>
+PluginSdk.Config.ConfigSchemaData.Properties.set -> void
+PluginSdk.Config.ConfigSchemaData.Structs.get -> System.Collections.Generic.Dictionary<string, PluginSdk.Config.StructInfo>
+PluginSdk.Config.ConfigSchemaData.Structs.set -> void
+PluginSdk.Config.ConfigStorage
+PluginSdk.Config.DictOptionAttribute
+PluginSdk.Config.DictOptionAttribute.DictOptionAttribute(int maxCount = 0, string description = null) -> void
+PluginSdk.Config.DictOptionAttribute.MaxCount.get -> int
+PluginSdk.Config.DictOptionAttribute.TreeParentField.get -> string
+PluginSdk.Config.DictOptionAttribute.TreeParentField.set -> void
+PluginSdk.Config.DirectionOptionAttribute
+PluginSdk.Config.DirectionOptionAttribute.DirectionOptionAttribute(string description = null) -> void
+PluginSdk.Config.DoubleOptionAttribute
+PluginSdk.Config.DoubleOptionAttribute.DoubleOptionAttribute(double min = -Infinity, double max = Infinity, string description = null) -> void
+PluginSdk.Config.DoubleOptionAttribute.Max.get -> double
+PluginSdk.Config.DoubleOptionAttribute.Min.get -> double
+PluginSdk.Config.EnumCaptionAttribute
+PluginSdk.Config.EnumCaptionAttribute.Caption.get -> string
+PluginSdk.Config.EnumCaptionAttribute.EnumCaptionAttribute(string caption) -> void
+PluginSdk.Config.EnumOptionAttribute
+PluginSdk.Config.EnumOptionAttribute.EnumOptionAttribute(string description = null) -> void
+PluginSdk.Config.EnumValueInfo
+PluginSdk.Config.EnumValueInfo.Caption.get -> string
+PluginSdk.Config.EnumValueInfo.Caption.set -> void
+PluginSdk.Config.EnumValueInfo.EnumValueInfo() -> void
+PluginSdk.Config.EnumValueInfo.Name.get -> string
+PluginSdk.Config.EnumValueInfo.Name.set -> void
+PluginSdk.Config.FloatOptionAttribute
+PluginSdk.Config.FloatOptionAttribute.FloatOptionAttribute(float min = -Infinity, float max = Infinity, string description = null) -> void
+PluginSdk.Config.FloatOptionAttribute.Max.get -> float
+PluginSdk.Config.FloatOptionAttribute.Min.get -> float
+PluginSdk.Config.IntOptionAttribute
+PluginSdk.Config.IntOptionAttribute.IntOptionAttribute(int min = -2147483648, int max = 2147483647, string description = null) -> void
+PluginSdk.Config.IntOptionAttribute.Max.get -> int
+PluginSdk.Config.IntOptionAttribute.Min.get -> int
+PluginSdk.Config.LayoutContainerAttribute
+PluginSdk.Config.LayoutContainerAttribute.Caption.get -> string
+PluginSdk.Config.LayoutContainerAttribute.Id.get -> string
+PluginSdk.Config.LayoutContainerAttribute.LayoutContainerAttribute(string id, string parent, string caption) -> void
+PluginSdk.Config.LayoutContainerAttribute.Parent.get -> string
+PluginSdk.Config.LayoutContainerInfo
+PluginSdk.Config.LayoutContainerInfo.Caption.get -> string
+PluginSdk.Config.LayoutContainerInfo.Caption.set -> void
+PluginSdk.Config.LayoutContainerInfo.Id.get -> string
+PluginSdk.Config.LayoutContainerInfo.Id.set -> void
+PluginSdk.Config.LayoutContainerInfo.Kind.get -> string
+PluginSdk.Config.LayoutContainerInfo.Kind.set -> void
+PluginSdk.Config.LayoutContainerInfo.LayoutContainerInfo() -> void
+PluginSdk.Config.LayoutContainerInfo.Parent.get -> string
+PluginSdk.Config.LayoutContainerInfo.Parent.set -> void
+PluginSdk.Config.ListOptionAttribute
+PluginSdk.Config.ListOptionAttribute.ListOptionAttribute(int maxCount = 0, string description = null) -> void
+PluginSdk.Config.ListOptionAttribute.MaxCount.get -> int
+PluginSdk.Config.ListOptionAttribute.TreeParentField.get -> string
+PluginSdk.Config.ListOptionAttribute.TreeParentField.set -> void
+PluginSdk.Config.LongOptionAttribute
+PluginSdk.Config.LongOptionAttribute.LongOptionAttribute(long min = -9223372036854775808, long max = 9223372036854775807, string description = null) -> void
+PluginSdk.Config.LongOptionAttribute.Max.get -> long
+PluginSdk.Config.LongOptionAttribute.Min.get -> long
+PluginSdk.Config.ManagedPluginConfiguration
+PluginSdk.Config.PluginConfig
+PluginSdk.Config.PluginConfig.NotifyChanged(string propertyName) -> void
+PluginSdk.Config.PluginConfig.PluginConfig() -> void
+PluginSdk.Config.PluginConfig.PropertyChanged -> System.ComponentModel.PropertyChangedEventHandler
+PluginSdk.Config.PluginConfig.SetField<T>(ref T field, T value, string propertyName = null) -> bool
+PluginSdk.Config.PositionAndOrientationOptionAttribute
+PluginSdk.Config.PositionAndOrientationOptionAttribute.PositionAndOrientationOptionAttribute(string description = null) -> void
+PluginSdk.Config.SectionAttribute
+PluginSdk.Config.SectionAttribute.SectionAttribute(string id, string parent = null, string caption = null) -> void
+PluginSdk.Config.StringOptionAttribute
+PluginSdk.Config.StringOptionAttribute.MaxLength.get -> int
+PluginSdk.Config.StringOptionAttribute.Multiline.get -> bool
+PluginSdk.Config.StringOptionAttribute.Multiline.set -> void
+PluginSdk.Config.StringOptionAttribute.Pattern.get -> string
+PluginSdk.Config.StringOptionAttribute.StringOptionAttribute(int maxLength = 0, string pattern = null, string description = null) -> void
+PluginSdk.Config.StructCaptionAttribute
+PluginSdk.Config.StructCaptionAttribute.StructCaptionAttribute() -> void
+PluginSdk.Config.StructInfo
+PluginSdk.Config.StructInfo.CaptionMember.get -> string
+PluginSdk.Config.StructInfo.CaptionMember.set -> void
+PluginSdk.Config.StructInfo.Members.get -> System.Collections.Generic.List<PluginSdk.Config.StructMemberInfo>
+PluginSdk.Config.StructInfo.Members.set -> void
+PluginSdk.Config.StructInfo.StructInfo() -> void
+PluginSdk.Config.StructMemberAttribute
+PluginSdk.Config.StructMemberAttribute.Description.get -> string
+PluginSdk.Config.StructMemberAttribute.StructMemberAttribute(string description = null) -> void
+PluginSdk.Config.StructMemberInfo
+PluginSdk.Config.StructMemberInfo.Description.get -> string
+PluginSdk.Config.StructMemberInfo.Description.set -> void
+PluginSdk.Config.StructMemberInfo.ElementEnum.get -> string
+PluginSdk.Config.StructMemberInfo.ElementEnum.set -> void
+PluginSdk.Config.StructMemberInfo.ElementStruct.get -> string
+PluginSdk.Config.StructMemberInfo.ElementStruct.set -> void
+PluginSdk.Config.StructMemberInfo.ElementType.get -> string
+PluginSdk.Config.StructMemberInfo.ElementType.set -> void
+PluginSdk.Config.StructMemberInfo.EnumName.get -> string
+PluginSdk.Config.StructMemberInfo.EnumName.set -> void
+PluginSdk.Config.StructMemberInfo.KeyType.get -> string
+PluginSdk.Config.StructMemberInfo.KeyType.set -> void
+PluginSdk.Config.StructMemberInfo.Name.get -> string
+PluginSdk.Config.StructMemberInfo.Name.set -> void
+PluginSdk.Config.StructMemberInfo.StructMemberInfo() -> void
+PluginSdk.Config.StructMemberInfo.StructName.get -> string
+PluginSdk.Config.StructMemberInfo.StructName.set -> void
+PluginSdk.Config.StructMemberInfo.Type.get -> string
+PluginSdk.Config.StructMemberInfo.Type.set -> void
+PluginSdk.Config.StructMemberInfo.ValueEnum.get -> string
+PluginSdk.Config.StructMemberInfo.ValueEnum.set -> void
+PluginSdk.Config.StructMemberInfo.ValueStruct.get -> string
+PluginSdk.Config.StructMemberInfo.ValueStruct.set -> void
+PluginSdk.Config.StructMemberInfo.ValueType.get -> string
+PluginSdk.Config.StructMemberInfo.ValueType.set -> void
+PluginSdk.Config.StructOptionAttribute
+PluginSdk.Config.StructOptionAttribute.StructOptionAttribute(string description = null) -> void
+PluginSdk.Config.TabAttribute
+PluginSdk.Config.TabAttribute.TabAttribute(string id, string parent = null, string caption = null) -> void
+PluginSdk.Config.Vector2DOptionAttribute
+PluginSdk.Config.Vector2DOptionAttribute.Vector2DOptionAttribute(string description = null) -> void
+PluginSdk.Config.Vector2IOptionAttribute
+PluginSdk.Config.Vector2IOptionAttribute.Vector2IOptionAttribute(string description = null) -> void
+PluginSdk.Config.Vector3DOptionAttribute
+PluginSdk.Config.Vector3DOptionAttribute.Vector3DOptionAttribute(string description = null) -> void
+PluginSdk.Config.Vector3IOptionAttribute
+PluginSdk.Config.Vector3IOptionAttribute.Vector3IOptionAttribute(string description = null) -> void
+PluginSdk.Logging.ILogSink
+PluginSdk.Logging.ILogSink.Write(in PluginSdk.Logging.LogEntry entry) -> void
+PluginSdk.Logging.LogEntry
+PluginSdk.Logging.LogEntry.Data.get -> object
+PluginSdk.Logging.LogEntry.Exception.get -> System.Exception
+PluginSdk.Logging.LogEntry.Level.get -> PluginSdk.Logging.LogLevel
+PluginSdk.Logging.LogEntry.LogEntry() -> void
+PluginSdk.Logging.LogEntry.LogEntry(System.DateTime utcTimestamp, PluginSdk.Logging.LogLevel level, string pluginName, int threadId, string message, System.Exception exception, object data) -> void
+PluginSdk.Logging.LogEntry.Message.get -> string
+PluginSdk.Logging.LogEntry.PluginName.get -> string
+PluginSdk.Logging.LogEntry.ThreadId.get -> int
+PluginSdk.Logging.LogEntry.UtcTimestamp.get -> System.DateTime
+PluginSdk.Logging.LogEnvironment
+PluginSdk.Logging.Logger
+PluginSdk.Logging.Logger.Critical(string message, object data = null) -> void
+PluginSdk.Logging.Logger.Critical(string message, System.Exception exception, object data = null) -> void
+PluginSdk.Logging.Logger.Debug(string message, object data = null) -> void
+PluginSdk.Logging.Logger.Error(string message, object data = null) -> void
+PluginSdk.Logging.Logger.Error(string message, System.Exception exception, object data = null) -> void
+PluginSdk.Logging.Logger.Info(string message, object data = null) -> void
+PluginSdk.Logging.Logger.Log(PluginSdk.Logging.LogLevel level, string message, System.Exception exception = null, object data = null) -> void
+PluginSdk.Logging.Logger.Logger(string pluginName, PluginSdk.Logging.ILogSink sink) -> void
+PluginSdk.Logging.Logger.PluginName.get -> string
+PluginSdk.Logging.Logger.Warning(string message, object data = null) -> void
+PluginSdk.Logging.LogLevel
+PluginSdk.Logging.LogLevel.Critical = 4 -> PluginSdk.Logging.LogLevel
+PluginSdk.Logging.LogLevel.Debug = 0 -> PluginSdk.Logging.LogLevel
+PluginSdk.Logging.LogLevel.Error = 3 -> PluginSdk.Logging.LogLevel
+PluginSdk.Logging.LogLevel.Info = 1 -> PluginSdk.Logging.LogLevel
+PluginSdk.Logging.LogLevel.Warning = 2 -> PluginSdk.Logging.LogLevel
+PluginSdk.Logging.MagnetarLogSink
+PluginSdk.Logging.MagnetarLogSink.MagnetarLogSink() -> void
+PluginSdk.Logging.MagnetarLogSink.Write(in PluginSdk.Logging.LogEntry entry) -> void
+PluginSdk.Logging.QuasarLogSink
+PluginSdk.Logging.QuasarLogSink.QuasarLogSink() -> void
+PluginSdk.Logging.QuasarLogSink.QuasarLogSink(System.Action<string> writeLine) -> void
+PluginSdk.Logging.QuasarLogSink.Write(in PluginSdk.Logging.LogEntry entry) -> void
+PluginSdk.MissionScreenContent
+PluginSdk.MissionScreenContent.CurrentObjective.get -> string
+PluginSdk.MissionScreenContent.CurrentObjectivePrefix.get -> string
+PluginSdk.MissionScreenContent.HasContent.get -> bool
+PluginSdk.MissionScreenContent.MissionScreenContent() -> void
+PluginSdk.MissionScreenContent.MissionScreenContent(string screenTitle, string currentObjectivePrefix, string currentObjective, string screenDescription, string okButtonCaption = null) -> void
+PluginSdk.MissionScreenContent.OkButtonCaption.get -> string
+PluginSdk.MissionScreenContent.ScreenDescription.get -> string
+PluginSdk.MissionScreenContent.ScreenTitle.get -> string
+PluginSdk.MissionScreens
+PluginSdk.Paths.IPathResolver
+PluginSdk.Paths.IPathResolver.GetFileName(string path) -> string
+PluginSdk.Paths.IPathResolver.GetFileNameWithoutExtension(string path) -> string
+PluginSdk.Paths.IPathResolver.Normalize(string path) -> string
+PluginSdk.Paths.IPathResolver.ResolveAbsolute(string absolutePath) -> string
+PluginSdk.Paths.IPathResolver.ResolveContentFilePath(string relativePath, string rootPath) -> string
+PluginSdk.Paths.IPathResolver.ToWindowsPath(string path) -> string
+PluginSdk.Paths.PathResolver
+PluginSdk.ServerControl
+PluginSdk.ServerTerminationKind
+PluginSdk.ServerTerminationKind.Restart = 1 -> PluginSdk.ServerTerminationKind
+PluginSdk.ServerTerminationKind.Shutdown = 0 -> PluginSdk.ServerTerminationKind
+PluginSdk.Stats.CounterAttribute
+PluginSdk.Stats.CounterAttribute.CounterAttribute(string description = null) -> void
+PluginSdk.Stats.DiscreteAttribute
+PluginSdk.Stats.DiscreteAttribute.DiscreteAttribute(string description = null) -> void
+PluginSdk.Stats.GaugeAttribute
+PluginSdk.Stats.GaugeAttribute.GaugeAttribute(string description = null) -> void
+PluginSdk.Stats.PluginStats
+PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAggregation.Max = 4 -> PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAggregation.Mean = 2 -> PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAggregation.Min = 3 -> PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAggregation.None = 0 -> PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAggregation.Sum = 1 -> PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAttribute
+PluginSdk.Stats.StatAttribute.AcrossInstances.get -> PluginSdk.Stats.StatAggregation
+PluginSdk.Stats.StatAttribute.AcrossInstances.set -> void
+PluginSdk.Stats.StatAttribute.Description.get -> string
+PluginSdk.Stats.StatAttribute.Description.set -> void
+PluginSdk.Stats.StatAttribute.OverTime.get -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.StatAttribute.OverTime.set -> void
+PluginSdk.Stats.StatAttribute.Parent.get -> string
+PluginSdk.Stats.StatAttribute.Parent.set -> void
+PluginSdk.Stats.StatAttribute.StatAttribute(string description) -> void
+PluginSdk.Stats.StatAttribute.Unit.get -> string
+PluginSdk.Stats.StatAttribute.Unit.set -> void
+PluginSdk.Stats.StatFieldInfo
+PluginSdk.Stats.StatFieldInfo.AcrossInstances.get -> string
+PluginSdk.Stats.StatFieldInfo.AcrossInstances.set -> void
+PluginSdk.Stats.StatFieldInfo.Description.get -> string
+PluginSdk.Stats.StatFieldInfo.Description.set -> void
+PluginSdk.Stats.StatFieldInfo.Kind.get -> string
+PluginSdk.Stats.StatFieldInfo.Kind.set -> void
+PluginSdk.Stats.StatFieldInfo.Name.get -> string
+PluginSdk.Stats.StatFieldInfo.Name.set -> void
+PluginSdk.Stats.StatFieldInfo.OverTime.get -> string
+PluginSdk.Stats.StatFieldInfo.OverTime.set -> void
+PluginSdk.Stats.StatFieldInfo.Parent.get -> string
+PluginSdk.Stats.StatFieldInfo.Parent.set -> void
+PluginSdk.Stats.StatFieldInfo.StatFieldInfo() -> void
+PluginSdk.Stats.StatFieldInfo.Unit.get -> string
+PluginSdk.Stats.StatFieldInfo.Unit.set -> void
+PluginSdk.Stats.StatGroup
+PluginSdk.Stats.StatGroup.Instances.get -> System.Collections.Generic.List<PluginSdk.Stats.StatInstance>
+PluginSdk.Stats.StatGroup.Instances.set -> void
+PluginSdk.Stats.StatGroup.Schema.get -> PluginSdk.Stats.StatsSchemaData
+PluginSdk.Stats.StatGroup.Schema.set -> void
+PluginSdk.Stats.StatGroup.StatGroup() -> void
+PluginSdk.Stats.StatInstance
+PluginSdk.Stats.StatInstance.Label.get -> string
+PluginSdk.Stats.StatInstance.Label.set -> void
+PluginSdk.Stats.StatInstance.StatInstance() -> void
+PluginSdk.Stats.StatInstance.Values.get -> double[]
+PluginSdk.Stats.StatInstance.Values.set -> void
+PluginSdk.Stats.StatLabelAttribute
+PluginSdk.Stats.StatLabelAttribute.Description.get -> string
+PluginSdk.Stats.StatLabelAttribute.Description.set -> void
+PluginSdk.Stats.StatLabelAttribute.StatLabelAttribute(string description = null) -> void
+PluginSdk.Stats.StatsSchema
+PluginSdk.Stats.StatsSchema.Capture(object poco) -> PluginSdk.Stats.StatInstance
+PluginSdk.Stats.StatsSchema.CaptureGroup(System.Collections.IEnumerable instances) -> PluginSdk.Stats.StatGroup
+PluginSdk.Stats.StatsSchema.Data.get -> PluginSdk.Stats.StatsSchemaData
+PluginSdk.Stats.StatsSchemaData
+PluginSdk.Stats.StatsSchemaData.Fields.get -> System.Collections.Generic.List<PluginSdk.Stats.StatFieldInfo>
+PluginSdk.Stats.StatsSchemaData.Fields.set -> void
+PluginSdk.Stats.StatsSchemaData.LabelDescription.get -> string
+PluginSdk.Stats.StatsSchemaData.LabelDescription.set -> void
+PluginSdk.Stats.StatsSchemaData.Name.get -> string
+PluginSdk.Stats.StatsSchemaData.Name.set -> void
+PluginSdk.Stats.StatsSchemaData.StatsSchemaData() -> void
+PluginSdk.Stats.StatsSnapshot
+PluginSdk.Stats.StatsSnapshot.Groups.get -> System.Collections.Generic.List<PluginSdk.Stats.StatGroup>
+PluginSdk.Stats.StatsSnapshot.Groups.set -> void
+PluginSdk.Stats.StatsSnapshot.StatsSnapshot() -> void
+PluginSdk.Stats.StatsSnapshot.UtcTimestamp.get -> System.DateTime
+PluginSdk.Stats.StatsSnapshot.UtcTimestamp.set -> void
+PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Last = 0 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Max = 4 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Mean = 2 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Median = 5 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Min = 3 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Percentiles = 6 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Stats.TimeAggregation.Sum = 1 -> PluginSdk.Stats.TimeAggregation
+PluginSdk.Storage.PluginStorage
+PluginSdk.Tools.SerializableDictionary<TKey, TValue>
+PluginSdk.Tools.SerializableDictionary<TKey, TValue>.GetSchema() -> System.Xml.Schema.XmlSchema
+PluginSdk.Tools.SerializableDictionary<TKey, TValue>.ReadXml(System.Xml.XmlReader reader) -> void
+PluginSdk.Tools.SerializableDictionary<TKey, TValue>.SerializableDictionary() -> void
+PluginSdk.Tools.SerializableDictionary<TKey, TValue>.SerializableDictionary(System.Collections.Generic.IDictionary<TKey, TValue> source) -> void
+PluginSdk.Tools.SerializableDictionary<TKey, TValue>.WriteXml(System.Xml.XmlWriter writer) -> void
+static PluginSdk.Clustering.ClusterLifecycle.Register(PluginSdk.Clustering.IClusterLifecycleProvider provider) -> bool
+static PluginSdk.Clustering.ClusterLifecycle.TryRequest(PluginSdk.Clustering.ClusterLifecycleRequest request, out System.Threading.Tasks.Task<PluginSdk.Clustering.ClusterLifecycleAcknowledgement> acknowledgement, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> bool
+static PluginSdk.Clustering.ClusterLifecycle.Unregister(PluginSdk.Clustering.IClusterLifecycleProvider provider) -> bool
+static PluginSdk.Clustering.ClusterLifecycleAcknowledgement.Unavailable(System.Guid requestId, string reasonCode, string message) -> PluginSdk.Clustering.ClusterLifecycleAcknowledgement
+static PluginSdk.Clustering.ClusterNodeLink.Current.get -> PluginSdk.Clustering.IClusterNodeLink
+static PluginSdk.Clustering.ClusterNodeLink.Register(PluginSdk.Clustering.IClusterNodeLink service) -> bool
+static PluginSdk.Clustering.ClusterNodeLink.Unregister(PluginSdk.Clustering.IClusterNodeLink service) -> bool
+static PluginSdk.Clustering.PluginBroadcastResult.Failure(PluginSdk.Clustering.PluginResultCode code) -> PluginSdk.Clustering.PluginBroadcastResult
+static PluginSdk.Clustering.PluginCluster.BindOwner(string pluginId, System.Reflection.Assembly assembly) -> void
+static PluginSdk.Clustering.PluginCluster.ClusterEvent -> System.Action<PluginSdk.Clustering.PluginClusterEvent>
+static PluginSdk.Clustering.PluginCluster.ConfigureStandalone(System.Func<PluginSdk.Clustering.IPluginClusterProvider> factory, System.Action<System.Exception> failure) -> void
+static PluginSdk.Clustering.PluginCluster.ContextChanged -> System.Action
+static PluginSdk.Clustering.PluginCluster.Current.get -> PluginSdk.Clustering.IPluginClusterProvider
+static PluginSdk.Clustering.PluginCluster.ForPlugin(string pluginId) -> PluginSdk.Clustering.PluginClusterClient
+static PluginSdk.Clustering.PluginCluster.IsClusterProcess.get -> bool
+static PluginSdk.Clustering.PluginCluster.Register(PluginSdk.Clustering.IPluginClusterProvider provider) -> bool
+static PluginSdk.Clustering.PluginCluster.Unregister(PluginSdk.Clustering.IPluginClusterProvider provider) -> bool
+static PluginSdk.Clustering.PluginRecordStore.ValidName(string text) -> bool
+static PluginSdk.Clustering.PluginResult.Failure(PluginSdk.Clustering.PluginResultCode code) -> PluginSdk.Clustering.PluginResult
+static PluginSdk.Commands.CommandReply.Announce(string text, VRageMath.Color? color = null) -> PluginSdk.Commands.CommandReply
+static PluginSdk.Commands.CommandReply.Error(string text) -> PluginSdk.Commands.CommandReply
+static PluginSdk.Commands.CommandReply.Info(string text) -> PluginSdk.Commands.CommandReply
+static PluginSdk.Commands.CommandReply.None.get -> PluginSdk.Commands.CommandReply
+static PluginSdk.Commands.CommandReply.Ok(string text) -> PluginSdk.Commands.CommandReply
+static PluginSdk.Commands.ServerCommands.Execute(string commandLine, in PluginSdk.Commands.CommandCaller caller, PluginSdk.Commands.ICommandResponder responder) -> bool
+static PluginSdk.Commands.ServerCommands.Register(System.Reflection.Assembly assembly) -> void
+static PluginSdk.Commands.ServerCommands.Register(System.Reflection.Assembly assembly, params System.Type[] moduleTypes) -> void
+static PluginSdk.Commands.ServerCommands.Registrar.get -> PluginSdk.Commands.ICommandRegistrar
+static PluginSdk.Commands.ServerCommands.Registrar.set -> void
+static PluginSdk.Config.ConfigSchema.Build(System.Type configType) -> PluginSdk.Config.ConfigSchemaData
+static PluginSdk.Config.ConfigStorage.GetLoadedConfigurations(System.Reflection.Assembly assembly) -> System.Collections.Generic.IReadOnlyList<PluginSdk.Config.PluginConfig>
+static PluginSdk.Config.ConfigStorage.LoadJson<T>(string json) -> T
+static PluginSdk.Config.ConfigStorage.LoadXml<T>(string path) -> T
+static PluginSdk.Config.ConfigStorage.SaveJson<T>(T config) -> string
+static PluginSdk.Config.ConfigStorage.SaveXml<T>(T config, string path) -> void
+static PluginSdk.Config.ManagedPluginConfiguration.BindOwner(string id, System.Reflection.Assembly assembly) -> void
+static PluginSdk.Config.ManagedPluginConfiguration.CompleteInitialization() -> void
+static PluginSdk.Config.ManagedPluginConfiguration.ConfigureFromEnvironment() -> void
+static PluginSdk.Config.ManagedPluginConfiguration.ExpectInstance(string id) -> void
+static PluginSdk.Config.ManagedPluginConfiguration.Failure.get -> string
+static PluginSdk.Config.ManagedPluginConfiguration.Initialized(string id, object instance) -> void
+static PluginSdk.Config.ManagedPluginConfiguration.Observe() -> bool
+static PluginSdk.Config.ManagedPluginConfiguration.Required.get -> bool
+static PluginSdk.Config.ManagedPluginConfiguration.Revision.get -> string
+static PluginSdk.Logging.LogEnvironment.CreateDefaultSink() -> PluginSdk.Logging.ILogSink
+static PluginSdk.Logging.LogEnvironment.IsManagedByQuasar() -> bool
+static PluginSdk.Logging.LogEnvironment.LineEmitted -> System.Action<string>
+static PluginSdk.Logging.Logger.Create(string pluginName) -> PluginSdk.Logging.Logger
+static PluginSdk.Logging.Logger.EntryEmitted -> System.Action<PluginSdk.Logging.LogEntry>
+static PluginSdk.Logging.MagnetarLogSink.Format(in PluginSdk.Logging.LogEntry entry) -> string
+static PluginSdk.Logging.QuasarLogSink.Format(in PluginSdk.Logging.LogEntry entry) -> string
+static PluginSdk.MissionScreens.IsHostSenderAvailable.get -> bool
+static PluginSdk.MissionScreens.ShowToAll(PluginSdk.MissionScreenContent content) -> bool
+static PluginSdk.MissionScreens.ShowToAll(string screenTitle, string currentObjectivePrefix, string currentObjective, string screenDescription, string okButtonCaption = null) -> bool
+static PluginSdk.MissionScreens.ShowToPlayer(long playerIdentityId, PluginSdk.MissionScreenContent content) -> bool
+static PluginSdk.MissionScreens.ShowToPlayer(long playerIdentityId, string screenTitle, string currentObjectivePrefix, string currentObjective, string screenDescription, string okButtonCaption = null) -> bool
+static PluginSdk.MissionScreens.ShowToSteam(ulong steamId, PluginSdk.MissionScreenContent content) -> bool
+static PluginSdk.MissionScreens.ShowToSteam(ulong steamId, string screenTitle, string currentObjectivePrefix, string currentObjective, string screenDescription, string okButtonCaption = null) -> bool
+static PluginSdk.Paths.PathResolver.GetFileName(string path) -> string
+static PluginSdk.Paths.PathResolver.GetFileNameWithoutExtension(string path) -> string
+static PluginSdk.Paths.PathResolver.Install(PluginSdk.Paths.IPathResolver backend) -> void
+static PluginSdk.Paths.PathResolver.IsCaseInsensitiveResolverActive.get -> bool
+static PluginSdk.Paths.PathResolver.Normalize(string path) -> string
+static PluginSdk.Paths.PathResolver.ResolveAbsolute(string absolutePath) -> string
+static PluginSdk.Paths.PathResolver.ResolveContentFilePath(string relativePath, string rootPath) -> string
+static PluginSdk.Paths.PathResolver.ToWindowsPath(string path) -> string
+static PluginSdk.ServerControl.QuitWithoutSaving() -> void
+static PluginSdk.ServerControl.ReloadConfig() -> bool
+static PluginSdk.ServerControl.RestartWithoutSaving() -> void
+static PluginSdk.ServerControl.SaveAndQuit() -> void
+static PluginSdk.ServerControl.SaveAndRestart() -> void
+static PluginSdk.ServerControl.SaveWorld() -> bool
+static PluginSdk.ServerControl.Terminating -> System.Action<PluginSdk.ServerTerminationKind>
+static PluginSdk.Stats.PluginStats.Clear(string provider) -> void
+static PluginSdk.Stats.PluginStats.Providers.get -> System.Collections.Generic.IReadOnlyList<string>
+static PluginSdk.Stats.PluginStats.Publish(string provider, PluginSdk.Stats.StatsSnapshot snapshot) -> void
+static PluginSdk.Stats.PluginStats.TryGetSnapshot(string provider, out PluginSdk.Stats.StatsSnapshot snapshot) -> bool
+static PluginSdk.Stats.PluginStats.Updated -> System.Action<string, PluginSdk.Stats.StatsSnapshot>
+static PluginSdk.Stats.StatsSchema.Build(System.Type pocoType) -> PluginSdk.Stats.StatsSchema
+static PluginSdk.Storage.PluginStorage.ConfigureStandalone(string root) -> void
+static PluginSdk.Storage.PluginStorage.FolderName(string pluginId) -> string
+static PluginSdk.Storage.PluginStorage.GetSharedDirectory(string pluginId) -> string
+static PluginSdk.Storage.PluginStorage.IsClusterShared.get -> bool
+static PluginSdk.Storage.PluginStorage.Root.get -> string
+virtual PluginSdk.Config.PluginConfig.OnPropertyChanged(string propertyName) -> void

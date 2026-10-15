@@ -219,13 +219,45 @@ The release gate compares versions with `sort -V`, which orders `2.3.3` before
 reverse does not: once a four-component version is released, dropping back to
 three components looks older and the release run is skipped.
 
+### PluginSdk contract version
+
+`PluginSdk.dll` carries a second version, the contract version `major.minor`, in
+[PluginSdk/Properties/Contract.cs](../PluginSdk/Properties/Contract.cs):
+
+```csharp
+[assembly: System.Reflection.AssemblyMetadata("PluginSdkContract", "1.0")]
+```
+
+It changes only with the public API, not with every Magnetar release:
+
+* **minor** goes up when public API is added.
+* **major** goes up when a public member is removed or changes signature, or when
+  documented behavior that plugins rely on changes incompatibly.
+* A release without a public API change keeps it.
+
+A plugin built against contract `M.m` runs on any PluginSdk with major `M` and a
+minor of `m` or higher. Cluster records the contract its release was built
+against, and Quasar compares it with the installed Magnetar's instead of the
+`PluginSdk.dll` file hash, so a Magnetar release that keeps the contract needs
+no cluster re-pin. Tools read the attribute with `System.Reflection.Metadata`,
+without loading the DLL. `AssemblyVersion` stays the Magnetar version.
+
+[Microsoft.CodeAnalysis.PublicApiAnalyzers](https://github.com/dotnet/roslyn/blob/main/src/RoslynAnalyzers/PublicApiAnalyzers/PublicApiAnalyzers.Help.md)
+keeps `PluginSdk/PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt` in step
+with the code: a public API change that isn't in the files fails the build
+(RS0016, RS0017). Add new API to `PublicAPI.Unshipped.txt` (the IDE code fix does
+it), and mark removed API there with `*REMOVED*`.
+[Build/check-plugin-sdk-contract.py](../Build/check-plugin-sdk-contract.py)
+compares the API files with the latest release tag and fails when the contract
+didn't move with them: added lines need a higher minor, removed or changed lines
+a higher major. Run it locally with the release tags fetched. Signature-preserving
+behavior changes are not detected; the PR author and the reviewer decide those,
+as they decide Magnetar version bumps.
+
 ## Continuous integration / releases
 
 Magnetar 2.4.2.2 introduces managed preparation. Its build-component bump is required
 for this workflow to build the PR bundles and publish the exporter after merge.
-Cluster runtime packages must rebuild against the PluginSdk DLL from the resulting
-release and record that binary's exact SHA-256; unchanged SDK source does not preserve
-binary identity across versioned builds.
 
 [`.github/workflows/release.yml`](../.github/workflows/release.yml) builds
 both platforms and publishes a GitHub release with the two `.7z` bundles
