@@ -10,7 +10,7 @@ namespace PluginSdk.Commands
     /// Converts the string arguments of a command into the typed parameter
     /// values of its handler method. Supports the common scalar types, enums,
     /// optional parameters (via C# defaults) and a trailing
-    /// <c>params</c> array.
+    /// <c>params</c> array. Words beyond the parameters are an error.
     /// </summary>
     internal static class ArgumentBinder
     {
@@ -61,6 +61,15 @@ namespace PluginSdk.Commands
                     error = $"missing argument <{p.Name}>";
                     return false;
                 }
+            }
+
+            // Dropping the rest would run "remove Big Ship" on "Big"
+            if (argIndex < args.Count)
+            {
+                error = $"unexpected argument '{args[argIndex]}'";
+                if (Array.Exists(parameters, p => p.ParameterType == typeof(string)))
+                    error += " (put text with spaces in quotes)";
+                return false;
             }
 
             return true;
