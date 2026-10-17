@@ -143,6 +143,38 @@ namespace PluginSdk.Tests
         }
 
         [Fact]
+        public void Handle_SurplusWord_RepliesUsageAndDoesNotRun()
+        {
+            var d = BuildDispatcher(out var r);
+            d.Handle("!test yell Big Ship", Caller(MyPromoteLevel.None), r);
+
+            var reply = Assert.Single(r.Replies);
+            Assert.False(reply.Broadcast);
+            Assert.Contains("unexpected argument 'Ship' (put text with spaces in quotes)", reply.Text);
+            Assert.Contains("!test yell <message>", reply.Text);
+        }
+
+        [Fact]
+        public void Handle_SurplusWord_NoTextParameter_HasNoQuoteHint()
+        {
+            var d = BuildDispatcher(out var r);
+            d.Handle("!test add 1 2 3", Caller(MyPromoteLevel.None), r);
+            Assert.Contains("unexpected argument '3'. Usage: !test add <a> [b]", r.LastText);
+
+            r.Replies.Clear();
+            d.Handle("!test ping now", Caller(MyPromoteLevel.None), r);
+            Assert.Contains("unexpected argument 'now'. Usage: !test ping", r.LastText);
+        }
+
+        [Fact]
+        public void Handle_QuotedArgument_FillsOneTextParameter()
+        {
+            var d = BuildDispatcher(out var r);
+            d.Handle("!test yell \"Big Ship\"", Caller(MyPromoteLevel.None), r);
+            Assert.Equal("Big Ship", r.LastText);
+        }
+
+        [Fact]
         public void Handle_QuotedArgument_KeptTogether()
         {
             var d = BuildDispatcher(out var r);

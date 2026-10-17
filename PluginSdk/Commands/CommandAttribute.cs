@@ -20,7 +20,8 @@ namespace PluginSdk.Commands
     /// and floating-point primitives, <c>bool</c>, and any <c>enum</c>. A
     /// trailing <c>params string[]</c> captures all remaining words. Parameters
     /// with C# default values are optional. Quoted <c>"multi word"</c> tokens
-    /// are kept together.
+    /// are kept together. More words than parameters get an error reply with
+    /// the usage line, and the handler doesn't run.
     /// </para>
     /// <para><b>Replying</b></para>
     /// <para>
