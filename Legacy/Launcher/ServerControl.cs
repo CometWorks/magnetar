@@ -355,12 +355,10 @@ internal static class ServerControl
     }
 
     /// <summary>Saves the world, then quits with exit code 0, for a signal:
-    /// on a worker thread and without Terminating.</summary>
+    /// on a worker thread and without Terminating. On Linux one Ctrl+C reaches
+    /// two handlers, so only the call that begins the shutdown logs.</summary>
     public static void QuitOnSignal(string signal)
-    {
-        LogFile.WriteLine($"Received {signal}: saving world and quitting");
-        Task.Run(() => SaveAndQuit(requested: false));
-    }
+        => Task.Run(() => SaveAndQuit(requested: false, $"Received {signal}: saving world and quitting"));
 
     /// <summary>Saves the world, then quits with exit code 0.</summary>
     public static void SaveAndQuit() => SaveAndQuit(requested: true);
@@ -368,11 +366,13 @@ internal static class ServerControl
     // A signal comes from outside the server, under a supervisor mostly
     // because the host shuts down, so it raises no Terminating: a supervisor
     // that keeps a server off after a requested stop must start it again.
-    private static void SaveAndQuit(bool requested)
+    private static void SaveAndQuit(bool requested, string reason = null)
     {
         if (!BeginTerminate())
             return;
 
+        if (reason != null)
+            LogFile.WriteLine(reason);
         if (requested)
             PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Shutdown);
         LogFile.WriteLine("Saving world before shutdown");
