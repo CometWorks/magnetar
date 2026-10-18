@@ -368,8 +368,8 @@ jobs:
       # build silently. Bump both together.
       - name: Fetch Steam dependencies
         env:
-          LINUX_DEPENDENCIES_TAG: v1.0.31
-          STEAM_DEPENDENCIES_SHA256: f512fb57f13f91183b007e750a3c01fc506bcc1202bd08f8fa67be528aa91daa
+          LINUX_DEPENDENCIES_TAG: v1.0.42
+          STEAM_DEPENDENCIES_SHA256: 3331ffab588a055f489f9951a5f7450a14c903144d682f4f4ff23909fb663a65
         run: |
           set -euo pipefail
           mkdir -p steam-deps
