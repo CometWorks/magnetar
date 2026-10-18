@@ -147,9 +147,12 @@ path:
 - A trailing `params string[]` captures **all** remaining words.
 - Quote `"multi word"` arguments to keep spaces; `\` escapes the next char.
 
-If a required argument is missing or a value does not parse, the caller
-automatically gets an error with the generated usage line, e.g.
-`!ess tp <target> [distance]` — the handler is not called.
+If a required argument is missing, a value does not parse, or there are more
+words than parameters, the caller automatically gets an error with the
+generated usage line, e.g. `!ess tp <target> [distance]` — the handler is not
+called. A handler taking one `string name` refuses `Big Ship` rather than run
+on `Big`: take a name of several words with a trailing `params string[]`, or
+let players quote it.
 
 ## Replying
 

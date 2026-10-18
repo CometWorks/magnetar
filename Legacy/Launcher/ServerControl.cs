@@ -355,12 +355,10 @@ internal static class ServerControl
     }
 
     /// <summary>Saves the world, then quits with exit code 0, for a signal:
-    /// on a worker thread and without Terminating.</summary>
+    /// on a worker thread and without Terminating. On Linux one Ctrl+C reaches
+    /// two handlers, so only the call that begins the shutdown logs.</summary>
     public static void QuitOnSignal(string signal)
-    {
-        LogFile.WriteLine($"Received {signal}: saving world and quitting");
-        Task.Run(() => SaveAndQuit(requested: false));
-    }
+        => Task.Run(() => SaveAndQuit(requested: false, $"Received {signal}: saving world and quitting"));
 
     /// <summary>Saves the world, then quits with exit code 0.</summary>
     public static void SaveAndQuit() => SaveAndQuit(requested: true);
@@ -368,11 +366,13 @@ internal static class ServerControl
     // A signal comes from outside the server, under a supervisor mostly
     // because the host shuts down, so it raises no Terminating: a supervisor
     // that keeps a server off after a requested stop must start it again.
-    private static void SaveAndQuit(bool requested)
+    private static void SaveAndQuit(bool requested, string reason = null)
     {
         if (!BeginTerminate())
             return;
 
+        if (reason != null)
+            LogFile.WriteLine(reason);
         if (requested)
             PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Shutdown);
         LogFile.WriteLine("Saving world before shutdown");
@@ -434,10 +434,23 @@ internal static class ServerControl
 
     private static void DisposePlugins()
     {
+        PluginLoader loader = PluginLoader.Instance;
+        if (loader == null)
+            return;
+
         try
         {
-            // Bound the wait so a misbehaving plugin cannot hang shutdown.
-            Task dispose = Task.Run(() => PluginLoader.Instance?.Dispose());
+            // The loader's Update and HandleInput drop disposed plugins from the
+            // list Dispose walks, so Dispose must not run while the game thread
+            // updates plugins: run it there, or on a worker while the game
+            // thread waits here. Without a session the game loop isn't running
+            // yet: the world loads at the end of the loader's Init. Bound the
+            // wait so a misbehaving plugin cannot hang shutdown.
+            Task dispose = new Task(loader.Dispose);
+            if (OnUpdateThread() || MySandboxGame.Static == null || MySession.Static == null)
+                dispose.Start();
+            else
+                Game.RunOnGameThread(dispose.RunSynchronously);
             if (!dispose.Wait(DisposeTimeout))
                 LogFile.Warn("Plugin disposal timed out");
         }

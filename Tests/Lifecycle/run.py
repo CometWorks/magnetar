@@ -195,6 +195,11 @@ def run_case(case, platform, args, port, gate):
                 failures.append("a restart changed the PID on Linux")
         if "Restart failed" in (work / "run.log").read_text(errors="replace"):
             failures.append("Restart failed on stderr")
+        if "Error disposing plugins" in server.info_logs():
+            failures.append("Error disposing plugins in the info log")
+        racing = [m for _, _, m in server.events() if m.startswith("dispose updates=") and m != "dispose updates=0"]
+        if racing:
+            failures.append(f"plugins updated during disposal: {racing}")
 
         server.stop()
         if case.reload:

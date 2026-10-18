@@ -84,16 +84,26 @@ fall back to anonymous until you set `PULSAR_GITHUB_TOKEN`.
 
 ## Client companion mod
 
-By default Magnetar auto-loads the Steam Workshop `MagnetarMod` client companion
-so server-side PluginSdk features can open mission-screen popups on clients. Pass
-`-noimplicitmod` to skip adding it and remove it from the active world mod list
-for that run.
+By default Magnetar adds the Steam Workshop mod `MagnetarMod` (id `3750200326`)
+to the world's mod list. Clients download it with the world like any other mod.
+It is the client-side receiver that lets server plugins built on the PluginSdk
+open mission-screen popups on players' screens. Pass `-noimplicitmod` to skip
+adding it and remove it from the active world mod list for that run.
+
+Before the world loads, Magnetar downloads or updates the mod into the Workshop
+cache in the `-path` data folder, `content/244850/3750200326`, where the
+dedicated server also keeps the world's other mods. That cache is separate from
+the Steam client's Workshop folder, and an up-to-date copy is not downloaded
+again. Magnetar 2.4.3.6 and older first put the mod into the dedicated server's
+install folder, `Content/Workshop`; newer versions don't write there, and that
+leftover folder can be deleted.
 
 Magnetar only adds and downloads the companion when Space Engineers has
-registered its Steam Workshop service. Without that service, Magnetar removes
-the implicit mod, logs a warning, and continues loading the server; mission-screen
-popups remain unavailable for that run. Other Workshop update failures are also
-reported as warnings and do not abort startup.
+registered its Steam Workshop service. Without that service, or when the
+download fails, Magnetar leaves the mod out of the world mods, logs a warning,
+and continues loading the server; mission-screen popups remain unavailable for
+that run. Workshop update failures of mod plugins are also reported as warnings
+and do not abort startup.
 
 ## Legacy Workshop mods
 
