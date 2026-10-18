@@ -1,4 +1,3 @@
-using Magnetar.Legacy.Integration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using HarmonyLib;
+using Magnetar.Legacy.Integration;
 using ParallelTasks;
 using Pulsar.Shared;
 using Pulsar.Shared.Data;
@@ -35,21 +35,31 @@ public static class SteamMods
         }
     }
 
-    public static void Update(IEnumerable<ulong> ids)
+    /// <summary>
+    /// Downloads or updates the items before the world loads. Returns false if
+    /// any of them failed; startup continues either way.
+    /// </summary>
+    public static bool Update(IEnumerable<ulong> ids)
     {
         var modItems = new List<MyObjectBuilder_Checkpoint.ModItem>(
             ids.Select(x => new MyObjectBuilder_Checkpoint.ModItem(x, "Steam"))
         );
         if (modItems.Count == 0)
-            return;
+            return true;
 
         if (!IsSteamWorkshopAvailable())
         {
             LogFile.Warn(
                 $"Steam Workshop service unavailable; skipping update for {modItems.Count} workshop items. Server startup will continue."
             );
-            return;
+            return false;
         }
+
+        // Until the world loads, the DS keeps its Workshop folder inside the
+        // install (Content/Workshop). Switch to the -path data folder first,
+        // as the world mod download does, so there is one cache and the
+        // install stays untouched.
+        MyGameService.GameServer?.SetServerModTemporaryDirectory();
 
         LogFile.WriteLine($"Updating {modItems.Count} workshop items");
 
@@ -77,20 +87,24 @@ public static class SteamMods
                 foreach (Exception e in exceptions)
                     sb.Append(e);
                 LogFile.Warn(sb.ToString());
+                return false;
             }
-            else if (result.Result != MyGameServiceCallResult.OK)
+
+            if (result.Result != MyGameServiceCallResult.OK)
             {
                 LogFile.Warn(
                     "Unable to update workshop items; server startup will continue. Result: "
                         + result.Result
                 );
+                return false;
             }
+
+            return true;
         }
         catch (Exception e)
         {
-            LogFile.Warn(
-                "Unable to update workshop items; server startup will continue: " + e
-            );
+            LogFile.Warn("Unable to update workshop items; server startup will continue: " + e);
+            return false;
         }
     }
 
@@ -118,8 +132,7 @@ public static class SteamMods
         catch (Exception e)
         {
             WarnInstallState(
-                "Unable to verify installed Steam Workshop items; treating them as untrusted: "
-                    + e
+                "Unable to verify installed Steam Workshop items; treating them as untrusted: " + e
             );
             return true;
         }
@@ -148,12 +161,12 @@ public static class SteamMods
                 .. mods.Select(x => new WorkshopId(x.PublishedFileId, x.PublishedServiceName)),
             ];
 
-            DownloadModsBlocking ??= AccessTools.Method(
-                typeof(MyWorkshop),
-                "DownloadModsBlocking"
-            );
+            DownloadModsBlocking ??= AccessTools.Method(typeof(MyWorkshop), "DownloadModsBlocking");
             if (DownloadModsBlocking is null)
-                throw new MissingMethodException(typeof(MyWorkshop).FullName, "DownloadModsBlocking");
+                throw new MissingMethodException(
+                    typeof(MyWorkshop).FullName,
+                    "DownloadModsBlocking"
+                );
 
             MyWorkshop.ResultData resultData = (MyWorkshop.ResultData)
                 DownloadModsBlocking.Invoke(

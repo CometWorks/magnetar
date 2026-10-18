@@ -103,9 +103,14 @@ public class Plugin : IPlugin
             Run(line);
     }
 
+    // Waits a second and logs how often the game thread updated the plugins
+    // meanwhile. Magnetar must not dispose while it does: the loader drops
+    // disposed plugins from the list it walks (SE1-0203).
     public void Dispose()
     {
-        Log("dispose");
+        int before = Volatile.Read(ref tick);
+        Thread.Sleep(1000);
+        Log($"dispose updates={Volatile.Read(ref tick) - before}");
     }
 
     // "<command> [args]", optionally prefixed with "worker " to run it on a
