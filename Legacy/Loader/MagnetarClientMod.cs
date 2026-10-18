@@ -1,7 +1,7 @@
-using Magnetar.Legacy.Arguments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Magnetar.Legacy.Arguments;
 using Pulsar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox;
@@ -81,7 +81,9 @@ internal static class MagnetarClientMod
         {
             int removed = mods.RemoveAll(IsMagnetarMod);
             if (removed > 0)
-                LogFile.WriteLine($"Removed MagnetarMod client companion ({WorkshopId}) from world mods because -noimplicitmod is set.");
+                LogFile.WriteLine(
+                    $"Removed MagnetarMod client companion ({WorkshopId}) from world mods because -noimplicitmod is set."
+                );
             return;
         }
 
@@ -89,7 +91,9 @@ internal static class MagnetarClientMod
         {
             int removed = mods.RemoveAll(IsMagnetarMod);
             if (removed > 0)
-                LogFile.WriteLine($"Crossplay enabled; removed MagnetarMod client companion ({WorkshopId}) from world mods.");
+                LogFile.WriteLine(
+                    $"Crossplay enabled; removed MagnetarMod client companion ({WorkshopId}) from world mods."
+                );
             return;
         }
 
@@ -110,7 +114,9 @@ internal static class MagnetarClientMod
             return;
 
         mods.Add(CreateModItem());
-        LogFile.WriteLine($"Added MagnetarMod client companion ({WorkshopId}) to world mods. {Purpose}");
+        LogFile.WriteLine(
+            $"Added MagnetarMod client companion ({WorkshopId}) to world mods. {Purpose}"
+        );
     }
 
     private static bool IsCrossplayEnabled()
@@ -118,9 +124,13 @@ internal static class MagnetarClientMod
         if (MySandboxGame.ConfigDedicated == null)
             return false;
 
-        return MySandboxGame.ConfigDedicated.CrossPlatform ||
-               MySandboxGame.ConfigDedicated.ConsoleCompatibility ||
-               string.Equals(MySandboxGame.ConfigDedicated.NetworkType, "eos", StringComparison.OrdinalIgnoreCase);
+        return MySandboxGame.ConfigDedicated.CrossPlatform
+            || MySandboxGame.ConfigDedicated.ConsoleCompatibility
+            || string.Equals(
+                MySandboxGame.ConfigDedicated.NetworkType,
+                "eos",
+                StringComparison.OrdinalIgnoreCase
+            );
     }
 
     private static void WarnSteamUnavailable()
@@ -134,11 +144,11 @@ internal static class MagnetarClientMod
         );
     }
 
-    private static bool IsMagnetarMod(MyObjectBuilder_Checkpoint.ModItem mod)
-        => mod.PublishedFileId == WorkshopId;
+    private static bool IsMagnetarMod(MyObjectBuilder_Checkpoint.ModItem mod) =>
+        mod.PublishedFileId == WorkshopId;
 
-    private static MyObjectBuilder_Checkpoint.ModItem CreateModItem()
-        => new MyObjectBuilder_Checkpoint.ModItem(WorkshopId, WorkshopService)
+    private static MyObjectBuilder_Checkpoint.ModItem CreateModItem() =>
+        new MyObjectBuilder_Checkpoint.ModItem(WorkshopId, WorkshopService)
         {
             FriendlyName = "MagnetarMod",
         };

@@ -1,4 +1,3 @@
-using Magnetar.Legacy.Integration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using HarmonyLib;
+using Magnetar.Legacy.Integration;
 using ParallelTasks;
 using Pulsar.Shared;
 using Pulsar.Shared.Data;
@@ -103,9 +103,7 @@ public static class SteamMods
         }
         catch (Exception e)
         {
-            LogFile.Warn(
-                "Unable to update workshop items; server startup will continue: " + e
-            );
+            LogFile.Warn("Unable to update workshop items; server startup will continue: " + e);
             return false;
         }
     }
@@ -134,8 +132,7 @@ public static class SteamMods
         catch (Exception e)
         {
             WarnInstallState(
-                "Unable to verify installed Steam Workshop items; treating them as untrusted: "
-                    + e
+                "Unable to verify installed Steam Workshop items; treating them as untrusted: " + e
             );
             return true;
         }
@@ -164,12 +161,12 @@ public static class SteamMods
                 .. mods.Select(x => new WorkshopId(x.PublishedFileId, x.PublishedServiceName)),
             ];
 
-            DownloadModsBlocking ??= AccessTools.Method(
-                typeof(MyWorkshop),
-                "DownloadModsBlocking"
-            );
+            DownloadModsBlocking ??= AccessTools.Method(typeof(MyWorkshop), "DownloadModsBlocking");
             if (DownloadModsBlocking is null)
-                throw new MissingMethodException(typeof(MyWorkshop).FullName, "DownloadModsBlocking");
+                throw new MissingMethodException(
+                    typeof(MyWorkshop).FullName,
+                    "DownloadModsBlocking"
+                );
 
             MyWorkshop.ResultData resultData = (MyWorkshop.ResultData)
                 DownloadModsBlocking.Invoke(
