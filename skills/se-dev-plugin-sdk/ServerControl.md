@@ -56,8 +56,8 @@ public static event Action<ServerTerminationKind> Terminating;
 
 public enum ServerTerminationKind
 {
-    Shutdown,   // !quit / !stop — the server is meant to stay down
-    Restart,    // !restart      — the server will come back up
+    Shutdown,   // asked to stop: the server is meant to stay down
+    Restart,    // asked to restart: the server will come back up
 }
 ```
 
@@ -86,11 +86,18 @@ private void OnTerminating(ServerTerminationKind kind)
 
 What you can rely on:
 
-- **In-game admin commands only.** It fires for the `!quit`/`!stop` command
-  (`Shutdown`) and the `!restart` command (`Restart`). It does **not** fire for
-  `SIGTERM`/`SIGINT` (e.g. `systemctl stop`) or SE's internal exit path — those
-  are not an admin lifecycle intent, so distinguish "stay down" from "comes
-  back" by the `kind`, not by inferring it from a process exit.
+- **Requested stops and restarts only.** It fires with `Shutdown` for the
+  `!quit`/`!stop` commands, a plugin's `SaveAndQuit` or `QuitWithoutSaving`
+  (the Essentials `Stop` step and `!ess stop` among them) and the dedicated
+  server's own exit (its `/stop`, the Remote API stop). It fires with
+  `Restart` for the `!restart` command and any `SaveAndRestart` or
+  `RestartWithoutSaving`, including the dedicated server's timed auto-restart.
+  Under Quasar, whose agent turns a restart into a quit that Quasar follows
+  with a new launch, plugins see `Shutdown` instead.
+  It does **not** fire for `SIGTERM`/`SIGINT` (e.g. `systemctl stop`): a
+  signal comes from outside, mostly from a host shutting down, and a
+  supervisor should start the server again. Distinguish "stay down" from
+  "comes back" by the `kind`, not by inferring it from a process exit.
 - **Raised before teardown.** It fires on the thread performing the termination,
   while plugins are still loaded and the session is still intact — before any
   world save or plugin disposal. So your handler still has a live game and a
@@ -99,7 +106,7 @@ What you can rely on:
   may block briefly (e.g. to flush a network message) but must not hang; a
   handler that throws is isolated and never blocks the shutdown or the other
   subscribers.
-- **Fires once per termination**, and only for these admin commands. Save
+- **Fires once per termination**, and only for these requests. Save
   (`!save`) and config reload (`!reload`) do not raise it — they do not tear the
   process down.
 
