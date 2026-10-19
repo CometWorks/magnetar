@@ -178,7 +178,6 @@ public class PluginLoader : IHandleInputPlugin
                 .Where(x => x.IsSupportedEnvironment())
                 .Select(x => x.WorkshopId)
         );
-        MagnetarClientMod.Download();
 
         Magnetar.Legacy.Patch.Patch_DeferInitialWorld.LoadInitialWorld();
     }
