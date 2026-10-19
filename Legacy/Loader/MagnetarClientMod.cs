@@ -71,6 +71,9 @@ internal static class MagnetarClientMod
         if (mods.Any(IsMagnetarMod))
             return;
 
+        // The DS downloads it with the world mods, after it has moved its
+        // Workshop folder to the -path data folder, and the world doesn't
+        // load if that download fails, as with any other world mod.
         mods.Add(CreateModItem());
         LogFile.WriteLine(
             $"Added MagnetarMod client companion ({WorkshopId}) to world mods. {Purpose}"

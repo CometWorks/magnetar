@@ -90,19 +90,19 @@ It is the client-side receiver that lets server plugins built on the PluginSdk
 open mission-screen popups on players' screens. Pass `-noimplicitmod` to skip
 adding it and remove it from the active world mod list for that run.
 
-Before the world loads, Magnetar downloads or updates the mod into the Workshop
-cache in the `-path` data folder, `content/244850/3750200326`, where the
-dedicated server also keeps the world's other mods. That cache is separate from
-the Steam client's Workshop folder, and an up-to-date copy is not downloaded
-again. Magnetar 2.4.3.6 and older first put the mod into the dedicated server's
+The server downloads the companion when the world loads, together with the
+world's other mods, into the Workshop cache in the `-path` data folder,
+`content/244850/3750200326`. That cache is separate from the Steam client's
+Workshop folder, and an up-to-date copy is not downloaded again. If the download
+fails, the world doesn't load, as with any other world mod. Magnetar 2.4.3.6 and
+older downloaded it once more before the world load, into the dedicated server's
 install folder, `Content/Workshop`; newer versions don't write there, and that
 leftover folder can be deleted.
 
-Magnetar only adds and downloads the companion when Space Engineers has
-registered its Steam Workshop service. Without that service, or when the
-download fails, Magnetar leaves the mod out of the world mods, logs a warning,
-and continues loading the server; mission-screen popups remain unavailable for
-that run.
+Magnetar only adds the companion when Space Engineers has registered its Steam
+Workshop service. Without that service, Magnetar removes the implicit mod, logs a
+warning, and continues loading the server; mission-screen popups remain
+unavailable for that run.
 
 ## Mod plugins
 
