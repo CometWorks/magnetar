@@ -56,7 +56,7 @@ Magnetar config folder). Each case gets a copy, so keep it small:
 ```bash
 Tests/Lifecycle/run.py --platform linux --install <Magnetar install> \
     --ds64 <DS>/DedicatedServer64 --template <template> --work <work> \
-    --jobs 4 --port-base 28100 --wrap "<workspace>/notes/parallel-test-work/run-test.sh 4 --"
+    --jobs 4 --port-base 28100 --wrap "<workspace>/testing/parallel-test-work/run-test.sh 4 --"
 ```
 
 Build the branch into an install folder of your own
