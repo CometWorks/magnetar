@@ -7,10 +7,22 @@
         <!-- NU1701: VRage.Math.dll is a .NET Framework assembly; that warning is noise here. -->
         <NoWarn>NU1701</NoWarn>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <!-- RS0016/RS0017: public API and PublicAPI.*.txt disagree. Fail the build so the files
+             can't go stale; add new API to PublicAPI.Unshipped.txt (the IDE code fix does it). -->
+        <WarningsAsErrors>$(WarningsAsErrors);RS0016;RS0017</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="System.Text.Json" Version="8.0.5" />
+        <!-- Keeps PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt in sync with the public API,
+             so every API change shows in the diff. Build/check-plugin-sdk-contract.py compares
+             them with the previous release to enforce the PluginSdkContract bump. -->
+        <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+        <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
     </ItemGroup>
 
     <ItemGroup>
