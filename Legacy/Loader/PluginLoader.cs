@@ -5,12 +5,12 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using HarmonyLib;
-using PluginSdk;
-using PluginSdk.Commands;
 using Magnetar.Legacy.Commands;
 using Magnetar.Legacy.Integration;
 using Magnetar.Legacy.Loader;
 using Magnetar.Legacy.Paths;
+using PluginSdk;
+using PluginSdk.Commands;
 using Pulsar.Shared;
 using Pulsar.Shared.Arguments;
 using Pulsar.Shared.Config;
@@ -114,8 +114,13 @@ public class PluginLoader : IHandleInputPlugin
             // Register Magnetar's built-in !save / !restart / !quit before
             // plugins initialize. Last-registration-wins, so a plugin may
             // override any of them by registering the same prefix later.
-            Commands.Register(typeof(SaveCommand).Assembly,
-                typeof(SaveCommand), typeof(RestartCommand), typeof(QuitCommand), typeof(StopCommand));
+            Commands.Register(
+                typeof(SaveCommand).Assembly,
+                typeof(SaveCommand),
+                typeof(RestartCommand),
+                typeof(QuitCommand),
+                typeof(StopCommand)
+            );
 
             // Bind plugin-facing mission-screen popup support before plugins
             // initialize. Clients need the paired MagnetarMod world mod loaded
@@ -123,7 +128,8 @@ public class PluginLoader : IHandleInputPlugin
             MissionScreens.Bind(
                 MissionScreenSender.ShowToPlayer,
                 MissionScreenSender.ShowToSteam,
-                MissionScreenSender.ShowToAll);
+                MissionScreenSender.ShowToAll
+            );
 
             // Bind the SDK PathResolver facade to the LinuxCompat case-insensitive
             // path cache before plugins initialize, so a plugin may already use it
@@ -165,16 +171,18 @@ public class PluginLoader : IHandleInputPlugin
         PluginList list = ConfigManager.Instance.List;
         Profile current = ConfigManager.Instance.Profiles.Current;
 
-        IEnumerable<ulong> steamIDs = MagnetarClientMod.GetWorkshopIdsForUpdate(
-            list.GetModPlugins(current, []).Select(x => x.WorkshopId));
-        SteamMods.Update(steamIDs);
+        SteamMods.Update(list.GetModPlugins(current, []).Select(x => x.WorkshopId));
+        MagnetarClientMod.Download();
 
         Magnetar.Legacy.Patch.Patch_DeferInitialWorld.LoadInitialWorld();
     }
 
     public void Update()
     {
-        (PluginSdk.Clustering.PluginCluster.Current as PluginSdk.Clustering.StandalonePluginProvider)?.Update();
+        (
+            PluginSdk.Clustering.PluginCluster.Current
+            as PluginSdk.Clustering.StandalonePluginProvider
+        )?.Update();
         if (!init)
             return;
 
@@ -205,7 +213,10 @@ public class PluginLoader : IHandleInputPlugin
             p.Dispose();
         plugins.Clear();
 
-        (PluginSdk.Clustering.PluginCluster.Current as PluginSdk.Clustering.StandalonePluginProvider)?.Dispose();
+        (
+            PluginSdk.Clustering.PluginCluster.Current
+            as PluginSdk.Clustering.StandalonePluginProvider
+        )?.Dispose();
         ServerCommands.Registrar = null;
         MissionScreens.Bind(null, null, null);
         Commands = null;
