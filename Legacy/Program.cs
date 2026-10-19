@@ -156,7 +156,7 @@ static class Program
 
         if (ServerFlags.PrepareManaged)
         {
-            SetupGameData(TryUpdate(baseDir));
+            SetupGameData(TryUpdate(baseDir), args);
             SetupPlugins(baseDir, preparationDirectory);
             return;
         }
@@ -177,7 +177,7 @@ static class Program
             Daemon.Detach();
 
         Updater updater = TryUpdate(baseDir);
-        SetupGameData(updater);
+        SetupGameData(updater, args);
         CheckCanStart(updater);
         SetupSteam();
         SetupPlugins(baseDir);
@@ -283,7 +283,7 @@ static class Program
         return updater;
     }
 
-    private static void SetupGameData(Updater updater)
+    private static void SetupGameData(Updater updater, string[] args)
     {
         string ds64Dir = Folder.GetDS64();
         if (ds64Dir is null)
@@ -308,15 +308,15 @@ static class Program
                 Environment.SetEnvironmentVariable("SPACE_ENGINEERS_ROOT", gameRoot);
         }
 
+        // Mod plugins are Workshop items. The DS downloads them into the Workshop
+        // cache of its own data folder (-path, or the default instance), not into
+        // the Steam client's folder, so Pulsar has to look for them there.
         string modDir = Path.Combine(
-            ds64Dir,
-            "..",
-            "..",
-            "..",
-            "workshop",
+            ResolveDataDir(args, ds64Dir) ?? DefaultDataDir,
             "content",
             Game.SteamId.ToString()
         );
+        LogFile.WriteLine("Workshop folder of mod plugins: " + modDir);
 
         Version seVersion = Game.GetGameVersion(ds64Dir);
         if (seVersion is null) // Prevent NRE from Keen updates
@@ -619,6 +619,13 @@ static class Program
 
         Game.StartDedicatedServer(finalArgs);
     }
+
+    // The DS's default instance, used without "-path" (DedicatedServer.GetUserDataPath).
+    private static string DefaultDataDir =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "SpaceEngineersDedicated"
+        );
 
     // Resolves the DS data directory (the "-path" value) the same way the DS's
     // ProcessArgs does — combined against the DS binaries' folder so an absolute

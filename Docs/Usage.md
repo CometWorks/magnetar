@@ -102,8 +102,20 @@ Magnetar only adds and downloads the companion when Space Engineers has
 registered its Steam Workshop service. Without that service, or when the
 download fails, Magnetar leaves the mod out of the world mods, logs a warning,
 and continues loading the server; mission-screen popups remain unavailable for
-that run. Workshop update failures of mod plugins are also reported as warnings
-and do not abort startup.
+that run.
+
+## Mod plugins
+
+A mod plugin is a Steam Workshop mod enabled as a plugin in the Magnetar profile,
+not in the world's mod list. Before the world loads, Magnetar downloads or
+updates the enabled mod plugins into the Workshop cache in the `-path` data
+folder, `content/244850/<workshop-id>`, and loads them from there. Update
+failures are reported as warnings and do not abort startup; a mod plugin that
+could not be downloaded is left out for that run.
+
+Magnetar 2.4.3.7 and older looked for mod plugins in the Steam client's Workshop
+folder instead, so they loaded only when a Steam client on the same machine
+had them.
 
 ## Legacy Workshop mods
 
