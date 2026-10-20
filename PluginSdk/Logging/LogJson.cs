@@ -31,8 +31,14 @@ namespace PluginSdk.Logging
         /// <summary>Serializes <paramref name="data"/> to compact JSON text.</summary>
         internal static string Serialize(object data)
         {
-            try { return JsonSerializer.Serialize(data, Options); }
-            catch (Exception ex) { return JsonSerializer.Serialize(Error(data, ex), Options); }
+            try
+            {
+                return JsonSerializer.Serialize(data, Options);
+            }
+            catch (Exception ex)
+            {
+                return JsonSerializer.Serialize(Error(data, ex), Options);
+            }
         }
 
         /// <summary>
@@ -41,11 +47,17 @@ namespace PluginSdk.Logging
         /// </summary>
         internal static JsonElement ToElement(object data)
         {
-            try { return JsonSerializer.SerializeToElement(data, Options); }
-            catch (Exception ex) { return JsonSerializer.SerializeToElement(Error(data, ex), Options); }
+            try
+            {
+                return JsonSerializer.SerializeToElement(data, Options);
+            }
+            catch (Exception ex)
+            {
+                return JsonSerializer.SerializeToElement(Error(data, ex), Options);
+            }
         }
 
-        private static object Error(object data, Exception ex)
-            => new { error = ex.Message, type = data?.GetType().FullName };
+        private static object Error(object data, Exception ex) =>
+            new { error = ex.Message, type = data?.GetType().FullName };
     }
 }

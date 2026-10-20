@@ -61,6 +61,7 @@ namespace PluginSdk.Config
     {
         public SectionAttribute(string id, string parent = null, string caption = null)
             : base(id, parent, caption) { }
+
         public override string Kind => "section";
     }
 
@@ -72,6 +73,7 @@ namespace PluginSdk.Config
     {
         public TabAttribute(string id, string parent = null, string caption = null)
             : base(id, parent, caption) { }
+
         public override string Kind => "tab";
     }
 
@@ -83,6 +85,7 @@ namespace PluginSdk.Config
     {
         public ColumnAttribute(string id, string parent = null, string caption = null)
             : base(id, parent, caption) { }
+
         public override string Kind => "column";
     }
 
@@ -107,7 +110,8 @@ namespace PluginSdk.Config
     /// <summary>Marks a <c>bool</c> configuration option.</summary>
     public sealed class BoolOptionAttribute : ConfigOptionAttribute
     {
-        public BoolOptionAttribute(string description = null) : base(description) { }
+        public BoolOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>Marks a 32-bit <c>int</c> configuration option with an optional inclusive range.</summary>
@@ -116,7 +120,11 @@ namespace PluginSdk.Config
         public int Min { get; }
         public int Max { get; }
 
-        public IntOptionAttribute(int min = int.MinValue, int max = int.MaxValue, string description = null)
+        public IntOptionAttribute(
+            int min = int.MinValue,
+            int max = int.MaxValue,
+            string description = null
+        )
             : base(description)
         {
             Min = min;
@@ -130,7 +138,11 @@ namespace PluginSdk.Config
         public long Min { get; }
         public long Max { get; }
 
-        public LongOptionAttribute(long min = long.MinValue, long max = long.MaxValue, string description = null)
+        public LongOptionAttribute(
+            long min = long.MinValue,
+            long max = long.MaxValue,
+            string description = null
+        )
             : base(description)
         {
             Min = min;
@@ -144,7 +156,11 @@ namespace PluginSdk.Config
         public float Min { get; }
         public float Max { get; }
 
-        public FloatOptionAttribute(float min = float.NegativeInfinity, float max = float.PositiveInfinity, string description = null)
+        public FloatOptionAttribute(
+            float min = float.NegativeInfinity,
+            float max = float.PositiveInfinity,
+            string description = null
+        )
             : base(description)
         {
             Min = min;
@@ -158,7 +174,11 @@ namespace PluginSdk.Config
         public double Min { get; }
         public double Max { get; }
 
-        public DoubleOptionAttribute(double min = double.NegativeInfinity, double max = double.PositiveInfinity, string description = null)
+        public DoubleOptionAttribute(
+            double min = double.NegativeInfinity,
+            double max = double.PositiveInfinity,
+            string description = null
+        )
             : base(description)
         {
             Min = min;
@@ -183,7 +203,11 @@ namespace PluginSdk.Config
         /// </summary>
         public bool Multiline { get; set; }
 
-        public StringOptionAttribute(int maxLength = 0, string pattern = null, string description = null)
+        public StringOptionAttribute(
+            int maxLength = 0,
+            string pattern = null,
+            string description = null
+        )
             : base(description)
         {
             MaxLength = maxLength;
@@ -262,7 +286,8 @@ namespace PluginSdk.Config
     /// </summary>
     public sealed class StructOptionAttribute : ConfigOptionAttribute
     {
-        public StructOptionAttribute(string description = null) : base(description) { }
+        public StructOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>
@@ -281,7 +306,8 @@ namespace PluginSdk.Config
     /// </summary>
     public sealed class EnumOptionAttribute : ConfigOptionAttribute
     {
-        public EnumOptionAttribute(string description = null) : base(description) { }
+        public EnumOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>
@@ -293,6 +319,7 @@ namespace PluginSdk.Config
     {
         /// <summary>Hide the alpha channel in the UI; alpha is forced to 255.</summary>
         Rgb,
+
         /// <summary>Expose the alpha channel in the UI.</summary>
         Rgba,
     }
@@ -306,7 +333,10 @@ namespace PluginSdk.Config
     {
         public ColorFormat Format { get; }
 
-        public ColorOptionAttribute(ColorFormat format = ColorFormat.Rgba, string description = null)
+        public ColorOptionAttribute(
+            ColorFormat format = ColorFormat.Rgba,
+            string description = null
+        )
             : base(description)
         {
             Format = format;
@@ -316,25 +346,29 @@ namespace PluginSdk.Config
     /// <summary>Marks a <see cref="VRageMath.Vector2D"/> configuration option.</summary>
     public sealed class Vector2DOptionAttribute : ConfigOptionAttribute
     {
-        public Vector2DOptionAttribute(string description = null) : base(description) { }
+        public Vector2DOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>Marks a <see cref="VRageMath.Vector3D"/> configuration option.</summary>
     public sealed class Vector3DOptionAttribute : ConfigOptionAttribute
     {
-        public Vector3DOptionAttribute(string description = null) : base(description) { }
+        public Vector3DOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>Marks a <see cref="VRageMath.Vector2I"/> configuration option.</summary>
     public sealed class Vector2IOptionAttribute : ConfigOptionAttribute
     {
-        public Vector2IOptionAttribute(string description = null) : base(description) { }
+        public Vector2IOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>Marks a <see cref="VRageMath.Vector3I"/> configuration option.</summary>
     public sealed class Vector3IOptionAttribute : ConfigOptionAttribute
     {
-        public Vector3IOptionAttribute(string description = null) : base(description) { }
+        public Vector3IOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>
@@ -345,7 +379,8 @@ namespace PluginSdk.Config
     /// </summary>
     public sealed class DirectionOptionAttribute : ConfigOptionAttribute
     {
-        public DirectionOptionAttribute(string description = null) : base(description) { }
+        public DirectionOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>
@@ -356,7 +391,8 @@ namespace PluginSdk.Config
     /// </summary>
     public sealed class PositionAndOrientationOptionAttribute : ConfigOptionAttribute
     {
-        public PositionAndOrientationOptionAttribute(string description = null) : base(description) { }
+        public PositionAndOrientationOptionAttribute(string description = null)
+            : base(description) { }
     }
 
     /// <summary>
@@ -365,7 +401,11 @@ namespace PluginSdk.Config
     /// validation for struct members is intentionally simple and
     /// metadata-only.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(
+        AttributeTargets.Property | AttributeTargets.Field,
+        AllowMultiple = false,
+        Inherited = true
+    )]
     public sealed class StructMemberAttribute : Attribute
     {
         public string Description { get; }
@@ -405,8 +445,10 @@ namespace PluginSdk.Config
     /// be marked. When absent, the UI falls back to a positional placeholder
     /// for each row.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
-    public sealed class StructCaptionAttribute : Attribute
-    {
-    }
+    [AttributeUsage(
+        AttributeTargets.Property | AttributeTargets.Field,
+        AllowMultiple = false,
+        Inherited = false
+    )]
+    public sealed class StructCaptionAttribute : Attribute { }
 }

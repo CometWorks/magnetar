@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -29,7 +29,8 @@ internal sealed class AccessListView : Window, IAutoSaveContent
     private bool touched;
     private bool groupIdInvalid;
 
-    public AccessListView(DedicatedConfigDocument cfg, AtomicFile writer, Action onSaved) : base("Access Lists")
+    public AccessListView(DedicatedConfigDocument cfg, AtomicFile writer, Action onSaved)
+        : base("Access Lists")
     {
         this.cfg = cfg;
         this.writer = writer;
@@ -47,7 +48,12 @@ internal sealed class AccessListView : Window, IAutoSaveContent
         bannedFrame.X = Pos.Right(adminFrame);
         reservedFrame.X = Pos.Right(bannedFrame);
 
-        groupId = new TextField(cfg.GroupId) { X = 11, Y = Pos.AnchorEnd(3), Width = 20 };
+        groupId = new TextField(cfg.GroupId)
+        {
+            X = 11,
+            Y = Pos.AnchorEnd(3),
+            Width = 20,
+        };
         groupId.TextChanged += _ => ValidateGroupId();
         var groupLabel = new Label("GroupID:") { X = 1, Y = Pos.AnchorEnd(3) };
 
@@ -82,13 +88,29 @@ internal sealed class AccessListView : Window, IAutoSaveContent
             Height = Dim.Fill(4),
             ColorScheme = TurboVisionTheme.Window,
         };
-        var lv = new ListView(data) { X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window };
+        var lv = new ListView(data)
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(1),
+            ColorScheme = TurboVisionTheme.Window,
+        };
         var add = new Button("Add") { X = 0, Y = Pos.AnchorEnd(1) };
         add.Clicked += () =>
         {
-            string id = Dialogs.Prompt($"Add to {title}", "SteamID (unsignedLong):", width: 44, validate: s =>
-                ulong.TryParse(s.Trim(), out _) ? null : "Enter a numeric SteamID.");
-            if (id != null) { data.Add(id.Trim()); lv.SetSource(data); touched = true; }
+            string id = Dialogs.Prompt(
+                $"Add to {title}",
+                "SteamID (unsignedLong):",
+                width: 44,
+                validate: s => ulong.TryParse(s.Trim(), out _) ? null : "Enter a numeric SteamID."
+            );
+            if (id != null)
+            {
+                data.Add(id.Trim());
+                lv.SetSource(data);
+                touched = true;
+            }
         };
         var del = new Button("Del") { X = Pos.Right(add) + 1, Y = Pos.AnchorEnd(1) };
         del.Clicked += () =>

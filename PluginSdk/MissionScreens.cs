@@ -20,8 +20,12 @@ namespace PluginSdk
         public const byte ProtocolVersion = 1;
         public const byte ShowMissionScreenPacket = 1;
 
-        private static Func<long, MissionScreenContent, bool> showToPlayer = (identityId, content) => false;
-        private static Func<ulong, MissionScreenContent, bool> showToSteam = (steamId, content) => false;
+        private static Func<long, MissionScreenContent, bool> showToPlayer = (
+            identityId,
+            content
+        ) => false;
+        private static Func<ulong, MissionScreenContent, bool> showToSteam = (steamId, content) =>
+            false;
         private static Func<MissionScreenContent, bool> showToAll = content => false;
 
         /// <summary>
@@ -37,16 +41,21 @@ namespace PluginSdk
             string currentObjectivePrefix,
             string currentObjective,
             string screenDescription,
-            string okButtonCaption = null)
-            => ShowToPlayer(playerIdentityId, new MissionScreenContent(
-                screenTitle,
-                currentObjectivePrefix,
-                currentObjective,
-                screenDescription,
-                okButtonCaption));
+            string okButtonCaption = null
+        ) =>
+            ShowToPlayer(
+                playerIdentityId,
+                new MissionScreenContent(
+                    screenTitle,
+                    currentObjectivePrefix,
+                    currentObjective,
+                    screenDescription,
+                    okButtonCaption
+                )
+            );
 
-        public static bool ShowToPlayer(long playerIdentityId, MissionScreenContent content)
-            => playerIdentityId != 0L && content.HasContent && showToPlayer(playerIdentityId, content);
+        public static bool ShowToPlayer(long playerIdentityId, MissionScreenContent content) =>
+            playerIdentityId != 0L && content.HasContent && showToPlayer(playerIdentityId, content);
 
         public static bool ShowToSteam(
             ulong steamId,
@@ -54,42 +63,53 @@ namespace PluginSdk
             string currentObjectivePrefix,
             string currentObjective,
             string screenDescription,
-            string okButtonCaption = null)
-            => ShowToSteam(steamId, new MissionScreenContent(
-                screenTitle,
-                currentObjectivePrefix,
-                currentObjective,
-                screenDescription,
-                okButtonCaption));
+            string okButtonCaption = null
+        ) =>
+            ShowToSteam(
+                steamId,
+                new MissionScreenContent(
+                    screenTitle,
+                    currentObjectivePrefix,
+                    currentObjective,
+                    screenDescription,
+                    okButtonCaption
+                )
+            );
 
-        public static bool ShowToSteam(ulong steamId, MissionScreenContent content)
-            => steamId != 0UL && content.HasContent && showToSteam(steamId, content);
+        public static bool ShowToSteam(ulong steamId, MissionScreenContent content) =>
+            steamId != 0UL && content.HasContent && showToSteam(steamId, content);
 
         public static bool ShowToAll(
             string screenTitle,
             string currentObjectivePrefix,
             string currentObjective,
             string screenDescription,
-            string okButtonCaption = null)
-            => ShowToAll(new MissionScreenContent(
-                screenTitle,
-                currentObjectivePrefix,
-                currentObjective,
-                screenDescription,
-                okButtonCaption));
+            string okButtonCaption = null
+        ) =>
+            ShowToAll(
+                new MissionScreenContent(
+                    screenTitle,
+                    currentObjectivePrefix,
+                    currentObjective,
+                    screenDescription,
+                    okButtonCaption
+                )
+            );
 
-        public static bool ShowToAll(MissionScreenContent content)
-            => content.HasContent && showToAll(content);
+        public static bool ShowToAll(MissionScreenContent content) =>
+            content.HasContent && showToAll(content);
 
         internal static void Bind(
             Func<long, MissionScreenContent, bool> showToPlayer,
             Func<ulong, MissionScreenContent, bool> showToSteam,
-            Func<MissionScreenContent, bool> showToAll)
+            Func<MissionScreenContent, bool> showToAll
+        )
         {
             MissionScreens.showToPlayer = showToPlayer ?? ((identityId, content) => false);
             MissionScreens.showToSteam = showToSteam ?? ((steamId, content) => false);
             MissionScreens.showToAll = showToAll ?? (content => false);
-            IsHostSenderAvailable = showToPlayer != null || showToSteam != null || showToAll != null;
+            IsHostSenderAvailable =
+                showToPlayer != null || showToSteam != null || showToAll != null;
         }
     }
 }

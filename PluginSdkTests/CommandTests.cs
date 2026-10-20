@@ -21,11 +21,13 @@ namespace PluginSdk.Tests
         {
             public readonly List<CommandReply> Replies = new List<CommandReply>();
             public readonly List<CommandCaller> Callers = new List<CommandCaller>();
+
             public void Send(in CommandReply reply, in CommandCaller caller)
             {
                 Replies.Add(reply);
                 Callers.Add(caller);
             }
+
             public IEnumerable<string> Texts => Replies.Select(r => r.Text);
             public string LastText => Replies.Count == 0 ? null : Replies[Replies.Count - 1].Text;
         }
@@ -43,7 +45,8 @@ namespace PluginSdk.Tests
 
             [Command("echo", "echoes the words")]
             [Permission(MyPromoteLevel.None)]
-            public CommandReply Echo(params string[] words) => CommandReply.Ok(string.Join(" ", words));
+            public CommandReply Echo(params string[] words) =>
+                CommandReply.Ok(string.Join(" ", words));
 
             [Command("yell", "announces to all")]
             [Permission(MyPromoteLevel.None)]
@@ -66,7 +69,10 @@ namespace PluginSdk.Tests
             public void Silent() { }
         }
 
-        private static CommandDispatcher BuildDispatcher(out CapturingResponder responder, Action<string, Exception> onError = null)
+        private static CommandDispatcher BuildDispatcher(
+            out CapturingResponder responder,
+            Action<string, Exception> onError = null
+        )
         {
             var registry = new CommandRegistry();
             registry.RegisterModule(typeof(SampleCommands), "owner1");
@@ -74,8 +80,8 @@ namespace PluginSdk.Tests
             return new CommandDispatcher(registry, onError);
         }
 
-        private static CommandCaller Caller(MyPromoteLevel level)
-            => new CommandCaller(123UL, 42L, "Tester", level);
+        private static CommandCaller Caller(MyPromoteLevel level) =>
+            new CommandCaller(123UL, 42L, "Tester", level);
 
         [Fact]
         public void Handle_SimpleCommand_RepliesToCaller()
@@ -150,7 +156,10 @@ namespace PluginSdk.Tests
 
             var reply = Assert.Single(r.Replies);
             Assert.False(reply.Broadcast);
-            Assert.Contains("unexpected argument 'Ship' (put text with spaces in quotes)", reply.Text);
+            Assert.Contains(
+                "unexpected argument 'Ship' (put text with spaces in quotes)",
+                reply.Text
+            );
             Assert.Contains("!test yell <message>", reply.Text);
         }
 
@@ -337,7 +346,10 @@ namespace PluginSdk.Tests
             public string Foo() => "foo";
         }
 
-        private static CommandDispatcher BuildDispatcherFor(Type moduleType, out CapturingResponder responder)
+        private static CommandDispatcher BuildDispatcherFor(
+            Type moduleType,
+            out CapturingResponder responder
+        )
         {
             var registry = new CommandRegistry();
             registry.RegisterModule(moduleType, "owner1");
@@ -548,8 +560,14 @@ namespace PluginSdk.Tests
             Assert.Contains("!adm", all);
             Assert.Contains("!def", all);
             Assert.Contains("!test", all);
-            Assert.True(all.IndexOf("!adm", StringComparison.Ordinal) < all.IndexOf("!def", StringComparison.Ordinal));
-            Assert.True(all.IndexOf("!def", StringComparison.Ordinal) < all.IndexOf("!test", StringComparison.Ordinal));
+            Assert.True(
+                all.IndexOf("!adm", StringComparison.Ordinal)
+                    < all.IndexOf("!def", StringComparison.Ordinal)
+            );
+            Assert.True(
+                all.IndexOf("!def", StringComparison.Ordinal)
+                    < all.IndexOf("!test", StringComparison.Ordinal)
+            );
             Assert.Contains("has a default command", all);
         }
 
@@ -627,8 +645,9 @@ namespace PluginSdk.Tests
         public void Register_HelpPrefix_IsRejected()
         {
             var registry = new CommandRegistry();
-            var ex = Assert.Throws<CommandRegistrationException>(
-                () => registry.RegisterModule(typeof(HelpPrefixCommands), "owner1"));
+            var ex = Assert.Throws<CommandRegistrationException>(() =>
+                registry.RegisterModule(typeof(HelpPrefixCommands), "owner1")
+            );
             Assert.Contains("help", ex.Message);
         }
     }

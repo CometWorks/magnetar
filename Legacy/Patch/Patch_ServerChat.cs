@@ -28,9 +28,11 @@ public static class Patch_ServerChat
         try
         {
             var channel = (ChatChannel)msg.Channel;
-            if (channel != ChatChannel.Global &&
-                channel != ChatChannel.Faction &&
-                channel != ChatChannel.Private)
+            if (
+                channel != ChatChannel.Global
+                && channel != ChatChannel.Faction
+                && channel != ChatChannel.Private
+            )
                 return true;
 
             string text = msg.Text;

@@ -49,14 +49,15 @@ namespace PluginSdk.Logging
             return line;
         }
 
-        private static MyLogSeverity ToSeverity(LogLevel level) => level switch
-        {
-            LogLevel.Debug => MyLogSeverity.Debug,
-            LogLevel.Info => MyLogSeverity.Info,
-            LogLevel.Warning => MyLogSeverity.Warning,
-            LogLevel.Error => MyLogSeverity.Error,
-            LogLevel.Critical => MyLogSeverity.Critical,
-            _ => MyLogSeverity.Info,
-        };
+        private static MyLogSeverity ToSeverity(LogLevel level) =>
+            level switch
+            {
+                LogLevel.Debug => MyLogSeverity.Debug,
+                LogLevel.Info => MyLogSeverity.Info,
+                LogLevel.Warning => MyLogSeverity.Warning,
+                LogLevel.Error => MyLogSeverity.Error,
+                LogLevel.Critical => MyLogSeverity.Critical,
+                _ => MyLogSeverity.Info,
+            };
     }
 }

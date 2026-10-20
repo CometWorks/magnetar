@@ -8,10 +8,10 @@ namespace Magnetar.Config.Model;
 /// <summary>The identity of the one instance the tool is bound to for the session.</summary>
 internal sealed class InstanceBinding
 {
-    public string DataDir;             // -path  (DS UserDataPath: cfg + Saves)
-    public string MagnetarConfigDir;   // -config (Magnetar state, logs, pid)
-    public string MagnetarExePath;     // launcher to spawn
-    public string Ds64Dir;             // DS install (templates; auto-detected)
+    public string DataDir; // -path  (DS UserDataPath: cfg + Saves)
+    public string MagnetarConfigDir; // -config (Magnetar state, logs, pid)
+    public string MagnetarExePath; // launcher to spawn
+    public string Ds64Dir; // DS install (templates; auto-detected)
 
     public string ConfigPath => Path.Combine(DataDir, "SpaceEngineers-Dedicated.cfg");
     public string SavesPath => Path.Combine(DataDir, "Saves");
@@ -23,6 +23,7 @@ internal sealed class InstanceProblems
 {
     public List<string> Messages { get; } = new();
     public bool Any => Messages.Count > 0;
+
     public void Add(string m) => Messages.Add(m);
 }
 
@@ -67,7 +68,9 @@ internal sealed class DsInstance
 
         Templates = WorldTemplateCatalog.Scan(Binding.Ds64Dir);
         if (Binding.Ds64Dir == null || Templates.Templates.Count == 0)
-            Problems.Add("No world templates found (DS install not located); new-world creation is disabled.");
+            Problems.Add(
+                "No world templates found (DS install not located); new-world creation is disabled."
+            );
 
         LastSession = LastSessionFile.Read(LastSessionFile.PathFor(Binding.SavesPath));
         ResolveActiveWorld();

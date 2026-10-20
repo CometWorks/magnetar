@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -21,19 +21,51 @@ internal static class InstancePickerDialog
         var dlg = new Dialog("Open Instance", 74, 16)
         {
             ColorScheme = TurboVisionTheme.Dialog,
-            X = 2, Width = Dim.Fill(2),
+            X = 2,
+            Width = Dim.Fill(2),
         };
 
-        TextField data = Field(dlg, "DS data dir (-path):", 1, seed.DataDir,
-            cur => FileDialogs.PickDirectory("DS data dir", "Select the DS data directory", cur));
-        TextField config = Field(dlg, "Magnetar config (-config):", 3, seed.MagnetarConfigDir,
-            cur => FileDialogs.PickDirectory("Magnetar config", "Select the Magnetar config directory", cur));
-        TextField exe = Field(dlg, "Launcher (-magnetar):", 5, seed.MagnetarExePath,
-            cur => FileDialogs.PickFile("Launcher", "Select the Magnetar launcher executable", cur));
-        TextField ds64 = Field(dlg, "DS install (-ds64):", 7, seed.Ds64Dir,
-            cur => FileDialogs.PickDirectory("DS install", "Select the DedicatedServer64 folder", cur));
+        TextField data = Field(
+            dlg,
+            "DS data dir (-path):",
+            1,
+            seed.DataDir,
+            cur => FileDialogs.PickDirectory("DS data dir", "Select the DS data directory", cur)
+        );
+        TextField config = Field(
+            dlg,
+            "Magnetar config (-config):",
+            3,
+            seed.MagnetarConfigDir,
+            cur =>
+                FileDialogs.PickDirectory(
+                    "Magnetar config",
+                    "Select the Magnetar config directory",
+                    cur
+                )
+        );
+        TextField exe = Field(
+            dlg,
+            "Launcher (-magnetar):",
+            5,
+            seed.MagnetarExePath,
+            cur => FileDialogs.PickFile("Launcher", "Select the Magnetar launcher executable", cur)
+        );
+        TextField ds64 = Field(
+            dlg,
+            "DS install (-ds64):",
+            7,
+            seed.Ds64Dir,
+            cur =>
+                FileDialogs.PickDirectory("DS install", "Select the DedicatedServer64 folder", cur)
+        );
 
-        var note = new Label("The DS data dir must already exist.") { X = 1, Y = 9, Width = Dim.Fill(2) };
+        var note = new Label("The DS data dir must already exist.")
+        {
+            X = 1,
+            Y = 9,
+            Width = Dim.Fill(2),
+        };
         dlg.Add(note);
 
         InstanceBinding result = null;
@@ -72,10 +104,21 @@ internal static class InstancePickerDialog
         return string.IsNullOrEmpty(s) ? null : s;
     }
 
-    private static TextField Field(Dialog dlg, string label, int y, string value, Func<string, string> browse)
+    private static TextField Field(
+        Dialog dlg,
+        string label,
+        int y,
+        string value,
+        Func<string, string> browse
+    )
     {
         dlg.Add(new Label(label) { X = 1, Y = y });
-        var tf = new TextField(value ?? "") { X = 28, Y = y, Width = Dim.Fill(13) };
+        var tf = new TextField(value ?? "")
+        {
+            X = 28,
+            Y = y,
+            Width = Dim.Fill(13),
+        };
         // The TextField constructor parks the cursor at the end of the seeded text, so a path
         // longer than the box opens scrolled all the way right with its start cropped off the
         // left edge. Reset the cursor to column 0 so the view is anchored at the start.

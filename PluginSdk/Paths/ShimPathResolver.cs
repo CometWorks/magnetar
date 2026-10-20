@@ -14,11 +14,11 @@ namespace PluginSdk.Paths
 
         public string ToWindowsPath(string path) => path;
 
-        public string GetFileName(string path)
-            => string.IsNullOrEmpty(path) ? path : Path.GetFileName(path);
+        public string GetFileName(string path) =>
+            string.IsNullOrEmpty(path) ? path : Path.GetFileName(path);
 
-        public string GetFileNameWithoutExtension(string path)
-            => string.IsNullOrEmpty(path) ? path : Path.GetFileNameWithoutExtension(path);
+        public string GetFileNameWithoutExtension(string path) =>
+            string.IsNullOrEmpty(path) ? path : Path.GetFileNameWithoutExtension(path);
 
         public string ResolveContentFilePath(string relativePath, string rootPath)
         {

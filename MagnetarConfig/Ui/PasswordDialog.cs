@@ -1,7 +1,7 @@
 using System;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -12,16 +12,43 @@ internal static class PasswordDialog
     {
         var dlg = new Dialog("Server Password", 56, 12) { ColorScheme = TurboVisionTheme.Dialog };
 
-        var state = new Label(cfg.HasPassword ? "A password is currently set." : "No password is set.")
-        { X = 1, Y = 0, Width = Dim.Fill(2) };
+        var state = new Label(
+            cfg.HasPassword ? "A password is currently set." : "No password is set."
+        )
+        {
+            X = 1,
+            Y = 0,
+            Width = Dim.Fill(2),
+        };
 
-        var p1 = new TextField("") { X = 14, Y = 2, Width = Dim.Fill(2), Secret = true };
-        var p2 = new TextField("") { X = 14, Y = 4, Width = Dim.Fill(2), Secret = true };
+        var p1 = new TextField("")
+        {
+            X = 14,
+            Y = 2,
+            Width = Dim.Fill(2),
+            Secret = true,
+        };
+        var p2 = new TextField("")
+        {
+            X = 14,
+            Y = 4,
+            Width = Dim.Fill(2),
+            Secret = true,
+        };
 
-        dlg.Add(state,
-            new Label("New:") { X = 1, Y = 2 }, p1,
-            new Label("Confirm:") { X = 1, Y = 4 }, p2,
-            new Label("Leave both empty and press Set to clear the password.") { X = 1, Y = 6, Width = Dim.Fill(2) });
+        dlg.Add(
+            state,
+            new Label("New:") { X = 1, Y = 2 },
+            p1,
+            new Label("Confirm:") { X = 1, Y = 4 },
+            p2,
+            new Label("Leave both empty and press Set to clear the password.")
+            {
+                X = 1,
+                Y = 6,
+                Width = Dim.Fill(2),
+            }
+        );
 
         var set = new Button("Set", true);
         set.Clicked += () =>
@@ -39,7 +66,10 @@ internal static class PasswordDialog
                 cfg.Save(writer);
                 onSaved?.Invoke();
                 Application.RequestStop(dlg);
-                Dialogs.Info("Password", string.IsNullOrEmpty(a) ? "Password cleared." : "Password set.");
+                Dialogs.Info(
+                    "Password",
+                    string.IsNullOrEmpty(a) ? "Password cleared." : "Password set."
+                );
             }
             catch (Exception e)
             {

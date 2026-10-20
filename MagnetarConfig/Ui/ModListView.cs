@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -22,7 +22,8 @@ internal sealed class ModListView : Window, IAutoSaveContent
     private bool touched;
     private IReadOnlyList<string> currentIssues = Array.Empty<string>();
 
-    public ModListView(WorldInfo world, AtomicFile writer) : base($"Mods — {world.SessionName}")
+    public ModListView(WorldInfo world, AtomicFile writer)
+        : base($"Mods — {world.SessionName}")
     {
         this.writer = writer;
         ColorScheme = TurboVisionTheme.Window;
@@ -37,7 +38,10 @@ internal sealed class ModListView : Window, IAutoSaveContent
 
         list = new ListView(Array.Empty<string>())
         {
-            X = 1, Y = 0, Width = Dim.Fill(1), Height = Dim.Fill(2),
+            X = 1,
+            Y = 0,
+            Width = Dim.Fill(1),
+            Height = Dim.Fill(2),
             ColorScheme = TurboVisionTheme.Window,
         };
 
@@ -49,9 +53,17 @@ internal sealed class ModListView : Window, IAutoSaveContent
         up.Clicked += () => MoveSelected(-1);
         var down = new Button("Dow_n") { X = Pos.Right(up) + 1, Y = Pos.AnchorEnd(2) };
         down.Clicked += () => MoveSelected(+1);
-        var dep = new Button("Toggle Dep_endency") { X = Pos.Right(down) + 1, Y = Pos.AnchorEnd(2) };
+        var dep = new Button("Toggle Dep_endency")
+        {
+            X = Pos.Right(down) + 1,
+            Y = Pos.AnchorEnd(2),
+        };
         dep.Clicked += ToggleDependency;
-        var hint = new Label("Changes save automatically") { X = Pos.Right(dep) + 2, Y = Pos.AnchorEnd(2) };
+        var hint = new Label("Changes save automatically")
+        {
+            X = Pos.Right(dep) + 2,
+            Y = Pos.AnchorEnd(2),
+        };
 
         Add(list, add, del, up, down, dep, hint);
         Refresh();
@@ -59,8 +71,13 @@ internal sealed class ModListView : Window, IAutoSaveContent
 
     private void Refresh()
     {
-        list.SetSource(mods.Items.Select((m, i) =>
-            $"{i + 1,3}. {m.PublishedFileId,-12} {(m.IsDependency ? "[dep] " : "      ")}{m.FriendlyName}").ToList());
+        list.SetSource(
+            mods.Items.Select(
+                    (m, i) =>
+                        $"{i + 1, 3}. {m.PublishedFileId, -12} {(m.IsDependency ? "[dep] " : "      ")}{m.FriendlyName}"
+                )
+                .ToList()
+        );
     }
 
     // Reorder the selected mod one slot, keeping the selection on that mod so it
@@ -92,14 +109,21 @@ internal sealed class ModListView : Window, IAutoSaveContent
     {
         // Accept either a numeric Workshop id or a Steam Workshop URL (or several,
         // pasted together) — ExtractIds pulls the ids out of whatever is entered.
-        string input = Dialogs.Prompt("Add mod", "Workshop id or URL:", width: 74, validate: s =>
-            WorkshopResolver.ExtractIds(s).Count > 0
-                ? null
-                : "Enter a numeric Workshop id or a Steam Workshop URL.");
-        if (input == null) return;
+        string input = Dialogs.Prompt(
+            "Add mod",
+            "Workshop id or URL:",
+            width: 74,
+            validate: s =>
+                WorkshopResolver.ExtractIds(s).Count > 0
+                    ? null
+                    : "Enter a numeric Workshop id or a Steam Workshop URL."
+        );
+        if (input == null)
+            return;
 
         var existing = new HashSet<ulong>(mods.Items.Select(m => m.PublishedFileId));
-        var wanted = WorkshopResolver.ExtractIds(input)
+        var wanted = WorkshopResolver
+            .ExtractIds(input)
             .Where(id => !existing.Contains((ulong)id))
             .ToList();
         if (wanted.Count == 0)
@@ -110,7 +134,10 @@ internal sealed class ModListView : Window, IAutoSaveContent
 
         // Look the names up off the UI thread so the resolve doesn't freeze the
         // window; ResolveOnline swallows transport errors into an offline result.
-        Dialogs.RunBackground(() => ResolveOnline(wanted), applied => ApplyResolved(wanted, applied));
+        Dialogs.RunBackground(
+            () => ResolveOnline(wanted),
+            applied => ApplyResolved(wanted, applied)
+        );
     }
 
     // The friendly-name lookup, run on a background thread. Returns null when the
@@ -143,10 +170,17 @@ internal sealed class ModListView : Window, IAutoSaveContent
                     mods.Items.Add(new ModItem { PublishedFileId = (ulong)id });
                     offlineAdded++;
                 }
-            if (offlineAdded > 0) { touched = true; Refresh(); }
-            Dialogs.ErrorDetails("Add mod", "Couldn't reach the Steam Workshop.",
-                $"Added {offlineAdded} mod(s) by id without a friendly name.\n" +
-                "Edit the name later once you're back online.");
+            if (offlineAdded > 0)
+            {
+                touched = true;
+                Refresh();
+            }
+            Dialogs.ErrorDetails(
+                "Add mod",
+                "Couldn't reach the Steam Workshop.",
+                $"Added {offlineAdded} mod(s) by id without a friendly name.\n"
+                    + "Edit the name later once you're back online."
+            );
             return;
         }
 
@@ -154,13 +188,23 @@ internal sealed class ModListView : Window, IAutoSaveContent
         foreach ((long id, string name) in resolved.Mods)
             if (existing.Add((ulong)id))
             {
-                mods.Items.Add(new ModItem { PublishedFileId = (ulong)id, FriendlyName = name ?? string.Empty });
+                mods.Items.Add(
+                    new ModItem { PublishedFileId = (ulong)id, FriendlyName = name ?? string.Empty }
+                );
                 added++;
             }
-        if (added > 0) { touched = true; Refresh(); }
+        if (added > 0)
+        {
+            touched = true;
+            Refresh();
+        }
 
         if (resolved.Warnings.Count > 0)
-            Dialogs.InfoDetails("Add mod", $"Added {added} mod(s).", string.Join("\n", resolved.Warnings));
+            Dialogs.InfoDetails(
+                "Add mod",
+                $"Added {added} mod(s).",
+                string.Join("\n", resolved.Warnings)
+            );
         else if (added == 0)
             Dialogs.Info("Add mod", "Nothing to add.");
     }

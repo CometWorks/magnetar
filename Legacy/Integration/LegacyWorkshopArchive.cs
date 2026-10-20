@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using Pulsar.Shared;
 using System.Linq;
+using Pulsar.Shared;
 
 namespace Magnetar.Legacy.Integration;
 
@@ -48,7 +48,10 @@ public static class LegacyWorkshopArchive
         if (string.IsNullOrWhiteSpace(targetFolder))
             return false;
 
-        string tempFolder = Path.Combine(targetFolder, ".magnetar-legacy-extract-" + Guid.NewGuid().ToString("N"));
+        string tempFolder = Path.Combine(
+            targetFolder,
+            ".magnetar-legacy-extract-" + Guid.NewGuid().ToString("N")
+        );
         try
         {
             Directory.CreateDirectory(targetFolder);
@@ -56,7 +59,10 @@ public static class LegacyWorkshopArchive
 
             ExtractZip(legacyArchive, tempFolder);
             CopyDirectory(tempFolder, targetFolder);
-            File.WriteAllText(Path.Combine(targetFolder, MarkerFile), GetMarkerContent(legacyArchive));
+            File.WriteAllText(
+                Path.Combine(targetFolder, MarkerFile),
+                GetMarkerContent(legacyArchive)
+            );
 
             string dataPath = Path.Combine(targetFolder, DataDirectory);
             if (!Directory.Exists(dataPath))
@@ -133,7 +139,9 @@ public static class LegacyWorkshopArchive
             string targetPath = Path.GetFullPath(Path.Combine(targetFolder, relativePath));
             string targetRoot = TerminatePath(Path.GetFullPath(targetFolder));
             if (!targetPath.StartsWith(targetRoot, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("Archive entry escapes target folder: " + entry.FullName);
+                throw new InvalidDataException(
+                    "Archive entry escapes target folder: " + entry.FullName
+                );
 
             if (
                 entry.FullName.EndsWith("/", StringComparison.Ordinal)
@@ -147,7 +155,12 @@ public static class LegacyWorkshopArchive
 
             Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
             using Stream input = entry.Open();
-            using FileStream output = new(targetPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using FileStream output = new(
+                targetPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None
+            );
             input.CopyTo(output);
         }
     }
@@ -155,7 +168,10 @@ public static class LegacyWorkshopArchive
     private static string NormalizeEntryPath(string entryName)
     {
         string normalized = entryName.Replace('\\', '/');
-        if (string.IsNullOrWhiteSpace(normalized) || normalized.StartsWith("/", StringComparison.Ordinal))
+        if (
+            string.IsNullOrWhiteSpace(normalized)
+            || normalized.StartsWith("/", StringComparison.Ordinal)
+        )
             throw new InvalidDataException("Invalid archive entry path: " + entryName);
 
         List<string> segments = [];
@@ -176,13 +192,21 @@ public static class LegacyWorkshopArchive
     {
         string sourceRoot = TerminatePath(Path.GetFullPath(sourceFolder));
 
-        foreach (string directory in Directory.EnumerateDirectories(sourceFolder, "*", SearchOption.AllDirectories))
+        foreach (
+            string directory in Directory.EnumerateDirectories(
+                sourceFolder,
+                "*",
+                SearchOption.AllDirectories
+            )
+        )
         {
             string relativePath = directory.Substring(sourceRoot.Length);
             Directory.CreateDirectory(Path.Combine(targetFolder, relativePath));
         }
 
-        foreach (string file in Directory.EnumerateFiles(sourceFolder, "*", SearchOption.AllDirectories))
+        foreach (
+            string file in Directory.EnumerateFiles(sourceFolder, "*", SearchOption.AllDirectories)
+        )
         {
             string relativePath = file.Substring(sourceRoot.Length);
             string targetPath = Path.Combine(targetFolder, relativePath);
@@ -206,8 +230,6 @@ public static class LegacyWorkshopArchive
             if (Directory.Exists(directory))
                 Directory.Delete(directory, recursive: true);
         }
-        catch
-        {
-        }
+        catch { }
     }
 }

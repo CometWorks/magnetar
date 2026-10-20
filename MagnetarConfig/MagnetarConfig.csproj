@@ -77,22 +77,29 @@
            from the RID-specific asset, other platforms the throwing shim the
            build output carries at its root (matching what the resolver would
            have found in the flat app folder before the split deploy). -->
-      <DeployLibraryFile Include="$(TargetDir)runtimes/win/lib/**/System.Management.dll"
-                         Condition="'$(OS)' == 'Windows_NT'" />
-      <DeployLibraryFile Include="$(TargetDir)System.Management.dll"
-                         Condition="'$(OS)' != 'Windows_NT'" />
+      <DeployLibraryFile
+        Include="$(TargetDir)runtimes/win/lib/**/System.Management.dll"
+        Condition="'$(OS)' == 'Windows_NT'"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)System.Management.dll"
+        Condition="'$(OS)' != 'Windows_NT'"
+      />
     </ItemGroup>
     <!-- Safety net (mirroring Legacy.csproj): warn when a Terminal.Gui bump
          adds a copy-local dependency the hand-maintained list above misses. -->
     <ItemGroup>
       <_DeployedName Include="@(DeployLibraryFile->'%(Filename)%(Extension)')" />
       <_CopyLocalName
-          Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
-          Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))" />
+        Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
+        Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))"
+      />
       <_UnstagedDependency Include="@(_CopyLocalName)" Exclude="@(_DeployedName)" />
     </ItemGroup>
-    <Warning Condition="'@(_UnstagedDependency)' != ''"
-             Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Terminal.Gui bump add a package?)." />
+    <Warning
+      Condition="'@(_UnstagedDependency)' != ''"
+      Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Terminal.Gui bump add a package?)."
+    />
     <Error Condition="'$(Magnetar)' == ''" Text="Specify Magnetar's deployment location!" />
     <RemoveDir Directories="$(DeployDirectory)" />
     <Copy SourceFiles="@(DeployRootFile)" DestinationFolder="$(Magnetar)" />

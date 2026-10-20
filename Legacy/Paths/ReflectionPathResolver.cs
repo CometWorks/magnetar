@@ -26,7 +26,8 @@ internal sealed class ReflectionPathResolver : IPathResolver
         Func<string, string> getFileName,
         Func<string, string> getFileNameWithoutExtension,
         Func<string, string, string> resolveContentFilePath,
-        Func<string, string> resolveAbsolute)
+        Func<string, string> resolveAbsolute
+    )
     {
         _normalize = normalize;
         _toWindowsPath = toWindowsPath;
@@ -50,25 +51,45 @@ internal sealed class ReflectionPathResolver : IPathResolver
         Func<string, string> normalize = Bind1(pathHelpers, "Normalize");
         Func<string, string> toWindowsPath = Bind1(pathHelpers, "ToWindowsPath");
         Func<string, string> getFileName = Bind1(pathHelpers, "GetFileName");
-        Func<string, string> getFileNameWithoutExtension = Bind1(pathHelpers, "GetFileNameWithoutExtension");
-        Func<string, string, string> resolveContentFilePath = Bind2(pathHelpers, "ResolveContentFilePath");
+        Func<string, string> getFileNameWithoutExtension = Bind1(
+            pathHelpers,
+            "GetFileNameWithoutExtension"
+        );
+        Func<string, string, string> resolveContentFilePath = Bind2(
+            pathHelpers,
+            "ResolveContentFilePath"
+        );
         Func<string, string> resolveAbsolute = Bind1(pathCache, "ResolveAbsolute");
 
-        if (normalize == null || toWindowsPath == null || getFileName == null ||
-            getFileNameWithoutExtension == null || resolveContentFilePath == null ||
-            resolveAbsolute == null)
+        if (
+            normalize == null
+            || toWindowsPath == null
+            || getFileName == null
+            || getFileNameWithoutExtension == null
+            || resolveContentFilePath == null
+            || resolveAbsolute == null
+        )
             return null;
 
         return new ReflectionPathResolver(
-            normalize, toWindowsPath, getFileName, getFileNameWithoutExtension,
-            resolveContentFilePath, resolveAbsolute);
+            normalize,
+            toWindowsPath,
+            getFileName,
+            getFileNameWithoutExtension,
+            resolveContentFilePath,
+            resolveAbsolute
+        );
     }
 
     private static Func<string, string> Bind1(Type type, string name)
     {
         MethodInfo m = type.GetMethod(
-            name, BindingFlags.Public | BindingFlags.Static, null,
-            new[] { typeof(string) }, null);
+            name,
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            new[] { typeof(string) },
+            null
+        );
         if (m == null || m.ReturnType != typeof(string))
             return null;
         return (Func<string, string>)Delegate.CreateDelegate(typeof(Func<string, string>), m);
@@ -77,18 +98,28 @@ internal sealed class ReflectionPathResolver : IPathResolver
     private static Func<string, string, string> Bind2(Type type, string name)
     {
         MethodInfo m = type.GetMethod(
-            name, BindingFlags.Public | BindingFlags.Static, null,
-            new[] { typeof(string), typeof(string) }, null);
+            name,
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            new[] { typeof(string), typeof(string) },
+            null
+        );
         if (m == null || m.ReturnType != typeof(string))
             return null;
-        return (Func<string, string, string>)Delegate.CreateDelegate(typeof(Func<string, string, string>), m);
+        return (Func<string, string, string>)
+            Delegate.CreateDelegate(typeof(Func<string, string, string>), m);
     }
 
     public string Normalize(string path) => _normalize(path);
+
     public string ToWindowsPath(string path) => _toWindowsPath(path);
+
     public string GetFileName(string path) => _getFileName(path);
+
     public string GetFileNameWithoutExtension(string path) => _getFileNameWithoutExtension(path);
-    public string ResolveContentFilePath(string relativePath, string rootPath)
-        => _resolveContentFilePath(relativePath, rootPath);
+
+    public string ResolveContentFilePath(string relativePath, string rootPath) =>
+        _resolveContentFilePath(relativePath, rootPath);
+
     public string ResolveAbsolute(string absolutePath) => _resolveAbsolute(absolutePath);
 }

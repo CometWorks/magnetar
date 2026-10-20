@@ -9,8 +9,8 @@ namespace Magnetar.Config.Model;
 internal sealed class WorldTemplate
 {
     public string FolderName;
-    public string FolderPath;        // absolute — becomes PremadeCheckpointPath
-    public string DisplayName;       // raw SessionName (may be a MyTexts key) or folder name
+    public string FolderPath; // absolute — becomes PremadeCheckpointPath
+    public string DisplayName; // raw SessionName (may be a MyTexts key) or folder name
     public bool HasWorldConfig;
     public bool HasCheckpoint;
 
@@ -25,16 +25,18 @@ internal sealed class WorldTemplate
 /// </summary>
 internal sealed class WorldTemplateCatalog
 {
-    public IReadOnlyList<WorldTemplate> Templates { get; private set; } = Array.Empty<WorldTemplate>();
+    public IReadOnlyList<WorldTemplate> Templates { get; private set; } =
+        Array.Empty<WorldTemplate>();
     public string CustomWorldsPath { get; }
 
     private WorldTemplateCatalog(string customWorldsPath) => CustomWorldsPath = customWorldsPath;
 
     public static WorldTemplateCatalog Scan(string ds64Dir)
     {
-        string customWorlds = ds64Dir == null
-            ? null
-            : Path.GetFullPath(Path.Combine(ds64Dir, "..", "Content", "CustomWorlds"));
+        string customWorlds =
+            ds64Dir == null
+                ? null
+                : Path.GetFullPath(Path.Combine(ds64Dir, "..", "Content", "CustomWorlds"));
 
         var catalog = new WorldTemplateCatalog(customWorlds);
         catalog.Rescan();
@@ -87,16 +89,15 @@ internal sealed class WorldTemplateCatalog
             if (!string.IsNullOrEmpty(name) && !IsLocalizationKey(name))
                 return name;
         }
-        catch
-        {
-        }
+        catch { }
         return tpl.FolderName;
     }
 
     private static bool IsLocalizationKey(string name)
     {
         string t = name.Trim();
-        return t.StartsWith("{", StringComparison.Ordinal) && t.EndsWith("}", StringComparison.Ordinal);
+        return t.StartsWith("{", StringComparison.Ordinal)
+            && t.EndsWith("}", StringComparison.Ordinal);
     }
 
     /// <summary>Opens the template's settings as an editable (in-memory) seed document.</summary>

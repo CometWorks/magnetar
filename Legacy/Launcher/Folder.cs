@@ -88,7 +88,8 @@ internal class Folder
     private static string FromOverride()
     {
         string path = ServerFlags.DedicatedServerDirectory;
-        if (path is null) return null;
+        if (path is null)
+            return null;
         if (!Path.IsPathRooted(path))
         {
             string currentPath = Assembly.GetExecutingAssembly().Location;

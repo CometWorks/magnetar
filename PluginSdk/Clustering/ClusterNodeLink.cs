@@ -25,7 +25,10 @@ namespace PluginSdk.Clustering
             if (service == null)
                 return false;
 
-            return ReferenceEquals(Interlocked.CompareExchange(ref current, null, service), service);
+            return ReferenceEquals(
+                Interlocked.CompareExchange(ref current, null, service),
+                service
+            );
         }
     }
 }

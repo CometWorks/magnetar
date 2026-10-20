@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NStack;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using NStack;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -45,7 +45,9 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
         AtomicFile writer,
         Action onSaved,
         string banner = null,
-        Action editMods = null) : base(title)
+        Action editMods = null
+    )
+        : base(title)
     {
         this.options = options;
         this.document = document;
@@ -60,7 +62,15 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
         int top = 0;
         if (!string.IsNullOrEmpty(banner))
         {
-            Add(new Label(banner) { X = 1, Y = 0, Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window });
+            Add(
+                new Label(banner)
+                {
+                    X = 1,
+                    Y = 0,
+                    Width = Dim.Fill(1),
+                    ColorScheme = TurboVisionTheme.Window,
+                }
+            );
             top = 1;
         }
 
@@ -75,7 +85,12 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             top += 1;
         }
 
-        var filterLabel = new Label("Filter: ") { X = 1, Y = top, ColorScheme = TurboVisionTheme.Window };
+        var filterLabel = new Label("Filter: ")
+        {
+            X = 1,
+            Y = top,
+            ColorScheme = TurboVisionTheme.Window,
+        };
         filter = new TextField(string.Empty)
         {
             X = Pos.Right(filterLabel),
@@ -129,7 +144,9 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
         };
         formFrame.Add(form);
 
-        hint = new Label("Changes save automatically · Tab move · Filter narrows fields across categories")
+        hint = new Label(
+            "Changes save automatically · Tab move · Filter narrows fields across categories"
+        )
         {
             X = 1,
             Y = Pos.AnchorEnd(1),
@@ -178,14 +195,29 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
                 .ToList();
             if (matches.Count == 0)
             {
-                form.Add(new Label("(no settings match)") { X = 0, Y = 0, ColorScheme = TurboVisionTheme.Window });
+                form.Add(
+                    new Label("(no settings match)")
+                    {
+                        X = 0,
+                        Y = 0,
+                        ColorScheme = TurboVisionTheme.Window,
+                    }
+                );
                 y = 1;
             }
             foreach (IGrouping<string, OptionDefinition> group in matches.GroupBy(o => o.Category))
             {
                 if (y > 0)
                     y += 1;
-                form.Add(new Label(group.Key + " /") { X = 0, Y = y, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window });
+                form.Add(
+                    new Label(group.Key + " /")
+                    {
+                        X = 0,
+                        Y = y,
+                        Width = Dim.Fill(),
+                        ColorScheme = TurboVisionTheme.Window,
+                    }
+                );
                 y += 1;
                 AddGroup(group, ref y);
             }
@@ -225,15 +257,22 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
     // Vertical rows a field's editor occupies; multi-line text needs several so
     // it isn't clipped to one line and doesn't overlap the fields below it.
     private const int MultilineRows = 3;
+
     private static bool IsMultiline(OptionDefinition def) => def.Kind == OptionKind.MultilineText;
-    private static int RowHeight(OptionDefinition def) =>
-        IsMultiline(def) ? MultilineRows : 1;
+
+    private static int RowHeight(OptionDefinition def) => IsMultiline(def) ? MultilineRows : 1;
 
     private View BuildRow(OptionDefinition def, ref int y)
     {
         const int labelWidth = 34;
         int rows = RowHeight(def);
-        var container = new View { X = 0, Y = y, Width = Dim.Fill(), Height = rows };
+        var container = new View
+        {
+            X = 0,
+            Y = y,
+            Width = Dim.Fill(),
+            Height = rows,
+        };
 
         var label = new Label(def.Label + StatusGlyph(def))
         {
@@ -261,7 +300,12 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
         {
             case OptionKind.Bool:
             {
-                var cb = new CheckBox(string.Empty) { X = x, Y = 0, Checked = document.GetBool(def) };
+                var cb = new CheckBox(string.Empty)
+                {
+                    X = x,
+                    Y = 0,
+                    Checked = document.GetBool(def),
+                };
                 cb.Toggled += _ =>
                 {
                     document.Set(def, cb.Checked ? "true" : "false");
@@ -272,8 +316,13 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             case OptionKind.Enum:
             {
                 string[] labels = def.Choices.Select(c => c.Label).ToArray();
-                int idx = Math.Max(0, Array.FindIndex(def.Choices, c =>
-                    c.XmlName.Equals(document.Get(def), StringComparison.OrdinalIgnoreCase)));
+                int idx = Math.Max(
+                    0,
+                    Array.FindIndex(
+                        def.Choices,
+                        c => c.XmlName.Equals(document.Get(def), StringComparison.OrdinalIgnoreCase)
+                    )
+                );
                 if (def.Choices.Length <= 4)
                 {
                     // Lay the choices out horizontally so they all fit on the row's
@@ -281,8 +330,11 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
                     // only its selected choice shows, hiding the rest.
                     var rg = new CyclingRadioGroup(labels.Select(l => ustring.Make(l)).ToArray())
                     {
-                        X = x, Y = 0, SelectedItem = idx,
-                        DisplayMode = DisplayModeLayout.Horizontal, HorizontalSpace = 2,
+                        X = x,
+                        Y = 0,
+                        SelectedItem = idx,
+                        DisplayMode = DisplayModeLayout.Horizontal,
+                        HorizontalSpace = 2,
                     };
                     rg.SelectedItemChanged += e =>
                     {
@@ -291,7 +343,13 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
                     };
                     return rg;
                 }
-                var combo = new ComboBox { X = x, Y = 0, Width = 24, Height = 5 };
+                var combo = new ComboBox
+                {
+                    X = x,
+                    Y = 0,
+                    Width = 24,
+                    Height = 5,
+                };
                 combo.SetSource(labels);
                 combo.SelectedItem = idx;
                 combo.SelectedItemChanged += e =>
@@ -308,7 +366,15 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             {
                 // AllowsTab=false lets Tab/Shift-Tab move focus between fields
                 // instead of inserting a tab character inside the editor.
-                var tv = new TextView { X = x, Y = 0, Width = Dim.Fill(1), Height = MultilineRows, Text = document.Get(def), AllowsTab = false };
+                var tv = new TextView
+                {
+                    X = x,
+                    Y = 0,
+                    Width = Dim.Fill(1),
+                    Height = MultilineRows,
+                    Text = document.Get(def),
+                    AllowsTab = false,
+                };
                 tv.Leave += _ =>
                 {
                     document.Set(def, tv.Text.ToString().TrimEnd('\n'));
@@ -321,11 +387,21 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             {
                 // Complex structured editors are out of scope for this form; show
                 // the raw current state read-only so nothing is silently dropped.
-                return new Label("(edited elsewhere)") { X = x, Y = 0, ColorScheme = TurboVisionTheme.Window };
+                return new Label("(edited elsewhere)")
+                {
+                    X = x,
+                    Y = 0,
+                    ColorScheme = TurboVisionTheme.Window,
+                };
             }
             default:
             {
-                var tf = new TextField(document.Get(def) ?? string.Empty) { X = x, Y = 0, Width = 24 };
+                var tf = new TextField(document.Get(def) ?? string.Empty)
+                {
+                    X = x,
+                    Y = 0,
+                    Width = 24,
+                };
                 tf.TextChanged += _ => OnFieldEdited(def, tf, tf.Text.ToString());
                 return tf;
             }
@@ -376,7 +452,8 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
             OptionKind.Bool => "Press SPACE to toggle.  ",
             _ => "",
         };
-        string live = def.Liveness == Liveness.LiveViaReload ? "applies live via reload" : "requires restart";
+        string live =
+            def.Liveness == Liveness.LiveViaReload ? "applies live via reload" : "requires restart";
         return $"{help}{keys}[default: {def.Default}] <{def.XmlName}> — {live}";
     }
 
@@ -389,7 +466,9 @@ internal sealed class OptionFormView : Window, IAutoSaveContent
     private sealed class CyclingRadioGroup : RadioGroup
     {
         private readonly int count;
-        public CyclingRadioGroup(ustring[] labels) : base(labels) => count = labels.Length;
+
+        public CyclingRadioGroup(ustring[] labels)
+            : base(labels) => count = labels.Length;
 
         public override bool ProcessKey(KeyEvent kb)
         {

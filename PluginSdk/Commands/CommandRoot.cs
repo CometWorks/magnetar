@@ -70,7 +70,11 @@ namespace PluginSdk.Commands
         /// <c>!restart 30</c> works. It does so only if it can take that many,
         /// otherwise a typo like <c>!stop nwo</c> would run <c>!stop</c>.
         /// </summary>
-        public bool TryResolve(IReadOnlyList<string> tokens, out RegisteredCommand command, out int consumed)
+        public bool TryResolve(
+            IReadOnlyList<string> tokens,
+            out RegisteredCommand command,
+            out int consumed
+        )
         {
             if (TryResolvePath(tokens, out command, out consumed))
                 return true;
@@ -83,7 +87,11 @@ namespace PluginSdk.Commands
             return true;
         }
 
-        private bool TryResolvePath(IReadOnlyList<string> tokens, out RegisteredCommand command, out int consumed)
+        private bool TryResolvePath(
+            IReadOnlyList<string> tokens,
+            out RegisteredCommand command,
+            out int consumed
+        )
         {
             command = null;
             consumed = 0;
@@ -135,15 +143,22 @@ namespace PluginSdk.Commands
                     stack.Push(child);
             }
 
-            found.Sort((a, b) => string.Compare(
-                string.Join(" ", a.Path), string.Join(" ", b.Path), StringComparison.OrdinalIgnoreCase));
+            found.Sort(
+                (a, b) =>
+                    string.Compare(
+                        string.Join(" ", a.Path),
+                        string.Join(" ", b.Path),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            );
             return found;
         }
 
         private sealed class Node
         {
-            public readonly Dictionary<string, Node> Children =
-                new Dictionary<string, Node>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, Node> Children = new Dictionary<string, Node>(
+                StringComparer.OrdinalIgnoreCase
+            );
             public RegisteredCommand Command;
         }
     }

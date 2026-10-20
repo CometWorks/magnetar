@@ -16,10 +16,13 @@ namespace PluginSdk.Clustering
         /// <see cref="Arrived"/> on the target, or null. Keep it fast: the capture waits for it.
         /// </summary>
         byte[] Leaving(long gridId);
+
         /// <summary>Source node: the move committed; the grid now lives on another node and is gone here.</summary>
         void Left(long gridId);
+
         /// <summary>Source node: the move was abandoned; the grid stays here and resumes.</summary>
         void Stayed(long gridId);
+
         /// <summary>
         /// Target node: the grid arrived and is live here. <paramref name="state"/> is what
         /// <see cref="Leaving"/> returned on the source, or null (none, or a node restart lost it).
@@ -41,6 +44,7 @@ namespace PluginSdk.Clustering
         internal sealed class NoRegistration : IDisposable
         {
             public static readonly NoRegistration Instance = new NoRegistration();
+
             public void Dispose() { }
         }
     }

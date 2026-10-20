@@ -53,7 +53,11 @@ internal sealed class PidFileReader
         }
 
         status.Pid = pid;
-        try { status.StartedAt = proc.StartTime; } catch { }
+        try
+        {
+            status.StartedAt = proc.StartTime;
+        }
+        catch { }
 
         if (IdentityMatches(pid, dataDirLine, proc))
         {
@@ -85,8 +89,10 @@ internal sealed class PidFileReader
             {
                 if (cmdline.IndexOf("Magnetar", StringComparison.OrdinalIgnoreCase) >= 0)
                     return true;
-                if (!string.IsNullOrEmpty(expectedDataDir)
-                    && cmdline.IndexOf(expectedDataDir, PlatformPaths.PathComparison) >= 0)
+                if (
+                    !string.IsNullOrEmpty(expectedDataDir)
+                    && cmdline.IndexOf(expectedDataDir, PlatformPaths.PathComparison) >= 0
+                )
                     return true;
             }
             return false;
@@ -97,7 +103,7 @@ internal sealed class PidFileReader
         {
             string name = proc.ProcessName ?? string.Empty;
             return name.IndexOf("Magnetar", StringComparison.OrdinalIgnoreCase) >= 0
-                   || name.IndexOf("SpaceEngineers", StringComparison.OrdinalIgnoreCase) >= 0;
+                || name.IndexOf("SpaceEngineers", StringComparison.OrdinalIgnoreCase) >= 0;
         }
         catch
         {

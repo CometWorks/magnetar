@@ -7,13 +7,13 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using HarmonyLib;
+using Magnetar.Legacy;
 using Magnetar.Legacy.Arguments;
 using Magnetar.Legacy.Launcher;
 using Magnetar.Legacy.Loader;
-using Magnetar.Legacy.Preparation;
 using Magnetar.Legacy.Patch;
+using Magnetar.Legacy.Preparation;
 using Magnetar.Legacy.Stats;
-using Magnetar.Legacy;
 using Pulsar.Compiler;
 using Pulsar.Interface;
 using Pulsar.Legacy.Launcher;
@@ -57,9 +57,11 @@ static class Program
         string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarInterim");
         string runtimeDir = RuntimeEnvironment.GetRuntimeDirectory();
 
-        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver(
-            [libraryDir, runtimeDir, baseDir]
-        );
+        AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver([
+            libraryDir,
+            runtimeDir,
+            baseDir,
+        ]);
 
         MagnetarMain(args);
     }
@@ -81,7 +83,10 @@ static class Program
         libraryResolver = AssemblyResolver([libraryDir]);
         AppDomain.CurrentDomain.AssemblyResolve += libraryResolver;
 #endif
-        try { ServerFlags.Initialize(args); }
+        try
+        {
+            ServerFlags.Initialize(args);
+        }
         catch (ArgumentException error)
         {
             Console.Error.WriteLine(error.Message);
@@ -108,8 +113,13 @@ static class Program
         // arguments and preparation never initialize native libraries or the game.
         if (OperatingSystem.IsLinux() && !ServerFlags.PrepareManaged)
         {
-            string launcherDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            NativeLibraryPreloader.Initialize(Path.Combine(launcherDirectory, "Libraries", "MagnetarInterim"), launcherDirectory);
+            string launcherDirectory = Path.GetDirectoryName(
+                Assembly.GetExecutingAssembly().Location
+            );
+            NativeLibraryPreloader.Initialize(
+                Path.Combine(launcherDirectory, "Libraries", "MagnetarInterim"),
+                launcherDirectory
+            );
         }
 #endif
 
@@ -143,13 +153,22 @@ static class Program
         string preparationDirectory = null;
         if (ServerFlags.PrepareManaged)
         {
-            if (string.IsNullOrWhiteSpace(ServerFlags.PreparationDirectory)
+            if (
+                string.IsNullOrWhiteSpace(ServerFlags.PreparationDirectory)
                 || ServerFlags.PreparationDirectory.StartsWith("-")
-                || ServerFlags.Daemon || Flags.Current.Bare || Flags.Current.SafeMode || Flags.Current.CheckAllPlugins)
-                throw new ArgumentException("-prepareManaged requires an output directory and cannot combine with daemon, bare, safeMode or debugCompileAll.");
+                || ServerFlags.Daemon
+                || Flags.Current.Bare
+                || Flags.Current.SafeMode
+                || Flags.Current.CheckAllPlugins
+            )
+                throw new ArgumentException(
+                    "-prepareManaged requires an output directory and cannot combine with daemon, bare, safeMode or debugCompileAll."
+                );
             preparationDirectory = Path.GetFullPath(ServerFlags.PreparationDirectory);
             if (Directory.Exists(preparationDirectory) || File.Exists(preparationDirectory))
-                throw new IOException("Preparation output must not already exist: " + preparationDirectory);
+                throw new IOException(
+                    "Preparation output must not already exist: " + preparationDirectory
+                );
         }
 
         SetupCoreData(baseDir);
@@ -237,7 +256,8 @@ static class Program
     private static string GetConfigOverride(string baseDir)
     {
         string path = ServerFlags.ConfigDirectory;
-        if (path is null) return null;
+        if (path is null)
+            return null;
         if (!Path.IsPathRooted(path))
             path = Path.Combine(baseDir, path);
 
@@ -464,25 +484,46 @@ static class Program
             PluginSdk.Config.ManagedPluginConfiguration.ConfigureFromEnvironment();
             // A plain server keeps plugin shared storage next to its own state; a cluster process reads
             // the cluster's shared root (CLUSTER_SHARED_ROOT) instead.
-            PluginSdk.Storage.PluginStorage.ConfigureStandalone(Path.Combine(magnetarDir, "PluginShared"));
+            PluginSdk.Storage.PluginStorage.ConfigureStandalone(
+                Path.Combine(magnetarDir, "PluginShared")
+            );
             if (!PluginSdk.Clustering.PluginCluster.IsClusterProcess)
                 PluginSdk.Clustering.PluginCluster.ConfigureStandalone(
-                    () => new PluginSdk.Clustering.StandalonePluginProvider(Path.Combine(magnetarDir, "PluginState")),
-                    error => Console.Error.WriteLine("Plugin shared state is unavailable: " + error.Message));
+                    () =>
+                        new PluginSdk.Clustering.StandalonePluginProvider(
+                            Path.Combine(magnetarDir, "PluginState")
+                        ),
+                    error =>
+                        Console.Error.WriteLine(
+                            "Plugin shared state is unavailable: " + error.Message
+                        )
+                );
             SharedLoader.Instance = new SharedLoader(VotesServer, corePlugins);
             // Pulsar's -bare suppresses its force-enable list. Diagnostic capture remains required;
             // other plugin/preloader safe-mode behavior is unchanged.
             if (!SharedLoader.Instance.Plugins.Any(item => item.Key.Id == "error-reporting"))
             {
-                if (!ConfigManager.Instance.List.TryGetPlugin("error-reporting", out var reportingData)
-                    || !reportingData.TryLoadAssembly(out var reportingAssembly))
-                    throw new InvalidOperationException("Required error-reporting plugin could not be loaded.");
+                if (
+                    !ConfigManager.Instance.List.TryGetPlugin(
+                        "error-reporting",
+                        out var reportingData
+                    ) || !reportingData.TryLoadAssembly(out var reportingAssembly)
+                )
+                    throw new InvalidOperationException(
+                        "Required error-reporting plugin could not be loaded."
+                    );
                 SharedLoader.Instance.Plugins.Insert(0, new(reportingData, reportingAssembly));
             }
-            var reporting = SharedLoader.Instance.Plugins.First(item => item.Key.Id == "error-reporting").Value;
-            var initializeReporting = reporting.GetType("Preloader")?.GetMethod("Initialize", BindingFlags.Public | BindingFlags.Static);
+            var reporting = SharedLoader
+                .Instance.Plugins.First(item => item.Key.Id == "error-reporting")
+                .Value;
+            var initializeReporting = reporting
+                .GetType("Preloader")
+                ?.GetMethod("Initialize", BindingFlags.Public | BindingFlags.Static);
             if (initializeReporting == null)
-                throw new InvalidOperationException("Required error-reporting plugin does not support early capture. Update the plugin.");
+                throw new InvalidOperationException(
+                    "Required error-reporting plugin does not support early capture. Update the plugin."
+                );
             initializeReporting.Invoke(null, null);
             // No deconstruction here: on net48 it binds to VRage.Library's KeyValuePair
             // Deconstruct, which cannot load before SetupGameResolver and fails the JIT.
@@ -547,14 +588,19 @@ static class Program
             Console.Error.WriteLine($"[Magnetar] {message}");
             LogFile.Error(message);
         }
-        catch { /* Fatal logging must not prevent remaining exception handlers. */ }
+        catch
+        { /* Fatal logging must not prevent remaining exception handlers. */
+        }
         finally
         {
-            try { ServerControl.FlushOnFatalExit(); } catch { }
+            try
+            {
+                ServerControl.FlushOnFatalExit();
+            }
+            catch { }
         }
         // Let remaining handlers capture evidence and the runtime terminate naturally.
         // Environment.Exit here suppresses runtime-created crash dumps.
-
     }
 
     private static void ShowStartupError(string message)

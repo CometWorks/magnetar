@@ -56,7 +56,13 @@ internal sealed class PluginManifest
 
         try
         {
-            foreach (string path in Directory.EnumerateFiles(folder, "*.xml", SearchOption.TopDirectoryOnly))
+            foreach (
+                string path in Directory.EnumerateFiles(
+                    folder,
+                    "*.xml",
+                    SearchOption.TopDirectoryOnly
+                )
+            )
             {
                 if (LooksLikeManifest(path))
                     return Path.GetFileName(path);
@@ -75,8 +81,8 @@ internal sealed class PluginManifest
         {
             XElement root = XDocument.Load(path).Root;
             // A PluginData document, or anything that declares the plugin's name.
-            return root != null &&
-                   (root.Name.LocalName == "PluginData" || Local(root, "FriendlyName") != null);
+            return root != null
+                && (root.Name.LocalName == "PluginData" || Local(root, "FriendlyName") != null);
         }
         catch
         {

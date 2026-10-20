@@ -16,6 +16,7 @@ internal sealed class OpResult
     public string Message { get; private set; } = string.Empty;
 
     public static OpResult Success(string m = "") => new() { Ok = true, Message = m };
+
     public static OpResult Fail(string m) => new() { Ok = false, Message = m };
 }
 
@@ -102,7 +103,9 @@ internal sealed class MagnetarProcess
         while (sw.Elapsed < timeout)
         {
             if (proc.HasExited)
-                return OpResult.Fail($"Magnetar exited early (code {proc.ExitCode}) before the pid file appeared. Check the logs.");
+                return OpResult.Fail(
+                    $"Magnetar exited early (code {proc.ExitCode}) before the pid file appeared. Check the logs."
+                );
 
             ServerStatus s = Query();
             if (s.State == ServerState.Running)
@@ -111,7 +114,9 @@ internal sealed class MagnetarProcess
             Thread.Sleep(250);
         }
 
-        return OpResult.Fail("Timed out waiting for the server to report its pid. It may still be starting; check the logs.");
+        return OpResult.Fail(
+            "Timed out waiting for the server to report its pid. It may still be starting; check the logs."
+        );
     }
 
     /// <summary>Graceful stop: SIGTERM → Magnetar saves the world and quits. Waits up to the grace period.</summary>
@@ -122,10 +127,14 @@ internal sealed class MagnetarProcess
             return OpResult.Fail("Server is not running.");
 
         if (!PlatformPaths.IsLinux)
-            return OpResult.Fail("Graceful stop is not available on Windows in this build; use force-kill (may lose progress).");
+            return OpResult.Fail(
+                "Graceful stop is not available on Windows in this build; use force-kill (may lose progress)."
+            );
 
         if (kill(s.Pid.Value, SIGTERM) != 0)
-            return OpResult.Fail($"Failed to send SIGTERM to pid {s.Pid} (errno {Marshal.GetLastWin32Error()}).");
+            return OpResult.Fail(
+                $"Failed to send SIGTERM to pid {s.Pid} (errno {Marshal.GetLastWin32Error()})."
+            );
 
         return WaitForExit(gracePeriod)
             ? OpResult.Success("Server stopped.")
@@ -142,7 +151,9 @@ internal sealed class MagnetarProcess
             return OpResult.Fail("Live reload is only available on Linux in this build.");
 
         if (kill(s.Pid.Value, SIGHUP) != 0)
-            return OpResult.Fail($"Failed to send SIGHUP to pid {s.Pid} (errno {Marshal.GetLastWin32Error()}).");
+            return OpResult.Fail(
+                $"Failed to send SIGHUP to pid {s.Pid} (errno {Marshal.GetLastWin32Error()})."
+            );
         return OpResult.Success("Reload signal sent.");
     }
 
@@ -196,9 +207,7 @@ internal sealed class MagnetarProcess
             if (File.Exists(binding.PidFilePath))
                 File.Delete(binding.PidFilePath);
         }
-        catch
-        {
-        }
+        catch { }
     }
 
     private static void DrainAsync(SysProcess proc)

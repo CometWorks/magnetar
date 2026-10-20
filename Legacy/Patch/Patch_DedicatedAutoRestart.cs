@@ -30,8 +30,14 @@ internal static class Patch_DedicatedAutoRestart
 
     public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
-        MethodInfo exit = AccessTools.Method(typeof(MySandboxGame), nameof(MySandboxGame.ExitThreadSafe));
-        MethodInfo restart = AccessTools.Method(typeof(Patch_DedicatedAutoRestart), nameof(Restart));
+        MethodInfo exit = AccessTools.Method(
+            typeof(MySandboxGame),
+            nameof(MySandboxGame.ExitThreadSafe)
+        );
+        MethodInfo restart = AccessTools.Method(
+            typeof(Patch_DedicatedAutoRestart),
+            nameof(Restart)
+        );
 
         List<CodeInstruction> code = instructions.ToList();
         int replaced = 0;
@@ -42,7 +48,9 @@ internal static class Patch_DedicatedAutoRestart
         }
 
         if (replaced != 1)
-            LogFile.Warn($"Dedicated server auto-restart: expected one ExitThreadSafe call, replaced {replaced}");
+            LogFile.Warn(
+                $"Dedicated server auto-restart: expected one ExitThreadSafe call, replaced {replaced}"
+            );
 
         return code;
     }
@@ -59,7 +67,9 @@ internal static class Patch_DedicatedAutoRestart
         {
             if (PluginSdk.ServerControl.TryRequestRestart("Dedicated server update"))
             {
-                LogFile.WriteLine("Dedicated server update pending: asked the lifecycle provider for a restart");
+                LogFile.WriteLine(
+                    "Dedicated server update pending: asked the lifecycle provider for a restart"
+                );
                 return;
             }
 

@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
 using Magnetar.Config.Ui;
+using Terminal.Gui;
 
 namespace Magnetar.Config;
 
@@ -23,8 +23,7 @@ internal static class Program
         string libraryDir = Path.Combine(baseDir, "Libraries", "MagnetarConfig");
         AppDomain.CurrentDomain.AssemblyResolve += (sender, eventArgs) =>
         {
-            string path = Path.Combine(
-                libraryDir, new AssemblyName(eventArgs.Name).Name + ".dll");
+            string path = Path.Combine(libraryDir, new AssemblyName(eventArgs.Name).Name + ".dll");
             return File.Exists(path) ? Assembly.LoadFrom(path) : null;
         };
 
@@ -61,7 +60,11 @@ internal static class Program
         // Ensure the box-drawing / shade glyphs render on legacy Windows consoles.
         if (PlatformPaths.IsWindows)
         {
-            try { Console.OutputEncoding = Encoding.UTF8; } catch { }
+            try
+            {
+                Console.OutputEncoding = Encoding.UTF8;
+            }
+            catch { }
         }
 
         // NetDriver is a portable fallback when curses/terminfo is broken.
@@ -85,9 +88,8 @@ internal static class Program
                     InstanceLocator.PresentWindowsLaunchers();
                 if (launchers.Count > 0)
                 {
-                    MagnetarLauncher chosen = launchers.Count == 1
-                        ? launchers[0]
-                        : ChooseLauncher(launchers);
+                    MagnetarLauncher chosen =
+                        launchers.Count == 1 ? launchers[0] : ChooseLauncher(launchers);
                     if (chosen == null)
                         return 0; // cancelled at the launcher picker
                     binding.MagnetarConfigDir = chosen.ConfigDir;
@@ -126,7 +128,8 @@ internal static class Program
     /// Returns the chosen launcher, or null if the operator cancelled.
     /// </summary>
     private static MagnetarLauncher ChooseLauncher(
-        System.Collections.Generic.IReadOnlyList<MagnetarLauncher> launchers)
+        System.Collections.Generic.IReadOnlyList<MagnetarLauncher> launchers
+    )
     {
         var buttons = new string[launchers.Count + 1];
         for (int i = 0; i < launchers.Count; i++)
@@ -138,7 +141,8 @@ internal static class Program
             "Which Magnetar do you want to configure?",
             "Both launchers are installed on this machine.",
             error: false,
-            buttons);
+            buttons
+        );
 
         return pick < launchers.Count ? launchers[pick] : null;
     }

@@ -91,9 +91,19 @@ internal abstract class ConfigDocumentBase
         return t == "1";
     }
 
-    public static bool TryParseLong(string raw, out long value)
-        => long.TryParse((raw ?? string.Empty).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+    public static bool TryParseLong(string raw, out long value) =>
+        long.TryParse(
+            (raw ?? string.Empty).Trim(),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out value
+        );
 
-    public static bool TryParseDouble(string raw, out double value)
-        => double.TryParse((raw ?? string.Empty).Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+    public static bool TryParseDouble(string raw, out double value) =>
+        double.TryParse(
+            (raw ?? string.Empty).Trim(),
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out value
+        );
 }

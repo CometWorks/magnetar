@@ -26,17 +26,11 @@ internal static class LogRotation
             if (File.Exists(current))
             {
                 DateTime stamp = File.GetLastWriteTime(current);
-                string rotated = Path.Combine(
-                    magnetarDir,
-                    $"info_{stamp:yyyyMMdd_HHmmss}.log"
-                );
+                string rotated = Path.Combine(magnetarDir, $"info_{stamp:yyyyMMdd_HHmmss}.log");
 
                 // A same-second restart collides; add a numeric suffix.
                 for (int i = 1; File.Exists(rotated); i++)
-                    rotated = Path.Combine(
-                        magnetarDir,
-                        $"info_{stamp:yyyyMMdd_HHmmss}_{i}.log"
-                    );
+                    rotated = Path.Combine(magnetarDir, $"info_{stamp:yyyyMMdd_HHmmss}_{i}.log");
 
                 File.Move(current, rotated);
             }

@@ -14,8 +14,10 @@ namespace PluginSdk.Commands
     {
         private const MyPromoteLevel DefaultPermission = MyPromoteLevel.Admin;
 
-        private readonly Dictionary<string, CommandRoot> roots =
-            new Dictionary<string, CommandRoot>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, CommandRoot> roots = new Dictionary<
+            string,
+            CommandRoot
+        >(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>The prefixes currently registered.</summary>
         public IReadOnlyCollection<string> Prefixes => roots.Keys;
@@ -60,17 +62,23 @@ namespace PluginSdk.Commands
             string prefix = rootAttr.Prefix?.Trim();
             if (string.IsNullOrEmpty(prefix) || prefix.IndexOf(' ') >= 0)
                 throw new CommandRegistrationException(
-                    $"{moduleType.Name} has an invalid command prefix '{rootAttr.Prefix}'");
+                    $"{moduleType.Name} has an invalid command prefix '{rootAttr.Prefix}'"
+                );
 
             // '!help' is the built-in command that lists every top-level command,
             // so plugins may not claim it as a root prefix.
             if (string.Equals(prefix, "help", StringComparison.OrdinalIgnoreCase))
                 throw new CommandRegistrationException(
-                    $"{moduleType.Name} uses the reserved prefix 'help'; '!help' is the built-in command list");
+                    $"{moduleType.Name} uses the reserved prefix 'help'; '!help' is the built-in command list"
+                );
 
             CommandRoot root = GetOrCreateRoot(prefix, rootAttr, ownerId);
 
-            foreach (MethodInfo method in moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            foreach (
+                MethodInfo method in moduleType.GetMethods(
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly
+                )
+            )
             {
                 var cmdAttr = method.GetCustomAttribute<CommandAttribute>(false);
                 if (cmdAttr == null)
@@ -80,25 +88,43 @@ namespace PluginSdk.Commands
                 // for a bare '!prefix'. Non-empty paths must not start with the
                 // reserved 'help' word.
                 List<string> path = SplitPath(cmdAttr.Command);
-                if (path.Count > 0 && string.Equals(path[0], "help", StringComparison.OrdinalIgnoreCase))
+                if (
+                    path.Count > 0
+                    && string.Equals(path[0], "help", StringComparison.OrdinalIgnoreCase)
+                )
                     throw new CommandRegistrationException(
-                        $"'!{prefix} help' is reserved and cannot be defined by {moduleType.Name}.{method.Name}");
+                        $"'!{prefix} help' is reserved and cannot be defined by {moduleType.Name}.{method.Name}"
+                    );
 
                 var permAttr = method.GetCustomAttribute<PermissionAttribute>(false);
                 MyPromoteLevel level = permAttr?.Level ?? DefaultPermission;
 
-                root.Add(new RegisteredCommand(ownerId, prefix, path,
-                    cmdAttr.Description, cmdAttr.HelpText, level, moduleType, method));
+                root.Add(
+                    new RegisteredCommand(
+                        ownerId,
+                        prefix,
+                        path,
+                        cmdAttr.Description,
+                        cmdAttr.HelpText,
+                        level,
+                        moduleType,
+                        method
+                    )
+                );
             }
         }
 
-        internal bool TryGetRoot(string prefix, out CommandRoot root)
-            => roots.TryGetValue(prefix, out root);
+        internal bool TryGetRoot(string prefix, out CommandRoot root) =>
+            roots.TryGetValue(prefix, out root);
 
         /// <summary>Every registered root, used to build the global <c>!help</c> listing.</summary>
         internal IEnumerable<CommandRoot> EnumerateRoots() => roots.Values;
 
-        private CommandRoot GetOrCreateRoot(string prefix, CommandRootAttribute attr, string ownerId)
+        private CommandRoot GetOrCreateRoot(
+            string prefix,
+            CommandRootAttribute attr,
+            string ownerId
+        )
         {
             if (roots.TryGetValue(prefix, out CommandRoot existing))
                 return existing;

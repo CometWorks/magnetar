@@ -21,8 +21,11 @@ namespace PluginSdk.Tests
         private sealed class Hooks : IPluginGridHandover
         {
             public byte[] Leaving(long gridId) => null;
+
             public void Left(long gridId) { }
+
             public void Stayed(long gridId) { }
+
             public void Arrived(long gridId, byte[] state) { }
         }
 
@@ -43,7 +46,7 @@ namespace PluginSdk.Tests
             Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", "node-1");
             try
             {
-                Assert.Null(client.RegisterGridHandover(new Hooks()));   // unknown, not a silent no-op
+                Assert.Null(client.RegisterGridHandover(new Hooks())); // unknown, not a silent no-op
                 var provider = new HookProvider();
                 Assert.True(PluginCluster.Register(provider));
                 try
@@ -53,22 +56,48 @@ namespace PluginSdk.Tests
                     Assert.NotNull(registration);
                     Assert.Equal((Id, (IPluginGridHandover)hooks), provider.Registered);
                 }
-                finally { PluginCluster.Unregister(provider); }
+                finally
+                {
+                    PluginCluster.Unregister(provider);
+                }
             }
-            finally { Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous); }
+            finally
+            {
+                Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous);
+            }
         }
 
         private sealed class HookProvider : IPluginClusterProvider, IPluginClusterHandoverProvider
         {
             public (string, IPluginGridHandover) Registered;
             public NodeContext Context => new NodeContext { Node = "node-1", Available = true };
-            public event Action ContextChanged { add { } remove { } }
-            public Task<PluginResult> ExecuteAsync(PluginRequest request, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public Task<PluginResult> RequestAsync(string plugin, PluginTarget target, string topic, byte[] payload,
-                Guid operationId, TimeSpan timeout, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public IDisposable RegisterHandler(string plugin, string topic, Func<PluginMessage, Task<byte[]>> handler) => null;
+            public event Action ContextChanged
+            {
+                add { }
+                remove { }
+            }
+
+            public Task<PluginResult> ExecuteAsync(
+                PluginRequest request,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public Task<PluginResult> RequestAsync(
+                string plugin,
+                PluginTarget target,
+                string topic,
+                byte[] payload,
+                Guid operationId,
+                TimeSpan timeout,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public IDisposable RegisterHandler(
+                string plugin,
+                string topic,
+                Func<PluginMessage, Task<byte[]>> handler
+            ) => null;
+
             public IDisposable RegisterGridHandover(string plugin, IPluginGridHandover handler)
             {
                 Registered = (plugin, handler);

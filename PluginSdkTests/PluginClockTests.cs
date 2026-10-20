@@ -28,19 +28,30 @@ namespace PluginSdk.Tests
             try
             {
                 var game = TimeSpan.FromHours(30.5);
-                MyAPIGateway.Session = PluginViewTests.Fake.Create<IMySession>(new Dictionary<string, Func<object[], object>> {
-                    ["GameDateTime"] = _ => new DateTime(2081, 1, 1, 0, 0, 0, DateTimeKind.Utc) + game });
+                MyAPIGateway.Session = PluginViewTests.Fake.Create<IMySession>(
+                    new Dictionary<string, Func<object[], object>>
+                    {
+                        ["GameDateTime"] = _ =>
+                            new DateTime(2081, 1, 1, 0, 0, 0, DateTimeKind.Utc) + game,
+                    }
+                );
                 var first = client.Time();
                 Thread.Sleep(20);
                 var second = client.Time();
                 Assert.Equal(game, first.GameTime);
-                Assert.Equal(new DateTime(2081, 1, 2, 6, 30, 0, DateTimeKind.Utc), first.GameDateTime);
+                Assert.Equal(
+                    new DateTime(2081, 1, 2, 6, 30, 0, DateTimeKind.Utc),
+                    first.GameDateTime
+                );
                 Assert.True(first.Synchronized && first.Authoritative);
                 Assert.True(second.ClockMilliseconds - first.ClockMilliseconds >= 15);
                 MyAPIGateway.Session = null;
-                Assert.Equal(TimeSpan.Zero, client.Time().GameTime);   // before a session: zero, not null
+                Assert.Equal(TimeSpan.Zero, client.Time().GameTime); // before a session: zero, not null
             }
-            finally { MyAPIGateway.Session = old; }
+            finally
+            {
+                MyAPIGateway.Session = old;
+            }
         }
 
         [Fact]
@@ -60,22 +71,49 @@ namespace PluginSdk.Tests
                     Assert.Equal(1234, time.ClockMilliseconds);
                     Assert.False(time.Synchronized);
                 }
-                finally { PluginCluster.Unregister(provider); }
+                finally
+                {
+                    PluginCluster.Unregister(provider);
+                }
             }
-            finally { Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous); }
+            finally
+            {
+                Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous);
+            }
         }
 
         private sealed class ClockProvider : IPluginClusterProvider, IPluginClusterClockProvider
         {
             public NodeContext Context => new NodeContext { Node = "node-1", Available = true };
-            public event Action ContextChanged { add { } remove { } }
-            public Task<PluginResult> ExecuteAsync(PluginRequest request, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public Task<PluginResult> RequestAsync(string plugin, PluginTarget target, string topic, byte[] payload,
-                Guid operationId, TimeSpan timeout, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public IDisposable RegisterHandler(string plugin, string topic, Func<PluginMessage, Task<byte[]>> handler) => null;
-            public PluginClusterTime Time() => new PluginClusterTime { ClockMilliseconds = 1234, Synchronized = false };
+            public event Action ContextChanged
+            {
+                add { }
+                remove { }
+            }
+
+            public Task<PluginResult> ExecuteAsync(
+                PluginRequest request,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public Task<PluginResult> RequestAsync(
+                string plugin,
+                PluginTarget target,
+                string topic,
+                byte[] payload,
+                Guid operationId,
+                TimeSpan timeout,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public IDisposable RegisterHandler(
+                string plugin,
+                string topic,
+                Func<PluginMessage, Task<byte[]>> handler
+            ) => null;
+
+            public PluginClusterTime Time() =>
+                new PluginClusterTime { ClockMilliseconds = 1234, Synchronized = false };
         }
     }
 }

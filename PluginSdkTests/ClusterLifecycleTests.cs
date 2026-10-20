@@ -15,8 +15,14 @@ namespace PluginSdk.Tests
         {
             int localCalls = 0;
             var provider = new RecordingProvider();
-            ServerControl.Bind(null, null, () => localCalls++, () => localCalls++,
-                () => localCalls++, () => localCalls++);
+            ServerControl.Bind(
+                null,
+                null,
+                () => localCalls++,
+                () => localCalls++,
+                () => localCalls++,
+                () => localCalls++
+            );
 
             Assert.True(ClusterLifecycle.Register(provider));
             try
@@ -25,15 +31,22 @@ namespace PluginSdk.Tests
                 ServerControl.SaveAndRestart();
                 ServerControl.QuitWithoutSaving();
                 ServerControl.RestartWithoutSaving();
-                Assert.Same(provider.AllReceived.Task,
-                    await Task.WhenAny(provider.AllReceived.Task, Task.Delay(TimeSpan.FromSeconds(2))));
+                Assert.Same(
+                    provider.AllReceived.Task,
+                    await Task.WhenAny(
+                        provider.AllReceived.Task,
+                        Task.Delay(TimeSpan.FromSeconds(2))
+                    )
+                );
 
                 Assert.Equal(0, localCalls);
-                Assert.Collection(provider.Requests,
+                Assert.Collection(
+                    provider.Requests,
                     request => AssertRequest(request, ServerTerminationKind.Shutdown, true),
                     request => AssertRequest(request, ServerTerminationKind.Restart, true),
                     request => AssertRequest(request, ServerTerminationKind.Shutdown, false),
-                    request => AssertRequest(request, ServerTerminationKind.Restart, false));
+                    request => AssertRequest(request, ServerTerminationKind.Restart, false)
+                );
             }
             finally
             {
@@ -46,15 +59,24 @@ namespace PluginSdk.Tests
         {
             var broken = new BrokenProvider();
             var replacement = new RecordingProvider();
-            var request = new ClusterLifecycleRequest(Guid.NewGuid(), ServerTerminationKind.Restart,
-                ClusterLifecycleOrigin.Plugin, true);
+            var request = new ClusterLifecycleRequest(
+                Guid.NewGuid(),
+                ServerTerminationKind.Restart,
+                ClusterLifecycleOrigin.Plugin,
+                true
+            );
 
             Assert.True(ClusterLifecycle.Register(broken));
             try
             {
                 Assert.False(ClusterLifecycle.Register(replacement));
                 Assert.False(ClusterLifecycle.Unregister(replacement));
-                Assert.True(ClusterLifecycle.TryRequest(request, out Task<ClusterLifecycleAcknowledgement> pending));
+                Assert.True(
+                    ClusterLifecycle.TryRequest(
+                        request,
+                        out Task<ClusterLifecycleAcknowledgement> pending
+                    )
+                );
                 ClusterLifecycleAcknowledgement acknowledgement = await pending;
                 Assert.Equal(ClusterLifecycleDisposition.Unavailable, acknowledgement.Disposition);
                 Assert.Equal("provider_failure", acknowledgement.ReasonCode);
@@ -68,10 +90,19 @@ namespace PluginSdk.Tests
         [Fact]
         public void No_provider_preserves_standalone_behavior()
         {
-            var request = new ClusterLifecycleRequest(Guid.NewGuid(), ServerTerminationKind.Restart,
-                ClusterLifecycleOrigin.Plugin, true);
+            var request = new ClusterLifecycleRequest(
+                Guid.NewGuid(),
+                ServerTerminationKind.Restart,
+                ClusterLifecycleOrigin.Plugin,
+                true
+            );
 
-            Assert.False(ClusterLifecycle.TryRequest(request, out Task<ClusterLifecycleAcknowledgement> pending));
+            Assert.False(
+                ClusterLifecycle.TryRequest(
+                    request,
+                    out Task<ClusterLifecycleAcknowledgement> pending
+                )
+            );
             Assert.Null(pending);
         }
 
@@ -114,8 +145,11 @@ namespace PluginSdk.Tests
             }
         }
 
-        private static void AssertRequest(ClusterLifecycleRequest request,
-            ServerTerminationKind kind, bool saveFirst)
+        private static void AssertRequest(
+            ClusterLifecycleRequest request,
+            ServerTerminationKind kind,
+            bool saveFirst
+        )
         {
             Assert.Equal(kind, request.Kind);
             Assert.Equal(saveFirst, request.SaveFirst);
@@ -125,11 +159,16 @@ namespace PluginSdk.Tests
 
         private sealed class RecordingProvider : IClusterLifecycleProvider
         {
-            public readonly System.Collections.Generic.List<ClusterLifecycleRequest> Requests = new();
-            public readonly TaskCompletionSource<bool> AllReceived = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            public readonly System.Collections.Generic.List<ClusterLifecycleRequest> Requests =
+                new();
+            public readonly TaskCompletionSource<bool> AllReceived = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
 
             public Task<ClusterLifecycleAcknowledgement> RequestAsync(
-                ClusterLifecycleRequest request, CancellationToken cancellationToken)
+                ClusterLifecycleRequest request,
+                CancellationToken cancellationToken
+            )
             {
                 lock (Requests)
                 {
@@ -137,17 +176,25 @@ namespace PluginSdk.Tests
                     if (Requests.Count == 4)
                         AllReceived.TrySetResult(true);
                 }
-                return Task.FromResult(new ClusterLifecycleAcknowledgement(request.RequestId,
-                    ClusterLifecycleDisposition.Accepted, request.RequestId,
-                    "node_restart_accepted", "Accepted.", "Closed"));
+                return Task.FromResult(
+                    new ClusterLifecycleAcknowledgement(
+                        request.RequestId,
+                        ClusterLifecycleDisposition.Accepted,
+                        request.RequestId,
+                        "node_restart_accepted",
+                        "Accepted.",
+                        "Closed"
+                    )
+                );
             }
         }
 
         private sealed class BrokenProvider : IClusterLifecycleProvider
         {
             public Task<ClusterLifecycleAcknowledgement> RequestAsync(
-                ClusterLifecycleRequest request, CancellationToken cancellationToken) =>
-                throw new InvalidOperationException("test");
+                ClusterLifecycleRequest request,
+                CancellationToken cancellationToken
+            ) => throw new InvalidOperationException("test");
         }
     }
 }
