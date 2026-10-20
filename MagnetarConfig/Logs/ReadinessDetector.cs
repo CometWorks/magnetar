@@ -24,15 +24,30 @@ internal static class ReadinessDetector
 
         try
         {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var fs = new FileStream(
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite
+            );
             long start = Math.Max(0, fs.Length - TailBytes);
             fs.Seek(start, SeekOrigin.Begin);
 
-            using var reader = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: false);
+            using var reader = new StreamReader(
+                fs,
+                Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: false
+            );
             string tail = reader.ReadToEnd();
             return tail.IndexOf(Marker, StringComparison.OrdinalIgnoreCase) >= 0;
         }
-        catch (IOException) { return false; }
-        catch (UnauthorizedAccessException) { return false; }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 }

@@ -70,8 +70,10 @@
          platform's steam_api native library; SteamApiFileName names the
          latter. Both are forwarded so the submodule sees the same values this
          project's Verify and Deploy targets check against. -->
-    <ProjectReference Include="..\Pulsar\Shared\Shared.csproj"
-                      AdditionalProperties="Steamworks=$(Steamworks);SteamApiFileName=$(SteamApiFileName)" />
+    <ProjectReference
+      Include="..\Pulsar\Shared\Shared.csproj"
+      AdditionalProperties="Steamworks=$(Steamworks);SteamApiFileName=$(SteamApiFileName)"
+    />
     <!-- The out-of-process Roslyn compiler. Not referenced as an assembly: its
          own Deploy target stages the executable and its dependencies into
          $(Magnetar)/Libraries/Compiler (the 'Pulsar' property is its
@@ -82,11 +84,13 @@
          (net48 on Windows, net10.0 on Linux), so undefine it. Without this the
          net10.0 inner build asks Compiler for a net10.0 target it does not have
          on Windows and fails with NETSDK1005. -->
-    <ProjectReference Include="..\Pulsar\Compiler\Compiler.csproj"
-                      ReferenceOutputAssembly="false"
-                      SkipGetTargetFrameworkProperties="true"
-                      UndefineProperties="TargetFramework"
-                      AdditionalProperties="Pulsar=$(Magnetar);Steamworks=$(Steamworks)" />
+    <ProjectReference
+      Include="..\Pulsar\Compiler\Compiler.csproj"
+      ReferenceOutputAssembly="false"
+      SkipGetTargetFrameworkProperties="true"
+      UndefineProperties="TargetFramework"
+      AdditionalProperties="Pulsar=$(Magnetar);Steamworks=$(Steamworks)"
+    />
   </ItemGroup>
   <!-- The Linux native-library bootstrap pulls in System.Runtime.Loader /
        OperatingSystem.IsLinux, which do not exist on .NET Framework. It is only
@@ -103,20 +107,48 @@
        without any source edit. A file can be linked here whenever it needs no
        server-specific changes; otherwise it stays a fork under Legacy/. -->
   <ItemGroup>
-    <Compile Include="..\Pulsar\Legacy\Patch\Patch_ComponentRegistered.cs" Link="Patch\Patch_ComponentRegistered.cs" />
-    <Compile Include="..\Pulsar\Legacy\Patch\Patch_LoadScripts.cs" Link="Patch\Patch_LoadScripts.cs" />
-    <Compile Include="..\Pulsar\Legacy\Patch\Patch_PrepareCrashReport.cs" Link="Patch\Patch_PrepareCrashReport.cs" />
+    <Compile
+      Include="..\Pulsar\Legacy\Patch\Patch_ComponentRegistered.cs"
+      Link="Patch\Patch_ComponentRegistered.cs"
+    />
+    <Compile
+      Include="..\Pulsar\Legacy\Patch\Patch_LoadScripts.cs"
+      Link="Patch\Patch_LoadScripts.cs"
+    />
+    <Compile
+      Include="..\Pulsar\Legacy\Patch\Patch_PrepareCrashReport.cs"
+      Link="Patch\Patch_PrepareCrashReport.cs"
+    />
     <Compile Include="..\Pulsar\Legacy\Patch\Patch_Rewriter.cs" Link="Patch\Patch_Rewriter.cs" />
-    <Compile Include="..\Pulsar\Legacy\Patch\Patch_StableLogs.cs" Link="Patch\Patch_StableLogs.cs" />
+    <Compile
+      Include="..\Pulsar\Legacy\Patch\Patch_StableLogs.cs"
+      Link="Patch\Patch_StableLogs.cs"
+    />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(DS64)\Microsoft.CodeAnalysis.dll" Private="False" />
-    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(DS64)\Microsoft.CodeAnalysis.CSharp.dll" Private="False" />
+    <Reference
+      Include="Microsoft.CodeAnalysis"
+      HintPath="$(DS64)\Microsoft.CodeAnalysis.dll"
+      Private="False"
+    />
+    <Reference
+      Include="Microsoft.CodeAnalysis.CSharp"
+      HintPath="$(DS64)\Microsoft.CodeAnalysis.CSharp.dll"
+      Private="False"
+    />
     <Reference Include="Sandbox.Game" HintPath="$(DS64)\Sandbox.Game.dll" Private="False" />
     <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
     <Reference Include="Sandbox.Graphics" HintPath="$(DS64)\Sandbox.Graphics.dll" Private="False" />
-    <Reference Include="SpaceEngineersDedicated" HintPath="$(DS64)\SpaceEngineersDedicated.exe" Private="False" />
-    <Reference Include="SpaceEngineers.Game" HintPath="$(DS64)\SpaceEngineers.Game.dll" Private="False" />
+    <Reference
+      Include="SpaceEngineersDedicated"
+      HintPath="$(DS64)\SpaceEngineersDedicated.exe"
+      Private="False"
+    />
+    <Reference
+      Include="SpaceEngineers.Game"
+      HintPath="$(DS64)\SpaceEngineers.Game.dll"
+      Private="False"
+    />
     <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="False" />
     <Reference Include="VRage.Dedicated" HintPath="$(DS64)\VRage.Dedicated.dll" Private="False" />
     <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="False" />
@@ -130,12 +162,20 @@
        signature. Take the DS's own copy (Private="False") so the patch binds to
        the very assembly the server's Microsoft.CodeAnalysis was built against. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <Reference Include="System.Collections.Immutable" HintPath="$(DS64)\System.Collections.Immutable.dll" Private="False" />
+    <Reference
+      Include="System.Collections.Immutable"
+      HintPath="$(DS64)\System.Collections.Immutable.dll"
+      Private="False"
+    />
   </ItemGroup>
   <!-- VRage.Platform.Windows is a Windows-only platform assembly shipped with the
        Windows dedicated server; the Linux server replaces it with its own. -->
   <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-    <Reference Include="VRage.Platform.Windows" HintPath="$(DS64)\VRage.Platform.Windows.dll" Private="False" />
+    <Reference
+      Include="VRage.Platform.Windows"
+      HintPath="$(DS64)\VRage.Platform.Windows.dll"
+      Private="False"
+    />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
@@ -144,11 +184,19 @@
   <Target Name="Verify" BeforeTargets="PrepareForBuild">
     <Error Condition="'$(Magnetar)' == ''" Text="Specify Magnetar's deployment location!" />
     <Error Condition="$(Magnetar.Contains(';'))" Text="Magnetar directory is not unique!" />
-    <Error Condition="'$(DS64)' == '' or !Exists('$(DS64)')" Text="Specify the SpaceEngineers DedicatedServer64 path (DS64)!" />
+    <Error
+      Condition="'$(DS64)' == '' or !Exists('$(DS64)')"
+      Text="Specify the SpaceEngineers DedicatedServer64 path (DS64)!"
+    />
     <Error Condition="'$(Steamworks)' == ''" Text="Specify the Steamworks path!" />
-    <Error Condition="!Exists('$(Steamworks)/Steamworks.NET.dll')" Text="Steamworks.NET.dll not found in $(Steamworks)!" />
-    <Error Condition="'$(OS)' != 'Windows_NT' and !Exists('$(Steamworks)/$(SteamApiFileName)')"
-           Text="$(SteamApiFileName) not found in $(Steamworks)! The dedicated server depot ships only the Windows steam_api64.dll, so on Linux point the Steamworks property at an extracted steam-dependencies.tar.gz from github.com/CometWorks/linux-dependencies." />
+    <Error
+      Condition="!Exists('$(Steamworks)/Steamworks.NET.dll')"
+      Text="Steamworks.NET.dll not found in $(Steamworks)!"
+    />
+    <Error
+      Condition="'$(OS)' != 'Windows_NT' and !Exists('$(Steamworks)/$(SteamApiFileName)')"
+      Text="$(SteamApiFileName) not found in $(Steamworks)! The dedicated server depot ships only the Windows steam_api64.dll, so on Linux point the Steamworks property at an extracted steam-dependencies.tar.gz from github.com/CometWorks/linux-dependencies."
+    />
   </Target>
   <!-- Deploy the freshly built launcher and its libraries into the Magnetar
        install folder, mirroring Pulsar's deployment convention:
@@ -171,9 +219,18 @@
       <DeployLibraryFile Include="$(TargetDir)PluginSdk.dll" />
       <DeployLibraryFile Include="$(TargetDir)0Harmony.dll" />
       <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.dll" />
-      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.Mdb.dll" Condition="Exists('$(TargetDir)Mono.Cecil.Mdb.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.Pdb.dll" Condition="Exists('$(TargetDir)Mono.Cecil.Pdb.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)Mono.Cecil.Rocks.dll" Condition="Exists('$(TargetDir)Mono.Cecil.Rocks.dll')" />
+      <DeployLibraryFile
+        Include="$(TargetDir)Mono.Cecil.Mdb.dll"
+        Condition="Exists('$(TargetDir)Mono.Cecil.Mdb.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)Mono.Cecil.Pdb.dll"
+        Condition="Exists('$(TargetDir)Mono.Cecil.Pdb.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)Mono.Cecil.Rocks.dll"
+        Condition="Exists('$(TargetDir)Mono.Cecil.Rocks.dll')"
+      />
       <DeployLibraryFile Include="$(TargetDir)Newtonsoft.Json.dll" />
       <DeployLibraryFile Include="$(TargetDir)Gameloop.Vdf.dll" />
       <DeployLibraryFile Include="$(TargetDir)NLog.dll" />
@@ -181,7 +238,10 @@
       <DeployLibraryFile Include="$(TargetDir)SharpCompress.dll" />
       <DeployLibraryFile Include="$(TargetDir)McMaster.Extensions.CommandLineUtils.dll" />
       <DeployLibraryFile Include="$(TargetDir)FuzzySharp.dll" />
-      <DeployLibraryFile Include="$(TargetDir)System.Text.Json.dll" Condition="Exists('$(TargetDir)System.Text.Json.dll')" />
+      <DeployLibraryFile
+        Include="$(TargetDir)System.Text.Json.dll"
+        Condition="Exists('$(TargetDir)System.Text.Json.dll')"
+      />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Commands.dll" />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Common.dll" />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Configuration.dll" />
@@ -192,15 +252,39 @@
       <DeployLibraryFile Include="$(TargetDir)NuGet.ProjectModel.dll" />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Protocol.dll" />
       <DeployLibraryFile Include="$(TargetDir)NuGet.Versioning.dll" />
-      <DeployLibraryFile Include="$(TargetDir)NuGet.Credentials.dll" Condition="Exists('$(TargetDir)NuGet.Credentials.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll" Condition="Exists('$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll" Condition="Exists('$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)Microsoft.Extensions.Primitives.dll" Condition="Exists('$(TargetDir)Microsoft.Extensions.Primitives.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)System.ServiceModel.dll" Condition="Exists('$(TargetDir)System.ServiceModel.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)System.ServiceModel.Primitives.dll" Condition="Exists('$(TargetDir)System.ServiceModel.Primitives.dll')" />
+      <DeployLibraryFile
+        Include="$(TargetDir)NuGet.Credentials.dll"
+        Condition="Exists('$(TargetDir)NuGet.Credentials.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll"
+        Condition="Exists('$(TargetDir)Microsoft.Extensions.FileProviders.Abstractions.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll"
+        Condition="Exists('$(TargetDir)Microsoft.Extensions.FileSystemGlobbing.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)Microsoft.Extensions.Primitives.dll"
+        Condition="Exists('$(TargetDir)Microsoft.Extensions.Primitives.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)System.ServiceModel.dll"
+        Condition="Exists('$(TargetDir)System.ServiceModel.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)System.ServiceModel.Primitives.dll"
+        Condition="Exists('$(TargetDir)System.ServiceModel.Primitives.dll')"
+      />
       <!-- Needed by NuGet signature verification on .NET Core (in the GAC on Framework). -->
-      <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.Pkcs.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.Pkcs.dll')" />
-      <DeployLibraryFile Include="$(TargetDir)System.Security.Cryptography.ProtectedData.dll" Condition="Exists('$(TargetDir)System.Security.Cryptography.ProtectedData.dll')" />
+      <DeployLibraryFile
+        Include="$(TargetDir)System.Security.Cryptography.Pkcs.dll"
+        Condition="Exists('$(TargetDir)System.Security.Cryptography.Pkcs.dll')"
+      />
+      <DeployLibraryFile
+        Include="$(TargetDir)System.Security.Cryptography.ProtectedData.dll"
+        Condition="Exists('$(TargetDir)System.Security.Cryptography.ProtectedData.dll')"
+      />
     </ItemGroup>
     <!-- On Windows the Steam files are deliberately NOT bundled: the dedicated
          server ships Steamworks.NET.dll and steam_api64.dll next to itself and
@@ -228,10 +312,14 @@
       <!-- Attribution travels with the binaries it covers. steam-dependencies
            ships these next to them; a $(Steamworks) folder assembled by hand
            may not, hence the Exists guards. -->
-      <DeployLicenseFile Include="$(Steamworks)/LICENSES/Steamworks.NET-LICENSE.txt"
-                         Condition="Exists('$(Steamworks)/LICENSES/Steamworks.NET-LICENSE.txt')" />
-      <DeployLicenseFile Include="$(Steamworks)/LICENSES/Steam-NOTICE.txt"
-                         Condition="Exists('$(Steamworks)/LICENSES/Steam-NOTICE.txt')" />
+      <DeployLicenseFile
+        Include="$(Steamworks)/LICENSES/Steamworks.NET-LICENSE.txt"
+        Condition="Exists('$(Steamworks)/LICENSES/Steamworks.NET-LICENSE.txt')"
+      />
+      <DeployLicenseFile
+        Include="$(Steamworks)/LICENSES/Steam-NOTICE.txt"
+        Condition="Exists('$(Steamworks)/LICENSES/Steam-NOTICE.txt')"
+      />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
       <DeployRootFile Include="$(TargetDir)$(AssemblyName).exe.config" />
@@ -264,8 +352,9 @@
       <!-- Skip satellite/RID-specific assets (they carry a destination
            subdirectory and are not loaded from the flat Libraries folder). -->
       <_CopyLocalName
-          Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
-          Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))" />
+        Include="@(ReferenceCopyLocalPaths->'%(Filename)%(Extension)')"
+        Condition="'%(Extension)' == '.dll' and '%(ReferenceCopyLocalPaths.DestinationSubDirectory)' == '' and !$([System.String]::new('%(Filename)').EndsWith('.resources'))"
+      />
       <!-- Transitive packages targeting netstandard also drop copies of
            assemblies .NET Framework 4.8 already provides in-box. Staging those
            is not merely redundant: binding redirects are deliberately off (see
@@ -275,18 +364,25 @@
       <_InBoxOnFramework Include="System.Security.AccessControl.dll" />
       <_InBoxOnFramework Include="System.Security.Principal.Windows.dll" />
       <_InBoxOnFramework Include="System.ValueTuple.dll" />
-      <_UnstagedDependency Include="@(_CopyLocalName)"
-                           Exclude="@(_DeployedName);@(_InBoxOnFramework)" />
+      <_UnstagedDependency
+        Include="@(_CopyLocalName)"
+        Exclude="@(_DeployedName);@(_InBoxOnFramework)"
+      />
     </ItemGroup>
-    <Warning Condition="'@(_UnstagedDependency)' != ''"
-             Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Pulsar submodule bump add a package?)." />
+    <Warning
+      Condition="'@(_UnstagedDependency)' != ''"
+      Text="Dependencies in the build output but not staged by Deploy: @(_UnstagedDependency). Add them to DeployLibraryFile (did a Pulsar submodule bump add a package?)."
+    />
     <Error Condition="!Exists('$(LicensePath)')" Text="License file not found!" />
     <Error Condition="!Exists('$(ReadmePath)')" Text="Readme file not found!" />
     <RemoveDir Directories="$(DeployDirectory)" />
     <Copy SourceFiles="@(DeployRootFile)" DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="@(DeployLibraryFile)" DestinationFolder="$(DeployDirectory)" />
-    <Copy SourceFiles="@(DeployLicenseFile)" DestinationFolder="$(DeployDirectory)/LICENSES"
-          Condition="'@(DeployLicenseFile)' != ''" />
+    <Copy
+      SourceFiles="@(DeployLicenseFile)"
+      DestinationFolder="$(DeployDirectory)/LICENSES"
+      Condition="'@(DeployLicenseFile)' != ''"
+    />
     <Copy SourceFiles="$(SourceExecutable)" DestinationFiles="$(DestinationExecutable)" />
     <Copy SourceFiles="$(LicensePath)" DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="$(ReadmePath)" DestinationFolder="$(Magnetar)" />

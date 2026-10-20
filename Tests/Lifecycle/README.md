@@ -4,7 +4,8 @@ Starts isolated Magnetar servers and sends each stop and restart command in
 each server state: running, starting, loading the world, saving, restarting,
 stopping, hung. Then it checks the outcome: whether the server restarted or
 exited, the exit code, whether the world was saved, that no second Magnetar
-process ran, and whether plugins got the `Terminating` event. The matrix is
+process ran, whether plugins got the `Terminating` event, and that the plugins
+were disposed without an error and while the game thread didn't update them. The matrix is
 in `cases.py`; `Docs/ServerControl.md` describes the expected behavior.
 
 Runs on Linux, natively (`linux`) or under Proton with the Windows launchers
@@ -25,7 +26,8 @@ the quasar repository (`Tests/Lifecycle`) and uses this folder's rig and probe.
   that long, so a command can arrive during one), `hang <seconds>` (blocks the
   game thread) and `crash` (an unhandled exception). A `probe-hold-init.txt`
   holding a number of seconds in the data folder keeps the server in plugin
-  initialization that long, once.
+  initialization that long, once. The probe's `Dispose` takes a second and
+  logs how many updates the game thread ran meanwhile.
 - `rig.py` sets up, starts, observes and stops one server.
 - `cases.py` is the matrix, `run.py` runs it, `cleanup.py <work>` kills what
   an interrupted run left behind.
@@ -54,7 +56,7 @@ Magnetar config folder). Each case gets a copy, so keep it small:
 ```bash
 Tests/Lifecycle/run.py --platform linux --install <Magnetar install> \
     --ds64 <DS>/DedicatedServer64 --template <template> --work <work> \
-    --jobs 4 --port-base 28100 --wrap "<workspace>/notes/parallel-test-work/run-test.sh 4 --"
+    --jobs 4 --port-base 28100 --wrap "<workspace>/testing/parallel-test-work/run-test.sh 4 --"
 ```
 
 Build the branch into an install folder of your own

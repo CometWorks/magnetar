@@ -20,7 +20,11 @@ public class ProfileCatalogTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(dir, true); } catch { }
+        try
+        {
+            Directory.Delete(dir, true);
+        }
+        catch { }
     }
 
     private void SeedCurrent(params string[] localDlls)
@@ -36,7 +40,7 @@ public class ProfileCatalogTests : IDisposable
     {
         // Invalid filename chars become '-'; valid chars pass through.
         Assert.Equal("My Preset", PluginProfileDocument.CleanKey("My Preset"));
-        Assert.Equal("a-b", PluginProfileDocument.CleanKey("a/b"));  // '/' is invalid on every platform
+        Assert.Equal("a-b", PluginProfileDocument.CleanKey("a/b")); // '/' is invalid on every platform
     }
 
     [Fact]
@@ -46,25 +50,25 @@ public class ProfileCatalogTests : IDisposable
         var catalog = new ProfileCatalog(dir, writer);
 
         Assert.True(catalog.SaveCurrentAs("Survival"));
-        Assert.False(catalog.SaveCurrentAs("Survival"));   // collision → false, no overwrite
+        Assert.False(catalog.SaveCurrentAs("Survival")); // collision → false, no overwrite
 
         // "Current" is reserved.
         Assert.Throws<InvalidOperationException>(() => catalog.SaveCurrentAs("Current"));
 
         ProfileInfo saved = Assert.Single(catalog.NamedProfiles());
         Assert.Equal("Survival", saved.Name);
-        Assert.True(saved.MatchesActive);                  // it was snapshotted from Current
+        Assert.True(saved.MatchesActive); // it was snapshotted from Current
         Assert.Equal("Survival", catalog.ActiveMatchKey());
 
         // Change the active set, then load the profile back.
         PluginProfileDocument current = PluginProfileDocument.Open(dir);
         current.DisableLocalDll("Essentials.dll");
         current.Save(writer);
-        Assert.Null(catalog.ActiveMatchKey());             // active no longer matches
+        Assert.Null(catalog.ActiveMatchKey()); // active no longer matches
 
         catalog.Load("Survival");
         Assert.Contains("Essentials.dll", PluginProfileDocument.Open(dir).LocalDlls);
-        Assert.Equal("Current", PluginProfileDocument.Open(dir).Name);   // stays the active profile
+        Assert.Equal("Current", PluginProfileDocument.Open(dir).Name); // stays the active profile
         Assert.Equal("Survival", catalog.ActiveMatchKey());
     }
 
@@ -84,7 +88,7 @@ public class ProfileCatalogTests : IDisposable
         PluginProfileDocument reloaded = PluginProfileDocument.OpenNamed(dir, "P");
         Assert.Contains("A.dll", reloaded.LocalDlls);
         Assert.Contains("B.dll", reloaded.LocalDlls);
-        Assert.Equal("P", reloaded.Name);   // name preserved
+        Assert.Equal("P", reloaded.Name); // name preserved
     }
 
     [Fact]
@@ -123,7 +127,9 @@ public class ProfileCatalogTests : IDisposable
         SeedCurrent("A.dll");
         var catalog = new ProfileCatalog(dir, writer);
         catalog.SaveCurrentAs("Real");
-        Assert.DoesNotContain(catalog.NamedProfiles(), p =>
-            string.Equals(p.Key, "Current", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            catalog.NamedProfiles(),
+            p => string.Equals(p.Key, "Current", StringComparison.OrdinalIgnoreCase)
+        );
     }
 }

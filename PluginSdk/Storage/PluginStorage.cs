@@ -31,7 +31,8 @@ namespace PluginSdk.Storage
         /// </summary>
         public static void ConfigureStandalone(string root)
         {
-            if (string.IsNullOrEmpty(root)) throw new ArgumentException("root is required", nameof(root));
+            if (string.IsNullOrEmpty(root))
+                throw new ArgumentException("root is required", nameof(root));
             Volatile.Write(ref standaloneRoot, Path.GetFullPath(root));
         }
 
@@ -51,9 +52,14 @@ namespace PluginSdk.Storage
                     return string.IsNullOrWhiteSpace(shared) ? null : Path.GetFullPath(shared);
                 }
                 string configured = Volatile.Read(ref standaloneRoot);
-                if (configured != null) return configured;
-                string data = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                return string.IsNullOrEmpty(data) ? null : Path.Combine(data, "Magnetar", "PluginShared");
+                if (configured != null)
+                    return configured;
+                string data = Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData
+                );
+                return string.IsNullOrEmpty(data)
+                    ? null
+                    : Path.Combine(data, "Magnetar", "PluginShared");
             }
         }
 
@@ -77,14 +83,23 @@ namespace PluginSdk.Storage
         public static string GetSharedDirectory(string pluginId)
         {
             if (!PluginRecordStore.ValidName(pluginId))
-                throw new ArgumentException("Plugin identity cannot be used as a storage folder.", nameof(pluginId));
+                throw new ArgumentException(
+                    "Plugin identity cannot be used as a storage folder.",
+                    nameof(pluginId)
+                );
             if (!PluginCluster.IsBoundOwner(Assembly.GetCallingAssembly(), pluginId))
-                throw new InvalidOperationException("Plugin namespace does not match its loader identity.");
+                throw new InvalidOperationException(
+                    "Plugin namespace does not match its loader identity."
+                );
             string root = Root;
             if (root == null)
-                throw new InvalidOperationException(PluginCluster.IsClusterProcess
-                    ? "This cluster has no shared storage configured (" + SharedRootVariable + ")"
-                    : "No local storage directory is available");
+                throw new InvalidOperationException(
+                    PluginCluster.IsClusterProcess
+                        ? "This cluster has no shared storage configured ("
+                            + SharedRootVariable
+                            + ")"
+                        : "No local storage directory is available"
+                );
             string directory = Path.Combine(root, "plugins", FolderName(pluginId));
             Directory.CreateDirectory(directory);
             return directory;
@@ -101,19 +116,25 @@ namespace PluginSdk.Storage
         /// </summary>
         public static string FolderName(string pluginId)
         {
-            if (pluginId == null) throw new ArgumentNullException(nameof(pluginId));
+            if (pluginId == null)
+                throw new ArgumentNullException(nameof(pluginId));
             var safe = new StringBuilder();
             foreach (char c in pluginId)
             {
                 bool dot = c == '.' && (safe.Length == 0 || safe[safe.Length - 1] != '.');
-                safe.Append(char.IsLetterOrDigit(c) && c < 128 || dot || c == '_' || c == '-' ? c : '_');
+                safe.Append(
+                    char.IsLetterOrDigit(c) && c < 128 || dot || c == '_' || c == '-' ? c : '_'
+                );
             }
             string prefix = safe.ToString().Trim('.');
-            if (prefix.Length > 48) prefix = prefix.Substring(0, 48).TrimEnd('.');
+            if (prefix.Length > 48)
+                prefix = prefix.Substring(0, 48).TrimEnd('.');
             using (var sha = SHA256.Create())
             {
                 byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(pluginId));
-                return (prefix.Length == 0 ? "plugin" : prefix) + "-" + BitConverter.ToString(hash, 0, 8).Replace("-", "").ToLowerInvariant();
+                return (prefix.Length == 0 ? "plugin" : prefix)
+                    + "-"
+                    + BitConverter.ToString(hash, 0, 8).Replace("-", "").ToLowerInvariant();
             }
         }
     }

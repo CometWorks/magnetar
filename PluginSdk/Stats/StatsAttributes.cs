@@ -119,7 +119,8 @@ namespace PluginSdk.Stats
     /// </summary>
     public sealed class CounterAttribute : StatAttribute
     {
-        public CounterAttribute(string description = null) : base(description)
+        public CounterAttribute(string description = null)
+            : base(description)
         {
             AcrossInstances = StatAggregation.Sum;
             OverTime = TimeAggregation.Sum;
@@ -136,7 +137,8 @@ namespace PluginSdk.Stats
     /// </summary>
     public sealed class GaugeAttribute : StatAttribute
     {
-        public GaugeAttribute(string description = null) : base(description)
+        public GaugeAttribute(string description = null)
+            : base(description)
         {
             AcrossInstances = StatAggregation.Sum;
             OverTime = TimeAggregation.Mean;
@@ -154,7 +156,8 @@ namespace PluginSdk.Stats
     /// </summary>
     public sealed class DiscreteAttribute : StatAttribute
     {
-        public DiscreteAttribute(string description = null) : base(description)
+        public DiscreteAttribute(string description = null)
+            : base(description)
         {
             AcrossInstances = StatAggregation.None;
             OverTime = TimeAggregation.Median;

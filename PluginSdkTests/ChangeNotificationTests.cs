@@ -183,7 +183,10 @@ namespace PluginSdk.Tests
         [Fact]
         public void Struct_Reassignment_WithSameValue_DoesNotRaiseEvent()
         {
-            var c = new TestConfig { StructValue = new TestStruct { Integer = 5, Text = "x" } };
+            var c = new TestConfig
+            {
+                StructValue = new TestStruct { Integer = 5, Text = "x" },
+            };
             var changed = CaptureChanges(c);
 
             c.StructValue = new TestStruct { Integer = 5, Text = "x" };

@@ -45,19 +45,23 @@ namespace MagnetarMod
             if (MyAPIGateway.Utilities == null)
                 return;
 
-            MyAPIGateway.Utilities.InvokeOnGameThread(delegate
-            {
-                if (MyAPIGateway.Utilities == null)
-                    return;
+            MyAPIGateway.Utilities.InvokeOnGameThread(
+                delegate
+                {
+                    if (MyAPIGateway.Utilities == null)
+                        return;
 
-                MyAPIGateway.Utilities.ShowMissionScreen(
-                    EmptyToNull(packet.ScreenTitle),
-                    EmptyToNull(packet.CurrentObjectivePrefix),
-                    EmptyToNull(packet.CurrentObjective),
-                    EmptyToNull(packet.ScreenDescription),
-                    null,
-                    EmptyToNull(packet.OkButtonCaption));
-            }, "MagnetarMod.ShowMissionScreen");
+                    MyAPIGateway.Utilities.ShowMissionScreen(
+                        EmptyToNull(packet.ScreenTitle),
+                        EmptyToNull(packet.CurrentObjectivePrefix),
+                        EmptyToNull(packet.CurrentObjective),
+                        EmptyToNull(packet.ScreenDescription),
+                        null,
+                        EmptyToNull(packet.OkButtonCaption)
+                    );
+                },
+                "MagnetarMod.ShowMissionScreen"
+            );
         }
 
         private static bool TryDeserialize(byte[] data, out MissionScreenPacket packet)
@@ -70,13 +74,15 @@ namespace MagnetarMod
                     return false;
 
                 packet = MyAPIGateway.Utilities.SerializeFromBinary<MissionScreenPacket>(data);
-                return packet != null &&
-                       packet.ProtocolVersion == ProtocolVersion &&
-                       packet.PacketType == ShowMissionScreenPacket;
+                return packet != null
+                    && packet.ProtocolVersion == ProtocolVersion
+                    && packet.PacketType == ShowMissionScreenPacket;
             }
             catch (Exception e)
             {
-                MyLog.Default.WriteLine("[MagnetarMod] Failed to decode mission screen packet: " + e);
+                MyLog.Default.WriteLine(
+                    "[MagnetarMod] Failed to decode mission screen packet: " + e
+                );
                 return false;
             }
         }

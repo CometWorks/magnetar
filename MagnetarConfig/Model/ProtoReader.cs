@@ -23,7 +23,8 @@ internal sealed class ProtoReader
     private int pos;
     private readonly int end;
 
-    public ProtoReader(byte[] buffer) : this(buffer, 0, buffer?.Length ?? 0) { }
+    public ProtoReader(byte[] buffer)
+        : this(buffer, 0, buffer?.Length ?? 0) { }
 
     public ProtoReader(byte[] buffer, int offset, int length)
     {

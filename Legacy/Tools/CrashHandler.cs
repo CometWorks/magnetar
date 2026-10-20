@@ -34,12 +34,21 @@ internal static class CrashHandler
         {
             try
             {
-                Console.Error.WriteLine($"[{label}] Native crash detected (unhandled SEH exception)");
+                Console.Error.WriteLine(
+                    $"[{label}] Native crash detected (unhandled SEH exception)"
+                );
                 Console.Error.Flush();
                 LogFile.Error("Native crash detected (unhandled SEH exception)");
             }
             catch { }
-            finally { try { ServerControl.FlushOnFatalExit(); } catch { } }
+            finally
+            {
+                try
+                {
+                    ServerControl.FlushOnFatalExit();
+                }
+                catch { }
+            }
             // EXCEPTION_CONTINUE_SEARCH: preserve Windows/runtime crash and dump handling.
             return 0;
         };

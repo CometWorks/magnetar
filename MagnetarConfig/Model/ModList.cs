@@ -39,7 +39,8 @@ internal sealed class ModList
         if (Items.Any(m => m.PublishedFileId == 0))
             issues.Add("A mod has a zero PublishedFileId.");
 
-        var dupes = Items.GroupBy(m => m.PublishedFileId)
+        var dupes = Items
+            .GroupBy(m => m.PublishedFileId)
             .Where(g => g.Key != 0 && g.Count() > 1)
             .Select(g => g.Key);
         foreach (ulong id in dupes)

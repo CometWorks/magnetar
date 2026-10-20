@@ -61,7 +61,8 @@ internal sealed record OptionDefinition(
     Liveness Liveness = Liveness.RestartRequired,
     bool Hidden = false,
     bool Experimental = false,
-    string ExperimentalRule = null)
+    string ExperimentalRule = null
+)
 {
     /// <summary>The XML name of the enum member for a given raw value, or the raw value if not an enum / not matched.</summary>
     public string NormalizeEnum(string raw)
@@ -72,9 +73,11 @@ internal sealed record OptionDefinition(
         string trimmed = raw.Trim();
         foreach (EnumChoice c in Choices)
         {
-            if (string.Equals(c.XmlName, trimmed, StringComparison.OrdinalIgnoreCase)
+            if (
+                string.Equals(c.XmlName, trimmed, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(c.Label, trimmed, StringComparison.OrdinalIgnoreCase)
-                || c.Value.ToString() == trimmed)
+                || c.Value.ToString() == trimmed
+            )
                 return c.XmlName;
         }
         return trimmed;

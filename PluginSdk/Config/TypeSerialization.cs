@@ -35,8 +35,10 @@ namespace PluginSdk.Config
         public static bool IsHandled(Type t)
         {
             return t == typeof(Color)
-                || t == typeof(Vector2D) || t == typeof(Vector3D)
-                || t == typeof(Vector2I) || t == typeof(Vector3I)
+                || t == typeof(Vector2D)
+                || t == typeof(Vector3D)
+                || t == typeof(Vector2I)
+                || t == typeof(Vector3I)
                 || t == typeof(Base6Directions.Direction)
                 || t == typeof(MyPositionAndOrientation);
         }
@@ -73,12 +75,20 @@ namespace PluginSdk.Config
                     writer.WriteString(d.ToString());
                     break;
                 case MyPositionAndOrientation pose:
-                    writer.WriteElementString("Position", FormatDoubles(pose.Position.X, pose.Position.Y, pose.Position.Z));
-                    writer.WriteElementString("Forward",  FormatDoubles(pose.Forward.X,  pose.Forward.Y,  pose.Forward.Z));
-                    writer.WriteElementString("Up",       FormatDoubles(pose.Up.X,       pose.Up.Y,       pose.Up.Z));
+                    writer.WriteElementString(
+                        "Position",
+                        FormatDoubles(pose.Position.X, pose.Position.Y, pose.Position.Z)
+                    );
+                    writer.WriteElementString(
+                        "Forward",
+                        FormatDoubles(pose.Forward.X, pose.Forward.Y, pose.Forward.Z)
+                    );
+                    writer.WriteElementString("Up", FormatDoubles(pose.Up.X, pose.Up.Y, pose.Up.Z));
                     break;
                 default:
-                    throw new InvalidOperationException($"TypeSerialization.WriteXml: unsupported type {value?.GetType().FullName}");
+                    throw new InvalidOperationException(
+                        $"TypeSerialization.WriteXml: unsupported type {value?.GetType().FullName}"
+                    );
             }
         }
 
@@ -91,9 +101,11 @@ namespace PluginSdk.Config
             bool isEmpty = reader.IsEmptyElement;
             reader.ReadStartElement();
             var text = isEmpty ? string.Empty : reader.ReadContentAsString();
-            if (!isEmpty) reader.ReadEndElement();
+            if (!isEmpty)
+                reader.ReadEndElement();
 
-            if (type == typeof(Color)) return ParseColor(text);
+            if (type == typeof(Color))
+                return ParseColor(text);
             if (type == typeof(Vector2D))
             {
                 var d = ParseDoubles(text, 2);
@@ -115,9 +127,12 @@ namespace PluginSdk.Config
                 return new Vector3I(i[0], i[1], i[2]);
             }
             if (type == typeof(Base6Directions.Direction))
-                return (Base6Directions.Direction)Enum.Parse(typeof(Base6Directions.Direction), text.Trim(), ignoreCase: false);
+                return (Base6Directions.Direction)
+                    Enum.Parse(typeof(Base6Directions.Direction), text.Trim(), ignoreCase: false);
 
-            throw new InvalidOperationException($"TypeSerialization.ReadXml: unsupported type {type.FullName}");
+            throw new InvalidOperationException(
+                $"TypeSerialization.ReadXml: unsupported type {type.FullName}"
+            );
         }
 
         private static MyPositionAndOrientation ReadPoseXml(XmlReader reader)
@@ -126,7 +141,8 @@ namespace PluginSdk.Config
 
             bool isEmpty = reader.IsEmptyElement;
             reader.ReadStartElement();
-            if (isEmpty) return pose;
+            if (isEmpty)
+                return pose;
 
             reader.MoveToContent();
             while (reader.NodeType != XmlNodeType.EndElement)
@@ -138,9 +154,15 @@ namespace PluginSdk.Config
                     var d = ParseDoubles(text, 3);
                     switch (name)
                     {
-                        case "Position": pose.Position = new Vector3D(d[0], d[1], d[2]); break;
-                        case "Forward":  pose.Forward  = new Vector3((float)d[0], (float)d[1], (float)d[2]); break;
-                        case "Up":       pose.Up       = new Vector3((float)d[0], (float)d[1], (float)d[2]); break;
+                        case "Position":
+                            pose.Position = new Vector3D(d[0], d[1], d[2]);
+                            break;
+                        case "Forward":
+                            pose.Forward = new Vector3((float)d[0], (float)d[1], (float)d[2]);
+                            break;
+                        case "Up":
+                            pose.Up = new Vector3((float)d[0], (float)d[1], (float)d[2]);
+                            break;
                     }
                 }
                 else
@@ -155,27 +177,57 @@ namespace PluginSdk.Config
 
         // ---------- Formatting helpers ----------------------------------
 
-        private static string FormatColor(Color c)
-            => $"#{c.R:X2}{c.G:X2}{c.B:X2}{c.A:X2}";
+        private static string FormatColor(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}{c.A:X2}";
 
         private static Color ParseColor(string text)
         {
             text = text.Trim();
-            if (text.StartsWith("#")) text = text.Substring(1);
+            if (text.StartsWith("#"))
+                text = text.Substring(1);
 
             if (text.Length == 6)
                 return new Color(
-                    byte.Parse(text.Substring(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    byte.Parse(text.Substring(2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    byte.Parse(text.Substring(4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    (byte)255);
+                    byte.Parse(
+                        text.Substring(0, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    ),
+                    byte.Parse(
+                        text.Substring(2, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    ),
+                    byte.Parse(
+                        text.Substring(4, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    ),
+                    (byte)255
+                );
 
             if (text.Length == 8)
                 return new Color(
-                    byte.Parse(text.Substring(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    byte.Parse(text.Substring(2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    byte.Parse(text.Substring(4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    byte.Parse(text.Substring(6, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture));
+                    byte.Parse(
+                        text.Substring(0, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    ),
+                    byte.Parse(
+                        text.Substring(2, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    ),
+                    byte.Parse(
+                        text.Substring(4, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    ),
+                    byte.Parse(
+                        text.Substring(6, 2),
+                        NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture
+                    )
+                );
 
             throw new FormatException($"Color must be #RRGGBB or #RRGGBBAA hex; got '{text}'.");
         }
@@ -198,20 +250,30 @@ namespace PluginSdk.Config
 
         private static double[] ParseDoubles(string text, int expectedCount)
         {
-            var parts = text.Trim().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = text.Trim()
+                .Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != expectedCount)
-                throw new FormatException($"Expected {expectedCount} numbers, got {parts.Length}: '{text}'.");
+                throw new FormatException(
+                    $"Expected {expectedCount} numbers, got {parts.Length}: '{text}'."
+                );
             var result = new double[expectedCount];
             for (int i = 0; i < expectedCount; i++)
-                result[i] = double.Parse(parts[i], NumberStyles.Float, CultureInfo.InvariantCulture);
+                result[i] = double.Parse(
+                    parts[i],
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture
+                );
             return result;
         }
 
         private static int[] ParseInts(string text, int expectedCount)
         {
-            var parts = text.Trim().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = text.Trim()
+                .Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != expectedCount)
-                throw new FormatException($"Expected {expectedCount} integers, got {parts.Length}: '{text}'.");
+                throw new FormatException(
+                    $"Expected {expectedCount} integers, got {parts.Length}: '{text}'."
+                );
             var result = new int[expectedCount];
             for (int i = 0; i < expectedCount; i++)
                 result[i] = int.Parse(parts[i], NumberStyles.Integer, CultureInfo.InvariantCulture);
@@ -233,34 +295,57 @@ namespace PluginSdk.Config
 
         private sealed class ColorJsonConverter : JsonConverter<Color>
         {
-            public override Color Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions __)
-                => ParseColor(reader.GetString());
+            public override Color Read(
+                ref Utf8JsonReader reader,
+                Type _,
+                JsonSerializerOptions __
+            ) => ParseColor(reader.GetString());
 
-            public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions _)
-                => writer.WriteStringValue(FormatColor(value));
+            public override void Write(
+                Utf8JsonWriter writer,
+                Color value,
+                JsonSerializerOptions _
+            ) => writer.WriteStringValue(FormatColor(value));
         }
 
         private sealed class Vector2DJsonConverter : JsonConverter<Vector2D>
         {
-            public override Vector2D Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions __)
+            public override Vector2D Read(
+                ref Utf8JsonReader reader,
+                Type _,
+                JsonSerializerOptions __
+            )
             {
-                double x = 0, y = 0;
-                if (reader.TokenType != JsonTokenType.StartObject) throw new JsonException();
+                double x = 0,
+                    y = 0;
+                if (reader.TokenType != JsonTokenType.StartObject)
+                    throw new JsonException();
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                    if (reader.TokenType != JsonTokenType.PropertyName)
+                        continue;
                     var name = reader.GetString();
                     reader.Read();
                     switch (name)
                     {
-                        case "x": case "X": x = reader.GetDouble(); break;
-                        case "y": case "Y": y = reader.GetDouble(); break;
+                        case "x":
+                        case "X":
+                            x = reader.GetDouble();
+                            break;
+                        case "y":
+                        case "Y":
+                            y = reader.GetDouble();
+                            break;
                     }
                 }
                 return new Vector2D(x, y);
             }
 
-            public override void Write(Utf8JsonWriter writer, Vector2D value, JsonSerializerOptions _)
+            public override void Write(
+                Utf8JsonWriter writer,
+                Vector2D value,
+                JsonSerializerOptions _
+            )
             {
                 writer.WriteStartObject();
                 writer.WriteNumber("x", value.X);
@@ -271,26 +356,47 @@ namespace PluginSdk.Config
 
         private sealed class Vector3DJsonConverter : JsonConverter<Vector3D>
         {
-            public override Vector3D Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions __)
+            public override Vector3D Read(
+                ref Utf8JsonReader reader,
+                Type _,
+                JsonSerializerOptions __
+            )
             {
-                double x = 0, y = 0, z = 0;
-                if (reader.TokenType != JsonTokenType.StartObject) throw new JsonException();
+                double x = 0,
+                    y = 0,
+                    z = 0;
+                if (reader.TokenType != JsonTokenType.StartObject)
+                    throw new JsonException();
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                    if (reader.TokenType != JsonTokenType.PropertyName)
+                        continue;
                     var name = reader.GetString();
                     reader.Read();
                     switch (name)
                     {
-                        case "x": case "X": x = reader.GetDouble(); break;
-                        case "y": case "Y": y = reader.GetDouble(); break;
-                        case "z": case "Z": z = reader.GetDouble(); break;
+                        case "x":
+                        case "X":
+                            x = reader.GetDouble();
+                            break;
+                        case "y":
+                        case "Y":
+                            y = reader.GetDouble();
+                            break;
+                        case "z":
+                        case "Z":
+                            z = reader.GetDouble();
+                            break;
                     }
                 }
                 return new Vector3D(x, y, z);
             }
 
-            public override void Write(Utf8JsonWriter writer, Vector3D value, JsonSerializerOptions _)
+            public override void Write(
+                Utf8JsonWriter writer,
+                Vector3D value,
+                JsonSerializerOptions _
+            )
             {
                 writer.WriteStartObject();
                 writer.WriteNumber("x", value.X);
@@ -302,25 +408,42 @@ namespace PluginSdk.Config
 
         private sealed class Vector2IJsonConverter : JsonConverter<Vector2I>
         {
-            public override Vector2I Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions __)
+            public override Vector2I Read(
+                ref Utf8JsonReader reader,
+                Type _,
+                JsonSerializerOptions __
+            )
             {
-                int x = 0, y = 0;
-                if (reader.TokenType != JsonTokenType.StartObject) throw new JsonException();
+                int x = 0,
+                    y = 0;
+                if (reader.TokenType != JsonTokenType.StartObject)
+                    throw new JsonException();
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                    if (reader.TokenType != JsonTokenType.PropertyName)
+                        continue;
                     var name = reader.GetString();
                     reader.Read();
                     switch (name)
                     {
-                        case "x": case "X": x = reader.GetInt32(); break;
-                        case "y": case "Y": y = reader.GetInt32(); break;
+                        case "x":
+                        case "X":
+                            x = reader.GetInt32();
+                            break;
+                        case "y":
+                        case "Y":
+                            y = reader.GetInt32();
+                            break;
                     }
                 }
                 return new Vector2I(x, y);
             }
 
-            public override void Write(Utf8JsonWriter writer, Vector2I value, JsonSerializerOptions _)
+            public override void Write(
+                Utf8JsonWriter writer,
+                Vector2I value,
+                JsonSerializerOptions _
+            )
             {
                 writer.WriteStartObject();
                 writer.WriteNumber("x", value.X);
@@ -331,26 +454,47 @@ namespace PluginSdk.Config
 
         private sealed class Vector3IJsonConverter : JsonConverter<Vector3I>
         {
-            public override Vector3I Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions __)
+            public override Vector3I Read(
+                ref Utf8JsonReader reader,
+                Type _,
+                JsonSerializerOptions __
+            )
             {
-                int x = 0, y = 0, z = 0;
-                if (reader.TokenType != JsonTokenType.StartObject) throw new JsonException();
+                int x = 0,
+                    y = 0,
+                    z = 0;
+                if (reader.TokenType != JsonTokenType.StartObject)
+                    throw new JsonException();
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                    if (reader.TokenType != JsonTokenType.PropertyName)
+                        continue;
                     var name = reader.GetString();
                     reader.Read();
                     switch (name)
                     {
-                        case "x": case "X": x = reader.GetInt32(); break;
-                        case "y": case "Y": y = reader.GetInt32(); break;
-                        case "z": case "Z": z = reader.GetInt32(); break;
+                        case "x":
+                        case "X":
+                            x = reader.GetInt32();
+                            break;
+                        case "y":
+                        case "Y":
+                            y = reader.GetInt32();
+                            break;
+                        case "z":
+                        case "Z":
+                            z = reader.GetInt32();
+                            break;
                     }
                 }
                 return new Vector3I(x, y, z);
             }
 
-            public override void Write(Utf8JsonWriter writer, Vector3I value, JsonSerializerOptions _)
+            public override void Write(
+                Utf8JsonWriter writer,
+                Vector3I value,
+                JsonSerializerOptions _
+            )
             {
                 writer.WriteStartObject();
                 writer.WriteNumber("x", value.X);
@@ -360,18 +504,25 @@ namespace PluginSdk.Config
             }
         }
 
-        private sealed class PositionAndOrientationJsonConverter : JsonConverter<MyPositionAndOrientation>
+        private sealed class PositionAndOrientationJsonConverter
+            : JsonConverter<MyPositionAndOrientation>
         {
-            public override MyPositionAndOrientation Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions options)
+            public override MyPositionAndOrientation Read(
+                ref Utf8JsonReader reader,
+                Type _,
+                JsonSerializerOptions options
+            )
             {
                 Vector3D position = Vector3D.Zero;
                 Vector3 forward = Vector3.Forward;
                 Vector3 up = Vector3.Up;
 
-                if (reader.TokenType != JsonTokenType.StartObject) throw new JsonException();
+                if (reader.TokenType != JsonTokenType.StartObject)
+                    throw new JsonException();
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                    if (reader.TokenType != JsonTokenType.PropertyName)
+                        continue;
                     var name = reader.GetString();
                     reader.Read();
                     switch (name)
@@ -382,7 +533,8 @@ namespace PluginSdk.Config
                             break;
                         case "forward":
                         case "Forward":
-                            forward = (Vector3)JsonSerializer.Deserialize<Vector3D>(ref reader, options);
+                            forward = (Vector3)
+                                JsonSerializer.Deserialize<Vector3D>(ref reader, options);
                             break;
                         case "up":
                         case "Up":
@@ -393,7 +545,11 @@ namespace PluginSdk.Config
                 return new MyPositionAndOrientation(position, forward, up);
             }
 
-            public override void Write(Utf8JsonWriter writer, MyPositionAndOrientation value, JsonSerializerOptions options)
+            public override void Write(
+                Utf8JsonWriter writer,
+                MyPositionAndOrientation value,
+                JsonSerializerOptions options
+            )
             {
                 writer.WriteStartObject();
 
@@ -401,10 +557,18 @@ namespace PluginSdk.Config
                 JsonSerializer.Serialize(writer, (Vector3D)value.Position, options);
 
                 writer.WritePropertyName("forward");
-                JsonSerializer.Serialize(writer, new Vector3D(value.Forward.X, value.Forward.Y, value.Forward.Z), options);
+                JsonSerializer.Serialize(
+                    writer,
+                    new Vector3D(value.Forward.X, value.Forward.Y, value.Forward.Z),
+                    options
+                );
 
                 writer.WritePropertyName("up");
-                JsonSerializer.Serialize(writer, new Vector3D(value.Up.X, value.Up.Y, value.Up.Z), options);
+                JsonSerializer.Serialize(
+                    writer,
+                    new Vector3D(value.Up.X, value.Up.Y, value.Up.Z),
+                    options
+                );
 
                 writer.WriteEndObject();
             }

@@ -17,7 +17,8 @@ namespace PluginSdk.Logging
         int threadId,
         string message,
         Exception exception,
-        object data)
+        object data
+    )
     {
         /// <summary>UTC instant the entry was created (<see cref="DateTime.UtcNow"/>).</summary>
         public DateTime UtcTimestamp { get; } = utcTimestamp;

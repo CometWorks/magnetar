@@ -1,4 +1,3 @@
-using Magnetar.Legacy.Integration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using HarmonyLib;
+using Magnetar.Legacy.Integration;
 using ParallelTasks;
 using Pulsar.Shared;
 using Pulsar.Shared.Data;
@@ -51,6 +51,12 @@ public static class SteamMods
             return;
         }
 
+        // Until the world loads, the DS keeps its Workshop folder inside the
+        // install (Content/Workshop). Switch to the -path data folder first,
+        // as the world mod download does, so there is one cache and the
+        // install stays untouched.
+        MyGameService.GameServer?.SetServerModTemporaryDirectory();
+
         LogFile.WriteLine($"Updating {modItems.Count} workshop items");
 
         try
@@ -88,9 +94,7 @@ public static class SteamMods
         }
         catch (Exception e)
         {
-            LogFile.Warn(
-                "Unable to update workshop items; server startup will continue: " + e
-            );
+            LogFile.Warn("Unable to update workshop items; server startup will continue: " + e);
         }
     }
 
@@ -118,8 +122,7 @@ public static class SteamMods
         catch (Exception e)
         {
             WarnInstallState(
-                "Unable to verify installed Steam Workshop items; treating them as untrusted: "
-                    + e
+                "Unable to verify installed Steam Workshop items; treating them as untrusted: " + e
             );
             return true;
         }
@@ -148,12 +151,12 @@ public static class SteamMods
                 .. mods.Select(x => new WorkshopId(x.PublishedFileId, x.PublishedServiceName)),
             ];
 
-            DownloadModsBlocking ??= AccessTools.Method(
-                typeof(MyWorkshop),
-                "DownloadModsBlocking"
-            );
+            DownloadModsBlocking ??= AccessTools.Method(typeof(MyWorkshop), "DownloadModsBlocking");
             if (DownloadModsBlocking is null)
-                throw new MissingMethodException(typeof(MyWorkshop).FullName, "DownloadModsBlocking");
+                throw new MissingMethodException(
+                    typeof(MyWorkshop).FullName,
+                    "DownloadModsBlocking"
+                );
 
             MyWorkshop.ResultData resultData = (MyWorkshop.ResultData)
                 DownloadModsBlocking.Invoke(

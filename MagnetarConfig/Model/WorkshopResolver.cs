@@ -10,19 +10,24 @@ namespace Magnetar.Config.Model;
 internal sealed class WorkshopItem
 {
     public long Id;
-    public int Result;           // 1 == OK
+    public int Result; // 1 == OK
     public string Title;
-    public int FileType;         // 2 == collection
+    public int FileType; // 2 == collection
     public string[] Tags = Array.Empty<string>();
-    public long[] ChildIds = Array.Empty<long>();   // collection members / declared dependencies
+    public long[] ChildIds = Array.Empty<long>(); // collection members / declared dependencies
 
     public bool Ok => Result == 1;
-    public bool IsCollection => FileType == 2 || Tags.Any(t => string.Equals(t, "collection", StringComparison.OrdinalIgnoreCase));
+    public bool IsCollection =>
+        FileType == 2
+        || Tags.Any(t => string.Equals(t, "collection", StringComparison.OrdinalIgnoreCase));
+
     // Space Engineers Workshop content that is clearly not a mod.
-    public bool IsClearlyNonMod => Tags.Any(t =>
-        string.Equals(t, "world", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(t, "blueprint", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(t, "ingameScript", StringComparison.OrdinalIgnoreCase));
+    public bool IsClearlyNonMod =>
+        Tags.Any(t =>
+            string.Equals(t, "world", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(t, "blueprint", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(t, "ingameScript", StringComparison.OrdinalIgnoreCase)
+        );
     public string DisplayName => string.IsNullOrWhiteSpace(Title) ? Id.ToString() : Title.Trim();
 }
 
@@ -47,11 +52,15 @@ internal sealed class WorkshopResolver
 {
     public const long SpaceEngineersAppId = 244850;
 
-    private static readonly Regex IdPattern = new(@"(?:(?:[?&]id=)|\b)(\d{6,20})\b", RegexOptions.Compiled);
+    private static readonly Regex IdPattern = new(
+        @"(?:(?:[?&]id=)|\b)(\d{6,20})\b",
+        RegexOptions.Compiled
+    );
 
     private readonly IHttpFetcher http;
 
-    public WorkshopResolver(IHttpFetcher fetcher = null) => http = fetcher ?? new DefaultHttpFetcher();
+    public WorkshopResolver(IHttpFetcher fetcher = null) =>
+        http = fetcher ?? new DefaultHttpFetcher();
 
     /// <summary>Extracts Workshop ids from free text or Workshop/collection URLs, deduped, in order.</summary>
     public static List<long> ExtractIds(string text)
@@ -87,7 +96,10 @@ internal sealed class WorkshopResolver
             for (int j = 0; j < chunk.Count; j++)
                 form.Add(new($"publishedfileids[{j}]", chunk[j].ToString()));
 
-            string json = http.Post("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", form);
+            string json = http.Post(
+                "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/",
+                form
+            );
             foreach (WorkshopItem item in ParsePublishedFileDetails(json))
                 result[item.Id] = item;
         }
@@ -109,7 +121,10 @@ internal sealed class WorkshopResolver
         for (int j = 0; j < list.Count; j++)
             form.Add(new($"publishedfileids[{j}]", list[j].ToString()));
 
-        string json = http.Post("https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/", form);
+        string json = http.Post(
+            "https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/",
+            form
+        );
         foreach (var kv in ParseCollectionDetails(json))
             result[kv.Key] = kv.Value;
         return result;
@@ -121,6 +136,7 @@ internal sealed class WorkshopResolver
         /// <summary>Usable mods in stable order (typed order first, then expanded
         /// collection members), each with its resolved friendly name.</summary>
         public List<(long Id, string Name)> Mods = new();
+
         /// <summary>Human-readable notes about ids that were skipped (not on the
         /// Workshop, not a mod, or empty collections).</summary>
         public List<string> Warnings = new();
@@ -143,11 +159,18 @@ internal sealed class WorkshopResolver
 
         // Expand collections one level (the common "I pasted a collection URL"
         // case) so their members get added in the collection's own sort order.
-        var collections = roots.Where(id => details.TryGetValue(id, out WorkshopItem d) && d.IsCollection).ToList();
-        Dictionary<long, List<long>> children = collections.Count > 0
-            ? GetCollectionChildren(collections)
-            : new Dictionary<long, List<long>>();
-        var members = children.Values.SelectMany(c => c).Distinct().Where(id => !details.ContainsKey(id)).ToList();
+        var collections = roots
+            .Where(id => details.TryGetValue(id, out WorkshopItem d) && d.IsCollection)
+            .ToList();
+        Dictionary<long, List<long>> children =
+            collections.Count > 0
+                ? GetCollectionChildren(collections)
+                : new Dictionary<long, List<long>>();
+        var members = children
+            .Values.SelectMany(c => c)
+            .Distinct()
+            .Where(id => !details.ContainsKey(id))
+            .ToList();
         if (members.Count > 0)
             foreach (var kv in GetDetails(members))
                 details[kv.Key] = kv.Value;
@@ -165,9 +188,12 @@ internal sealed class WorkshopResolver
             if (details.TryGetValue(id, out WorkshopItem d) && d.IsCollection)
             {
                 if (children.TryGetValue(id, out List<long> ms) && ms.Count > 0)
-                    foreach (long m in ms) AddId(m);
+                    foreach (long m in ms)
+                        AddId(m);
                 else
-                    result.Warnings.Add($"{d.DisplayName} ({id}): collection is empty or private, skipped.");
+                    result.Warnings.Add(
+                        $"{d.DisplayName} ({id}): collection is empty or private, skipped."
+                    );
             }
             else
             {
@@ -185,7 +211,9 @@ internal sealed class WorkshopResolver
             }
             if (item.IsClearlyNonMod)
             {
-                result.Warnings.Add($"{item.DisplayName} ({id}): not a mod (world/blueprint/script), skipped.");
+                result.Warnings.Add(
+                    $"{item.DisplayName} ({id}): not a mod (world/blueprint/script), skipped."
+                );
                 continue;
             }
             result.Mods.Add((id, item.DisplayName));
@@ -205,8 +233,14 @@ internal sealed class WorkshopResolver
         if (string.IsNullOrWhiteSpace(json))
             return items;
         JsonValue root;
-        try { root = MiniJson.Parse(json); }
-        catch (FormatException) { return items; }
+        try
+        {
+            root = MiniJson.Parse(json);
+        }
+        catch (FormatException)
+        {
+            return items;
+        }
 
         JsonValue details = root["response"]["publishedfiledetails"];
         foreach (JsonValue d in details.Items)
@@ -219,12 +253,16 @@ internal sealed class WorkshopResolver
                 Result = d["result"].AsInt(),
                 Title = d["title"].AsString(),
                 FileType = d["file_type"].AsInt(),
-                Tags = d["tags"].Items
-                    .Select(t => t["tag"].AsString())
-                    .Where(t => !string.IsNullOrEmpty(t)).ToArray(),
-                ChildIds = d["children"].Items
-                    .Select(c => long.TryParse(c["publishedfileid"].AsString(), out long cid) ? cid : 0)
-                    .Where(cid => cid > 0).ToArray(),
+                Tags = d["tags"]
+                    .Items.Select(t => t["tag"].AsString())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToArray(),
+                ChildIds = d["children"]
+                    .Items.Select(c =>
+                        long.TryParse(c["publishedfileid"].AsString(), out long cid) ? cid : 0
+                    )
+                    .Where(cid => cid > 0)
+                    .ToArray(),
             };
             items.Add(item);
         }
@@ -238,16 +276,26 @@ internal sealed class WorkshopResolver
         if (string.IsNullOrWhiteSpace(json))
             return result;
         JsonValue root;
-        try { root = MiniJson.Parse(json); }
-        catch (FormatException) { return result; }
+        try
+        {
+            root = MiniJson.Parse(json);
+        }
+        catch (FormatException)
+        {
+            return result;
+        }
 
         foreach (JsonValue c in root["response"]["collectiondetails"].Items)
         {
             if (!long.TryParse(c["publishedfileid"].AsString(), out long id) || id <= 0)
                 continue;
-            var children = c["children"].Items
-                .Select(ch => (Id: long.TryParse(ch["publishedfileid"].AsString(), out long cid) ? cid : 0,
-                               Sort: ch["sortorder"].AsInt()))
+            var children = c["children"]
+                .Items.Select(ch =>
+                    (
+                        Id: long.TryParse(ch["publishedfileid"].AsString(), out long cid) ? cid : 0,
+                        Sort: ch["sortorder"].AsInt()
+                    )
+                )
                 .Where(x => x.Id > 0)
                 .OrderBy(x => x.Sort)
                 .Select(x => x.Id)

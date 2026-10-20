@@ -38,7 +38,9 @@ internal static class Diagnostics
         Console.WriteLine();
         Console.WriteLine($"Worlds ({instance.Worlds.Worlds.Count}):");
         foreach (WorldInfo w in instance.Worlds.Worlds)
-            Console.WriteLine($"  {(w.IsActive ? "*" : " ")} {w.SessionName,-30} mods={w.ModCount} cfg={(w.HasWorldConfig ? "ok" : "missing")} saved={w.LastSaveTime:yyyy-MM-dd HH:mm}");
+            Console.WriteLine(
+                $"  {(w.IsActive ? "*" : " ")} {w.SessionName, -30} mods={w.ModCount} cfg={(w.HasWorldConfig ? "ok" : "missing")} saved={w.LastSaveTime:yyyy-MM-dd HH:mm}"
+            );
 
         Console.WriteLine();
         Console.WriteLine($"Active world : {instance.ActiveWorld?.SessionName ?? "(none)"}");
@@ -53,27 +55,41 @@ internal static class Diagnostics
         {
             var plugins = new MagnetarPlugins(binding.MagnetarConfigDir, new Io.AtomicFile());
             var dlls = plugins.LocalDlls();
-            Console.WriteLine($"Local DLLs ({dlls.Count(d => d.Enabled)} enabled of {dlls.Count}):");
+            Console.WriteLine(
+                $"Local DLLs ({dlls.Count(d => d.Enabled)} enabled of {dlls.Count}):"
+            );
             foreach (LocalDllInfo d in dlls)
                 Console.WriteLine($"  {(d.Enabled ? "[x]" : "[ ]")} {d.FileName}");
 
             var devs = plugins.DevFolderPlugins();
-            Console.WriteLine($"Registered dev folders ({devs.Count(p => p.Enabled)} enabled of {devs.Count}):");
+            Console.WriteLine(
+                $"Registered dev folders ({devs.Count(p => p.Enabled)} enabled of {devs.Count}):"
+            );
             foreach (DevFolderPlugin p in devs)
-                Console.WriteLine($"  {(p.Enabled ? "[x]" : "[ ]")} {p.Id}  {p.Folder ?? "(no folder)"}{(p.SourceMissing ? " !missing" : "")}");
+                Console.WriteLine(
+                    $"  {(p.Enabled ? "[x]" : "[ ]")} {p.Id}  {p.Folder ?? "(no folder)"}{(p.SourceMissing ? " !missing" : "")}"
+                );
 
             var hub = plugins.HubCatalogPlugins();
-            Console.WriteLine($"Hub plugins ({hub.Count(h => h.Enabled)} enabled of {hub.Count} in catalog):");
+            Console.WriteLine(
+                $"Hub plugins ({hub.Count(h => h.Enabled)} enabled of {hub.Count} in catalog):"
+            );
             foreach (HubPluginView h in hub)
-                Console.WriteLine($"  {(h.Enabled ? "[x]" : "[ ]")} {h.Info.FriendlyName,-28} {h.Info.RepoId ?? h.Info.Id}");
+                Console.WriteLine(
+                    $"  {(h.Enabled ? "[x]" : "[ ]")} {h.Info.FriendlyName, -28} {h.Info.RepoId ?? h.Info.Id}"
+                );
 
-            Console.WriteLine($"Plugin sources: {plugins.RemoteHubs().Count} hub, " +
-                $"{plugins.RemotePlugins().Count} plugin, {plugins.LocalHubs().Count} local");
+            Console.WriteLine(
+                $"Plugin sources: {plugins.RemoteHubs().Count} hub, "
+                    + $"{plugins.RemotePlugins().Count} plugin, {plugins.LocalHubs().Count} local"
+            );
 
             var catalog = new ProfileCatalog(binding.MagnetarConfigDir, new Io.AtomicFile());
             var namedProfiles = catalog.NamedProfiles();
             string activeMatch = catalog.ActiveMatchKey();
-            Console.WriteLine($"Profiles ({namedProfiles.Count} saved; active set matches: {activeMatch ?? "none"}):");
+            Console.WriteLine(
+                $"Profiles ({namedProfiles.Count} saved; active set matches: {activeMatch ?? "none"}):"
+            );
             foreach (ProfileInfo pr in namedProfiles)
                 Console.WriteLine($"  {(pr.MatchesActive ? "->" : "  ")} {pr.Name}");
         }

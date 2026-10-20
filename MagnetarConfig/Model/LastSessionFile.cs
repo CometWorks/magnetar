@@ -22,6 +22,7 @@ internal sealed class LastSessionFile
     public bool IsContentWorlds;
     public bool IsOnline;
     public bool IsLobby;
+
     // The DS records the port it last bound (0 before the world has run). We
     // write 0 like a fresh DS-authored file and preserve whatever we read back.
     public int ServerPort;
@@ -67,7 +68,9 @@ internal sealed class LastSessionFile
         {
             Path = System.IO.Path.GetFullPath(world.FolderPath),
             RelativePath = relative,
-            GameName = string.IsNullOrEmpty(world.SessionName) ? world.FolderName : world.SessionName,
+            GameName = string.IsNullOrEmpty(world.SessionName)
+                ? world.FolderName
+                : world.SessionName,
             IsContentWorlds = false,
             IsOnline = false,
             IsLobby = false,
@@ -78,7 +81,8 @@ internal sealed class LastSessionFile
     {
         var doc = new XDocument(
             new XDeclaration("1.0", "utf-8", null),
-            new XElement("MyObjectBuilder_LastSession",
+            new XElement(
+                "MyObjectBuilder_LastSession",
                 new XAttribute(XNamespace.Xmlns + "xsi", Xsi.NamespaceName),
                 new XAttribute(XNamespace.Xmlns + "xsd", Xsd.NamespaceName),
                 new XElement("Path", Path ?? string.Empty),
@@ -86,8 +90,15 @@ internal sealed class LastSessionFile
                 new XElement("IsOnline", IsOnline ? "true" : "false"),
                 new XElement("IsLobby", IsLobby ? "true" : "false"),
                 new XElement("GameName", GameName ?? string.Empty),
-                new XElement("ServerPort", ServerPort.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                string.IsNullOrEmpty(RelativePath) ? null : new XElement("RelativePath", RelativePath)));
+                new XElement(
+                    "ServerPort",
+                    ServerPort.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                ),
+                string.IsNullOrEmpty(RelativePath)
+                    ? null
+                    : new XElement("RelativePath", RelativePath)
+            )
+        );
 
         writer.WriteText(sblPath, XmlOut.ToXmlString(doc));
     }
@@ -98,8 +109,11 @@ internal sealed class LastSessionFile
         {
             string rel = PlatformPaths.GetRelativePath(savesPath, worldPath);
             // Only usable when the world actually lives under Saves/.
-            if (string.IsNullOrEmpty(rel) || rel.StartsWith("..", StringComparison.Ordinal)
-                || System.IO.Path.IsPathRooted(rel))
+            if (
+                string.IsNullOrEmpty(rel)
+                || rel.StartsWith("..", StringComparison.Ordinal)
+                || System.IO.Path.IsPathRooted(rel)
+            )
                 return null;
             return rel;
         }

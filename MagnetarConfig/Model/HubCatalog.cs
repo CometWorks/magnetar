@@ -5,7 +5,13 @@ using System.Linq;
 
 namespace Magnetar.Config.Model;
 
-internal enum HubPluginKind { GitHub, Mod, Obsolete, Unknown }
+internal enum HubPluginKind
+{
+    GitHub,
+    Mod,
+    Obsolete,
+    Unknown,
+}
 
 /// <summary>
 /// One plugin entry read from a hub/plugin catalog cache. Mirrors the subset of
@@ -14,7 +20,7 @@ internal enum HubPluginKind { GitHub, Mod, Obsolete, Unknown }
 /// </summary>
 internal sealed class HubPluginInfo
 {
-    public string Id;            // PluginData.Id — the key stored in Profile.GitHub
+    public string Id; // PluginData.Id — the key stored in Profile.GitHub
     public string FriendlyName;
     public string Author;
     public string Tooltip;
@@ -22,8 +28,8 @@ internal sealed class HubPluginInfo
     public bool Hidden;
     public string[] DependencyIds = Array.Empty<string>();
     public HubPluginKind Kind = HubPluginKind.Unknown;
-    public string RepoId;        // GitHubPlugin.RepoId, e.g. "CometWorks/block-limits" (for display / links)
-    public string SourceLabel;   // hub source Name (e.g. "MagnetarHub") or the .bin file stem
+    public string RepoId; // GitHubPlugin.RepoId, e.g. "CometWorks/block-limits" (for display / links)
+    public string SourceLabel; // hub source Name (e.g. "MagnetarHub") or the .bin file stem
 }
 
 /// <summary>

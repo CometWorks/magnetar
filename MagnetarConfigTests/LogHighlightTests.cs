@@ -21,8 +21,10 @@ public class LogHighlightTests
     [Fact]
     public void Exception_wins_over_ready_when_both_present() =>
         // A fault is the more urgent thing to surface.
-        Assert.Equal("Exception",
-            LogHighlight.Classify("Game ready... but then Exception was thrown").ToString());
+        Assert.Equal(
+            "Exception",
+            LogHighlight.Classify("Game ready... but then Exception was thrown").ToString()
+        );
 
     [Fact]
     public void Matching_is_case_sensitive_to_avoid_prose_false_positives()

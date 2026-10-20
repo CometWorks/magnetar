@@ -19,14 +19,30 @@ namespace PluginSdk.Tests
             try
             {
                 using var provider = new StandalonePluginProvider(root);
-                int thread = Environment.CurrentManagedThreadId, called = 0;
-                Guid operation = Guid.NewGuid(), seen = Guid.Empty;
-                using var registration = provider.RegisterHandler("test", "news", message => {
-                    called++; seen = message.OperationId;
-                    Assert.Equal(thread, Environment.CurrentManagedThreadId);
-                    return Task.FromResult(new byte[] { (byte)(message.Payload[0] + 1) });
-                });
-                var broadcast = provider.BroadcastAsync("test", "news", new byte[] { 4 }, operation, true, TimeSpan.FromSeconds(2), default);
+                int thread = Environment.CurrentManagedThreadId,
+                    called = 0;
+                Guid operation = Guid.NewGuid(),
+                    seen = Guid.Empty;
+                using var registration = provider.RegisterHandler(
+                    "test",
+                    "news",
+                    message =>
+                    {
+                        called++;
+                        seen = message.OperationId;
+                        Assert.Equal(thread, Environment.CurrentManagedThreadId);
+                        return Task.FromResult(new byte[] { (byte)(message.Payload[0] + 1) });
+                    }
+                );
+                var broadcast = provider.BroadcastAsync(
+                    "test",
+                    "news",
+                    new byte[] { 4 },
+                    operation,
+                    true,
+                    TimeSpan.FromSeconds(2),
+                    default
+                );
                 Assert.False(broadcast.IsCompleted);
                 provider.Update();
                 var result = await broadcast;
@@ -37,7 +53,10 @@ namespace PluginSdk.Tests
                 Assert.Equal(1, called);
                 Assert.Equal(operation, seen);
             }
-            finally { Directory.Delete(root, true); }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
         }
 
         [Fact]
@@ -47,13 +66,24 @@ namespace PluginSdk.Tests
             try
             {
                 using var provider = new StandalonePluginProvider(root);
-                var broadcast = provider.BroadcastAsync("test", "nobody", null, Guid.NewGuid(), true, TimeSpan.FromSeconds(2), default);
+                var broadcast = provider.BroadcastAsync(
+                    "test",
+                    "nobody",
+                    null,
+                    Guid.NewGuid(),
+                    true,
+                    TimeSpan.FromSeconds(2),
+                    default
+                );
                 provider.Update();
                 var result = await broadcast;
                 Assert.NotEqual(PluginResultCode.Success, result.Code);
                 Assert.Equal(result.Code, Assert.Single(result.Nodes).Value.Code);
             }
-            finally { Directory.Delete(root, true); }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
         }
 
         [Theory]
@@ -65,11 +95,22 @@ namespace PluginSdk.Tests
             try
             {
                 using var provider = new StandalonePluginProvider(root);
-                var result = await provider.BroadcastAsync("test", topic, new byte[size], Guid.NewGuid(), true, TimeSpan.FromSeconds(1), default);
+                var result = await provider.BroadcastAsync(
+                    "test",
+                    topic,
+                    new byte[size],
+                    Guid.NewGuid(),
+                    true,
+                    TimeSpan.FromSeconds(1),
+                    default
+                );
                 Assert.Equal(PluginResultCode.Invalid, result.Code);
                 Assert.Empty(result.Nodes);
             }
-            finally { Directory.Delete(root, true); }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
         }
 
         [Fact]
@@ -78,16 +119,37 @@ namespace PluginSdk.Tests
             PluginCluster.BindOwner(Id, typeof(PluginBroadcastTests).Assembly);
             var client = PluginCluster.ForPlugin(Id);
             Assert.Null(PluginCluster.Current);
-            Assert.Equal(PluginResultCode.Unavailable,
-                (await client.BroadcastAsync("news", null, Guid.NewGuid(), TimeSpan.FromSeconds(1))).Code);
+            Assert.Equal(
+                PluginResultCode.Unavailable,
+                (
+                    await client.BroadcastAsync(
+                        "news",
+                        null,
+                        Guid.NewGuid(),
+                        TimeSpan.FromSeconds(1)
+                    )
+                ).Code
+            );
             var legacy = new UnicastOnlyProvider();
             Assert.True(PluginCluster.Register(legacy));
             try
             {
-                Assert.Equal(PluginResultCode.Unsupported,
-                    (await client.BroadcastAsync("news", null, Guid.NewGuid(), TimeSpan.FromSeconds(1))).Code);
+                Assert.Equal(
+                    PluginResultCode.Unsupported,
+                    (
+                        await client.BroadcastAsync(
+                            "news",
+                            null,
+                            Guid.NewGuid(),
+                            TimeSpan.FromSeconds(1)
+                        )
+                    ).Code
+                );
             }
-            finally { PluginCluster.Unregister(legacy); }
+            finally
+            {
+                PluginCluster.Unregister(legacy);
+            }
         }
 
         [Fact]
@@ -99,30 +161,71 @@ namespace PluginSdk.Tests
             Assert.True(PluginCluster.Register(broken));
             try
             {
-                Assert.Equal(PluginResultCode.Unavailable,
-                    (await client.BroadcastAsync("news", null, Guid.NewGuid(), TimeSpan.FromSeconds(1))).Code);
+                Assert.Equal(
+                    PluginResultCode.Unavailable,
+                    (
+                        await client.BroadcastAsync(
+                            "news",
+                            null,
+                            Guid.NewGuid(),
+                            TimeSpan.FromSeconds(1)
+                        )
+                    ).Code
+                );
                 Assert.Equal(Id, broken.Plugin);
             }
-            finally { PluginCluster.Unregister(broken); }
+            finally
+            {
+                PluginCluster.Unregister(broken);
+            }
         }
 
         private class UnicastOnlyProvider : IPluginClusterProvider
         {
             public NodeContext Context => new NodeContext { Node = "legacy", Available = true };
-            public event Action ContextChanged { add { } remove { } }
-            public Task<PluginResult> ExecuteAsync(PluginRequest request, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public Task<PluginResult> RequestAsync(string plugin, PluginTarget target, string topic, byte[] payload,
-                Guid operationId, TimeSpan timeout, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public IDisposable RegisterHandler(string plugin, string topic, Func<PluginMessage, Task<byte[]>> handler) => null;
+            public event Action ContextChanged
+            {
+                add { }
+                remove { }
+            }
+
+            public Task<PluginResult> ExecuteAsync(
+                PluginRequest request,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public Task<PluginResult> RequestAsync(
+                string plugin,
+                PluginTarget target,
+                string topic,
+                byte[] payload,
+                Guid operationId,
+                TimeSpan timeout,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public IDisposable RegisterHandler(
+                string plugin,
+                string topic,
+                Func<PluginMessage, Task<byte[]>> handler
+            ) => null;
         }
 
-        private sealed class ThrowingBroadcastProvider : UnicastOnlyProvider, IPluginClusterBroadcastProvider
+        private sealed class ThrowingBroadcastProvider
+            : UnicastOnlyProvider,
+                IPluginClusterBroadcastProvider
         {
             public string Plugin;
-            public Task<PluginBroadcastResult> BroadcastAsync(string plugin, string topic, byte[] payload, Guid operationId,
-                bool includeWorldAuthority, TimeSpan timeout, CancellationToken cancellationToken)
+
+            public Task<PluginBroadcastResult> BroadcastAsync(
+                string plugin,
+                string topic,
+                byte[] payload,
+                Guid operationId,
+                bool includeWorldAuthority,
+                TimeSpan timeout,
+                CancellationToken cancellationToken
+            )
             {
                 Plugin = plugin;
                 throw new InvalidOperationException("provider fault");

@@ -30,7 +30,11 @@ public class HubCatalogTests
         Assert.Equal(HubPluginKind.GitHub, blockLimits.Kind);
         Assert.Equal("CometWorks/block-limits", blockLimits.RepoId);
         Assert.Equal("OwendB", blockLimits.Author);
-        Assert.Contains("block limit", blockLimits.Tooltip, System.StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            "block limit",
+            blockLimits.Tooltip,
+            System.StringComparison.OrdinalIgnoreCase
+        );
         Assert.Equal("MagnetarHub", blockLimits.SourceLabel);
         // The Id is the stable key stored into Profile.GitHub.
         Assert.False(string.IsNullOrWhiteSpace(blockLimits.Id));

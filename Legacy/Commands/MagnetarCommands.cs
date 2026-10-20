@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Magnetar.Legacy.Launcher;
 using PluginSdk.Clustering;
 using PluginSdk.Commands;
-using Magnetar.Legacy.Launcher;
 using Pulsar.Legacy.Launcher;
 using Pulsar.Shared;
 using SdkServerControl = PluginSdk.ServerControl;
@@ -38,7 +38,9 @@ public sealed class SaveCommand : CommandModule
             catch (Exception e)
             {
                 LogFile.Error($"!save failed: {e}");
-                Game.RunOnGameThread(() => context.Respond(CommandReply.Error($"World save failed: {e.Message}")));
+                Game.RunOnGameThread(() =>
+                    context.Respond(CommandReply.Error($"World save failed: {e.Message}"))
+                );
             }
         });
     }
@@ -50,8 +52,14 @@ public sealed class RestartCommand : CommandModule
     [Command("", "Save and restart the server")]
     public void Restart()
     {
-        if (LifecycleCommandRouting.TryRoute(Context, ServerTerminationKind.Restart,
-                saveFirst: true, "Magnetar !restart"))
+        if (
+            LifecycleCommandRouting.TryRoute(
+                Context,
+                ServerTerminationKind.Restart,
+                saveFirst: true,
+                "Magnetar !restart"
+            )
+        )
             return;
 
         Context.Respond("Saving world and restarting the server\u2026");
@@ -65,8 +73,14 @@ public sealed class QuitCommand : CommandModule
     [Command("", "Shut the server down without saving")]
     public void Quit()
     {
-        if (LifecycleCommandRouting.TryRoute(Context, ServerTerminationKind.Shutdown,
-                saveFirst: false, "Magnetar !quit"))
+        if (
+            LifecycleCommandRouting.TryRoute(
+                Context,
+                ServerTerminationKind.Shutdown,
+                saveFirst: false,
+                "Magnetar !quit"
+            )
+        )
             return;
 
         Context.Respond("Shutting the server down without saving\u2026");
@@ -80,8 +94,14 @@ public sealed class StopCommand : CommandModule
     [Command("", "Save the world then shut the server down")]
     public void Stop()
     {
-        if (LifecycleCommandRouting.TryRoute(Context, ServerTerminationKind.Shutdown,
-                saveFirst: true, "Magnetar !stop"))
+        if (
+            LifecycleCommandRouting.TryRoute(
+                Context,
+                ServerTerminationKind.Shutdown,
+                saveFirst: true,
+                "Magnetar !stop"
+            )
+        )
             return;
 
         var context = Context;
@@ -100,7 +120,13 @@ public sealed class StopCommand : CommandModule
             catch (Exception e)
             {
                 LogFile.Error($"!stop failed: {e}");
-                Game.RunOnGameThread(() => context.Respond(CommandReply.Error($"World save failed: {e.Message}, shutting down anyway\u2026")));
+                Game.RunOnGameThread(() =>
+                    context.Respond(
+                        CommandReply.Error(
+                            $"World save failed: {e.Message}, shutting down anyway\u2026"
+                        )
+                    )
+                );
             }
 
             SdkServerControl.QuitWithoutSaving();
@@ -110,28 +136,48 @@ public sealed class StopCommand : CommandModule
 
 internal static class LifecycleCommandRouting
 {
-    public static bool TryRoute(CommandContext context, ServerTerminationKind kind,
-        bool saveFirst, string reason)
+    public static bool TryRoute(
+        CommandContext context,
+        ServerTerminationKind kind,
+        bool saveFirst,
+        string reason
+    )
     {
-        var request = new ClusterLifecycleRequest(Guid.NewGuid(), kind,
-            ClusterLifecycleOrigin.ChatCommand, saveFirst, context.Caller.SteamId, reason);
-        if (!ClusterLifecycle.TryRequest(request,
-                out Task<ClusterLifecycleAcknowledgement> acknowledgement))
+        var request = new ClusterLifecycleRequest(
+            Guid.NewGuid(),
+            kind,
+            ClusterLifecycleOrigin.ChatCommand,
+            saveFirst,
+            context.Caller.SteamId,
+            reason
+        );
+        if (
+            !ClusterLifecycle.TryRequest(
+                request,
+                out Task<ClusterLifecycleAcknowledgement> acknowledgement
+            )
+        )
             return false;
 
-        context.Respond(kind == ServerTerminationKind.Restart
-            ? "Requesting a coordinated node restart\u2026"
-            : "Requesting coordinated shutdown\u2026");
+        context.Respond(
+            kind == ServerTerminationKind.Restart
+                ? "Requesting a coordinated node restart\u2026"
+                : "Requesting coordinated shutdown\u2026"
+        );
         _ = ReplyWhenAcknowledged(context, acknowledgement);
         return true;
     }
 
-    private static async Task ReplyWhenAcknowledged(CommandContext context,
-        Task<ClusterLifecycleAcknowledgement> pending)
+    private static async Task ReplyWhenAcknowledged(
+        CommandContext context,
+        Task<ClusterLifecycleAcknowledgement> pending
+    )
     {
         ClusterLifecycleAcknowledgement acknowledgement = await pending.ConfigureAwait(false);
-        bool accepted = acknowledgement.Disposition is ClusterLifecycleDisposition.Accepted
-            or ClusterLifecycleDisposition.AlreadyApplied;
+        bool accepted =
+            acknowledgement.Disposition
+            is ClusterLifecycleDisposition.Accepted
+                or ClusterLifecycleDisposition.AlreadyApplied;
         string message = string.IsNullOrWhiteSpace(acknowledgement.Message)
             ? acknowledgement.ReasonCode
             : acknowledgement.Message;
@@ -140,8 +186,9 @@ internal static class LifecycleCommandRouting
             if (accepted)
                 context.Respond(message);
             else
-                context.Respond(CommandReply.Error(
-                    $"Request denied ({acknowledgement.ReasonCode}): {message}"));
+                context.Respond(
+                    CommandReply.Error($"Request denied ({acknowledgement.ReasonCode}): {message}")
+                );
         });
     }
 }

@@ -21,9 +21,7 @@ internal sealed class DedicatedConfigDocument : ConfigDocumentBase
     private static readonly XNamespace Xsd = "http://www.w3.org/2001/XMLSchema";
 
     private DedicatedConfigDocument(string filePath, XDocument xml, bool existsOnDisk)
-        : base(filePath, xml, existsOnDisk)
-    {
-    }
+        : base(filePath, xml, existsOnDisk) { }
 
     /// <summary>Opens the cfg, tolerating a missing file (a minimal skeleton is built in memory).</summary>
     public static DedicatedConfigDocument Open(string filePath)
@@ -41,10 +39,13 @@ internal sealed class DedicatedConfigDocument : ConfigDocumentBase
     {
         return new XDocument(
             new XDeclaration("1.0", "utf-8", null),
-            new XElement(RootName,
+            new XElement(
+                RootName,
                 new XAttribute(XNamespace.Xmlns + "xsi", Xsi.NamespaceName),
                 new XAttribute(XNamespace.Xmlns + "xsd", Xsd.NamespaceName),
-                new XElement(SessionSettingsName)));
+                new XElement(SessionSettingsName)
+            )
+        );
     }
 
     private XElement Root => Xml.Root;
@@ -101,7 +102,9 @@ internal sealed class DedicatedConfigDocument : ConfigDocumentBase
     public IReadOnlyList<string> Reserved => ReadItems("Reserved");
 
     public void SetAdministrators(IEnumerable<string> ids) => WriteItems("Administrators", ids);
+
     public void SetBanned(IEnumerable<string> ids) => WriteItems("Banned", ids);
+
     public void SetReserved(IEnumerable<string> ids) => WriteItems("Reserved", ids);
 
     public string GroupId

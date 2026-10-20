@@ -27,8 +27,14 @@ public class PluginInteropTests
             return env;
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return Path.Combine(
-            home, ".local", "share", "Magnetar",
-            "Libraries", "MagnetarInterim", "Pulsar.Shared.dll");
+            home,
+            ".local",
+            "share",
+            "Magnetar",
+            "Libraries",
+            "MagnetarInterim",
+            "Pulsar.Shared.dll"
+        );
     }
 
     [Fact]
@@ -46,10 +52,12 @@ public class PluginInteropTests
             // plus a pre-existing GitHub entry to ensure it survives.
             string profilesDir = Path.Combine(dir, "Profiles");
             Directory.CreateDirectory(profilesDir);
-            File.WriteAllText(Path.Combine(profilesDir, "Current.xml"),
-                "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                "<Profile>\n  <Name>Current</Name>\n  <GitHub><GitHubPluginConfig><Id>hub-x</Id></GitHubPluginConfig></GitHub>\n" +
-                "  <DevFolder />\n  <Local />\n  <Mods />\n</Profile>\n");
+            File.WriteAllText(
+                Path.Combine(profilesDir, "Current.xml"),
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                    + "<Profile>\n  <Name>Current</Name>\n  <GitHub><GitHubPluginConfig><Id>hub-x</Id></GitHubPluginConfig></GitHub>\n"
+                    + "  <DevFolder />\n  <Local />\n  <Mods />\n</Profile>\n"
+            );
 
             PluginProfileDocument doc = PluginProfileDocument.Open(dir);
             doc.EnableLocalDll("Essentials.dll");
@@ -79,7 +87,10 @@ public class PluginInteropTests
 
                 Assert.NotNull(profile);
                 bool valid = (bool)profileType.GetMethod("Validate").Invoke(profile, null);
-                Assert.True(valid, "Magnetar's Profile.Validate() rejected the tool-written profile");
+                Assert.True(
+                    valid,
+                    "Magnetar's Profile.Validate() rejected the tool-written profile"
+                );
 
                 var local = (IEnumerable)profileType.GetProperty("Local").GetValue(profile);
                 Assert.Contains("Essentials.dll", System.Linq.Enumerable.Cast<string>(local));
@@ -93,7 +104,10 @@ public class PluginInteropTests
                     if (id == "my-plugin" && debugBuild)
                         foundDev = true;
                 }
-                Assert.True(foundDev, "the dev-folder entry did not round-trip through Magnetar's serializer");
+                Assert.True(
+                    foundDev,
+                    "the dev-folder entry did not round-trip through Magnetar's serializer"
+                );
             }
             finally
             {
@@ -102,7 +116,11 @@ public class PluginInteropTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch { }
         }
     }
 
@@ -161,10 +179,14 @@ public class PluginInteropTests
                 using (FileStream fs = File.OpenRead(PluginSourcesDocument.PathFor(dir)))
                     sourcesObj = new XmlSerializer(sourcesType).Deserialize(fs);
 
-                var remoteHubs = (IEnumerable)sourcesType.GetProperty("RemoteHubSources").GetValue(sourcesObj);
+                var remoteHubs = (IEnumerable)
+                    sourcesType.GetProperty("RemoteHubSources").GetValue(sourcesObj);
                 bool foundRepo = false;
                 foreach (object h in remoteHubs)
-                    if ((string)h.GetType().GetProperty("Repo").GetValue(h) == "CometWorks/magnetar-hub")
+                    if (
+                        (string)h.GetType().GetProperty("Repo").GetValue(h)
+                        == "CometWorks/magnetar-hub"
+                    )
                         foundRepo = true;
                 Assert.True(foundRepo, "RemoteHub repo did not round-trip");
             }
@@ -175,7 +197,11 @@ public class PluginInteropTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch { }
         }
     }
 
@@ -216,19 +242,27 @@ public class PluginInteropTests
                 // override); initialize Pulsar's parser with empty arguments
                 // exactly like a launcher with no flags would.
                 Type parserType = shared.GetType("Pulsar.Shared.Arguments.Parser");
-                parserType.GetMethod("Initialize")
+                parserType
+                    .GetMethod("Initialize")
                     .Invoke(null, new object[] { Array.Empty<string>(), true });
 
                 // Magnetar's own loader must discover the named profile and the
                 // active Current, both passing Validate() (Load discards invalid ones).
                 object config = cfgType.GetMethod("Load").Invoke(null, new object[] { dir });
-                var namedProfiles = ((System.Collections.IEnumerable)cfgType.GetProperty("Profiles").GetValue(config))
-                    .Cast<object>().ToList();
+                var namedProfiles = (
+                    (System.Collections.IEnumerable)cfgType.GetProperty("Profiles").GetValue(config)
+                )
+                    .Cast<object>()
+                    .ToList();
 
                 Type profileType = shared.GetType("Pulsar.Shared.Data.Profile");
                 bool foundPreset = namedProfiles.Any(p =>
-                    (string)profileType.GetProperty("Name").GetValue(p) == "Survival Preset");
-                Assert.True(foundPreset, "Magnetar's ProfilesConfig.Load did not load the tool-written profile");
+                    (string)profileType.GetProperty("Name").GetValue(p) == "Survival Preset"
+                );
+                Assert.True(
+                    foundPreset,
+                    "Magnetar's ProfilesConfig.Load did not load the tool-written profile"
+                );
 
                 object current2 = cfgType.GetProperty("Current").GetValue(config);
                 Assert.NotNull(current2);
@@ -241,7 +275,11 @@ public class PluginInteropTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch { }
         }
     }
 }

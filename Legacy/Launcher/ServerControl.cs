@@ -146,7 +146,8 @@ internal static class ServerControl
             SaveAndQuit,
             SaveAndRestart,
             QuitWithoutSaving,
-            RestartWithoutSaving);
+            RestartWithoutSaving
+        );
 
 #if NETCOREAPP
         sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, OnTerminate);
@@ -177,9 +178,11 @@ internal static class ServerControl
         if (ctrlType != CtrlCloseEvent && ctrlType != CtrlShutdownEvent)
             return false;
 
-        LogFile.WriteLine(ctrlType == CtrlCloseEvent
-            ? "Console window closed: saving world and quitting"
-            : "Windows is shutting down: saving world and quitting");
+        LogFile.WriteLine(
+            ctrlType == CtrlCloseEvent
+                ? "Console window closed: saving world and quitting"
+                : "Windows is shutting down: saving world and quitting"
+        );
         // Closing the window asks for a stop; a shutdown is the host going
         // down, which, like a signal, a supervisor should recover from.
         Task.Run(() => SaveAndQuit(requested: ctrlType == CtrlCloseEvent));
@@ -263,9 +266,11 @@ internal static class ServerControl
         if (WaitForSaveIdle(stopwatch, limit))
             return true;
 
-        LogFile.Warn(startedOwnSave
-            ? "World save did not finish within the timeout"
-            : "In-progress world save did not finish within the timeout");
+        LogFile.Warn(
+            startedOwnSave
+                ? "World save did not finish within the timeout"
+                : "In-progress world save did not finish within the timeout"
+        );
         return false;
     }
 
@@ -320,7 +325,9 @@ internal static class ServerControl
                 // server name is the only value that needs an explicit push.
                 try
                 {
-                    MyGameService.GameServer?.SetServerName(MySandboxGame.ConfigDedicated.ServerName);
+                    MyGameService.GameServer?.SetServerName(
+                        MySandboxGame.ConfigDedicated.ServerName
+                    );
                 }
                 catch (Exception e)
                 {
@@ -355,12 +362,12 @@ internal static class ServerControl
     }
 
     /// <summary>Saves the world, then quits with exit code 0, for a signal:
-    /// on a worker thread and without Terminating.</summary>
-    public static void QuitOnSignal(string signal)
-    {
-        LogFile.WriteLine($"Received {signal}: saving world and quitting");
-        Task.Run(() => SaveAndQuit(requested: false));
-    }
+    /// on a worker thread and without Terminating. On Linux one Ctrl+C reaches
+    /// two handlers, so only the call that begins the shutdown logs.</summary>
+    public static void QuitOnSignal(string signal) =>
+        Task.Run(() =>
+            SaveAndQuit(requested: false, $"Received {signal}: saving world and quitting")
+        );
 
     /// <summary>Saves the world, then quits with exit code 0.</summary>
     public static void SaveAndQuit() => SaveAndQuit(requested: true);
@@ -368,11 +375,13 @@ internal static class ServerControl
     // A signal comes from outside the server, under a supervisor mostly
     // because the host shuts down, so it raises no Terminating: a supervisor
     // that keeps a server off after a requested stop must start it again.
-    private static void SaveAndQuit(bool requested)
+    private static void SaveAndQuit(bool requested, string reason = null)
     {
         if (!BeginTerminate())
             return;
 
+        if (reason != null)
+            LogFile.WriteLine(reason);
         if (requested)
             PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Shutdown);
         LogFile.WriteLine("Saving world before shutdown");
@@ -434,10 +443,23 @@ internal static class ServerControl
 
     private static void DisposePlugins()
     {
+        PluginLoader loader = PluginLoader.Instance;
+        if (loader == null)
+            return;
+
         try
         {
-            // Bound the wait so a misbehaving plugin cannot hang shutdown.
-            Task dispose = Task.Run(() => PluginLoader.Instance?.Dispose());
+            // The loader's Update and HandleInput drop disposed plugins from the
+            // list Dispose walks, so Dispose must not run while the game thread
+            // updates plugins: run it there, or on a worker while the game
+            // thread waits here. Without a session the game loop isn't running
+            // yet: the world loads at the end of the loader's Init. Bound the
+            // wait so a misbehaving plugin cannot hang shutdown.
+            Task dispose = new Task(loader.Dispose);
+            if (OnUpdateThread() || MySandboxGame.Static == null || MySession.Static == null)
+                dispose.Start();
+            else
+                Game.RunOnGameThread(dispose.RunSynchronously);
             if (!dispose.Wait(DisposeTimeout))
                 LogFile.Warn("Plugin disposal timed out");
         }
@@ -457,7 +479,11 @@ internal static class ServerControl
     /// </summary>
     public static void FlushOnFatalExit()
     {
-        try { FlushAll(); } catch { }
+        try
+        {
+            FlushAll();
+        }
+        catch { }
     }
 
     private static void FlushAll()
@@ -467,11 +493,31 @@ internal static class ServerControl
         // through FlushOnFatalExit; anything that kills the process outright
         // (SIGKILL, a native abort) still leaves a stale file behind, which the
         // reader detects by probing the (now dead) pid.
-        try { PidFile.Delete(); } catch { }
-        try { Console.Out.Flush(); } catch { }
-        try { Console.Error.Flush(); } catch { }
-        try { MyLog.Default?.Flush(); } catch { }
-        try { LogFile.Dispose(); } catch { }
+        try
+        {
+            PidFile.Delete();
+        }
+        catch { }
+        try
+        {
+            Console.Out.Flush();
+        }
+        catch { }
+        try
+        {
+            Console.Error.Flush();
+        }
+        catch { }
+        try
+        {
+            MyLog.Default?.Flush();
+        }
+        catch { }
+        try
+        {
+            LogFile.Dispose();
+        }
+        catch { }
     }
 
     private static void ExitProcess(int code)
@@ -480,7 +526,11 @@ internal static class ServerControl
         // finalizer or static destructor, unlike Environment.Exit.
         if (IsLinux)
         {
-            try { LibcExit(code); } catch { }
+            try
+            {
+                LibcExit(code);
+            }
+            catch { }
         }
 
         Environment.Exit(code);
@@ -528,7 +578,11 @@ internal static class ServerControl
             // null-terminated for libc.
             if (!string.IsNullOrEmpty(originalCwd))
             {
-                try { Environment.CurrentDirectory = originalCwd; } catch { }
+                try
+                {
+                    Environment.CurrentDirectory = originalCwd;
+                }
+                catch { }
             }
 
             string[] argv = new string[originalArgv.Length + 1];
@@ -542,7 +596,9 @@ internal static class ServerControl
             execve(path, argv, envp);
 
             // Only reached if execve failed.
-            Console.Error.WriteLine($"Restart failed: execve {path}: errno {Marshal.GetLastWin32Error()}");
+            Console.Error.WriteLine(
+                $"Restart failed: execve {path}: errno {Marshal.GetLastWin32Error()}"
+            );
             ExitProcess(1);
             return;
         }
@@ -589,9 +645,9 @@ internal static class ServerControl
         Environment.Exit(0);
     }
 
-    private static bool OnUpdateThread()
-        => MyPrecalcComponent.UpdateThreadManagedId != 0
-           && Environment.CurrentManagedThreadId == MyPrecalcComponent.UpdateThreadManagedId;
+    private static bool OnUpdateThread() =>
+        MyPrecalcComponent.UpdateThreadManagedId != 0
+        && Environment.CurrentManagedThreadId == MyPrecalcComponent.UpdateThreadManagedId;
 
 #if NETCOREAPP
     private static bool IsLinux => OperatingSystem.IsLinux();
@@ -607,24 +663,47 @@ internal static class ServerControl
     private struct StartupInfo
     {
         public int cb;
-        public string lpReserved, lpDesktop, lpTitle;
-        public int dwX, dwY, dwXSize, dwYSize, dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;
-        public short wShowWindow, cbReserved2;
-        public IntPtr lpReserved2, hStdInput, hStdOutput, hStdError;
+        public string lpReserved,
+            lpDesktop,
+            lpTitle;
+        public int dwX,
+            dwY,
+            dwXSize,
+            dwYSize,
+            dwXCountChars,
+            dwYCountChars,
+            dwFillAttribute,
+            dwFlags;
+        public short wShowWindow,
+            cbReserved2;
+        public IntPtr lpReserved2,
+            hStdInput,
+            hStdOutput,
+            hStdError;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct ProcessInformation
     {
-        public IntPtr hProcess, hThread;
-        public int dwProcessId, dwThreadId;
+        public IntPtr hProcess,
+            hThread;
+        public int dwProcessId,
+            dwThreadId;
     }
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool CreateProcess(string applicationName, StringBuilder commandLine,
-        IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, int creationFlags,
-        string environment, string currentDirectory, ref StartupInfo startupInfo,
-        out ProcessInformation processInformation);
+    private static extern bool CreateProcess(
+        string applicationName,
+        StringBuilder commandLine,
+        IntPtr processAttributes,
+        IntPtr threadAttributes,
+        bool inheritHandles,
+        int creationFlags,
+        string environment,
+        string currentDirectory,
+        ref StartupInfo startupInfo,
+        out ProcessInformation processInformation
+    );
 
     // .NET Framework creates sockets inheritable, and Process.Start passes every
     // inheritable handle to the child. The new server then holds the old one's
@@ -639,8 +718,20 @@ internal static class ServerControl
 
         string environment = string.Join("\0", originalEnv) + "\0\0";
         var startupInfo = new StartupInfo { cb = Marshal.SizeOf(typeof(StartupInfo)) };
-        if (!CreateProcess(path, commandLine, IntPtr.Zero, IntPtr.Zero, false, CreateUnicodeEnvironment,
-                environment, originalCwd, ref startupInfo, out ProcessInformation process))
+        if (
+            !CreateProcess(
+                path,
+                commandLine,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                false,
+                CreateUnicodeEnvironment,
+                environment,
+                originalCwd,
+                ref startupInfo,
+                out ProcessInformation process
+            )
+        )
             throw new System.ComponentModel.Win32Exception();
 
         CloseHandle(process.hThread);

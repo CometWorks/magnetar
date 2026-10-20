@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NStack;
-using Terminal.Gui;
 using Magnetar.Config.Logs;
 using Magnetar.Config.Model;
+using NStack;
+using Terminal.Gui;
 // Terminal.Gui v1's redraw hooks take the legacy System.Rune, not System.Text.Rune.
 using Rune = System.Rune;
 
@@ -47,7 +47,8 @@ internal sealed class LogViewerView : Window
     // applied on the first LayoutComplete. See ScrollToBottom / OnTextLayout.
     private bool bottomScrollPending;
 
-    public LogViewerView(InstanceBinding binding) : base("Logs")
+    public LogViewerView(InstanceBinding binding)
+        : base("Logs")
     {
         ColorScheme = TurboVisionTheme.Window;
         Border.BorderStyle = BorderStyle.Double;
@@ -57,7 +58,11 @@ internal sealed class LogViewerView : Window
 
         fileList = new ListView(Array.Empty<string>())
         {
-            X = 1, Y = 1, Width = 20, Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = 1,
+            Y = 1,
+            Width = 20,
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
         };
         fileList.SelectedItemChanged += _ => LoadSelected();
         // Enter on a file moves into the text pane so it can be scrolled — the same
@@ -66,8 +71,13 @@ internal sealed class LogViewerView : Window
 
         text = new LogTextView
         {
-            X = 22, Y = 1, Width = Dim.Fill(1), Height = Dim.Fill(2),
-            ReadOnly = true, WordWrap = wrapEnabled, ColorScheme = TurboVisionTheme.Window,
+            X = 22,
+            Y = 1,
+            Width = Dim.Fill(1),
+            Height = Dim.Fill(2),
+            ReadOnly = true,
+            WordWrap = wrapEnabled,
+            ColorScheme = TurboVisionTheme.Window,
         };
 
         // See OnViewerKey: the follow/refresh/wrap keys are handled on the focused child so
@@ -80,7 +90,12 @@ internal sealed class LogViewerView : Window
         text.LayoutComplete += OnTextLayout;
 
         statusLabel = new Label
-        { X = 1, Y = Pos.AnchorEnd(1), Width = Dim.Fill(1), ColorScheme = TurboVisionTheme.Window };
+        {
+            X = 1,
+            Y = Pos.AnchorEnd(1),
+            Width = Dim.Fill(1),
+            ColorScheme = TurboVisionTheme.Window,
+        };
 
         Add(new Label("Log files:") { X = 1, Y = 0 }, fileList, text, statusLabel);
         UpdateStatus();
@@ -89,8 +104,10 @@ internal sealed class LogViewerView : Window
 
     private void Populate()
     {
-        var items = catalog.Files
-            .Select(f => $"{(f.IsActive ? "*" : " ")}[{f.Group.ToString()[0]}] {f.DisplayName}")
+        var items = catalog
+            .Files.Select(f =>
+                $"{(f.IsActive ? "*" : " ")}[{f.Group.ToString()[0]}] {f.DisplayName}"
+            )
             .ToList();
         fileList.SetSource(items);
         if (catalog.Files.Count > 0)
@@ -122,7 +139,8 @@ internal sealed class LogViewerView : Window
         var lines = reader.Lines;
         for (int i = 0; i < lines.Count; i++)
         {
-            if (i > 0) rendered.Append('\n');
+            if (i > 0)
+                rendered.Append('\n');
             rendered.Append(lines[i]);
         }
         renderedCount = lines.Count;
@@ -148,7 +166,8 @@ internal sealed class LogViewerView : Window
             return;
         for (int i = renderedCount; i < lines.Count; i++)
         {
-            if (rendered.Length > 0) rendered.Append('\n');
+            if (rendered.Length > 0)
+                rendered.Append('\n');
             rendered.Append(lines[i]);
         }
         renderedCount = lines.Count;
@@ -272,13 +291,32 @@ internal sealed class LogViewerView : Window
         StopFollow();
 
         var dlg = new Dialog("Find", 60, 11) { ColorScheme = TurboVisionTheme.Dialog };
-        var field = new TextField(searchTerm) { X = 1, Y = 2, Width = Dim.Fill(2) };
-        var caseBox = new CheckBox("Case sensitive") { X = 1, Y = 4, Checked = searchMatchCase };
-        var wordBox = new CheckBox("Whole words only") { X = 1, Y = 5, Checked = searchWholeWord };
+        var field = new TextField(searchTerm)
+        {
+            X = 1,
+            Y = 2,
+            Width = Dim.Fill(2),
+        };
+        var caseBox = new CheckBox("Case sensitive")
+        {
+            X = 1,
+            Y = 4,
+            Checked = searchMatchCase,
+        };
+        var wordBox = new CheckBox("Whole words only")
+        {
+            X = 1,
+            Y = 5,
+            Checked = searchWholeWord,
+        };
 
         bool accepted = false;
         var ok = new Button("OK", is_default: true);
-        ok.Clicked += () => { accepted = true; Application.RequestStop(dlg); };
+        ok.Clicked += () =>
+        {
+            accepted = true;
+            Application.RequestStop(dlg);
+        };
         var cancel = new Button("Cancel");
         cancel.Clicked += () => Application.RequestStop(dlg);
 
@@ -348,8 +386,10 @@ internal sealed class LogViewerView : Window
     private string SearchOptionSuffix()
     {
         var on = new List<string>();
-        if (searchMatchCase) on.Add("case");
-        if (searchWholeWord) on.Add("word");
+        if (searchMatchCase)
+            on.Add("case");
+        if (searchWholeWord)
+            on.Add("word");
         return on.Count > 0 ? $" [{string.Join(", ", on)}]" : string.Empty;
     }
 
@@ -369,9 +409,7 @@ internal sealed class LogViewerView : Window
             return true;
         }
 
-        text.CursorPosition = forward
-            ? Point.Empty
-            : new Point(0, Math.Max(text.Lines - 1, 0));
+        text.CursorPosition = forward ? Point.Empty : new Point(0, Math.Max(text.Lines - 1, 0));
         text.FindTextChanged();
         found = forward
             ? text.FindNextText(needle, out _, searchMatchCase, searchWholeWord)
@@ -427,8 +465,10 @@ internal sealed class LogViewerView : Window
         text.Selecting = false;
         text.CursorPosition = new Point(0, target);
 
-        string what = LogHighlight.Classify(lines[target]) == LogHighlightKind.Ready
-            ? "Game ready" : "Exception";
+        string what =
+            LogHighlight.Classify(lines[target]) == LogHighlightKind.Ready
+                ? "Game ready"
+                : "Exception";
         statusLabel.Text = wrapped
             ? $"Wrapped to {what} line · [ ]: prev/next · Esc: clear"
             : $"{what} line · [ ]: prev/next · Esc: clear";
@@ -483,14 +523,17 @@ internal sealed class LogViewerView : Window
         // current window and snaps to the very end immediately — picking up
         // anything written since the file was last read — then keep polling.
         LoadSelected();
-        followToken = Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(700), _ =>
-        {
-            if (!following || reader == null)
-                return false;
-            if (reader.Poll())
-                RenderFollow();
-            return true;
-        });
+        followToken = Application.MainLoop.AddTimeout(
+            TimeSpan.FromMilliseconds(700),
+            _ =>
+            {
+                if (!following || reader == null)
+                    return false;
+                if (reader.Poll())
+                    RenderFollow();
+                return true;
+            }
+        );
     }
 
     private void StopFollow()
@@ -534,10 +577,14 @@ internal sealed class LogViewerView : Window
     {
         // Vivid, high-contrast within the CGA-16 palette so a matched line reads as a
         // deliberate marker rather than an accident of the theme.
-        private static readonly Terminal.Gui.Attribute ReadyColor =
-            Terminal.Gui.Attribute.Make(Color.Black, Color.Green);
-        private static readonly Terminal.Gui.Attribute ExceptionColor =
-            Terminal.Gui.Attribute.Make(Color.BrightYellow, Color.Red);
+        private static readonly Terminal.Gui.Attribute ReadyColor = Terminal.Gui.Attribute.Make(
+            Color.Black,
+            Color.Green
+        );
+        private static readonly Terminal.Gui.Attribute ExceptionColor = Terminal.Gui.Attribute.Make(
+            Color.BrightYellow,
+            Color.Red
+        );
 
         // The redraw loop reuses one List<Rune> for every rune of a row, so classify
         // once per row and cache by reference — turning O(runes) work into O(rows).

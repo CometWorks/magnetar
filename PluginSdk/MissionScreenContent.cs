@@ -13,17 +13,18 @@ namespace PluginSdk
         public string OkButtonCaption { get; }
 
         public bool HasContent =>
-            !string.IsNullOrEmpty(ScreenTitle) ||
-            !string.IsNullOrEmpty(CurrentObjectivePrefix) ||
-            !string.IsNullOrEmpty(CurrentObjective) ||
-            !string.IsNullOrEmpty(ScreenDescription);
+            !string.IsNullOrEmpty(ScreenTitle)
+            || !string.IsNullOrEmpty(CurrentObjectivePrefix)
+            || !string.IsNullOrEmpty(CurrentObjective)
+            || !string.IsNullOrEmpty(ScreenDescription);
 
         public MissionScreenContent(
             string screenTitle,
             string currentObjectivePrefix,
             string currentObjective,
             string screenDescription,
-            string okButtonCaption = null)
+            string okButtonCaption = null
+        )
         {
             ScreenTitle = screenTitle;
             CurrentObjectivePrefix = currentObjectivePrefix;

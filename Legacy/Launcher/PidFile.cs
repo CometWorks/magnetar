@@ -43,8 +43,11 @@ internal static class PidFile
         {
             string path = Path.Combine(configDir, FileName);
             int pid = Process.GetCurrentProcess().Id;
-            string content = pid.ToString(CultureInfo.InvariantCulture)
-                             + "\n" + (dataDir ?? string.Empty) + "\n";
+            string content =
+                pid.ToString(CultureInfo.InvariantCulture)
+                + "\n"
+                + (dataDir ?? string.Empty)
+                + "\n";
             File.WriteAllText(path, content);
             writtenPath = path;
             LogFile.WriteLine($"Wrote pid file {path} (pid {pid})");
