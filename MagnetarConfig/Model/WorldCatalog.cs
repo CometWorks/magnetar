@@ -8,14 +8,14 @@ namespace Magnetar.Config.Model;
 /// <summary>Display metadata for one world folder under <c>Saves/</c>.</summary>
 internal sealed class WorldInfo
 {
-    public string FolderName;        // bare name — the identity used in RelativePath
+    public string FolderName; // bare name — the identity used in RelativePath
     public string FolderPath;
     public string SessionName;
     public DateTime? LastSaveTime;
     public int ModCount;
-    public bool HasWorldConfig;      // Sandbox_config.sbc present?
-    public bool HasCheckpoint;       // Sandbox.sbc present? (activation guard)
-    public bool IsActive;            // matches the resolved LastSession target
+    public bool HasWorldConfig; // Sandbox_config.sbc present?
+    public bool HasCheckpoint; // Sandbox.sbc present? (activation guard)
+    public bool IsActive; // matches the resolved LastSession target
 
     public string SandboxPath => Path.Combine(FolderPath, "Sandbox.sbc");
     public string WorldConfigPath => Path.Combine(FolderPath, "Sandbox_config.sbc");
@@ -60,8 +60,7 @@ internal sealed class WorldCatalog
             }
         }
 
-        Worlds = list
-            .OrderByDescending(w => w.LastSaveTime ?? DateTime.MinValue)
+        Worlds = list.OrderByDescending(w => w.LastSaveTime ?? DateTime.MinValue)
             .ThenBy(w => w.FolderName, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
@@ -95,7 +94,11 @@ internal sealed class WorldCatalog
 
         if (info.LastSaveTime == null)
         {
-            try { info.LastSaveTime = File.GetLastWriteTime(info.SandboxPath); } catch { }
+            try
+            {
+                info.LastSaveTime = File.GetLastWriteTime(info.SandboxPath);
+            }
+            catch { }
         }
     }
 

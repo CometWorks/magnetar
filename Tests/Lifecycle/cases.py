@@ -14,6 +14,8 @@ Expectations:
   saved      whether the world file was written after the command; None = not checked
   terminating  ServerControl.Terminating kinds the plugins saw, in order; None = not checked
   reload     start the server again afterwards and expect the world to load
+  replies    text each of which some reply to the probe's chat commands contains
+  essentials_src  the case needs an Essentials newer than MagnetarHub's (run.py --essentials-src)
 """
 
 from dataclasses import dataclass, field
@@ -33,6 +35,8 @@ class Case:
     saved: object = None
     terminating: object = None
     reload: bool = False
+    replies: list = field(default_factory=list)
+    essentials_src: bool = False
     platforms: tuple = ALL
     essentials: str = "none"
     auto_restart: bool = False
@@ -144,7 +148,7 @@ def _running():
             [READY, ("probe", "chat !ess stop")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
         ),
         Case(
             "run-stop-ess-auto",
@@ -153,7 +157,7 @@ def _running():
             [READY],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
             essentials="stop",
         ),
         Case(
@@ -163,7 +167,7 @@ def _running():
             [READY, ("probe", "worker sdk SaveAndQuit")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
         ),
         Case(
             "run-quit-sdk",
@@ -181,7 +185,17 @@ def _running():
             [READY, ("probe", "exit")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
+        ),
+        Case(
+            "run-update-ds",
+            "running",
+            "DS's own stop for Keen's auto-update",
+            [READY, ("probe", "update")],
+            exit=0,
+            saved=True,
+            terminating=["Shutdown"],
+            notes="Without a lifecycle provider it exits, so an updater can run",
         ),
         Case(
             "run-sigterm",
@@ -409,7 +423,7 @@ def _stopping():
             [READY, *STOPPING, ("probe", "worker sdk SaveAndRestart")],
             exit=0,
             saved=True,
-            terminating=[],
+            terminating=["Shutdown"],
         ),
         Case(
             "stop-sigterm",
@@ -487,4 +501,57 @@ def _hung():
     ]
 
 
-CASES = _running() + _starting() + _saving() + _restarting() + _stopping() + _double() + _hung()
+def _command_lines():
+    # How the dispatcher reads a command line (DIS-0017, SE1-0187): a root's default
+    # command takes arguments only when it has parameters for them.
+    return [
+        Case(
+            "cmd-restart-help",
+            "running",
+            "Magnetar `!restart help`",
+            [READY, ("probe", "chat !restart help")],
+            replies=["Usage: !restart"],
+        ),
+        Case(
+            "cmd-restart-seconds",
+            "running",
+            "Magnetar `!restart 30` (Magnetar's `!restart` takes no delay)",
+            [READY, ("probe", "chat !restart 30")],
+            replies=["Unknown command"],
+        ),
+        Case(
+            "cmd-stop-typo",
+            "running",
+            "Magnetar `!stop` with a stray word",
+            [READY, ("probe", "chat !stop nwo")],
+            replies=["Unknown command"],
+        ),
+        # Essentials' top-level short forms (DIS-0017), as the console
+        Case(
+            "cmd-reload",
+            "running",
+            "Essentials `!reload`",
+            [READY, ("probe", "chat !reload")],
+            replies=["Configuration reloaded."],
+            essentials_src=True,
+        ),
+        Case(
+            "cmd-fixship",
+            "running",
+            "Essentials `!fixship` (the console has no grids)",
+            [READY, ("probe", "chat !fixship")],
+            replies=["Console has no Grids"],
+            essentials_src=True,
+        ),
+        Case(
+            "cmd-fixshipmodid",
+            "running",
+            "Essentials `!fixshipmodid 123` (an argument to a short form)",
+            [READY, ("probe", "chat !fixshipmodid 123")],
+            replies=["Grid not found"],
+            essentials_src=True,
+        ),
+    ]
+
+
+CASES = _command_lines() + _running() + _starting() + _saving() + _restarting() + _stopping() + _double() + _hung()

@@ -29,7 +29,12 @@ internal static class FileDialogs
     }
 
     /// <summary>Browse for a file. Returns the picked path, or null on cancel.</summary>
-    public static string PickFile(string title, string prompt, string initial, string[] allowedTypes = null)
+    public static string PickFile(
+        string title,
+        string prompt,
+        string initial,
+        string[] allowedTypes = null
+    )
     {
         var dlg = new OpenDialog(title, prompt)
         {
@@ -70,7 +75,12 @@ internal static class FileDialogs
         string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         string full = null;
-        try { if (!string.IsNullOrEmpty(initial)) full = Path.GetFullPath(initial); } catch { }
+        try
+        {
+            if (!string.IsNullOrEmpty(initial))
+                full = Path.GetFullPath(initial);
+        }
+        catch { }
         if (string.IsNullOrEmpty(full))
         {
             dlg.DirectoryPath = ustring.Make(home);
@@ -79,7 +89,11 @@ internal static class FileDialogs
 
         bool exists = Directory.Exists(full) || File.Exists(full);
         string parent = null;
-        try { parent = Path.GetDirectoryName(full.TrimEnd('/', '\\')); } catch { }
+        try
+        {
+            parent = Path.GetDirectoryName(full.TrimEnd('/', '\\'));
+        }
+        catch { }
         bool hasParent = !string.IsNullOrEmpty(parent) && Directory.Exists(parent);
 
         if (exists && hasParent)
@@ -121,8 +135,14 @@ internal static class FileDialogs
                 return;
 
             Type type = dirList.GetType();
-            FieldInfo watcherField = type.GetField("watcher", BindingFlags.Instance | BindingFlags.NonPublic);
-            PropertyInfo directoryChanged = type.GetProperty("DirectoryChanged", BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo watcherField = type.GetField(
+                "watcher",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
+            PropertyInfo directoryChanged = type.GetProperty(
+                "DirectoryChanged",
+                BindingFlags.Instance | BindingFlags.Public
+            );
             if (watcherField == null || directoryChanged == null)
                 return;
 
@@ -135,11 +155,16 @@ internal static class FileDialogs
             // Chain, don't replace: the dialog's own handler keeps the path/name
             // fields in sync, and ours quiets the freshly-created watcher after.
             var previous = (Action<ustring>)directoryChanged.GetValue(dirList);
-            directoryChanged.SetValue(dirList, (Action<ustring>)(dir =>
-            {
-                previous?.Invoke(dir);
-                Silence();
-            }));
+            directoryChanged.SetValue(
+                dirList,
+                (Action<ustring>)(
+                    dir =>
+                    {
+                        previous?.Invoke(dir);
+                        Silence();
+                    }
+                )
+            );
 
             Silence();
         }

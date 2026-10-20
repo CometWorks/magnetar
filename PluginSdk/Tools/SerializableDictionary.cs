@@ -23,7 +23,8 @@ namespace PluginSdk.Tools
     {
         public SerializableDictionary() { }
 
-        public SerializableDictionary(IDictionary<TKey, TValue> source) : base(source) { }
+        public SerializableDictionary(IDictionary<TKey, TValue> source)
+            : base(source) { }
 
         public XmlSchema GetSchema() => null;
 
@@ -34,7 +35,8 @@ namespace PluginSdk.Tools
 
             bool isEmpty = reader.IsEmptyElement;
             reader.Read();
-            if (isEmpty) return;
+            if (isEmpty)
+                return;
 
             while (reader.NodeType != XmlNodeType.EndElement)
             {

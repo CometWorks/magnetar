@@ -25,8 +25,8 @@ namespace PluginSdk.Logging
         /// <summary>
         /// True when the current process is managed by the Quasar Agent.
         /// </summary>
-        public static bool IsManagedByQuasar()
-            => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(QuasarEnvironmentVariable));
+        public static bool IsManagedByQuasar() =>
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(QuasarEnvironmentVariable));
 
         /// <summary>
         /// Process-wide tap on the structured Quasar log stream. The in-process
@@ -54,7 +54,7 @@ namespace PluginSdk.Logging
         /// <see cref="QuasarLogSink"/> when managed by Quasar, otherwise
         /// <see cref="MagnetarLogSink"/>.
         /// </summary>
-        public static ILogSink CreateDefaultSink()
-            => IsManagedByQuasar() ? new QuasarLogSink() : (ILogSink)new MagnetarLogSink();
+        public static ILogSink CreateDefaultSink() =>
+            IsManagedByQuasar() ? new QuasarLogSink() : (ILogSink)new MagnetarLogSink();
     }
 }

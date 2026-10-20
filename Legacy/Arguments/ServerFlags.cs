@@ -57,49 +57,87 @@ public static class ServerFlags
         string versionText = version is null ? "" : $" v{version.ToString(3)}";
         string launcher = Assembly.GetEntryAssembly()?.GetName().Name ?? "MagnetarInterim";
 
-        Console.WriteLine($"Magnetar{versionText} - Space Engineers Dedicated Server plugin loader");
+        Console.WriteLine(
+            $"Magnetar{versionText} - Space Engineers Dedicated Server plugin loader"
+        );
         Console.WriteLine();
         Console.WriteLine($"Usage: {launcher} [options]");
         Console.WriteLine();
         Console.WriteLine("Magnetar options:");
         Console.WriteLine("  -config <dir>       Use a custom Magnetar config and log directory");
-        Console.WriteLine("  -ds64 <dir>         Path to the Space Engineers DedicatedServer64 directory");
+        Console.WriteLine(
+            "  -ds64 <dir>         Path to the Space Engineers DedicatedServer64 directory"
+        );
         Console.WriteLine("                      (overrides auto-detection)");
-        Console.WriteLine("  -daemon             Detach from the parent process and console so the");
+        Console.WriteLine(
+            "  -daemon             Detach from the parent process and console so the"
+        );
         Console.WriteLine("                      server keeps running after the parent exits");
-        Console.WriteLine("  -prepareManaged <dir> Compile and export managed plugin bundles and SDK defaults");
-        Console.WriteLine("                      without starting the server (Linux/CoreCLR; new output directory)");
-        Console.WriteLine("  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod");
+        Console.WriteLine(
+            "  -prepareManaged <dir> Compile and export managed plugin bundles and SDK defaults"
+        );
+        Console.WriteLine(
+            "                      without starting the server (Linux/CoreCLR; new output directory)"
+        );
+        Console.WriteLine(
+            "  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod"
+        );
         Console.WriteLine();
         // Only the Pulsar flags that change something on a dedicated server are
         // listed. Pulsar's parser still accepts the rest (client-only ones like
         // -f12Menu and -keepIntro, and -sources/-noUpdate/-preRelease, which
         // reach no live code path here); they are simply not advertised.
         Console.WriteLine("Plugin loader options (shared with Pulsar):");
-        Console.WriteLine("  -profile <name|file> Force a specific plugin profile by name or file path");
+        Console.WriteLine(
+            "  -profile <name|file> Force a specific plugin profile by name or file path"
+        );
         Console.WriteLine("  -safeMode           Start with user plugins disabled");
-        Console.WriteLine("  -bare               Disable force-loading core (compatibility) plugins");
-        Console.WriteLine("  -hardened           Load only trusted mods, stripping untrusted Workshop mods");
-        Console.WriteLine("  -multiInstance      Allow multiple launcher instances on this machine");
-        Console.WriteLine("  -useHome            Store Magnetar data under the user's app-data folder");
+        Console.WriteLine(
+            "  -bare               Disable force-loading core (compatibility) plugins"
+        );
+        Console.WriteLine(
+            "  -hardened           Load only trusted mods, stripping untrusted Workshop mods"
+        );
+        Console.WriteLine(
+            "  -multiInstance      Allow multiple launcher instances on this machine"
+        );
+        Console.WriteLine(
+            "  -useHome            Store Magnetar data under the user's app-data folder"
+        );
         Console.WriteLine("                      instead of next to the launcher");
         Console.WriteLine("  -lazyPreload        Reuse existing preloader assemblies");
         Console.WriteLine("  -stableLogs         Overwrite game logs instead of timestamping them");
-        Console.WriteLine("  -mkCheck            Regenerate the Libraries checksum file (bitrot detection)");
+        Console.WriteLine(
+            "  -mkCheck            Regenerate the Libraries checksum file (bitrot detection)"
+        );
         Console.WriteLine("  -debug              Launch the managed debugger at startup");
         Console.WriteLine("  -debugMods          Build game mods in debug mode");
-        Console.WriteLine("  -debugCompileAll    Compile-check every available plugin (diagnostics)");
+        Console.WriteLine(
+            "  -debugCompileAll    Compile-check every available plugin (diagnostics)"
+        );
         Console.WriteLine();
         Console.WriteLine("Telemetry consent:");
-        Console.WriteLine("  -consent <choice>   accept   Send anonymous plugin usage statistics (remembers");
+        Console.WriteLine(
+            "  -consent <choice>   accept   Send anonymous plugin usage statistics (remembers"
+        );
         Console.WriteLine("                               the decision)");
-        Console.WriteLine("                      deny     Do not send usage statistics for this run only");
-        Console.WriteLine("                      withdraw Withdraw consent, erase the data from the statistics");
-        Console.WriteLine("                               server, then exit without starting the server");
+        Console.WriteLine(
+            "                      deny     Do not send usage statistics for this run only"
+        );
+        Console.WriteLine(
+            "                      withdraw Withdraw consent, erase the data from the statistics"
+        );
+        Console.WriteLine(
+            "                               server, then exit without starting the server"
+        );
         Console.WriteLine();
         Console.WriteLine("Dedicated server options (passed through):");
-        Console.WriteLine("  -path <dir>         Server instance directory (worlds and Dedicated.cfg);");
-        Console.WriteLine("                      Magnetar enables -console automatically when this is set");
+        Console.WriteLine(
+            "  -path <dir>         Server instance directory (worlds and Dedicated.cfg);"
+        );
+        Console.WriteLine(
+            "                      Magnetar enables -console automatically when this is set"
+        );
         Console.WriteLine("  -console            Run headless in console mode");
         Console.WriteLine("  -noconsole          Run headless without a console window");
         Console.WriteLine("  -session:<path>     Load the world save at <path>");

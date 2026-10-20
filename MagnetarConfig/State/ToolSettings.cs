@@ -47,8 +47,13 @@ internal sealed class ToolSettings
         {
             var doc = new XDocument(
                 new XDeclaration("1.0", "utf-8", null),
-                new XElement("MagnetarConfig",
-                    string.IsNullOrEmpty(LastPluginFolder) ? null : new XElement("LastPluginFolder", LastPluginFolder)));
+                new XElement(
+                    "MagnetarConfig",
+                    string.IsNullOrEmpty(LastPluginFolder)
+                        ? null
+                        : new XElement("LastPluginFolder", LastPluginFolder)
+                )
+            );
             writer.WriteText(filePath, XmlOut.ToXmlString(doc));
         }
         catch

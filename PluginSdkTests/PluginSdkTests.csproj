@@ -1,46 +1,47 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- VRage.Math is built for .NET Framework; consume it from net10.0 anyway. -->
+    <NoWarn>NU1701</NoWarn>
+    <OutputType>Library</OutputType>
+    <!-- Windows tests both runtimes; Linux can only build/run net10.0. -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFrameworks>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <IsPackable>false</IsPackable>
-        <Nullable>disable</Nullable>
-        <LangVersion>latest</LangVersion>
-        <Platforms>x64</Platforms>
-        <PlatformTarget>x64</PlatformTarget>
-        <!-- VRage.Math is built for .NET Framework; consume it from net10.0 anyway. -->
-        <NoWarn>NU1701</NoWarn>
-        <OutputType>Library</OutputType>
-        <!-- Windows tests both runtimes; Linux can only build/run net10.0. -->
-        <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net10.0</TargetFrameworks>
-        <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFrameworks>
-    </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="5.1.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-        <PackageReference Include="xunit" Version="2.9.2" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <!-- DispatchProxy is built into CoreCLR, but Framework test doubles need its compatibility package. -->
+    <PackageReference Include="System.Reflection.DispatchProxy" Version="4.8.2" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-        <!-- DispatchProxy is built into CoreCLR, but Framework test doubles need its compatibility package. -->
-        <PackageReference Include="System.Reflection.DispatchProxy" Version="4.8.2" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
+    <Compile
+      Include="..\Legacy\Preparation\ConfigurationDefaults.cs"
+      Link="ConfigurationDefaults.cs"
+    />
+    <Compile Include="..\Legacy\Preparation\DevFolderProvenance.cs" Link="DevFolderProvenance.cs" />
+    <Compile Include="..\Legacy\Arguments\ServerArguments.cs" Link="ServerArguments.cs" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\PluginSdk\PluginSdk.csproj" />
-        <Compile Include="..\Legacy\Preparation\ConfigurationDefaults.cs" Link="ConfigurationDefaults.cs" />
-        <Compile Include="..\Legacy\Preparation\DevFolderProvenance.cs" Link="DevFolderProvenance.cs" />
-        <Compile Include="..\Legacy\Arguments\ServerArguments.cs" Link="ServerArguments.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <!-- Tests instantiate VRage.Math types directly, so the dlls must be present at
+  <ItemGroup>
+    <!-- Tests instantiate VRage.Math types directly, so the dlls must be present at
              runtime. Private="True" copies them into the test output. -->
-        <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="True" />
-        <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="True" />
-        <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="True" />
-        <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="True" />
-        <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="True" />
-    </ItemGroup>
-
+    <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="True" />
+    <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="True" />
+    <Reference Include="VRage.Library" HintPath="$(DS64)\VRage.Library.dll" Private="True" />
+    <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="True" />
+    <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="True" />
+  </ItemGroup>
 </Project>

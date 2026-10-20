@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cases import CASES  # noqa: E402
+import rig  # noqa: E402
 from rig import Platform, Server  # noqa: E402
 
 READY_TIMEOUT = 300
@@ -173,6 +174,11 @@ def run_case(case, platform, args, port, gate):
             failures.append(f"{len(runs) - 1} restarts, expected {case.restarts}")
         if case.saved is not None and marked and result["saved"] != case.saved:
             failures.append(f"saved={result['saved']}, expected {case.saved}")
+        replies = [m[len("reply ") :] for _, _, m in server.events() if m.startswith("reply ")]
+        result["replies"] = replies
+        for text in case.replies:
+            if not any(text in reply for reply in replies):
+                failures.append(f"no reply with {text!r}, got {replies}")
         if case.terminating is not None and terminating != case.terminating:
             failures.append(f"terminating {terminating}, expected {case.terminating}")
         if platform.windows:
@@ -189,6 +195,11 @@ def run_case(case, platform, args, port, gate):
                 failures.append("a restart changed the PID on Linux")
         if "Restart failed" in (work / "run.log").read_text(errors="replace"):
             failures.append("Restart failed on stderr")
+        if "Error disposing plugins" in server.info_logs():
+            failures.append("Error disposing plugins in the info log")
+        racing = [m for _, _, m in server.events() if m.startswith("dispose updates=") and m != "dispose updates=0"]
+        if racing:
+            failures.append(f"plugins updated during disposal: {racing}")
 
         server.stop()
         if case.reload:
@@ -259,7 +270,13 @@ def main():
         action="store_true",
         help="set STEAM_COMPAT_PROTON for the server, as Steam does; left out by default",
     )
+    ap.add_argument(
+        "--essentials-src",
+        help="Essentials working copy to compile as a DevFolder instead of the MagnetarHub version; "
+        "the cases marked essentials_src need it",
+    )
     args = ap.parse_args()
+    rig.ESSENTIALS_SRC = Path(args.essentials_src).expanduser() if args.essentials_src else None
 
     platform = Platform(
         args.platform,
@@ -276,6 +293,11 @@ def main():
         ap.error("--prefix needs one prefix per job")
     patterns = args.cases.split(",")
     cases = [c for c in CASES if platform.name in c.platforms and any(fnmatch.fnmatch(c.id, p) for p in patterns)]
+    if not args.essentials_src:
+        skipped = [c.id for c in cases if c.essentials_src]
+        if skipped:
+            print(f"skipped without --essentials-src: {', '.join(skipped)}", flush=True)
+        cases = [c for c in cases if not c.essentials_src]
     Path(args.work).mkdir(parents=True, exist_ok=True)
 
     slots = queue.Queue()

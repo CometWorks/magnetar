@@ -57,7 +57,8 @@ internal static class OptionRegistry
     private static List<OptionDefinition> dedicated;
     private static List<OptionDefinition> session;
 
-    public static IReadOnlyList<OptionDefinition> DedicatedOptions => dedicated ??= BuildDedicated();
+    public static IReadOnlyList<OptionDefinition> DedicatedOptions =>
+        dedicated ??= BuildDedicated();
     public static IReadOnlyList<OptionDefinition> SessionOptions => session ??= BuildSession();
 
     public static IEnumerable<OptionDefinition> All => DedicatedOptions.Concat(SessionOptions);
@@ -66,8 +67,8 @@ internal static class OptionRegistry
 
     public static IEnumerable<string> Categories(OptionScope scope) =>
         (scope == OptionScope.DedicatedRoot ? DedicatedOptions : SessionOptions)
-        .Select(o => o.Category)
-        .Distinct();
+            .Select(o => o.Category)
+            .Distinct();
 
     // --- dedicated root options (MyConfigDedicatedData) ---
 
@@ -79,7 +80,12 @@ internal static class OptionRegistry
         b.Cat("Identity");
         b.Text("ServerName", "", Live, "Name shown in the server browser.");
         b.Multiline("ServerDescription", "", Live, "Description shown to clients in the browser.");
-        b.Multiline("MessageOfTheDay", "", Live, "Message shown to players on join; recomputed per join.");
+        b.Multiline(
+            "MessageOfTheDay",
+            "",
+            Live,
+            "Message shown to players on join; recomputed per join."
+        );
         b.Text("MessageOfTheDayUrl", "", Live);
         b.UInt("GroupID", "0", help: "Steam group id restricting who may join (0 = open).");
 
@@ -99,9 +105,21 @@ internal static class OptionRegistry
         b.Text("RemoteApiIP", "");
 
         b.Cat("World Selection");
-        b.Text("LoadWorld", "", help: "World folder to load when no LastSession is set. Usually left empty.");
-        b.Bool("IgnoreLastSession", "false", help: "When true the DS ignores Saves/LastSession.sbl.");
-        b.Text("PremadeCheckpointPath", "", help: "Template world path the DS materializes into a new world on next start.");
+        b.Text(
+            "LoadWorld",
+            "",
+            help: "World folder to load when no LastSession is set. Usually left empty."
+        );
+        b.Bool(
+            "IgnoreLastSession",
+            "false",
+            help: "When true the DS ignores Saves/LastSession.sbl."
+        );
+        b.Text(
+            "PremadeCheckpointPath",
+            "",
+            help: "Template world path the DS materializes into a new world on next start."
+        );
         b.Text("WorldName", "", help: "Name given to a newly created world.");
         b.Int("AsteroidAmount", "4");
         b.Bool("PauseGameWhenEmpty", "false", Live);
@@ -109,7 +127,13 @@ internal static class OptionRegistry
         b.Cat("Auto Restart");
         b.Bool("AutoRestartEnabled", "true");
         // Keen's typo is the real element name — do not "fix" it.
-        b.Int("AutoRestatTimeInMin", "0", 0, null, help: "Auto-restart interval in minutes (0 = off). Field name keeps the vanilla typo.");
+        b.Int(
+            "AutoRestatTimeInMin",
+            "0",
+            0,
+            null,
+            help: "Auto-restart interval in minutes (0 = off). Field name keeps the vanilla typo."
+        );
         b.Bool("AutoRestartSave", "true");
 
         b.Cat("Auto Update");
@@ -146,8 +170,19 @@ internal static class OptionRegistry
 
         b.Cat("Core");
         b.Enum("GameMode", GameMode, "Creative", help: "Creative or Survival.");
-        b.Enum("OnlineMode", OnlineMode, "OFFLINE", help: "Visibility: Offline/Public/Friends/Private.");
-        b.Short("MaxPlayers", "4", 0, 128, help: "Player slots. Must be non-zero for the DS to create/load a world.");
+        b.Enum(
+            "OnlineMode",
+            OnlineMode,
+            "OFFLINE",
+            help: "Visibility: Offline/Public/Friends/Private."
+        );
+        b.Short(
+            "MaxPlayers",
+            "4",
+            0,
+            128,
+            help: "Player slots. Must be non-zero for the DS to create/load a world."
+        );
         b.Bool("EnableSaving", "true");
         b.UInt("AutoSaveInMinutes", "5");
         b.Short("MaxBackupSaves", "5");
@@ -170,9 +205,14 @@ internal static class OptionRegistry
         b.Float("EnvironmentDamageMultiplier", "1");
 
         b.Cat("Block Limits");
-        b.Enum("BlockLimitsEnabled", BlockLimits, "NONE", experimental: true,
+        b.Enum(
+            "BlockLimitsEnabled",
+            BlockLimits,
+            "NONE",
+            experimental: true,
             experimentalRule: "BlockLimitsEnabled == NONE",
-            help: "How build limits are scoped. NONE forces experimental mode.");
+            help: "How build limits are scoped. NONE forces experimental mode."
+        );
         b.Enum("LimitBlocksBy", LimitBlocksBy, "BlockPairName");
         b.Int("MaxGridSize", "50000");
         b.Int("MaxBlocksPerPlayer", "100000");
@@ -286,7 +326,11 @@ internal static class OptionRegistry
         b.Int("PlayerCharacterRemovalThreshold", "15");
         b.Int("RemoveOldIdentitiesH", "0");
         // Keen's typo is the real element name.
-        b.Int("AFKTimeountMin", "0", help: "AFK timeout in minutes (0 = off). Field name keeps the vanilla typo.");
+        b.Int(
+            "AFKTimeountMin",
+            "0",
+            help: "AFK timeout in minutes (0 = off). Field name keeps the vanilla typo."
+        );
         b.Bool("VoxelTrashRemovalEnabled", "false");
         b.Float("VoxelPlayerDistanceThreshold", "5000");
         b.Float("VoxelGridDistanceThreshold", "5000");
@@ -364,55 +408,231 @@ internal static class OptionRegistry
 
         public void Cat(string name) => category = name;
 
-        private void Add(string xml, OptionKind kind, string def, double? min, double? max,
-            EnumChoice[] choices, Liveness liveness, string help, bool experimental, string rule)
+        private void Add(
+            string xml,
+            OptionKind kind,
+            string def,
+            double? min,
+            double? max,
+            EnumChoice[] choices,
+            Liveness liveness,
+            string help,
+            bool experimental,
+            string rule
+        )
         {
-            Options.Add(new OptionDefinition(
-                Id: $"{(scope == OptionScope.DedicatedRoot ? "Dedicated" : "Session")}.{xml}",
-                Scope: scope,
-                XmlName: xml,
-                Kind: kind,
-                Category: category,
-                Label: Humanize(xml),
-                Help: help ?? string.Empty,
-                Default: def,
-                Min: min,
-                Max: max,
-                Choices: choices,
-                Liveness: liveness,
-                Experimental: experimental,
-                ExperimentalRule: rule));
+            Options.Add(
+                new OptionDefinition(
+                    Id: $"{(scope == OptionScope.DedicatedRoot ? "Dedicated" : "Session")}.{xml}",
+                    Scope: scope,
+                    XmlName: xml,
+                    Kind: kind,
+                    Category: category,
+                    Label: Humanize(xml),
+                    Help: help ?? string.Empty,
+                    Default: def,
+                    Min: min,
+                    Max: max,
+                    Choices: choices,
+                    Liveness: liveness,
+                    Experimental: experimental,
+                    ExperimentalRule: rule
+                )
+            );
         }
 
-        public void Bool(string xml, string def, Liveness live = Liveness.RestartRequired, string help = null, bool experimental = false)
-            => Add(xml, OptionKind.Bool, def, null, null, null, live, help, experimental, null);
-        public void NullableBool(string xml, string def, bool experimental = true)
-            => Add(xml, OptionKind.Bool, def, null, null, null, Liveness.RestartRequired, null, experimental, null);
-        public void Int(string xml, string def, double? min = null, double? max = null, Liveness live = Liveness.RestartRequired, string help = null, string experimentalRule = null)
-            => Add(xml, OptionKind.Int, def, min, max, null, live, help, experimentalRule != null, experimentalRule);
+        public void Bool(
+            string xml,
+            string def,
+            Liveness live = Liveness.RestartRequired,
+            string help = null,
+            bool experimental = false
+        ) => Add(xml, OptionKind.Bool, def, null, null, null, live, help, experimental, null);
+
+        public void NullableBool(string xml, string def, bool experimental = true) =>
+            Add(
+                xml,
+                OptionKind.Bool,
+                def,
+                null,
+                null,
+                null,
+                Liveness.RestartRequired,
+                null,
+                experimental,
+                null
+            );
+
+        public void Int(
+            string xml,
+            string def,
+            double? min = null,
+            double? max = null,
+            Liveness live = Liveness.RestartRequired,
+            string help = null,
+            string experimentalRule = null
+        ) =>
+            Add(
+                xml,
+                OptionKind.Int,
+                def,
+                min,
+                max,
+                null,
+                live,
+                help,
+                experimentalRule != null,
+                experimentalRule
+            );
+
         // Overload used when the 3rd positional arg is Liveness (a couple of anti-spam ints).
-        public void Int(string xml, string def, Liveness live)
-            => Add(xml, OptionKind.Int, def, null, null, null, live, null, false, null);
-        public void Short(string xml, string def, double? min = null, double? max = null, string help = null)
-            => Add(xml, OptionKind.Int, def, min ?? short.MinValue, max ?? short.MaxValue, null, Liveness.RestartRequired, help, false, null);
-        public void UInt(string xml, string def, string help = null)
-            => Add(xml, OptionKind.UInt, def, 0, null, null, Liveness.RestartRequired, help, false, null);
-        public void Long(string xml, string def)
-            => Add(xml, OptionKind.Long, def, null, null, null, Liveness.RestartRequired, null, false, null);
-        public void Float(string xml, string def, Liveness live = Liveness.RestartRequired, string experimentalRule = null)
-            => Add(xml, OptionKind.Float, def, null, null, null, live, null, experimentalRule != null, experimentalRule);
-        public void Double(string xml, string def)
-            => Add(xml, OptionKind.Double, def, null, null, null, Liveness.RestartRequired, null, false, null);
-        public void Text(string xml, string def, Liveness live = Liveness.RestartRequired, string help = null)
-            => Add(xml, OptionKind.Text, def, null, null, null, live, help, false, null);
-        public void Multiline(string xml, string def, Liveness live = Liveness.RestartRequired, string help = null)
-            => Add(xml, OptionKind.MultilineText, def, null, null, null, live, help, false, null);
-        public void StringList(string xml, string itemName)
-            => Add(xml, OptionKind.StringList, "", null, null, null, Liveness.RestartRequired, null, false, null);
-        public void BlockLimits(string xml)
-            => Add(xml, OptionKind.BlockTypeLimits, "", null, null, null, Liveness.RestartRequired, null, false, null);
-        public void Enum(string xml, EnumChoice[] choices, string def, Liveness live = Liveness.RestartRequired, string help = null, bool experimental = false, string experimentalRule = null)
-            => Add(xml, OptionKind.Enum, def, null, null, choices, live, help, experimental, experimentalRule);
+        public void Int(string xml, string def, Liveness live) =>
+            Add(xml, OptionKind.Int, def, null, null, null, live, null, false, null);
+
+        public void Short(
+            string xml,
+            string def,
+            double? min = null,
+            double? max = null,
+            string help = null
+        ) =>
+            Add(
+                xml,
+                OptionKind.Int,
+                def,
+                min ?? short.MinValue,
+                max ?? short.MaxValue,
+                null,
+                Liveness.RestartRequired,
+                help,
+                false,
+                null
+            );
+
+        public void UInt(string xml, string def, string help = null) =>
+            Add(
+                xml,
+                OptionKind.UInt,
+                def,
+                0,
+                null,
+                null,
+                Liveness.RestartRequired,
+                help,
+                false,
+                null
+            );
+
+        public void Long(string xml, string def) =>
+            Add(
+                xml,
+                OptionKind.Long,
+                def,
+                null,
+                null,
+                null,
+                Liveness.RestartRequired,
+                null,
+                false,
+                null
+            );
+
+        public void Float(
+            string xml,
+            string def,
+            Liveness live = Liveness.RestartRequired,
+            string experimentalRule = null
+        ) =>
+            Add(
+                xml,
+                OptionKind.Float,
+                def,
+                null,
+                null,
+                null,
+                live,
+                null,
+                experimentalRule != null,
+                experimentalRule
+            );
+
+        public void Double(string xml, string def) =>
+            Add(
+                xml,
+                OptionKind.Double,
+                def,
+                null,
+                null,
+                null,
+                Liveness.RestartRequired,
+                null,
+                false,
+                null
+            );
+
+        public void Text(
+            string xml,
+            string def,
+            Liveness live = Liveness.RestartRequired,
+            string help = null
+        ) => Add(xml, OptionKind.Text, def, null, null, null, live, help, false, null);
+
+        public void Multiline(
+            string xml,
+            string def,
+            Liveness live = Liveness.RestartRequired,
+            string help = null
+        ) => Add(xml, OptionKind.MultilineText, def, null, null, null, live, help, false, null);
+
+        public void StringList(string xml, string itemName) =>
+            Add(
+                xml,
+                OptionKind.StringList,
+                "",
+                null,
+                null,
+                null,
+                Liveness.RestartRequired,
+                null,
+                false,
+                null
+            );
+
+        public void BlockLimits(string xml) =>
+            Add(
+                xml,
+                OptionKind.BlockTypeLimits,
+                "",
+                null,
+                null,
+                null,
+                Liveness.RestartRequired,
+                null,
+                false,
+                null
+            );
+
+        public void Enum(
+            string xml,
+            EnumChoice[] choices,
+            string def,
+            Liveness live = Liveness.RestartRequired,
+            string help = null,
+            bool experimental = false,
+            string experimentalRule = null
+        ) =>
+            Add(
+                xml,
+                OptionKind.Enum,
+                def,
+                null,
+                null,
+                choices,
+                live,
+                help,
+                experimental,
+                experimentalRule
+            );
     }
 
     /// <summary>Inserts spaces before internal capitals so "MaxFloatingObjects" reads "Max Floating Objects".</summary>
@@ -422,7 +642,11 @@ internal static class OptionRegistry
         for (int i = 0; i < xml.Length; i++)
         {
             char c = xml[i];
-            if (i > 0 && char.IsUpper(c) && (!char.IsUpper(xml[i - 1]) || (i + 1 < xml.Length && char.IsLower(xml[i + 1]))))
+            if (
+                i > 0
+                && char.IsUpper(c)
+                && (!char.IsUpper(xml[i - 1]) || (i + 1 < xml.Length && char.IsLower(xml[i + 1])))
+            )
                 sb.Append(' ');
             sb.Append(c);
         }

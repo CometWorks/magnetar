@@ -8,11 +8,9 @@ namespace Magnetar.Config.Io;
 /// </summary>
 internal static class PlatformPaths
 {
-    public static bool IsWindows { get; } =
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    public static bool IsWindows { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-    public static bool IsLinux { get; } =
-        RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    public static bool IsLinux { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
     /// <summary>
     /// File-path comparer: case-insensitive on Windows, case-sensitive on Linux,

@@ -9,10 +9,10 @@ namespace Magnetar.Config.Model;
 /// <summary>One saved plugin profile on disk (a <c>Profiles/&lt;Key&gt;.xml</c> file).</summary>
 internal sealed class ProfileInfo
 {
-    public string Name;         // <Name> element
-    public string Key;          // file-name stem (CleanFileName(Name))
+    public string Name; // <Name> element
+    public string Key; // file-name stem (CleanFileName(Name))
     public string FilePath;
-    public bool MatchesActive;  // its enabled set is identical to Current's
+    public bool MatchesActive; // its enabled set is identical to Current's
 }
 
 /// <summary>
@@ -52,13 +52,15 @@ internal sealed class ProfileCatalog
             if (string.Equals(stem, CurrentKey, StringComparison.OrdinalIgnoreCase))
                 continue;
             PluginProfileDocument doc = PluginProfileDocument.OpenNamed(configDir, stem);
-            result.Add(new ProfileInfo
-            {
-                Name = doc.Name,
-                Key = stem,
-                FilePath = file,
-                MatchesActive = doc.CollectionsSignature() == activeSig,
-            });
+            result.Add(
+                new ProfileInfo
+                {
+                    Name = doc.Name,
+                    Key = stem,
+                    FilePath = file,
+                    MatchesActive = doc.CollectionsSignature() == activeSig,
+                }
+            );
         }
         return result.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -66,10 +68,10 @@ internal sealed class ProfileCatalog
     /// <summary>The key of the saved profile whose enabled set matches Current, or null.</summary>
     public string ActiveMatchKey() => NamedProfiles().FirstOrDefault(p => p.MatchesActive)?.Key;
 
-    private string ActiveSignature() => PluginProfileDocument.Open(configDir).CollectionsSignature();
+    private string ActiveSignature() =>
+        PluginProfileDocument.Open(configDir).CollectionsSignature();
 
-    public bool Exists(string key) =>
-        File.Exists(PluginProfileDocument.PathForKey(configDir, key));
+    public bool Exists(string key) => File.Exists(PluginProfileDocument.PathForKey(configDir, key));
 
     /// <summary>
     /// Saves the active set (Current.xml) as a new named profile. Throws if the
@@ -99,7 +101,7 @@ internal sealed class ProfileCatalog
         PluginProfileDocument named = PluginProfileDocument.OpenNamed(configDir, key);
         PluginProfileDocument current = PluginProfileDocument.Open(configDir);
         current.CopyCollectionsFrom(named);
-        current.Name = CurrentKey;   // the active profile is always "Current"
+        current.Name = CurrentKey; // the active profile is always "Current"
         current.Save(writer);
     }
 
@@ -142,6 +144,11 @@ internal sealed class ProfileCatalog
 
     private static void TryDelete(string path)
     {
-        try { if (File.Exists(path)) File.Delete(path); } catch { }
+        try
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch { }
     }
 }

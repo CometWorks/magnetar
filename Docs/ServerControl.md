@@ -11,9 +11,11 @@ dedicated server's own exit path all end in one of four operations:
 | `SaveAndRestart` | Yes | Disposes the plugins and restarts Magnetar |
 | `RestartWithoutSaving` | No | Disposes the plugins and restarts Magnetar |
 
-Plugins call these through `PluginSdk.ServerControl`. Before a restart, and
-before `!quit` or `!stop`, plugins get the `Terminating` event with the kind
-`Restart` or `Shutdown`. `SaveAndQuit` doesn't raise it.
+Plugins call these through `PluginSdk.ServerControl`. Before a stop or restart
+that a command, a plugin or the dedicated server itself asks for, plugins get
+the `Terminating` event with the kind `Restart` or `Shutdown`. Signals don't
+raise it: they come from outside, mostly from a host shutting down, and a
+supervisor should start the server again after one.
 
 ## How a restart works
 
@@ -53,7 +55,7 @@ Framework 4.8. The rest comes from reading the code.
 | Command | Linux | Linux, under Quasar | Windows, MagnetarInterim | Windows, MagnetarLegacy |
 |---|---|---|---|---|
 | Essentials `Restart` auto command step, `!ess restart` (`SaveAndRestart`) | Restarts in place, same PID *(tested)* | Saves and quits, Quasar starts it again, see [Quasar](#quasar) *(tested)* | New process, the old one exits 0 *(tested)* | New process, the old one exits 0 *(tested)* |
-| Magnetar `!restart` (`SaveAndRestart`) | Restarts in place, same PID *(tested)* | Not reached: Quasar.Agent's own `!restart` counts down 10 s, saves, quits and lets Quasar start the server again *(tested)* | New process, the old one exits 0 *(tested)* | New process, the old one exits 0 *(tested)* |
+| Magnetar `!restart` (`SaveAndRestart`) | Restarts in place, same PID *(tested)* | Not reached: Quasar.Agent's own `!restart [seconds]` counts down (10 s by default, `!restart 30` for 30 s, at most 3600), saves, quits and lets Quasar start the server again *(tested)* | New process, the old one exits 0 *(tested)* | New process, the old one exits 0 *(tested)* |
 | Quasar's restart (UI, Discord, schedule, maximum uptime, health policy) | n/a | Quasar asks the agent to save and quit, kills the process if it is still running 30 s later, then starts a new one *(UI and health policy tested)* | n/a | n/a |
 | The dedicated server's timed auto-restart (`SaveAndRestart`) | Restarts in place, same PID *(tested)* | Saves and quits, Quasar starts it again, see [Quasar](#quasar) *(tested)* | New process, the old one exits 0 *(tested)* | New process, the old one exits 0 *(tested)* |
 | `RestartWithoutSaving` (plugin API only) | Like `SaveAndRestart`, without the save *(tested)* | Quits without saving, Quasar starts it again *(tested)* | Like `SaveAndRestart`, without the save *(tested)* | Like `SaveAndRestart`, without the save *(tested)* |
@@ -76,12 +78,14 @@ lifecycle provider such as a cluster handles it when one is registered.
 |---|---|---|---|
 | Magnetar `!stop` (save, then `QuitWithoutSaving`) | Exits 0 *(tested)* | Not reached: Quasar.Agent's own `!stop` tells Quasar to keep the server off, then saves and quits *(tested)* | Exits 0 *(tested)* |
 | Magnetar `!quit` (`QuitWithoutSaving`) | Exits 0 without saving *(tested)* | Not reached: Quasar.Agent's own `!quit` tells Quasar to keep the server off, then quits without saving *(tested)* | Exits 0 without saving *(tested)* |
-| Essentials `Stop` step, `!ess stop` (`SaveAndQuit`) | Exits 0 *(tested)* | Exits 0, and Quasar starts it again as crash recovery *(tested)* | Exits 0 *(tested)* |
-| `QuitWithoutSaving` from a plugin | Exits 0 without saving *(tested)* | Quasar.Agent tells Quasar to keep the server off *(tested)* | Exits 0 without saving *(tested)* |
+| Essentials `Stop` step, `!ess stop` (`SaveAndQuit`) | Exits 0 *(tested)* | Quasar.Agent tells Quasar to keep the server off *(tested)* | Exits 0 *(tested)* |
+| `SaveAndQuit`, `QuitWithoutSaving` from a plugin | Exits 0, saved or not *(tested)* | Quasar.Agent tells Quasar to keep the server off *(tested)* | Exits 0, saved or not *(tested)* |
 | SIGTERM, SIGINT (`SaveAndQuit`) | Exits 0 *(tested)* | Quasar sends no signals; one from outside exits 0 and Quasar starts it again *(tested)* | n/a |
 | Ctrl+C in the console | Same as SIGINT | Same as SIGINT | Saves and exits 0, through the dedicated server's own exit |
-| Closing the console window, Windows shutting down (`SaveAndQuit`) | n/a | n/a | Saves and exits 0, if that fits in the 5 s Windows allows, see below *(tested in a conhost window)* |
-| The dedicated server's own exit (`MySandboxGame.ExitThreadSafe`) other than its timed auto-restart, such as its stop for Keen's auto-update | Saves and exits 0 *(tested)* | Exits 0, and Quasar starts it again as crash recovery *(tested)* | Saves and exits 0 *(tested)* |
+| Closing the console window (`SaveAndQuit`) | n/a | n/a | Saves and exits 0, if that fits in the 5 s Windows allows, see below *(tested in a conhost window)* |
+| Windows shutting down | n/a | n/a | Saves and exits 0 like a signal, without `Terminating`, in the same 5 s *(not tested)* |
+| The dedicated server's own exit (`MySandboxGame.ExitThreadSafe`): its `/stop`, the Remote API stop, a scenario's stop | Saves and exits 0 *(tested)* | Quasar.Agent tells Quasar to keep the server off *(tested)* | Saves and exits 0 *(tested)* |
+| The dedicated server's stop for Keen's auto-update (`AutoUpdateEnabled`) | Saves and exits 0, so an updater can run *(tested)* | Restarts through Quasar like a plugin's restart; Quasar's launch update installs the new build *(tested)* | Saves and exits 0 *(tested)* |
 
 A second stop or restart while one is under way is ignored: the first one
 wins, also against a signal *(tested)*. A stop or restart while the game thread
@@ -114,8 +118,8 @@ it is an in-game restart, then saves and quits, quits without saving for
 `RestartWithoutSaving`, and Quasar starts the server again: a new process,
 restart cause `InGame`, no crash counted *(tested on Linux and, for
 MagnetarInterim, under Proton)*. Plugins see `Terminating` with the kind
-`Shutdown` (`RestartWithoutSaving`) or no `Terminating` at all
-(`SaveAndRestart`), because the server does quit.
+`Shutdown`, because the server does quit. Keen's auto-update stop takes the
+same way when a lifecycle provider is registered, outside a cluster.
 
 An older agent doesn't intercept. Magnetar then restarts itself: in place on
 Linux, where the agent's connection drops and Quasar's health policy kills and
@@ -123,10 +127,11 @@ relaunches the server 30 s later; as a new process on Windows, which Quasar
 takes for a crash and starts a second server next to it.
 
 With its default `RestartOnCrash`, Quasar treats any exit it didn't ask for
-as a crash, whatever the exit code. So it starts the server again after the
-Essentials `Stop` step, `SaveAndQuit` from a plugin, a SIGTERM from outside or
-the dedicated server's own exit. A plugin's `QuitWithoutSaving`, and the
-agent's `!stop` and `!quit`, tell Quasar to keep the server off.
+and wasn't told about as a crash, whatever the exit code. Quasar.Agent tells it
+about every `Terminating(Shutdown)` it didn't ask for itself, so a plugin's
+stop, the agent's `!stop` and `!quit` and the dedicated server's own exit keep
+the server off. A SIGTERM or SIGINT from outside raises no `Terminating`, and
+Quasar starts the server again as crash recovery.
 
 A self-restart gives Quasar no chance to apply plugin updates before the
 server starts again; the restart through Quasar does.

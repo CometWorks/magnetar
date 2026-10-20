@@ -103,9 +103,14 @@ public class Plugin : IPlugin
             Run(line);
     }
 
+    // Waits a second and logs how often the game thread updated the plugins
+    // meanwhile. Magnetar must not dispose while it does: the loader drops
+    // disposed plugins from the list it walks (SE1-0203).
     public void Dispose()
     {
-        Log("dispose");
+        int before = Volatile.Read(ref tick);
+        Thread.Sleep(1000);
+        Log($"dispose updates={Volatile.Read(ref tick) - before}");
     }
 
     // "<command> [args]", optionally prefixed with "worker " to run it on a
@@ -140,6 +145,9 @@ public class Plugin : IPlugin
                 case "exit":
                     MySandboxGame.ExitThreadSafe();
                     break;
+                case "update":
+                    PendUpdate();
+                    break;
                 case "slowsave":
                     slowSaveSeconds = int.Parse(arg);
                     break;
@@ -161,6 +169,19 @@ public class Plugin : IPlugin
         {
             Log($"error {line}: {e.GetType().Name}: {e.Message}");
         }
+    }
+
+    // Puts the DS where Keen's auto-update countdown ends: an update is pending
+    // and its stop is due, so the next CheckAutoRestartForDedicatedServer stops
+    // the server for the update.
+    private static void PendUpdate()
+    {
+        MySandboxGame game = MySandboxGame.Static;
+        AccessTools.Field(typeof(MySandboxGame), "m_isGoingToUpdate").SetValue(game, true);
+        AccessTools.Field(typeof(MySandboxGame), "m_autoUpdateRestartTimeInMin").SetValue(game, 0);
+        AccessTools.Field(typeof(MySandboxGame), "m_lastRestartCheckInMilis").SetValue(game, 0);
+        FieldInfo stage = AccessTools.Field(typeof(MySandboxGame), "m_autoRestartState");
+        stage.SetValue(null, Enum.Parse(stage.FieldType, "Restarting"));
     }
 
     private static void Sdk(string operation)

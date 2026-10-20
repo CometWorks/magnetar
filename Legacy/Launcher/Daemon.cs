@@ -111,7 +111,9 @@ internal static class Daemon
         string exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe))
         {
-            LogFile.Warn("Daemon: cannot re-exec (process path unknown); continuing attached to parent session");
+            LogFile.Warn(
+                "Daemon: cannot re-exec (process path unknown); continuing attached to parent session"
+            );
             return;
         }
 
@@ -137,14 +139,20 @@ internal static class Daemon
         }
         catch (Exception e)
         {
-            LogFile.Error($"Daemon: re-exec failed ({e.Message}); continuing attached to parent session");
+            LogFile.Error(
+                $"Daemon: re-exec failed ({e.Message}); continuing attached to parent session"
+            );
             return;
         }
 
         // Exit the parent so the child is reparented to init and the group/session
         // we were leading is dissolved. _exit skips finalizers — nothing meaningful
         // has started this early. The child re-runs startup and detaches via setsid.
-        try { LogFile.Dispose(); } catch { }
+        try
+        {
+            LogFile.Dispose();
+        }
+        catch { }
         LibcExit(0);
     }
 #endif

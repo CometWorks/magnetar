@@ -18,16 +18,22 @@ public class DocumentTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(dir, true); } catch { }
+        try
+        {
+            Directory.Delete(dir, true);
+        }
+        catch { }
     }
 
     [Fact]
     public void Upsert_preserves_unknown_elements()
     {
         string path = Path.Combine(dir, "SpaceEngineers-Dedicated.cfg");
-        File.WriteAllText(path,
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<MyConfigDedicated>\n  <FutureUnknownField>keepme</FutureUnknownField>\n  <ServerName>old</ServerName>\n</MyConfigDedicated>\n");
+        File.WriteAllText(
+            path,
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                + "<MyConfigDedicated>\n  <FutureUnknownField>keepme</FutureUnknownField>\n  <ServerName>old</ServerName>\n</MyConfigDedicated>\n"
+        );
 
         DedicatedConfigDocument doc = DedicatedConfigDocument.Open(path);
         doc.Set(OptionRegistry.ById("Dedicated.ServerName"), "new");
@@ -48,9 +54,9 @@ public class DocumentTests : IDisposable
         DedicatedConfigDocument doc = DedicatedConfigDocument.Open(path);
         OptionDefinition online = OptionRegistry.ById("Session.OnlineMode");
 
-        doc.Set(online, "Public");         // label
+        doc.Set(online, "Public"); // label
         Assert.Equal("PUBLIC", doc.Get(online));
-        doc.Set(online, "1");              // int value
+        doc.Set(online, "1"); // int value
         Assert.Equal("PUBLIC", doc.Get(online));
     }
 
@@ -106,7 +112,14 @@ public class DocumentTests : IDisposable
         WorldConfigDocument doc = WorldConfigDocument.Open(path);
         var mods = new ModList();
         mods.Items.Add(new ModItem { PublishedFileId = 100, FriendlyName = "First" });
-        mods.Items.Add(new ModItem { PublishedFileId = 200, FriendlyName = "Second", IsDependency = true });
+        mods.Items.Add(
+            new ModItem
+            {
+                PublishedFileId = 200,
+                FriendlyName = "Second",
+                IsDependency = true,
+            }
+        );
         doc.WriteMods(mods);
         doc.Save(new AtomicFile());
 

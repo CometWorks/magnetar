@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -19,10 +19,10 @@ namespace Magnetar.Config.Ui;
 internal sealed class HubPluginsView : Window
 {
     private const string CachedEmptyMessage =
-        "No hub plugins cached yet.\n\n" +
-        "Magnetar downloads the plugin catalog on server start from the\n" +
-        "configured hub sources. Add a source under Plugins ▸ Plugin Sources,\n" +
-        "then start the server once so it fetches the catalog.";
+        "No hub plugins cached yet.\n\n"
+        + "Magnetar downloads the plugin catalog on server start from the\n"
+        + "configured hub sources. Add a source under Plugins ▸ Plugin Sources,\n"
+        + "then start the server once so it fetches the catalog.";
 
     private readonly MagnetarPlugins plugins;
     private readonly TextField filter;
@@ -32,7 +32,8 @@ internal sealed class HubPluginsView : Window
     private List<HubPluginView> items = new();
     private string defaultHubLabel;
 
-    public HubPluginsView(string magnetarConfigDir, AtomicFile writer) : base("Hub Plugins")
+    public HubPluginsView(string magnetarConfigDir, AtomicFile writer)
+        : base("Hub Plugins")
     {
         plugins = new MagnetarPlugins(magnetarConfigDir, writer);
         ColorScheme = TurboVisionTheme.Window;
@@ -40,25 +41,49 @@ internal sealed class HubPluginsView : Window
 
         var listFrame = new FrameView("Available plugins — Space/Enter toggles enabled")
         {
-            X = 0, Y = 0, Width = Dim.Percent(34), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = 0,
+            Y = 0,
+            Width = Dim.Percent(34),
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
         };
         var filterLabel = new Label("Filter: ") { X = 0, Y = 0 };
         filter = new TextField(string.Empty)
-        { X = Pos.Right(filterLabel), Y = 0, Width = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        {
+            X = Pos.Right(filterLabel),
+            Y = 0,
+            Width = Dim.Fill(),
+            ColorScheme = TurboVisionTheme.Window,
+        };
         filter.TextChanged += _ => ApplyFilter();
         list = new ListView(Array.Empty<string>())
-        { X = 0, Y = 1, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        {
+            X = 0,
+            Y = 1,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            ColorScheme = TurboVisionTheme.Window,
+        };
         list.SelectedItemChanged += _ => ShowDetails();
         list.OpenSelectedItem += _ => Toggle();
         listFrame.Add(filterLabel, filter, list);
 
         var detailFrame = new FrameView("Details")
         {
-            X = Pos.Percent(34), Y = 0, Width = Dim.Fill(), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = Pos.Percent(34),
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
         };
         details = new TextView
         {
-            X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(), ReadOnly = true, WordWrap = true,
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            ReadOnly = true,
+            WordWrap = true,
             ColorScheme = TurboVisionTheme.Window,
         };
         detailFrame.Add(details);
@@ -67,7 +92,11 @@ internal sealed class HubPluginsView : Window
         toggle.Clicked += Toggle;
         var refresh = new Button("Re_fresh") { X = Pos.Right(toggle) + 1, Y = Pos.AnchorEnd(1) };
         refresh.Clicked += Refresh;
-        var srcHint = new Label("Manage sources & dev folders under Plugins") { X = Pos.Right(refresh) + 2, Y = Pos.AnchorEnd(1) };
+        var srcHint = new Label("Manage sources & dev folders under Plugins")
+        {
+            X = Pos.Right(refresh) + 2,
+            Y = Pos.AnchorEnd(1),
+        };
 
         Add(listFrame, detailFrame, toggle, refresh, srcHint);
         Refresh();
@@ -88,7 +117,8 @@ internal sealed class HubPluginsView : Window
         plugins.Reload();
         defaultHubLabel = plugins.DefaultHubLabel;
         // Hub/remote plugins plus the registered dev folders, interleaved by name.
-        allItems = plugins.HubCatalogPlugins()
+        allItems = plugins
+            .HubCatalogPlugins()
             .Concat(plugins.DevFolderCatalogViews())
             .OrderBy(v => v.Info.FriendlyName, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -119,8 +149,10 @@ internal sealed class HubPluginsView : Window
     private static bool Matches(HubPluginView v, string q)
     {
         HubPluginInfo p = v.Info;
-        return Contains(p.FriendlyName, q) || Contains(p.Id, q)
-            || Contains(p.Author, q) || Contains(p.Tooltip, q);
+        return Contains(p.FriendlyName, q)
+            || Contains(p.Id, q)
+            || Contains(p.Author, q)
+            || Contains(p.Tooltip, q);
     }
 
     private static bool Contains(string s, string q) =>
@@ -134,8 +166,13 @@ internal sealed class HubPluginsView : Window
             return $"{box} {v.Info.FriendlyName} - dev folder";
         string kind = v.Info.Kind == HubPluginKind.Mod ? " (mod)" : "";
         // Only label the source when it isn't the default hub — that suffix is implied.
-        bool fromDefault = string.IsNullOrEmpty(v.Info.SourceLabel)
-            || string.Equals(v.Info.SourceLabel, defaultHubLabel, StringComparison.OrdinalIgnoreCase);
+        bool fromDefault =
+            string.IsNullOrEmpty(v.Info.SourceLabel)
+            || string.Equals(
+                v.Info.SourceLabel,
+                defaultHubLabel,
+                StringComparison.OrdinalIgnoreCase
+            );
         string src = fromDefault ? "" : $"  — {v.Info.SourceLabel}";
         return $"{box} {v.Info.FriendlyName}{kind}{src}";
     }
@@ -152,15 +189,22 @@ internal sealed class HubPluginsView : Window
         HubPluginInfo p = items[i].Info;
         var sb = new System.Text.StringBuilder();
         sb.AppendLine(p.FriendlyName);
-        if (!string.IsNullOrEmpty(p.Author)) sb.AppendLine("by " + p.Author);
-        if (!string.IsNullOrEmpty(p.RepoId)) sb.AppendLine(p.RepoId);
+        if (!string.IsNullOrEmpty(p.Author))
+            sb.AppendLine("by " + p.Author);
+        if (!string.IsNullOrEmpty(p.RepoId))
+            sb.AppendLine(p.RepoId);
         sb.AppendLine();
         sb.AppendLine("Id: " + p.Id);
         if (p.DependencyIds != null && p.DependencyIds.Length > 0)
             sb.AppendLine("Depends on: " + string.Join(", ", p.DependencyIds));
         sb.AppendLine();
-        if (!string.IsNullOrEmpty(p.Tooltip)) { sb.AppendLine(p.Tooltip); sb.AppendLine(); }
-        if (!string.IsNullOrEmpty(p.Description)) sb.AppendLine(p.Description);
+        if (!string.IsNullOrEmpty(p.Tooltip))
+        {
+            sb.AppendLine(p.Tooltip);
+            sb.AppendLine();
+        }
+        if (!string.IsNullOrEmpty(p.Description))
+            sb.AppendLine(p.Description);
         details.Text = sb.ToString();
     }
 
@@ -184,9 +228,11 @@ internal sealed class HubPluginsView : Window
             Refresh();
             list.SelectedItem = i;
             if (!v.Enabled && touched.Count > 1)
-                Dialogs.Info("Enabled with dependencies",
-                    $"Enabled '{v.Info.FriendlyName}' and {touched.Count - 1} dependency plugin(s).\n\n" +
-                    "Takes effect on the next server start.");
+                Dialogs.Info(
+                    "Enabled with dependencies",
+                    $"Enabled '{v.Info.FriendlyName}' and {touched.Count - 1} dependency plugin(s).\n\n"
+                        + "Takes effect on the next server start."
+                );
         }
         catch (Exception e)
         {

@@ -15,21 +15,31 @@ namespace PluginSdk.Config
         /// <summary>Builds the schema for the given <paramref name="configType"/>.</summary>
         public static ConfigSchemaData Build(Type configType)
         {
-            if (configType == null) throw new ArgumentNullException(nameof(configType));
+            if (configType == null)
+                throw new ArgumentNullException(nameof(configType));
             if (!typeof(PluginConfig).IsAssignableFrom(configType))
-                throw new ArgumentException($"{configType} does not derive from {nameof(PluginConfig)}", nameof(configType));
+                throw new ArgumentException(
+                    $"{configType} does not derive from {nameof(PluginConfig)}",
+                    nameof(configType)
+                );
 
             var schema = new ConfigSchemaData();
 
-            foreach (var layout in configType.GetCustomAttributes<LayoutContainerAttribute>(inherit: true))
+            foreach (
+                var layout in configType.GetCustomAttributes<LayoutContainerAttribute>(
+                    inherit: true
+                )
+            )
             {
-                schema.Layout.Add(new LayoutContainerInfo
-                {
-                    Kind = layout.Kind,
-                    Id = layout.Id,
-                    Parent = layout.Parent,
-                    Caption = layout.Caption,
-                });
+                schema.Layout.Add(
+                    new LayoutContainerInfo
+                    {
+                        Kind = layout.Kind,
+                        Id = layout.Id,
+                        Parent = layout.Parent,
+                        Caption = layout.Caption,
+                    }
+                );
             }
 
             // Struct discovery is a worklist: top-level options enqueue any
@@ -40,23 +50,34 @@ namespace PluginSdk.Config
             foreach (var prop in PluginConfig.GetConfigProperties(configType))
             {
                 var info = BuildPropertyInfo(prop, pendingStructs, schema);
-                if (info != null) schema.Properties.Add(info);
+                if (info != null)
+                    schema.Properties.Add(info);
             }
 
             while (pendingStructs.Count > 0)
             {
                 var structType = pendingStructs.Dequeue();
-                if (schema.Structs.ContainsKey(structType.Name)) continue;
-                schema.Structs[structType.Name] = BuildStructInfo(structType, pendingStructs, schema);
+                if (schema.Structs.ContainsKey(structType.Name))
+                    continue;
+                schema.Structs[structType.Name] = BuildStructInfo(
+                    structType,
+                    pendingStructs,
+                    schema
+                );
             }
 
             return schema;
         }
 
-        private static ConfigPropertyInfo BuildPropertyInfo(PropertyInfo prop, Queue<Type> pendingStructs, ConfigSchemaData schema)
+        private static ConfigPropertyInfo BuildPropertyInfo(
+            PropertyInfo prop,
+            Queue<Type> pendingStructs,
+            ConfigSchemaData schema
+        )
         {
             var option = prop.GetCustomAttribute<ConfigOptionAttribute>();
-            if (option == null) return null;
+            if (option == null)
+                return null;
 
             var info = new ConfigPropertyInfo
             {
@@ -75,38 +96,49 @@ namespace PluginSdk.Config
 
                 case IntOptionAttribute io:
                     info.Type = "int";
-                    if (io.Min != int.MinValue) info.Min = io.Min;
-                    if (io.Max != int.MaxValue) info.Max = io.Max;
+                    if (io.Min != int.MinValue)
+                        info.Min = io.Min;
+                    if (io.Max != int.MaxValue)
+                        info.Max = io.Max;
                     break;
 
                 case LongOptionAttribute lo:
                     info.Type = "long";
-                    if (lo.Min != long.MinValue) info.Min = lo.Min;
-                    if (lo.Max != long.MaxValue) info.Max = lo.Max;
+                    if (lo.Min != long.MinValue)
+                        info.Min = lo.Min;
+                    if (lo.Max != long.MaxValue)
+                        info.Max = lo.Max;
                     break;
 
                 case FloatOptionAttribute fo:
                     info.Type = "float";
-                    if (!float.IsNegativeInfinity(fo.Min)) info.Min = fo.Min;
-                    if (!float.IsPositiveInfinity(fo.Max)) info.Max = fo.Max;
+                    if (!float.IsNegativeInfinity(fo.Min))
+                        info.Min = fo.Min;
+                    if (!float.IsPositiveInfinity(fo.Max))
+                        info.Max = fo.Max;
                     break;
 
                 case DoubleOptionAttribute dbo:
                     info.Type = "double";
-                    if (!double.IsNegativeInfinity(dbo.Min)) info.Min = dbo.Min;
-                    if (!double.IsPositiveInfinity(dbo.Max)) info.Max = dbo.Max;
+                    if (!double.IsNegativeInfinity(dbo.Min))
+                        info.Min = dbo.Min;
+                    if (!double.IsPositiveInfinity(dbo.Max))
+                        info.Max = dbo.Max;
                     break;
 
                 case StringOptionAttribute so:
                     info.Type = "string";
-                    if (so.MaxLength > 0) info.MaxLength = so.MaxLength;
+                    if (so.MaxLength > 0)
+                        info.MaxLength = so.MaxLength;
                     info.Pattern = so.Pattern;
-                    if (so.Multiline) info.Multiline = true;
+                    if (so.Multiline)
+                        info.Multiline = true;
                     break;
 
                 case ListOptionAttribute listOpt:
                     info.Type = "list";
-                    if (listOpt.MaxCount > 0) info.MaxCount = listOpt.MaxCount;
+                    if (listOpt.MaxCount > 0)
+                        info.MaxCount = listOpt.MaxCount;
                     info.TreeParentField = listOpt.TreeParentField;
                     var elementType = GetGenericArgument(t, typeof(List<>), 0);
                     info.ElementType = TypeName(elementType);
@@ -124,7 +156,8 @@ namespace PluginSdk.Config
 
                 case DictOptionAttribute dictOpt:
                     info.Type = "dict";
-                    if (dictOpt.MaxCount > 0) info.MaxCount = dictOpt.MaxCount;
+                    if (dictOpt.MaxCount > 0)
+                        info.MaxCount = dictOpt.MaxCount;
                     info.TreeParentField = dictOpt.TreeParentField;
                     var dictArgs = GetDictionaryArguments(t);
                     info.KeyType = TypeName(dictArgs.Key);
@@ -219,38 +252,61 @@ namespace PluginSdk.Config
             return info;
         }
 
-        private static StructInfo BuildStructInfo(Type structType, Queue<Type> pendingStructs, ConfigSchemaData schema)
+        private static StructInfo BuildStructInfo(
+            Type structType,
+            Queue<Type> pendingStructs,
+            ConfigSchemaData schema
+        )
         {
             var members = new List<StructMemberInfo>();
             string captionMember = null;
 
             foreach (var field in structType.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
-                members.Add(DescribeStructMember(
-                    field.Name,
-                    field.FieldType,
-                    field.GetCustomAttribute<StructMemberAttribute>()?.Description,
-                    pendingStructs,
-                    schema));
+                members.Add(
+                    DescribeStructMember(
+                        field.Name,
+                        field.FieldType,
+                        field.GetCustomAttribute<StructMemberAttribute>()?.Description,
+                        pendingStructs,
+                        schema
+                    )
+                );
 
                 if (field.GetCustomAttribute<StructCaptionAttribute>() != null)
-                    captionMember = ValidateCaptionMember(structType, field.Name, field.FieldType,
-                        field.GetCustomAttribute<StructMemberAttribute>(), captionMember);
+                    captionMember = ValidateCaptionMember(
+                        structType,
+                        field.Name,
+                        field.FieldType,
+                        field.GetCustomAttribute<StructMemberAttribute>(),
+                        captionMember
+                    );
             }
 
-            foreach (var prop in structType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (
+                var prop in structType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            )
             {
-                if (!prop.CanRead || !prop.CanWrite) continue;
-                members.Add(DescribeStructMember(
-                    prop.Name,
-                    prop.PropertyType,
-                    prop.GetCustomAttribute<StructMemberAttribute>()?.Description,
-                    pendingStructs,
-                    schema));
+                if (!prop.CanRead || !prop.CanWrite)
+                    continue;
+                members.Add(
+                    DescribeStructMember(
+                        prop.Name,
+                        prop.PropertyType,
+                        prop.GetCustomAttribute<StructMemberAttribute>()?.Description,
+                        pendingStructs,
+                        schema
+                    )
+                );
 
                 if (prop.GetCustomAttribute<StructCaptionAttribute>() != null)
-                    captionMember = ValidateCaptionMember(structType, prop.Name, prop.PropertyType,
-                        prop.GetCustomAttribute<StructMemberAttribute>(), captionMember);
+                    captionMember = ValidateCaptionMember(
+                        structType,
+                        prop.Name,
+                        prop.PropertyType,
+                        prop.GetCustomAttribute<StructMemberAttribute>(),
+                        captionMember
+                    );
             }
 
             return new StructInfo { Members = members, CaptionMember = captionMember };
@@ -263,21 +319,28 @@ namespace PluginSdk.Config
         /// the validated member name.
         /// </summary>
         private static string ValidateCaptionMember(
-            Type structType, string memberName, Type memberType,
-            StructMemberAttribute structMember, string existingCaptionMember)
+            Type structType,
+            string memberName,
+            Type memberType,
+            StructMemberAttribute structMember,
+            string existingCaptionMember
+        )
         {
             if (existingCaptionMember != null)
                 throw new InvalidOperationException(
-                    $"{structType.Name} has more than one [StructCaption] member " +
-                    $"('{existingCaptionMember}' and '{memberName}'); only one is allowed.");
+                    $"{structType.Name} has more than one [StructCaption] member "
+                        + $"('{existingCaptionMember}' and '{memberName}'); only one is allowed."
+                );
             if (structMember == null)
                 throw new InvalidOperationException(
-                    $"{structType.Name}.{memberName} is marked [StructCaption] but lacks [StructMember]; " +
-                    "the caption member must also be a serialized struct member so the UI can read its value.");
+                    $"{structType.Name}.{memberName} is marked [StructCaption] but lacks [StructMember]; "
+                        + "the caption member must also be a serialized struct member so the UI can read its value."
+                );
             if (memberType != typeof(string))
                 throw new InvalidOperationException(
-                    $"{structType.Name}.{memberName} is marked [StructCaption] but is {memberType.Name}; " +
-                    "the caption member must be of type string.");
+                    $"{structType.Name}.{memberName} is marked [StructCaption] but is {memberType.Name}; "
+                        + "the caption member must be of type string."
+                );
             return memberName;
         }
 
@@ -287,7 +350,13 @@ namespace PluginSdk.Config
         /// structs — the same shapes the top-level option attributes cover.
         /// Anything else collapses to <c>"unknown"</c>.
         /// </summary>
-        private static StructMemberInfo DescribeStructMember(string name, Type type, string description, Queue<Type> pendingStructs, ConfigSchemaData schema)
+        private static StructMemberInfo DescribeStructMember(
+            string name,
+            Type type,
+            string description,
+            Queue<Type> pendingStructs,
+            ConfigSchemaData schema
+        )
         {
             var info = new StructMemberInfo { Name = name, Description = description };
             var typeName = TypeName(type);
@@ -358,14 +427,22 @@ namespace PluginSdk.Config
 
         private static string TypeName(Type t)
         {
-            if (t == typeof(bool)) return "bool";
-            if (t == typeof(int)) return "int";
-            if (t == typeof(long)) return "long";
-            if (t == typeof(float)) return "float";
-            if (t == typeof(double)) return "double";
-            if (t == typeof(string)) return "string";
-            if (t.IsEnum) return "enum";
-            if (t.IsValueType && !t.IsPrimitive && !t.IsEnum) return "struct";
+            if (t == typeof(bool))
+                return "bool";
+            if (t == typeof(int))
+                return "int";
+            if (t == typeof(long))
+                return "long";
+            if (t == typeof(float))
+                return "float";
+            if (t == typeof(double))
+                return "double";
+            if (t == typeof(string))
+                return "string";
+            if (t.IsEnum)
+                return "enum";
+            if (t.IsValueType && !t.IsPrimitive && !t.IsEnum)
+                return "struct";
             return "unknown";
         }
 
@@ -379,13 +456,15 @@ namespace PluginSdk.Config
         /// </summary>
         private static void RegisterEnum(ConfigSchemaData schema, Type enumType)
         {
-            if (schema.Enums.ContainsKey(enumType.Name)) return;
+            if (schema.Enums.ContainsKey(enumType.Name))
+                return;
 
             var values = new List<EnumValueInfo>();
             foreach (var name in Enum.GetNames(enumType))
             {
-                var caption = enumType.GetField(name)
-                    ?.GetCustomAttribute<EnumCaptionAttribute>()?.Caption ?? name;
+                var caption =
+                    enumType.GetField(name)?.GetCustomAttribute<EnumCaptionAttribute>()?.Caption
+                    ?? name;
                 values.Add(new EnumValueInfo { Name = name, Caption = caption });
             }
 
@@ -402,7 +481,8 @@ namespace PluginSdk.Config
         private static (Type Key, Type Value) GetDictionaryArguments(Type t)
         {
             var args = TryGetDictionaryArguments(t);
-            if (args.HasValue) return args.Value;
+            if (args.HasValue)
+                return args.Value;
             throw new InvalidOperationException($"Type {t} is not a Dictionary<,>");
         }
 
@@ -412,7 +492,10 @@ namespace PluginSdk.Config
             // find Dictionary<,>'s generic arguments.
             for (var cursor = t; cursor != null; cursor = cursor.BaseType)
             {
-                if (cursor.IsGenericType && cursor.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                if (
+                    cursor.IsGenericType
+                    && cursor.GetGenericTypeDefinition() == typeof(Dictionary<,>)
+                )
                 {
                     var args = cursor.GetGenericArguments();
                     return (args[0], args[1]);
@@ -427,14 +510,16 @@ namespace PluginSdk.Config
     {
         public List<LayoutContainerInfo> Layout { get; set; } = new List<LayoutContainerInfo>();
         public List<ConfigPropertyInfo> Properties { get; set; } = new List<ConfigPropertyInfo>();
-        public Dictionary<string, StructInfo> Structs { get; set; } = new Dictionary<string, StructInfo>();
+        public Dictionary<string, StructInfo> Structs { get; set; } =
+            new Dictionary<string, StructInfo>();
 
         /// <summary>
         /// Enum definitions referenced by options or struct members, keyed by
         /// enum type name. Each entry lists the members in the enum's natural
         /// (underlying-value) order.
         /// </summary>
-        public Dictionary<string, List<EnumValueInfo>> Enums { get; set; } = new Dictionary<string, List<EnumValueInfo>>();
+        public Dictionary<string, List<EnumValueInfo>> Enums { get; set; } =
+            new Dictionary<string, List<EnumValueInfo>>();
     }
 
     /// <summary>

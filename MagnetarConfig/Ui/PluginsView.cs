@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
 using Magnetar.Config.State;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -29,7 +29,8 @@ internal sealed class PluginsView : Window
     private List<LocalDllInfo> locals = new();
     private List<DevFolderPlugin> devs = new();
 
-    public PluginsView(string magnetarConfigDir, AtomicFile writer, ToolSettings settings) : base("Plugins")
+    public PluginsView(string magnetarConfigDir, AtomicFile writer, ToolSettings settings)
+        : base("Plugins")
     {
         this.writer = writer;
         this.settings = settings;
@@ -40,29 +41,63 @@ internal sealed class PluginsView : Window
 
         var localFrame = new FrameView("Local DLLs (from Local/ folder) — Press SPACE to toggle")
         {
-            X = 0, Y = 0, Width = Dim.Percent(50), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = 0,
+            Y = 0,
+            Width = Dim.Percent(50),
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
         };
         localList = new ListView(Array.Empty<string>())
-        { X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            ColorScheme = TurboVisionTheme.Window,
+        };
         localList.OpenSelectedItem += _ => ToggleLocal();
         localFrame.Add(localList);
 
-        var devFrame = new FrameView("Registered dev folders — Press SPACE to toggle (select per-profile under Hub Plugins)")
+        var devFrame = new FrameView(
+            "Registered dev folders — Press SPACE to toggle (select per-profile under Hub Plugins)"
+        )
         {
-            X = Pos.Percent(50), Y = 0, Width = Dim.Fill(), Height = Dim.Fill(2), ColorScheme = TurboVisionTheme.Window,
+            X = Pos.Percent(50),
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Window,
         };
         devList = new ListView(Array.Empty<string>())
-        { X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            ColorScheme = TurboVisionTheme.Window,
+        };
         devList.OpenSelectedItem += _ => ToggleDev();
         devFrame.Add(devList);
 
         var toggle = new Button("_Toggle DLL") { X = 0, Y = Pos.AnchorEnd(1) };
         toggle.Clicked += ToggleLocal;
-        var add = new Button("_Add Dev Folder…") { X = Pos.Right(toggle) + 1, Y = Pos.AnchorEnd(1) };
+        var add = new Button("_Add Dev Folder…")
+        {
+            X = Pos.Right(toggle) + 1,
+            Y = Pos.AnchorEnd(1),
+        };
         add.Clicked += AddDevFolder;
-        var toggleDev = new Button("Toggle _Enabled") { X = Pos.Right(add) + 1, Y = Pos.AnchorEnd(1) };
+        var toggleDev = new Button("Toggle _Enabled")
+        {
+            X = Pos.Right(add) + 1,
+            Y = Pos.AnchorEnd(1),
+        };
         toggleDev.Clicked += ToggleDev;
-        var remove = new Button("_Remove Dev Folder") { X = Pos.Right(toggleDev) + 1, Y = Pos.AnchorEnd(1) };
+        var remove = new Button("_Remove Dev Folder")
+        {
+            X = Pos.Right(toggleDev) + 1,
+            Y = Pos.AnchorEnd(1),
+        };
         remove.Clicked += RemoveDevFolder;
         var refresh = new Button("Re_fresh") { X = Pos.Right(remove) + 1, Y = Pos.AnchorEnd(1) };
         refresh.Clicked += Refresh;
@@ -114,13 +149,14 @@ internal sealed class PluginsView : Window
         int idWidth = devs.Max(p => (p.Id ?? string.Empty).Length);
 
         return devs.Select(p =>
-        {
-            string box = p.SourceEnabled ? "[x]" : "[ ]";
-            string flag = p.SourceMissing ? "  ! folder missing" : "";
-            string folder = p.Folder ?? "(no folder)";
-            string id = (p.Id ?? string.Empty).PadRight(idWidth);
-            return $"{box} {id}   {folder}{flag}";
-        }).ToList();
+            {
+                string box = p.SourceEnabled ? "[x]" : "[ ]";
+                string flag = p.SourceMissing ? "  ! folder missing" : "";
+                string folder = p.Folder ?? "(no folder)";
+                string id = (p.Id ?? string.Empty).PadRight(idWidth);
+                return $"{box} {id}   {folder}{flag}";
+            })
+            .ToList();
     }
 
     private void ToggleLocal()
@@ -156,18 +192,24 @@ internal sealed class PluginsView : Window
             return;
 
         // Remember the folder immediately so the next add starts here.
-        try { settings.LastPluginFolder = Path.GetDirectoryName(Path.GetFullPath(picked)); } catch { }
+        try
+        {
+            settings.LastPluginFolder = Path.GetDirectoryName(Path.GetFullPath(picked));
+        }
+        catch { }
         settings.Save(writer);
 
         try
         {
             string id = plugins.AddDevFolderFromManifest(picked);
             Refresh();
-            Dialogs.Info("Dev folder registered",
-                $"Registered dev folder '{id}' as a plugin source.\n\n" +
-                "It's now selectable in the Hub Plugins list (shown with a\n" +
-                "\"- dev folder\" suffix). Enable it there to load it on the\n" +
-                "next server start.");
+            Dialogs.Info(
+                "Dev folder registered",
+                $"Registered dev folder '{id}' as a plugin source.\n\n"
+                    + "It's now selectable in the Hub Plugins list (shown with a\n"
+                    + "\"- dev folder\" suffix). Enable it there to load it on the\n"
+                    + "next server start."
+            );
         }
         catch (Exception e)
         {
@@ -184,10 +226,14 @@ internal sealed class PluginsView : Window
             return;
         }
         DevFolderPlugin p = devs[i];
-        if (!Dialogs.Confirm("Remove dev folder",
-                $"Unregister dev folder '{p.Id}'?\n\n" +
-                "This removes it from the plugin sources (and disables it in the\n" +
-                "active profile if enabled). Your source files on disk are not touched."))
+        if (
+            !Dialogs.Confirm(
+                "Remove dev folder",
+                $"Unregister dev folder '{p.Id}'?\n\n"
+                    + "This removes it from the plugin sources (and disables it in the\n"
+                    + "active profile if enabled). Your source files on disk are not touched."
+            )
+        )
             return;
 
         try

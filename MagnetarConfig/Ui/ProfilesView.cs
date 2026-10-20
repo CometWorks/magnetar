@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -23,7 +23,8 @@ internal sealed class ProfilesView : Window
     private readonly Label activeLabel;
     private List<ProfileInfo> profiles = new();
 
-    public ProfilesView(string magnetarConfigDir, AtomicFile writer, Action onActiveChanged = null) : base("Plugin Profiles")
+    public ProfilesView(string magnetarConfigDir, AtomicFile writer, Action onActiveChanged = null)
+        : base("Plugin Profiles")
     {
         catalog = new ProfileCatalog(magnetarConfigDir, writer);
         this.onActiveChanged = onActiveChanged;
@@ -32,14 +33,30 @@ internal sealed class ProfilesView : Window
 
         var frame = new FrameView("Saved profiles — Enter/Load applies to the active set")
         {
-            X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(3), ColorScheme = TurboVisionTheme.Window,
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(3),
+            ColorScheme = TurboVisionTheme.Window,
         };
         list = new ListView(Array.Empty<string>())
-        { X = 0, Y = 0, Width = Dim.Fill(), Height = Dim.Fill(), ColorScheme = TurboVisionTheme.Window };
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+            ColorScheme = TurboVisionTheme.Window,
+        };
         list.OpenSelectedItem += _ => Load();
         frame.Add(list);
 
-        activeLabel = new Label("") { X = 0, Y = Pos.AnchorEnd(2), Width = Dim.Fill(), Height = 1 };
+        activeLabel = new Label("")
+        {
+            X = 0,
+            Y = Pos.AnchorEnd(2),
+            Width = Dim.Fill(),
+            Height = 1,
+        };
 
         var load = new Button("_Load") { X = 0, Y = Pos.AnchorEnd(1) };
         load.Clicked += Load;
@@ -65,13 +82,13 @@ internal sealed class ProfilesView : Window
             list.SelectedItem = Math.Min(Math.Max(0, keep), profiles.Count - 1);
 
         string match = catalog.ActiveMatchKey();
-        activeLabel.Text = match == null
-            ? " Active set (Current.xml): unsaved — not matching any profile"
-            : $" Active set (Current.xml): matches profile '{profiles.First(p => p.Key == match).Name}'";
+        activeLabel.Text =
+            match == null
+                ? " Active set (Current.xml): unsaved — not matching any profile"
+                : $" Active set (Current.xml): matches profile '{profiles.First(p => p.Key == match).Name}'";
     }
 
-    private static string Format(ProfileInfo p) =>
-        $"{(p.MatchesActive ? "→ " : "  ")}{p.Name}";
+    private static string Format(ProfileInfo p) => $"{(p.MatchesActive ? "→ " : "  ")}{p.Name}";
 
     private ProfileInfo Selected()
     {
@@ -82,11 +99,16 @@ internal sealed class ProfilesView : Window
     private void Load()
     {
         ProfileInfo p = Selected();
-        if (p == null) return;
-        if (!Dialogs.Confirm("Load profile",
-                $"Make '{p.Name}' the active plugin set?\n\n" +
-                "This overwrites Current.xml with this profile's enabled plugins.\n" +
-                "It takes effect on the next server start."))
+        if (p == null)
+            return;
+        if (
+            !Dialogs.Confirm(
+                "Load profile",
+                $"Make '{p.Name}' the active plugin set?\n\n"
+                    + "This overwrites Current.xml with this profile's enabled plugins.\n"
+                    + "It takes effect on the next server start."
+            )
+        )
             return;
         try
         {
@@ -94,27 +116,39 @@ internal sealed class ProfilesView : Window
             Refresh();
             onActiveChanged?.Invoke();
         }
-        catch (Exception e) { Dialogs.Error("Load profile", e.Message); }
+        catch (Exception e)
+        {
+            Dialogs.Error("Load profile", e.Message);
+        }
     }
 
     private void SaveAsNew()
     {
         string name = Dialogs.Prompt("Save profile", "New profile name:");
-        if (string.IsNullOrWhiteSpace(name)) return;
+        if (string.IsNullOrWhiteSpace(name))
+            return;
         try
         {
             if (!catalog.SaveCurrentAs(name))
             {
-                if (Dialogs.Confirm("Profile exists",
-                        $"A profile named '{name.Trim()}' already exists.\nOverwrite it with the active set?"))
+                if (
+                    Dialogs.Confirm(
+                        "Profile exists",
+                        $"A profile named '{name.Trim()}' already exists.\nOverwrite it with the active set?"
+                    )
+                )
                 {
                     catalog.Update(PluginProfileDocument.CleanKey(name.Trim()));
                 }
-                else return;
+                else
+                    return;
             }
             Refresh();
         }
-        catch (Exception e) { Dialogs.Error("Save profile", e.Message); }
+        catch (Exception e)
+        {
+            Dialogs.Error("Save profile", e.Message);
+        }
     }
 
     private void Update()
@@ -125,49 +159,72 @@ internal sealed class ProfilesView : Window
             Dialogs.Info("Update", "Select a profile to overwrite, or use 'Save As New…'.");
             return;
         }
-        if (!Dialogs.Confirm("Update profile",
-                $"Overwrite profile '{p.Name}' with the current active plugin set?"))
+        if (
+            !Dialogs.Confirm(
+                "Update profile",
+                $"Overwrite profile '{p.Name}' with the current active plugin set?"
+            )
+        )
             return;
         try
         {
             catalog.Update(p.Key);
             Refresh();
         }
-        catch (Exception e) { Dialogs.Error("Update profile", e.Message); }
+        catch (Exception e)
+        {
+            Dialogs.Error("Update profile", e.Message);
+        }
     }
 
     private void Rename()
     {
         ProfileInfo p = Selected();
-        if (p == null) return;
+        if (p == null)
+            return;
         string newName = Dialogs.Prompt("Rename profile", "New name:", p.Name);
-        if (string.IsNullOrWhiteSpace(newName) || newName.Trim() == p.Name) return;
+        if (string.IsNullOrWhiteSpace(newName) || newName.Trim() == p.Name)
+            return;
         try
         {
             string newKey = PluginProfileDocument.CleanKey(newName.Trim());
             if (!string.Equals(newKey, p.Key, StringComparison.Ordinal) && catalog.Exists(newKey))
             {
-                Dialogs.Error("Rename profile", $"A profile named '{newName.Trim()}' already exists.");
+                Dialogs.Error(
+                    "Rename profile",
+                    $"A profile named '{newName.Trim()}' already exists."
+                );
                 return;
             }
             catalog.Rename(p.Key, newName.Trim());
             Refresh();
         }
-        catch (Exception e) { Dialogs.Error("Rename profile", e.Message); }
+        catch (Exception e)
+        {
+            Dialogs.Error("Rename profile", e.Message);
+        }
     }
 
     private void Delete()
     {
         ProfileInfo p = Selected();
-        if (p == null) return;
-        if (!Dialogs.Confirm("Delete profile",
-                $"Delete profile '{p.Name}'?\n\nThe active set (Current.xml) is not affected."))
+        if (p == null)
+            return;
+        if (
+            !Dialogs.Confirm(
+                "Delete profile",
+                $"Delete profile '{p.Name}'?\n\nThe active set (Current.xml) is not affected."
+            )
+        )
             return;
         try
         {
             catalog.Delete(p.Key);
             Refresh();
         }
-        catch (Exception e) { Dialogs.Error("Delete profile", e.Message); }
+        catch (Exception e)
+        {
+            Dialogs.Error("Delete profile", e.Message);
+        }
     }
 }

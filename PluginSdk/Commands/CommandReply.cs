@@ -37,7 +37,13 @@ namespace PluginSdk.Commands
         /// <summary><c>true</c> when there is text to send.</summary>
         public bool HasContent => !string.IsNullOrEmpty(Text);
 
-        public CommandReply(string text, Color? color = null, string font = MyFontEnum.White, string author = null, bool broadcast = false)
+        public CommandReply(
+            string text,
+            Color? color = null,
+            string font = MyFontEnum.White,
+            string author = null,
+            bool broadcast = false
+        )
         {
             Text = text;
             Color = color;
@@ -50,21 +56,31 @@ namespace PluginSdk.Commands
         public static CommandReply None => new CommandReply(null);
 
         /// <summary>A plain white reply to the caller.</summary>
-        public static CommandReply Ok(string text) => new CommandReply(text, font: MyFontEnum.White);
+        public static CommandReply Ok(string text) =>
+            new CommandReply(text, font: MyFontEnum.White);
 
         /// <summary>An informational blue reply to the caller.</summary>
-        public static CommandReply Info(string text) => new CommandReply(text, font: MyFontEnum.Blue);
+        public static CommandReply Info(string text) =>
+            new CommandReply(text, font: MyFontEnum.Blue);
 
         /// <summary>An error reply to the caller, shown in red.</summary>
-        public static CommandReply Error(string text) => new CommandReply(text, font: MyFontEnum.Red);
+        public static CommandReply Error(string text) =>
+            new CommandReply(text, font: MyFontEnum.Red);
 
         /// <summary>A reply broadcast to every player.</summary>
-        public static CommandReply Announce(string text, Color? color = null)
-            => new CommandReply(text, color: color, font: MyFontEnum.White, broadcast: true);
+        public static CommandReply Announce(string text, Color? color = null) =>
+            new CommandReply(text, color: color, font: MyFontEnum.White, broadcast: true);
 
-        public CommandReply WithColor(Color color) => new CommandReply(Text, color, Font, Author, Broadcast);
-        public CommandReply WithFont(string font) => new CommandReply(Text, Color, font, Author, Broadcast);
-        public CommandReply WithAuthor(string author) => new CommandReply(Text, Color, Font, author, Broadcast);
-        public CommandReply AsBroadcast(bool broadcast = true) => new CommandReply(Text, Color, Font, Author, broadcast);
+        public CommandReply WithColor(Color color) =>
+            new CommandReply(Text, color, Font, Author, Broadcast);
+
+        public CommandReply WithFont(string font) =>
+            new CommandReply(Text, Color, font, Author, Broadcast);
+
+        public CommandReply WithAuthor(string author) =>
+            new CommandReply(Text, Color, Font, author, Broadcast);
+
+        public CommandReply AsBroadcast(bool broadcast = true) =>
+            new CommandReply(Text, Color, Font, Author, broadcast);
     }
 }

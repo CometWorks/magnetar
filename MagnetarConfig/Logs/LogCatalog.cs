@@ -75,7 +75,11 @@ internal sealed class LogCatalog
 
     private void ScanGameLogs()
     {
-        List<LogFileInfo> game = Discover(binding?.DataDir, "SpaceEngineersDedicated*.log", LogGroup.Game);
+        List<LogFileInfo> game = Discover(
+            binding?.DataDir,
+            "SpaceEngineersDedicated*.log",
+            LogGroup.Game
+        );
         // The DS overwrites SpaceEngineersDedicated.log per start; the newest wins.
         LogFileInfo newest = game.OrderByDescending(f => f.LastWrite).FirstOrDefault();
         if (newest != null)
@@ -106,25 +110,41 @@ internal sealed class LogCatalog
         {
             paths = Directory.GetFiles(dir, pattern);
         }
-        catch (IOException) { return result; }
-        catch (UnauthorizedAccessException) { return result; }
+        catch (IOException)
+        {
+            return result;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return result;
+        }
 
         foreach (string path in paths)
         {
             FileInfo fi;
-            try { fi = new FileInfo(path); }
-            catch (IOException) { continue; }
-            catch (UnauthorizedAccessException) { continue; }
-
-            result.Add(new LogFileInfo
+            try
             {
-                Path = path,
-                Group = group,
-                LastWrite = fi.LastWriteTimeUtc,
-                Size = fi.Exists ? fi.Length : 0,
-            });
+                fi = new FileInfo(path);
+            }
+            catch (IOException)
+            {
+                continue;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                continue;
+            }
+
+            result.Add(
+                new LogFileInfo
+                {
+                    Path = path,
+                    Group = group,
+                    LastWrite = fi.LastWriteTimeUtc,
+                    Size = fi.Exists ? fi.Length : 0,
+                }
+            );
         }
         return result;
     }
-
 }

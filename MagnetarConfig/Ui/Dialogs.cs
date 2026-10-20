@@ -14,8 +14,12 @@ internal static class Dialogs
         MessageBox.ErrorQuery(title, "\n" + message + "\n", "OK");
 
     /// <summary>Yes/No confirmation; returns true on Yes (button index 0).</summary>
-    public static bool Confirm(string title, string message, string yes = "Yes", string no = "No") =>
-        MessageBox.Query(title, "\n" + message + "\n", yes, no) == 0;
+    public static bool Confirm(
+        string title,
+        string message,
+        string yes = "Yes",
+        string no = "No"
+    ) => MessageBox.Query(title, "\n" + message + "\n", yes, no) == 0;
 
     // --- centered-question + left-aligned-details dialogs ---
     //
@@ -33,8 +37,13 @@ internal static class Dialogs
         QueryDetails(title, question, details, error: true, "OK");
 
     /// <summary>Yes/No confirmation with a left-aligned detail block; true on Yes (button index 0).</summary>
-    public static bool ConfirmDetails(string title, string question, string details, string yes = "Yes", string no = "No") =>
-        QueryDetails(title, question, details, error: false, yes, no) == 0;
+    public static bool ConfirmDetails(
+        string title,
+        string question,
+        string details,
+        string yes = "Yes",
+        string no = "No"
+    ) => QueryDetails(title, question, details, error: false, yes, no) == 0;
 
     /// <summary>
     /// Destructive confirmation rendered in the error theme. The safe option is
@@ -42,9 +51,22 @@ internal static class Dialogs
     /// fallback — only an explicit click on <paramref name="confirmLabel"/> returns
     /// true. Use for irreversible actions (deletes) so a stray Enter/Esc is safe.
     /// </summary>
-    public static bool ConfirmDestructive(string title, string question, string details, string confirmLabel, string cancelLabel = "No") =>
-        QueryDetailsCore(title, question, details, error: true, defaultButton: 0, escButton: 0,
-            new[] { cancelLabel, confirmLabel }) == 1;
+    public static bool ConfirmDestructive(
+        string title,
+        string question,
+        string details,
+        string confirmLabel,
+        string cancelLabel = "No"
+    ) =>
+        QueryDetailsCore(
+            title,
+            question,
+            details,
+            error: true,
+            defaultButton: 0,
+            escButton: 0,
+            new[] { cancelLabel, confirmLabel }
+        ) == 1;
 
     /// <summary>
     /// Modal with a centered <paramref name="question"/> header sitting over a
@@ -52,8 +74,22 @@ internal static class Dialogs
     /// along the bottom (first is the default). Returns the clicked button index,
     /// or the last index on Esc. Pass a null/empty question or details to omit it.
     /// </summary>
-    public static int QueryDetails(string title, string question, string details, bool error, params string[] buttons) =>
-        QueryDetailsCore(title, question, details, error, defaultButton: 0, escButton: buttons.Length - 1, buttons);
+    public static int QueryDetails(
+        string title,
+        string question,
+        string details,
+        bool error,
+        params string[] buttons
+    ) =>
+        QueryDetailsCore(
+            title,
+            question,
+            details,
+            error,
+            defaultButton: 0,
+            escButton: buttons.Length - 1,
+            buttons
+        );
 
     /// <summary>
     /// Core of <see cref="QueryDetails"/>. <paramref name="defaultButton"/> is the
@@ -62,7 +98,15 @@ internal static class Dialogs
     /// confirm (Enter=Yes, Esc=No) but coincide for a destructive confirm so both
     /// resolve to the safe option.
     /// </summary>
-    private static int QueryDetailsCore(string title, string question, string details, bool error, int defaultButton, int escButton, string[] buttons)
+    private static int QueryDetailsCore(
+        string title,
+        string question,
+        string details,
+        bool error,
+        int defaultButton,
+        int escButton,
+        string[] buttons
+    )
     {
         int qLines = string.IsNullOrEmpty(question) ? 0 : question.Split('\n').Length;
         int dLines = string.IsNullOrEmpty(details) ? 0 : details.Split('\n').Length;
@@ -70,7 +114,10 @@ internal static class Dialogs
 
         int Longest(string s) => string.IsNullOrEmpty(s) ? 0 : s.Split('\n').Max(l => l.Length);
         int buttonsWidth = buttons.Sum(b => b.Length + 4) + Math.Max(0, buttons.Length - 1);
-        int content = Math.Max(Math.Max(Longest(question), Longest(details)), Math.Max(buttonsWidth, title.Length));
+        int content = Math.Max(
+            Math.Max(Longest(question), Longest(details)),
+            Math.Max(buttonsWidth, title.Length)
+        );
 
         int width = Math.Clamp(content + 6, 44, Math.Max(44, Application.Driver.Cols - 6));
         int height = Math.Min(qLines + gap + dLines + 4, Math.Max(7, Application.Driver.Rows - 2));
@@ -81,26 +128,30 @@ internal static class Dialogs
         };
 
         if (qLines > 0)
-            dlg.Add(new Label(question)
-            {
-                X = 0,
-                Y = 0,
-                Width = Dim.Fill(),
-                Height = qLines,
-                TextAlignment = TextAlignment.Centered,
-                AutoSize = false,
-            });
+            dlg.Add(
+                new Label(question)
+                {
+                    X = 0,
+                    Y = 0,
+                    Width = Dim.Fill(),
+                    Height = qLines,
+                    TextAlignment = TextAlignment.Centered,
+                    AutoSize = false,
+                }
+            );
 
         if (dLines > 0)
-            dlg.Add(new Label(details)
-            {
-                X = 1,
-                Y = qLines + gap,
-                Width = Dim.Fill(1),
-                Height = dLines,
-                TextAlignment = TextAlignment.Left,
-                AutoSize = false,
-            });
+            dlg.Add(
+                new Label(details)
+                {
+                    X = 1,
+                    Y = qLines + gap,
+                    Width = Dim.Fill(1),
+                    Height = dLines,
+                    TextAlignment = TextAlignment.Left,
+                    AutoSize = false,
+                }
+            );
 
         int result = escButton;
         Button defaultBtn = null;
@@ -108,7 +159,11 @@ internal static class Dialogs
         {
             int idx = i;
             var button = new Button(buttons[i], is_default: i == defaultButton);
-            button.Clicked += () => { result = idx; Application.RequestStop(dlg); };
+            button.Clicked += () =>
+            {
+                result = idx;
+                Application.RequestStop(dlg);
+            };
             dlg.AddButton(button);
             if (i == defaultButton)
                 defaultBtn = button;
@@ -121,7 +176,13 @@ internal static class Dialogs
 
     /// <summary>Three-way pending-changes prompt: 0=Save, 1=Discard, 2=Cancel.</summary>
     public static int PendingChanges(string title) =>
-        MessageBox.Query(title, "\nThis document has unsaved changes.\n", "Save", "Discard", "Cancel");
+        MessageBox.Query(
+            title,
+            "\nThis document has unsaved changes.\n",
+            "Save",
+            "Discard",
+            "Cancel"
+        );
 
     /// <summary>
     /// Single-line text prompt; returns the entered text, or null on cancel.
@@ -129,24 +190,42 @@ internal static class Dialogs
     /// text; returning a non-null error message shows it and keeps the dialog open,
     /// so the caller only ever gets a value that passed validation (or null).
     /// </summary>
-    public static string Prompt(string title, string label, string initial = "", int width = 60,
-        Func<string, string> validate = null)
+    public static string Prompt(
+        string title,
+        string label,
+        string initial = "",
+        int width = 60,
+        Func<string, string> validate = null
+    )
     {
         var dlg = new Dialog(title, width, 9) { ColorScheme = TurboVisionTheme.Dialog };
         var lbl = new Label(label) { X = 1, Y = 1 };
-        var field = new TextField(initial ?? "") { X = 1, Y = 3, Width = Dim.Fill(2) };
+        var field = new TextField(initial ?? "")
+        {
+            X = 1,
+            Y = 3,
+            Width = Dim.Fill(2),
+        };
         string result = null;
         var ok = new Button("OK", true);
         ok.Clicked += () =>
         {
             string text = field.Text.ToString();
             string error = validate?.Invoke(text);
-            if (error != null) { Error("Invalid", error); return; }
+            if (error != null)
+            {
+                Error("Invalid", error);
+                return;
+            }
             result = text;
             Application.RequestStop(dlg);
         };
         var cancel = new Button("Cancel");
-        cancel.Clicked += () => { result = null; Application.RequestStop(dlg); };
+        cancel.Clicked += () =>
+        {
+            result = null;
+            Application.RequestStop(dlg);
+        };
         dlg.Add(lbl, field);
         dlg.AddButton(ok);
         dlg.AddButton(cancel);

@@ -9,12 +9,12 @@ namespace Magnetar.Config;
 /// <summary>Parsed command-line options (see Docs/MagnetarConfig.md §10).</summary>
 internal sealed class Cli
 {
-    public string DataDir;         // -path
-    public string ConfigDir;       // -config
-    public string MagnetarExe;     // -magnetar
-    public string Ds64Dir;         // -ds64
-    public bool NetDriver;         // -netdriver
-    public bool Diag;              // -diag (headless read-only report, no UI)
+    public string DataDir; // -path
+    public string ConfigDir; // -config
+    public string MagnetarExe; // -magnetar
+    public string Ds64Dir; // -ds64
+    public bool NetDriver; // -netdriver
+    public bool Diag; // -diag (headless read-only report, no UI)
     public bool Help;
     public string Error;
 
@@ -26,15 +26,29 @@ internal sealed class Cli
             string a = args[i];
             switch (a.ToLowerInvariant())
             {
-                case "-path": cli.DataDir = Next(args, ref i); break;
-                case "-config": cli.ConfigDir = Next(args, ref i); break;
-                case "-magnetar": cli.MagnetarExe = Next(args, ref i); break;
-                case "-ds64": cli.Ds64Dir = Next(args, ref i); break;
-                case "-netdriver": cli.NetDriver = true; break;
-                case "-diag": cli.Diag = true; break;
+                case "-path":
+                    cli.DataDir = Next(args, ref i);
+                    break;
+                case "-config":
+                    cli.ConfigDir = Next(args, ref i);
+                    break;
+                case "-magnetar":
+                    cli.MagnetarExe = Next(args, ref i);
+                    break;
+                case "-ds64":
+                    cli.Ds64Dir = Next(args, ref i);
+                    break;
+                case "-netdriver":
+                    cli.NetDriver = true;
+                    break;
+                case "-diag":
+                    cli.Diag = true;
+                    break;
                 case "-h":
                 case "-help":
-                case "--help": cli.Help = true; break;
+                case "--help":
+                    cli.Help = true;
+                    break;
                 default:
                     cli.Error = $"Unknown argument: {a}";
                     return cli;
@@ -75,7 +89,8 @@ internal sealed class Cli
 
     public static void PrintHelp()
     {
-        Console.WriteLine(@"MagnetarConfig — configure and operate a Magnetar-managed SE1 Dedicated Server.
+        Console.WriteLine(
+            @"MagnetarConfig — configure and operate a Magnetar-managed SE1 Dedicated Server.
 
 Usage: MagnetarConfig [options]
 
@@ -87,6 +102,7 @@ Usage: MagnetarConfig [options]
   -diag            Print a headless read-only instance report and exit.
   -help, -h        Show this help.
 
-With no -path/-config the tool opens an interactive instance picker.");
+With no -path/-config the tool opens an interactive instance picker."
+        );
     }
 }

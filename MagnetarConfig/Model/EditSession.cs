@@ -31,6 +31,7 @@ internal sealed class EditSession
 {
     private readonly IReadOnlyList<OptionDefinition> options;
     private string snapshot;
+
     // Cheap gate for IsDirty: set by NotifyChanged on any edit, cleared once the
     // content is confirmed equal to the snapshot again (or on save). Lets the ~1s
     // auto-save tick skip the expensive full-document serialization when the panel
@@ -95,10 +96,17 @@ internal sealed class EditSession
                 issues.Add(new OptionIssue(o.Id, error, true));
 
             // Non-blocking warnings do not prevent saving.
-            if (o.Kind == OptionKind.Enum && o.Choices != null && !o.Choices.Any(c =>
+            if (
+                o.Kind == OptionKind.Enum
+                && o.Choices != null
+                && !o.Choices.Any(c =>
                     c.XmlName.Equals(raw, StringComparison.OrdinalIgnoreCase)
-                    || c.Value.ToString() == raw))
-                issues.Add(new OptionIssue(o.Id, $"{o.Label}: '{raw}' is not a known value.", false));
+                    || c.Value.ToString() == raw
+                )
+            )
+                issues.Add(
+                    new OptionIssue(o.Id, $"{o.Label}: '{raw}' is not a known value.", false)
+                );
 
             if (o.Experimental && o.Kind == OptionKind.Bool && ConfigDocumentBase.ParseBool(raw))
                 issues.Add(new OptionIssue(o.Id, $"{o.Label} enables experimental mode.", false));
@@ -157,11 +165,14 @@ internal sealed class EditSession
             foreach ((string id, string label) in ports)
             {
                 OptionDefinition def = OptionRegistry.ById(id);
-                if (def == null) continue;
+                if (def == null)
+                    continue;
                 if (!ConfigDocumentBase.TryParseLong(Document.Get(def), out long p))
                     continue;
                 if (seen.TryGetValue(p, out string other))
-                    issues.Add(new OptionIssue(id, $"{label} collides with {other} (both {p}).", true));
+                    issues.Add(
+                        new OptionIssue(id, $"{label} collides with {other} (both {p}).", true)
+                    );
                 else
                     seen[p] = label;
             }

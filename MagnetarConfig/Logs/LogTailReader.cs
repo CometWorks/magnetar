@@ -101,8 +101,14 @@ internal sealed class LogTailReader
             AppendText(Decode(buffer, read));
             return read > 0;
         }
-        catch (IOException) { return false; }
-        catch (UnauthorizedAccessException) { return false; }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private FileStream Open() =>

@@ -10,9 +10,9 @@ namespace Magnetar.Config.Model;
 /// <summary>One enabled dev-folder plugin in the active profile.</summary>
 internal sealed class DevFolderEntry
 {
-    public string Id;         // == the source folder name (last path segment)
+    public string Id; // == the source folder name (last path segment)
     public bool DebugBuild = true;
-    public string Folder;     // resolved from the matching sources entry (may be null)
+    public string Folder; // resolved from the matching sources entry (may be null)
 }
 
 /// <summary>
@@ -80,14 +80,17 @@ internal sealed class PluginProfileDocument
     {
         return new XDocument(
             new XDeclaration("1.0", "utf-8", null),
-            new XElement("Profile",
+            new XElement(
+                "Profile",
                 new XAttribute(XNamespace.Xmlns + "xsi", Xsi.NamespaceName),
                 new XAttribute(XNamespace.Xmlns + "xsd", Xsd.NamespaceName),
                 new XElement("Name", name),
                 new XElement("GitHub"),
                 new XElement("DevFolder"),
                 new XElement("Local"),
-                new XElement("Mods")));
+                new XElement("Mods")
+            )
+        );
     }
 
     /// <summary>The profile's display name (<c>&lt;Name&gt;</c>); its key is <see cref="CleanKey"/> of it.</summary>
@@ -111,7 +114,10 @@ internal sealed class PluginProfileDocument
         {
             XElement mine = List(name);
             XElement theirs = source.Root.Element(name);
-            mine.ReplaceNodes(theirs?.Elements().Select(e => new XElement(e)) ?? System.Linq.Enumerable.Empty<XElement>());
+            mine.ReplaceNodes(
+                theirs?.Elements().Select(e => new XElement(e))
+                    ?? System.Linq.Enumerable.Empty<XElement>()
+            );
         }
     }
 
@@ -121,20 +127,32 @@ internal sealed class PluginProfileDocument
     /// </summary>
     public string CollectionsSignature()
     {
-        string Join(IEnumerable<string> vals) => string.Join(",",
-            (vals ?? System.Linq.Enumerable.Empty<string>())
-            .Select(v => (v ?? string.Empty).Trim())
-            .OrderBy(v => v, StringComparer.OrdinalIgnoreCase));
+        string Join(IEnumerable<string> vals) =>
+            string.Join(
+                ",",
+                (vals ?? System.Linq.Enumerable.Empty<string>())
+                    .Select(v => (v ?? string.Empty).Trim())
+                    .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+            );
 
-        string gh = Join(Root.Element("GitHub")?.Elements("GitHubPluginConfig").Select(e => e.Element("Id")?.Value));
-        string dev = Join(Root.Element("DevFolder")?.Elements("LocalFolderConfig").Select(e => e.Element("Id")?.Value));
+        string gh = Join(
+            Root.Element("GitHub")
+                ?.Elements("GitHubPluginConfig")
+                .Select(e => e.Element("Id")?.Value)
+        );
+        string dev = Join(
+            Root.Element("DevFolder")
+                ?.Elements("LocalFolderConfig")
+                .Select(e => e.Element("Id")?.Value)
+        );
         string loc = Join(Root.Element("Local")?.Elements("string").Select(e => e.Value));
         string mod = Join(Root.Element("Mods")?.Elements("unsignedLong").Select(e => e.Value));
         return $"GH[{gh}]|DEV[{dev}]|LOC[{loc}]|MOD[{mod}]";
     }
 
     /// <summary>Writes this profile to an explicit path (used by profile save/rename).</summary>
-    public void SaveTo(AtomicFile writer, string path) => writer.WriteText(path, XmlOut.ToXmlString(xml));
+    public void SaveTo(AtomicFile writer, string path) =>
+        writer.WriteText(path, XmlOut.ToXmlString(xml));
 
     private XElement Root => xml.Root;
 
@@ -152,8 +170,12 @@ internal sealed class PluginProfileDocument
     // --- local DLLs (Profile.Local: HashSet<string> of DLL file names) ---
 
     public IReadOnlyList<string> LocalDlls =>
-        Root.Element("Local")?.Elements("string").Select(e => e.Value.Trim())
-            .Where(v => v.Length > 0).ToList() ?? new List<string>();
+        Root.Element("Local")
+            ?.Elements("string")
+            .Select(e => e.Value.Trim())
+            .Where(v => v.Length > 0)
+            .ToList()
+        ?? new List<string>();
 
     public bool EnableLocalDll(string dllFileName)
     {
@@ -166,7 +188,8 @@ internal sealed class PluginProfileDocument
 
     public bool DisableLocalDll(string dllFileName)
     {
-        XElement removed = Root.Element("Local")?.Elements("string")
+        XElement removed = Root.Element("Local")
+            ?.Elements("string")
             .FirstOrDefault(e => IdEq(e.Value, dllFileName));
         if (removed == null)
             return false;
@@ -179,11 +202,15 @@ internal sealed class PluginProfileDocument
     // The manifest-file hint lives in the sources.xml LocalPlugin entry (its
     // File element); the profile's LocalFolderConfig carries only Id + DebugBuild.
     public IReadOnlyList<DevFolderEntry> DevFolders =>
-        Root.Element("DevFolder")?.Elements("LocalFolderConfig").Select(e => new DevFolderEntry
-        {
-            Id = e.Element("Id")?.Value?.Trim(),
-            DebugBuild = ConfigDocumentBase.ParseBool(e.Element("DebugBuild")?.Value),
-        }).ToList() ?? new List<DevFolderEntry>();
+        Root.Element("DevFolder")
+            ?.Elements("LocalFolderConfig")
+            .Select(e => new DevFolderEntry
+            {
+                Id = e.Element("Id")?.Value?.Trim(),
+                DebugBuild = ConfigDocumentBase.ParseBool(e.Element("DebugBuild")?.Value),
+            })
+            .ToList()
+        ?? new List<DevFolderEntry>();
 
     public bool EnableDevFolder(string id, bool debugBuild)
     {
@@ -191,15 +218,20 @@ internal sealed class PluginProfileDocument
         if (list.Elements("LocalFolderConfig").Any(e => IdEq(e.Element("Id")?.Value, id)))
             return false;
 
-        list.Add(new XElement("LocalFolderConfig",
-            new XElement("Id", id),
-            new XElement("DebugBuild", debugBuild ? "true" : "false")));
+        list.Add(
+            new XElement(
+                "LocalFolderConfig",
+                new XElement("Id", id),
+                new XElement("DebugBuild", debugBuild ? "true" : "false")
+            )
+        );
         return true;
     }
 
     public bool DisableDevFolder(string id)
     {
-        XElement removed = Root.Element("DevFolder")?.Elements("LocalFolderConfig")
+        XElement removed = Root.Element("DevFolder")
+            ?.Elements("LocalFolderConfig")
             .FirstOrDefault(e => IdEq(e.Element("Id")?.Value, id));
         if (removed == null)
             return false;
@@ -211,9 +243,12 @@ internal sealed class PluginProfileDocument
     // A plugin is enabled by naming its PluginData.Id in a <GitHubPluginConfig>.
 
     public IReadOnlyList<string> GitHubPlugins =>
-        Root.Element("GitHub")?.Elements("GitHubPluginConfig")
+        Root.Element("GitHub")
+            ?.Elements("GitHubPluginConfig")
             .Select(e => e.Element("Id")?.Value?.Trim())
-            .Where(v => !string.IsNullOrEmpty(v)).ToList() ?? new List<string>();
+            .Where(v => !string.IsNullOrEmpty(v))
+            .ToList()
+        ?? new List<string>();
 
     public bool EnableGitHub(string id)
     {
@@ -228,7 +263,8 @@ internal sealed class PluginProfileDocument
 
     public bool DisableGitHub(string id)
     {
-        XElement removed = Root.Element("GitHub")?.Elements("GitHubPluginConfig")
+        XElement removed = Root.Element("GitHub")
+            ?.Elements("GitHubPluginConfig")
             .FirstOrDefault(e => IdEq(e.Element("Id")?.Value, id));
         if (removed == null)
             return false;
@@ -244,5 +280,9 @@ internal sealed class PluginProfileDocument
     public void Save(AtomicFile writer) => writer.WriteText(FilePath, XmlOut.ToXmlString(xml));
 
     private static bool IdEq(string a, string b) =>
-        string.Equals((a ?? string.Empty).Trim(), (b ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase);
+        string.Equals(
+            (a ?? string.Empty).Trim(),
+            (b ?? string.Empty).Trim(),
+            StringComparison.OrdinalIgnoreCase
+        );
 }

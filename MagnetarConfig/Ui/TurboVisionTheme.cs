@@ -15,7 +15,8 @@ internal static class TurboVisionTheme
     public static ColorScheme Error { get; private set; }
     public static ColorScheme Desktop { get; private set; }
 
-    private static Terminal.Gui.Attribute A(Color fg, Color bg) => Terminal.Gui.Attribute.Make(fg, bg);
+    private static Terminal.Gui.Attribute A(Color fg, Color bg) =>
+        Terminal.Gui.Attribute.Make(fg, bg);
 
     public static void Apply()
     {

@@ -19,7 +19,11 @@ public class PluginConfigTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(dir, true); } catch { }
+        try
+        {
+            Directory.Delete(dir, true);
+        }
+        catch { }
     }
 
     [Fact]
@@ -28,15 +32,17 @@ public class PluginConfigTests : IDisposable
         string profilesDir = Path.Combine(dir, "Profiles");
         Directory.CreateDirectory(profilesDir);
         string path = Path.Combine(profilesDir, "Current.xml");
-        File.WriteAllText(path,
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<Profile>\n" +
-            "  <Name>Current</Name>\n" +
-            "  <GitHub><GitHubPluginConfig><Id>keep-me</Id></GitHubPluginConfig></GitHub>\n" +
-            "  <DevFolder />\n" +
-            "  <Local />\n" +
-            "  <Mods><unsignedLong>12345</unsignedLong></Mods>\n" +
-            "</Profile>\n");
+        File.WriteAllText(
+            path,
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                + "<Profile>\n"
+                + "  <Name>Current</Name>\n"
+                + "  <GitHub><GitHubPluginConfig><Id>keep-me</Id></GitHubPluginConfig></GitHub>\n"
+                + "  <DevFolder />\n"
+                + "  <Local />\n"
+                + "  <Mods><unsignedLong>12345</unsignedLong></Mods>\n"
+                + "</Profile>\n"
+        );
 
         PluginProfileDocument doc = PluginProfileDocument.Open(dir);
         Assert.True(doc.EnableLocalDll("Essentials.dll"));
@@ -44,8 +50,8 @@ public class PluginConfigTests : IDisposable
         doc.Save(new AtomicFile());
 
         string xml = File.ReadAllText(path);
-        Assert.Contains("keep-me", xml);              // GitHub preserved
-        Assert.Contains("12345", xml);                // Mods preserved
+        Assert.Contains("keep-me", xml); // GitHub preserved
+        Assert.Contains("12345", xml); // Mods preserved
         Assert.Contains("<string>Essentials.dll</string>", xml);
         Assert.Contains("<Id>my-plugin</Id>", xml);
         Assert.Contains("<DebugBuild>true</DebugBuild>", xml);
@@ -62,7 +68,7 @@ public class PluginConfigTests : IDisposable
     {
         PluginProfileDocument doc = PluginProfileDocument.Open(dir);
         Assert.True(doc.EnableLocalDll("Foo.dll"));
-        Assert.False(doc.EnableLocalDll("Foo.dll"));   // already present
+        Assert.False(doc.EnableLocalDll("Foo.dll")); // already present
         Assert.True(doc.DisableLocalDll("Foo.dll"));
         Assert.False(doc.DisableLocalDll("Foo.dll"));
         Assert.Empty(doc.LocalDlls);
@@ -74,12 +80,14 @@ public class PluginConfigTests : IDisposable
         string sourcesDir = Path.Combine(dir, "Sources");
         Directory.CreateDirectory(sourcesDir);
         string path = Path.Combine(sourcesDir, "sources.xml");
-        File.WriteAllText(path,
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<SourcesConfig>\n" +
-            "  <RemoteHubSources><RemoteHub><Name>MagnetarHub</Name></RemoteHub></RemoteHubSources>\n" +
-            "  <LocalPluginSources />\n" +
-            "</SourcesConfig>\n");
+        File.WriteAllText(
+            path,
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                + "<SourcesConfig>\n"
+                + "  <RemoteHubSources><RemoteHub><Name>MagnetarHub</Name></RemoteHub></RemoteHubSources>\n"
+                + "  <LocalPluginSources />\n"
+                + "</SourcesConfig>\n"
+        );
 
         PluginSourcesDocument doc = PluginSourcesDocument.Open(dir);
         Assert.True(doc.AddLocalPlugin("my-plugin", "/src/my-plugin"));
@@ -98,8 +106,8 @@ public class PluginConfigTests : IDisposable
         string local = Path.Combine(dir, "Local");
         Directory.CreateDirectory(local);
         File.WriteAllText(Path.Combine(local, "Essentials.dll"), "x");
-        File.WriteAllText(Path.Combine(local, "0Harmony.dll"), "x");        // implicit
-        File.WriteAllText(Path.Combine(local, "Quasar.Agent.dll"), "x");    // implicit
+        File.WriteAllText(Path.Combine(local, "0Harmony.dll"), "x"); // implicit
+        File.WriteAllText(Path.Combine(local, "Quasar.Agent.dll"), "x"); // implicit
 
         var plugins = new MagnetarPlugins(dir, new AtomicFile());
         var dlls = plugins.LocalDlls();
@@ -117,20 +125,22 @@ public class PluginConfigTests : IDisposable
         string profilesDir = Path.Combine(dir, "Profiles");
         Directory.CreateDirectory(profilesDir);
         string path = Path.Combine(profilesDir, "Current.xml");
-        File.WriteAllText(path,
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<Profile>\n  <Name>Current</Name>\n" +
-            "  <GitHub><GitHubPluginConfig><Id>keep-hub</Id></GitHubPluginConfig></GitHub>\n" +
-            "  <DevFolder />\n  <Local><string>Keep.dll</string></Local>\n  <Mods><unsignedLong>111</unsignedLong></Mods>\n</Profile>\n");
+        File.WriteAllText(
+            path,
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                + "<Profile>\n  <Name>Current</Name>\n"
+                + "  <GitHub><GitHubPluginConfig><Id>keep-hub</Id></GitHubPluginConfig></GitHub>\n"
+                + "  <DevFolder />\n  <Local><string>Keep.dll</string></Local>\n  <Mods><unsignedLong>111</unsignedLong></Mods>\n</Profile>\n"
+        );
 
         PluginProfileDocument doc = PluginProfileDocument.Open(dir);
         Assert.True(doc.EnableGitHub("cool-plugin-guid"));
-        Assert.False(doc.EnableGitHub("cool-plugin-guid"));   // idempotent
+        Assert.False(doc.EnableGitHub("cool-plugin-guid")); // idempotent
         doc.Save(new AtomicFile());
 
         string xml = File.ReadAllText(path);
-        Assert.Contains("keep-hub", xml);           // existing GitHub preserved
-        Assert.Contains("Keep.dll", xml);           // existing Local preserved
+        Assert.Contains("keep-hub", xml); // existing GitHub preserved
+        Assert.Contains("Keep.dll", xml); // existing Local preserved
         Assert.Contains("<Id>cool-plugin-guid</Id>", xml);
         // The tool no longer edits <Mods> (per-world Sandbox_config.sbc is
         // authoritative), but an existing entry must be preserved untouched.
@@ -149,13 +159,15 @@ public class PluginConfigTests : IDisposable
         string sourcesDir = Path.Combine(dir, "Sources");
         Directory.CreateDirectory(sourcesDir);
         string path = Path.Combine(sourcesDir, "sources.xml");
-        File.WriteAllText(path,
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<SourcesConfig>\n" +
-            "  <RemoteHubSources><RemoteHub><Name>MagnetarHub</Name><Repo>CometWorks/magnetar-hub</Repo>" +
-            "<Branch>main</Branch><LastCheck>2026-07-11T18:55:51Z</LastCheck><Hash>abc123</Hash>" +
-            "<Enabled>true</Enabled><Trusted>true</Trusted></RemoteHub></RemoteHubSources>\n" +
-            "</SourcesConfig>\n");
+        File.WriteAllText(
+            path,
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                + "<SourcesConfig>\n"
+                + "  <RemoteHubSources><RemoteHub><Name>MagnetarHub</Name><Repo>CometWorks/magnetar-hub</Repo>"
+                + "<Branch>main</Branch><LastCheck>2026-07-11T18:55:51Z</LastCheck><Hash>abc123</Hash>"
+                + "<Enabled>true</Enabled><Trusted>true</Trusted></RemoteHub></RemoteHubSources>\n"
+                + "</SourcesConfig>\n"
+        );
 
         PluginSourcesDocument doc = PluginSourcesDocument.Open(dir);
         Assert.True(doc.AddRemoteHub("Extra", "owner/extra-hub", "dev"));
@@ -164,8 +176,8 @@ public class PluginConfigTests : IDisposable
         doc.Save(new AtomicFile());
 
         string xml = File.ReadAllText(path);
-        Assert.Contains("abc123", xml);                 // Magnetar-managed Hash preserved
-        Assert.Contains("2026-07-11T18:55:51Z", xml);   // LastCheck preserved
+        Assert.Contains("abc123", xml); // Magnetar-managed Hash preserved
+        Assert.Contains("2026-07-11T18:55:51Z", xml); // LastCheck preserved
         Assert.Contains("owner/extra-hub", xml);
 
         PluginSourcesDocument re = PluginSourcesDocument.Open(dir);
@@ -209,8 +221,10 @@ public class PluginConfigTests : IDisposable
         string devFolder = Path.Combine(dir, "src", "cool-plugin");
         Directory.CreateDirectory(devFolder);
         string manifest = Path.Combine(devFolder, "CoolPlugin.xml");
-        File.WriteAllText(manifest,
-            "<?xml version=\"1.0\"?><PluginData><Id>whatever</Id><FriendlyName>Cool Plugin</FriendlyName></PluginData>");
+        File.WriteAllText(
+            manifest,
+            "<?xml version=\"1.0\"?><PluginData><Id>whatever</Id><FriendlyName>Cool Plugin</FriendlyName></PluginData>"
+        );
 
         var plugins = new MagnetarPlugins(dir, new AtomicFile());
         string id = plugins.AddDevFolderFromManifest(manifest);
@@ -250,6 +264,9 @@ public class PluginConfigTests : IDisposable
         // Removal unregisters and disables in one shot.
         plugins.RemoveDevFolder(p);
         Assert.Empty(plugins.DevFolderPlugins());
-        Assert.DoesNotContain("<Id>cool-plugin</Id>", File.ReadAllText(PluginProfileDocument.PathFor(dir)));
+        Assert.DoesNotContain(
+            "<Id>cool-plugin</Id>",
+            File.ReadAllText(PluginProfileDocument.PathFor(dir))
+        );
     }
 }

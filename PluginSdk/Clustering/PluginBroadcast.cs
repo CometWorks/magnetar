@@ -11,8 +11,10 @@ namespace PluginSdk.Clustering
     {
         public string Node { get; set; }
         public long Incarnation { get; set; }
+
         /// <summary>"Regular" or "WorldAuthority", as in <see cref="NodeContext.Role"/>.</summary>
         public string Role { get; set; }
+
         /// <summary>The fence a message to this node is addressed to (target kind <see cref="PluginTargetKind.Node"/>).</summary>
         public OwnerFence Fence { get; set; }
     }
@@ -23,9 +25,13 @@ namespace PluginSdk.Clustering
         /// <summary>Success when every addressed node answered Success; otherwise the first failure's code,
         /// or the reason nothing was sent (Unavailable, Unsupported, Invalid).</summary>
         public PluginResultCode Code { get; set; }
+
         /// <summary>Node id -> that node's handler result (its reply payload, or why it failed).</summary>
-        public IReadOnlyDictionary<string, PluginResult> Nodes { get; set; } = new Dictionary<string, PluginResult>();
-        public static PluginBroadcastResult Failure(PluginResultCode code) => new PluginBroadcastResult { Code = code };
+        public IReadOnlyDictionary<string, PluginResult> Nodes { get; set; } =
+            new Dictionary<string, PluginResult>();
+
+        public static PluginBroadcastResult Failure(PluginResultCode code) =>
+            new PluginBroadcastResult { Code = code };
     }
 
     /// <summary>
@@ -35,7 +41,14 @@ namespace PluginSdk.Clustering
     /// </summary>
     public interface IPluginClusterBroadcastProvider
     {
-        Task<PluginBroadcastResult> BroadcastAsync(string plugin, string topic, byte[] payload, Guid operationId,
-            bool includeWorldAuthority, TimeSpan timeout, CancellationToken cancellationToken);
+        Task<PluginBroadcastResult> BroadcastAsync(
+            string plugin,
+            string topic,
+            byte[] payload,
+            Guid operationId,
+            bool includeWorldAuthority,
+            TimeSpan timeout,
+            CancellationToken cancellationToken
+        );
     }
 }

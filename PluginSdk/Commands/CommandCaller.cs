@@ -25,7 +25,13 @@ namespace PluginSdk.Commands
         /// console rather than a player.</summary>
         public bool IsConsole { get; }
 
-        public CommandCaller(ulong steamId, long identityId, string name, MyPromoteLevel promoteLevel, bool isConsole = false)
+        public CommandCaller(
+            ulong steamId,
+            long identityId,
+            string name,
+            MyPromoteLevel promoteLevel,
+            bool isConsole = false
+        )
         {
             SteamId = steamId;
             IdentityId = identityId;

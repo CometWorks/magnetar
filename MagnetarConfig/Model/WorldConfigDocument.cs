@@ -21,9 +21,7 @@ internal sealed class WorldConfigDocument : ConfigDocumentBase
     private static readonly XNamespace Xsd = "http://www.w3.org/2001/XMLSchema";
 
     private WorldConfigDocument(string filePath, XDocument xml, bool existsOnDisk)
-        : base(filePath, xml, existsOnDisk)
-    {
-    }
+        : base(filePath, xml, existsOnDisk) { }
 
     public static WorldConfigDocument Open(string filePath)
     {
@@ -40,10 +38,13 @@ internal sealed class WorldConfigDocument : ConfigDocumentBase
     {
         return new XDocument(
             new XDeclaration("1.0", "utf-8", null),
-            new XElement(RootName,
+            new XElement(
+                RootName,
                 new XAttribute(XNamespace.Xmlns + "xsi", Xsi.NamespaceName),
                 new XAttribute(XNamespace.Xmlns + "xsd", Xsd.NamespaceName),
-                new XElement(SettingsName)));
+                new XElement(SettingsName)
+            )
+        );
     }
 
     private XElement Root => Xml.Root;
@@ -113,13 +114,15 @@ internal sealed class WorldConfigDocument : ConfigDocumentBase
             if (list.Items.Any(m => m.PublishedFileId == id))
                 continue;
 
-            list.Items.Add(new ModItem
-            {
-                PublishedFileId = id,
-                FriendlyName = (string)item.Attribute("FriendlyName") ?? string.Empty,
-                ServiceName = item.Element("PublishedServiceName")?.Value ?? "Steam",
-                IsDependency = ParseBool(item.Element("IsDependency")?.Value),
-            });
+            list.Items.Add(
+                new ModItem
+                {
+                    PublishedFileId = id,
+                    FriendlyName = (string)item.Attribute("FriendlyName") ?? string.Empty,
+                    ServiceName = item.Element("PublishedServiceName")?.Value ?? "Steam",
+                    IsDependency = ParseBool(item.Element("IsDependency")?.Value),
+                }
+            );
         }
         return list;
     }
@@ -146,12 +149,19 @@ internal sealed class WorldConfigDocument : ConfigDocumentBase
         foreach (ModItem mod in list.Items.Where(m => m.PublishedFileId != 0))
         {
             string id = mod.PublishedFileId.ToString();
-            mods.Add(new XElement("ModItem",
-                new XAttribute("FriendlyName", mod.FriendlyName ?? string.Empty),
-                new XElement("Name", id + ".sbm"),
-                new XElement("PublishedFileId", id),
-                new XElement("PublishedServiceName", string.IsNullOrEmpty(mod.ServiceName) ? "Steam" : mod.ServiceName),
-                new XElement("IsDependency", mod.IsDependency ? "true" : "false")));
+            mods.Add(
+                new XElement(
+                    "ModItem",
+                    new XAttribute("FriendlyName", mod.FriendlyName ?? string.Empty),
+                    new XElement("Name", id + ".sbm"),
+                    new XElement("PublishedFileId", id),
+                    new XElement(
+                        "PublishedServiceName",
+                        string.IsNullOrEmpty(mod.ServiceName) ? "Steam" : mod.ServiceName
+                    ),
+                    new XElement("IsDependency", mod.IsDependency ? "true" : "false")
+                )
+            );
         }
     }
 

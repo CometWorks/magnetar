@@ -8,8 +8,8 @@ internal enum ServerState
     Starting,
     Running,
     Stopping,
-    StalePidFile,   // pid file present but the process is gone
-    Foreign,        // pid alive but identity does not match this instance
+    StalePidFile, // pid file present but the process is gone
+    Foreign, // pid alive but identity does not match this instance
 }
 
 /// <summary>A snapshot of the managed instance's process state.</summary>
@@ -20,9 +20,13 @@ internal sealed class ServerStatus
     public DateTime? StartedAt { get; set; }
     public string Detail { get; set; } = string.Empty;
 
-    public bool IsAlive => State == ServerState.Running || State == ServerState.Starting || State == ServerState.Stopping;
+    public bool IsAlive =>
+        State == ServerState.Running
+        || State == ServerState.Starting
+        || State == ServerState.Stopping;
 
-    public TimeSpan? Uptime => StartedAt.HasValue ? DateTime.Now - StartedAt.Value : (TimeSpan?)null;
+    public TimeSpan? Uptime =>
+        StartedAt.HasValue ? DateTime.Now - StartedAt.Value : (TimeSpan?)null;
 
     public override string ToString()
     {
@@ -31,11 +35,16 @@ internal sealed class ServerStatus
             case ServerState.Running:
                 string up = Uptime.HasValue ? $" up {FormatUptime(Uptime.Value)}" : string.Empty;
                 return $"RUNNING pid {Pid}{up}";
-            case ServerState.Starting: return "STARTING…";
-            case ServerState.Stopping: return "STOPPING…";
-            case ServerState.StalePidFile: return "STALE PID FILE";
-            case ServerState.Foreign: return $"FOREIGN pid {Pid}";
-            default: return "STOPPED";
+            case ServerState.Starting:
+                return "STARTING…";
+            case ServerState.Stopping:
+                return "STOPPING…";
+            case ServerState.StalePidFile:
+                return "STALE PID FILE";
+            case ServerState.Foreign:
+                return $"FOREIGN pid {Pid}";
+            default:
+                return "STOPPED";
         }
     }
 

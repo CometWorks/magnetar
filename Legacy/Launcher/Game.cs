@@ -58,7 +58,8 @@ internal static class Game
             "m_handleInputPlugins",
             BindingFlags.Static | BindingFlags.NonPublic
         );
-        var m_handleInputPlugins = (List<IHandleInputPlugin>)m_handleInputPluginsField.GetValue(null);
+        var m_handleInputPlugins =
+            (List<IHandleInputPlugin>)m_handleInputPluginsField.GetValue(null);
         m_handleInputPlugins.Add(plugin);
     }
 
@@ -125,11 +126,11 @@ internal static class Game
         Assembly dsAssembly = Assembly.LoadFrom(
             Path.Combine(MyFileSystem.ExePath, "SpaceEngineersDedicated.exe")
         );
-        Type myProgram = dsAssembly.GetType("SpaceEngineersDedicated.MyProgram", throwOnError: true);
-        MethodInfo main = myProgram.GetMethod(
-            "Main",
-            BindingFlags.Static | BindingFlags.NonPublic
+        Type myProgram = dsAssembly.GetType(
+            "SpaceEngineersDedicated.MyProgram",
+            throwOnError: true
         );
+        MethodInfo main = myProgram.GetMethod("Main", BindingFlags.Static | BindingFlags.NonPublic);
         main.Invoke(null, [args]);
     }
 

@@ -8,10 +8,10 @@ namespace Magnetar.Config.Io;
 /// <summary>A Windows Magnetar launcher variant the tool can configure.</summary>
 internal sealed class MagnetarLauncher
 {
-    public string Name;       // assembly / exe base name, e.g. "MagnetarLegacy"
-    public string Label;      // human label for the picker
-    public string ConfigDir;  // where this launcher reads its config.xml / pid
-    public string ExePath;    // launcher executable to start/stop
+    public string Name; // assembly / exe base name, e.g. "MagnetarLegacy"
+    public string Label; // human label for the picker
+    public string ConfigDir; // where this launcher reads its config.xml / pid
+    public string ExePath; // launcher executable to start/stop
 }
 
 /// <summary>
@@ -23,8 +23,7 @@ internal sealed class MagnetarLauncher
 /// </summary>
 internal static class InstanceLocator
 {
-    private static string Home =>
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    private static string Home => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
     /// <summary>Default DS data dir (holds the cfg + Saves).</summary>
     public static string DefaultDataDir()
@@ -32,7 +31,8 @@ internal static class InstanceLocator
         if (PlatformPaths.IsWindows)
             return Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "SpaceEngineersDedicated");
+                "SpaceEngineersDedicated"
+            );
         return Path.Combine(Home, ".config", "SpaceEngineersDedicated");
     }
 
@@ -50,11 +50,12 @@ internal static class InstanceLocator
         get
         {
             string exe = Environment.ProcessPath;
-            string dir = !string.IsNullOrEmpty(exe)
-                         && Path.GetFileNameWithoutExtension(exe)
-                             .Equals("MagnetarConfig", StringComparison.OrdinalIgnoreCase)
-                ? Path.GetDirectoryName(exe)
-                : AppContext.BaseDirectory;
+            string dir =
+                !string.IsNullOrEmpty(exe)
+                && Path.GetFileNameWithoutExtension(exe)
+                    .Equals("MagnetarConfig", StringComparison.OrdinalIgnoreCase)
+                    ? Path.GetDirectoryName(exe)
+                    : AppContext.BaseDirectory;
             return Path.GetFullPath(dir).TrimEnd(Path.DirectorySeparatorChar);
         }
     }
@@ -95,21 +96,25 @@ internal static class InstanceLocator
             return launchers;
 
         string root = InstallRoot;
-        foreach ((string name, string label) in new[]
-                 {
-                     ("MagnetarLegacy", "Legacy (.NET Framework 4.8)"),
-                     ("MagnetarInterim", "Interim (.NET 10)"),
-                 })
+        foreach (
+            (string name, string label) in new[]
+            {
+                ("MagnetarLegacy", "Legacy (.NET Framework 4.8)"),
+                ("MagnetarInterim", "Interim (.NET 10)"),
+            }
+        )
         {
             string exe = Path.Combine(root, name + ".exe");
             if (File.Exists(exe))
-                launchers.Add(new MagnetarLauncher
-                {
-                    Name = name,
-                    Label = label,
-                    ExePath = exe,
-                    ConfigDir = LauncherConfigDir(root),
-                });
+                launchers.Add(
+                    new MagnetarLauncher
+                    {
+                        Name = name,
+                        Label = label,
+                        ExePath = exe,
+                        ConfigDir = LauncherConfigDir(root),
+                    }
+                );
         }
         return launchers;
     }
@@ -141,10 +146,25 @@ internal static class InstanceLocator
         }
         else
         {
-            yield return Path.Combine(Home, ".steam", "steam", "steamapps", "common",
-                "SpaceEngineersDedicatedServer", "DedicatedServer64");
-            yield return Path.Combine(Home, ".local", "share", "Steam", "steamapps", "common",
-                "SpaceEngineersDedicatedServer", "DedicatedServer64");
+            yield return Path.Combine(
+                Home,
+                ".steam",
+                "steam",
+                "steamapps",
+                "common",
+                "SpaceEngineersDedicatedServer",
+                "DedicatedServer64"
+            );
+            yield return Path.Combine(
+                Home,
+                ".local",
+                "share",
+                "Steam",
+                "steamapps",
+                "common",
+                "SpaceEngineersDedicatedServer",
+                "DedicatedServer64"
+            );
         }
     }
 
@@ -154,7 +174,7 @@ internal static class InstanceLocator
             return false;
         // The DS launcher is the reliable marker.
         return File.Exists(Path.Combine(dir, "SpaceEngineersDedicated.exe"))
-               || File.Exists(Path.Combine(dir, "VRage.dll"));
+            || File.Exists(Path.Combine(dir, "VRage.dll"));
     }
 
     /// <summary>Fills in any unset binding fields with their resolved defaults.</summary>

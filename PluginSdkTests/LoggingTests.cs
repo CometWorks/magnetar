@@ -18,6 +18,7 @@ namespace PluginSdk.Tests
         private sealed class CapturingSink : ILogSink
         {
             public readonly List<LogEntry> Entries = new List<LogEntry>();
+
             public void Write(in LogEntry entry) => Entries.Add(entry);
         }
 
@@ -27,10 +28,15 @@ namespace PluginSdk.Tests
             var sink = new CapturingSink();
             var log = new Logger("observer-test", sink);
             int observed = 0;
-            Action<LogEntry> broken = e => { if (e.PluginName == "observer-test") throw new InvalidOperationException(); };
+            Action<LogEntry> broken = e =>
+            {
+                if (e.PluginName == "observer-test")
+                    throw new InvalidOperationException();
+            };
             Action<LogEntry> recursive = e =>
             {
-                if (e.PluginName != "observer-test") return;
+                if (e.PluginName != "observer-test")
+                    return;
                 observed++;
                 log.Error("nested");
             };
@@ -147,8 +153,15 @@ namespace PluginSdk.Tests
         public void QuasarLogSink_NestsDataPayloadAsJsonObject()
         {
             var ts = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var entry = new LogEntry(ts, LogLevel.Info, "P", 1, "downloaded",
-                null, new { count = 42, name = "mods" });
+            var entry = new LogEntry(
+                ts,
+                LogLevel.Info,
+                "P",
+                1,
+                "downloaded",
+                null,
+                new { count = 42, name = "mods" }
+            );
 
             var json = QuasarLogSink.Format(in entry);
 
@@ -163,8 +176,15 @@ namespace PluginSdk.Tests
         public void MagnetarLogSink_AppendsDataPayloadAsJsonText()
         {
             var ts = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var entry = new LogEntry(ts, LogLevel.Info, "MyPlugin", 7, "downloaded",
-                null, new { count = 42 });
+            var entry = new LogEntry(
+                ts,
+                LogLevel.Info,
+                "MyPlugin",
+                7,
+                "downloaded",
+                null,
+                new { count = 42 }
+            );
 
             var line = MagnetarLogSink.Format(in entry);
 
@@ -176,8 +196,14 @@ namespace PluginSdk.Tests
         public void QuasarLogSink_IncludesExceptionWhenPresent()
         {
             Exception ex;
-            try { throw new InvalidOperationException("boom"); }
-            catch (Exception caught) { ex = caught; }
+            try
+            {
+                throw new InvalidOperationException("boom");
+            }
+            catch (Exception caught)
+            {
+                ex = caught;
+            }
 
             var ts = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var entry = new LogEntry(ts, LogLevel.Error, "P", 1, "failed", ex, null);
@@ -196,7 +222,13 @@ namespace PluginSdk.Tests
             var sink = new QuasarLogSink(lines.Add);
             var entry = new LogEntry(
                 new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                LogLevel.Debug, "P", 1, "x", null, null);
+                LogLevel.Debug,
+                "P",
+                1,
+                "x",
+                null,
+                null
+            );
 
             sink.Write(in entry);
 
@@ -208,7 +240,9 @@ namespace PluginSdk.Tests
         [Fact]
         public void LogEnvironment_SelectsSinkFromEnvironmentVariable()
         {
-            var original = Environment.GetEnvironmentVariable(LogEnvironment.QuasarEnvironmentVariable);
+            var original = Environment.GetEnvironmentVariable(
+                LogEnvironment.QuasarEnvironmentVariable
+            );
             try
             {
                 Environment.SetEnvironmentVariable(LogEnvironment.QuasarEnvironmentVariable, "1");
@@ -221,7 +255,10 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                Environment.SetEnvironmentVariable(LogEnvironment.QuasarEnvironmentVariable, original);
+                Environment.SetEnvironmentVariable(
+                    LogEnvironment.QuasarEnvironmentVariable,
+                    original
+                );
             }
         }
     }
