@@ -22,45 +22,105 @@ internal static class ManagedPreparation
     internal static void Export(string output, string[] corePlugins)
     {
 #if NETFRAMEWORK
-        throw new PlatformNotSupportedException("Managed preparation requires MagnetarInterim on Linux.");
+        throw new PlatformNotSupportedException(
+            "Managed preparation requires MagnetarInterim on Linux."
+        );
 #else
-        if (!OperatingSystem.IsLinux()) throw new PlatformNotSupportedException("Managed preparation currently targets Linux/CoreCLR.");
-        if (ManagedPluginConfiguration.Required || PluginSdk.Clustering.PluginCluster.IsClusterProcess)
-            throw new InvalidOperationException("Run preparation outside a managed cluster process.");
+        if (!OperatingSystem.IsLinux())
+            throw new PlatformNotSupportedException(
+                "Managed preparation currently targets Linux/CoreCLR."
+            );
+        if (
+            ManagedPluginConfiguration.Required
+            || PluginSdk.Clustering.PluginCluster.IsClusterProcess
+        )
+            throw new InvalidOperationException(
+                "Run preparation outside a managed cluster process."
+            );
         var manager = ConfigManager.Instance;
         var selected = new SortedDictionary<string, PluginData>(StringComparer.Ordinal);
-        foreach (string id in manager.Profiles.Current.GetPluginIDs().Concat(corePlugins).Concat(new[] { "direct-transport" }))
+        foreach (
+            string id in manager
+                .Profiles.Current.GetPluginIDs()
+                .Concat(corePlugins)
+                .Concat(new[] { "direct-transport" })
+        )
             Add(id);
         void Add(string id)
         {
             SafeName(id);
-            if (selected.ContainsKey(id)) return;
-            if (!manager.List.TryGetPlugin(id, out var data)) throw new InvalidDataException("Selected plugin is unavailable: " + id);
-            if (data is ModPlugin) throw new InvalidDataException("Managed preparation does not export Workshop mods: " + id);
-            if (id is "cluster-node" or "cluster-wa") throw new InvalidDataException("Cluster role plugins belong to the cluster runtime package: " + id);
+            if (selected.ContainsKey(id))
+                return;
+            if (!manager.List.TryGetPlugin(id, out var data))
+                throw new InvalidDataException("Selected plugin is unavailable: " + id);
+            if (data is ModPlugin)
+                throw new InvalidDataException(
+                    "Managed preparation does not export Workshop mods: " + id
+                );
+            if (id is "cluster-node" or "cluster-wa")
+                throw new InvalidDataException(
+                    "Cluster role plugins belong to the cluster runtime package: " + id
+                );
             selected.Add(id, data);
-            foreach (string dependency in data.DependencyIds ?? []) Add(dependency);
+            foreach (string dependency in data.DependencyIds ?? [])
+                Add(dependency);
         }
 
         var loaded = new List<(PluginData Data, Assembly Assembly, GitHubPlugin Metadata)>();
         foreach (var data in selected.Values)
         {
             GitHubPlugin metadata = ReadMetadata(data, manager.Profiles.Current);
-            if (!data.TryLoadAssembly(out var assembly)) throw new InvalidDataException("Failed to prepare plugin: " + data.Id);
-            if (loaded.Any(item => item.Assembly == assembly)) throw new InvalidDataException("Ambiguous assembly ownership: " + data.Id);
+            if (!data.TryLoadAssembly(out var assembly))
+                throw new InvalidDataException("Failed to prepare plugin: " + data.Id);
+            // The checkout may have moved while the build read it.
+            if (
+                data is LocalFolderPlugin folder
+                && DevFolderProvenance.CleanHead(Name(data), folder.Folder) != metadata.Commit
+            )
+                throw new InvalidDataException(
+                    "Dev folder "
+                        + Name(data)
+                        + " moved off commit "
+                        + metadata.Commit
+                        + " during preparation."
+                );
+            if (loaded.Any(item => item.Assembly == assembly))
+                throw new InvalidDataException("Ambiguous assembly ownership: " + data.Id);
             loaded.Add((data, assembly, metadata));
         }
         foreach (var item in loaded.Where(item => item.Data is LocalPlugin))
-            if (loaded.Any(other => other.Data.Id != item.Data.Id
-                    && Path.GetDirectoryName(other.Assembly.Location) == Path.GetDirectoryName(item.Assembly.Location)))
-                throw new InvalidDataException("Local plugins require separate bundle directories: " + item.Data.Id);
+            if (
+                loaded.Any(other =>
+                    other.Data.Id != item.Data.Id
+                    && Path.GetDirectoryName(other.Assembly.Location)
+                        == Path.GetDirectoryName(item.Assembly.Location)
+                )
+            )
+                throw new InvalidDataException(
+                    "Local plugins require separate bundle directories: " + item.Data.Id
+                );
         string outputParent = Path.GetDirectoryName(output);
-        foreach (string source in loaded.Select(item => Path.GetDirectoryName(item.Assembly.Location))
-                     .Concat(loaded.SelectMany(item => item.Data.GetNamedAssets().Values).Where(Directory.Exists)))
+        foreach (
+            string source in loaded
+                .Select(item => Path.GetDirectoryName(item.Assembly.Location))
+                .Concat(
+                    loaded
+                        .SelectMany(item => item.Data.GetNamedAssets().Values)
+                        .Where(Directory.Exists)
+                )
+        )
         {
             string fullSource = Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar);
-            if (outputParent == fullSource || outputParent.StartsWith(fullSource + Path.DirectorySeparatorChar, StringComparison.Ordinal))
-                throw new InvalidDataException("Preparation output must be outside plugin and asset source directories.");
+            if (
+                outputParent == fullSource
+                || outputParent.StartsWith(
+                    fullSource + Path.DirectorySeparatorChar,
+                    StringComparison.Ordinal
+                )
+            )
+                throw new InvalidDataException(
+                    "Preparation output must be outside plugin and asset source directories."
+                );
         }
 
         // Publish only after every file, schema and default was captured successfully.
@@ -74,16 +134,43 @@ internal static class ManagedPreparation
             foreach (var (data, assembly, metadata) in loaded)
             {
                 Type[] types = assembly.GetTypes();
-                Type[] plugins = types.Where(type => !type.IsAbstract && !type.IsInterface && typeof(IPlugin).IsAssignableFrom(type)).ToArray();
-                if (plugins.Length > 1) throw new InvalidDataException("Ambiguous IPlugin entry points: " + data.Id);
+                Type[] plugins = types
+                    .Where(type =>
+                        !type.IsAbstract
+                        && !type.IsInterface
+                        && typeof(IPlugin).IsAssignableFrom(type)
+                    )
+                    .ToArray();
+                if (plugins.Length > 1)
+                    throw new InvalidDataException("Ambiguous IPlugin entry points: " + data.Id);
                 var defaults = ConfigurationDefaults.Export(types, plugins);
-                configurations.Add(data.Id, defaults.Count == 1
-                    ? (object)new { configType = defaults.First().Key, configuration = Parse(defaults.First().Value) }
-                    : new { configurations = defaults.Select(pair => new { configType = pair.Key, configuration = Parse(pair.Value) }).ToArray() });
+                configurations.Add(
+                    data.Id,
+                    defaults.Count == 1
+                        ? (object)
+                            new
+                            {
+                                configType = defaults.First().Key,
+                                configuration = Parse(defaults.First().Value),
+                            }
+                        : new
+                        {
+                            configurations = defaults
+                                .Select(pair => new
+                                {
+                                    configType = pair.Key,
+                                    configuration = Parse(pair.Value),
+                                })
+                                .ToArray(),
+                        }
+                );
 
                 bool transport = data.Id == "direct-transport";
                 string name = transport ? "DirectTransport" : data.Id;
-                string bundle = Path.Combine(staging, transport ? "DirectTransport" : "CommonPlugins/" + name);
+                string bundle = Path.Combine(
+                    staging,
+                    transport ? "DirectTransport" : "CommonPlugins/" + name
+                );
                 string bin = Path.GetDirectoryName(assembly.Location);
                 Directory.CreateDirectory(bundle);
                 CopyTree(bin, bundle, assembly.Location);
@@ -93,19 +180,30 @@ internal static class ManagedPreparation
                     using (var file = File.Create(sourceMetadata))
                         new XmlSerializer(typeof(PluginData)).Serialize(file, metadata);
                 var assets = new List<PluginAsset>();
-                foreach (var asset in data.GetNamedAssets().OrderBy(pair => pair.Key, StringComparer.Ordinal))
+                foreach (
+                    var asset in data.GetNamedAssets()
+                        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                )
                 {
                     SafeName(asset.Key);
                     string source = Path.GetFullPath(asset.Value);
                     string relative = Path.GetRelativePath(bin, source);
-                    if (relative == ".." || relative.StartsWith("../", StringComparison.Ordinal) || Path.IsPathRooted(relative))
+                    if (
+                        relative == ".."
+                        || relative.StartsWith("../", StringComparison.Ordinal)
+                        || Path.IsPathRooted(relative)
+                    )
                     {
                         relative = "Assets/" + asset.Key;
                         string target = Path.Combine(bundle, relative);
-                        if (Directory.Exists(source)) CopyTree(source, target);
-                        else CopyFile(source, target);
+                        if (Directory.Exists(source))
+                            CopyTree(source, target);
+                        else
+                            CopyFile(source, target);
                     }
-                    assets.Add(new PluginAsset { Name = asset.Key, Path = relative.Replace('\\', '/') });
+                    assets.Add(
+                        new PluginAsset { Name = asset.Key, Path = relative.Replace('\\', '/') }
+                    );
                 }
                 metadata.Assets = assets.ToArray();
                 metadata.Runtimes = "CoreCLR";
@@ -114,24 +212,71 @@ internal static class ManagedPreparation
                 metadata.NuGetReferences = null;
                 using (var file = File.Create(Path.Combine(bundle, name + ".xml")))
                     new XmlSerializer(typeof(PluginData)).Serialize(file, metadata);
-                if (transport) File.Copy(Path.Combine(bundle, name + ".xml"), Path.Combine(bundle, name + ".dll.xml"), true);
-                provenance.Add(new { id = data.Id, repository = metadata.RepoId, commit = metadata.Commit,
-                    source = data is LocalPlugin ? "local-metadata" : "github", assemblySha256 = Tools.GetFileHash(assembly.Location) });
+                if (transport)
+                    File.Copy(
+                        Path.Combine(bundle, name + ".xml"),
+                        Path.Combine(bundle, name + ".dll.xml"),
+                        true
+                    );
+                provenance.Add(
+                    new
+                    {
+                        id = data.Id,
+                        repository = metadata.RepoId,
+                        commit = metadata.Commit,
+                        source = data switch
+                        {
+                            LocalPlugin => "local-metadata",
+                            LocalFolderPlugin => "dev-folder",
+                            _ => "github",
+                        },
+                        assemblySha256 = Tools.GetFileHash(assembly.Location),
+                    }
+                );
             }
             var version = manager.GameVersion;
-            string gameVersion = checked(version.Major * 1000000 + version.Minor * 1000 + version.Build).ToString(CultureInfo.InvariantCulture);
-            var files = Directory.GetFiles(staging, "*", SearchOption.AllDirectories)
-                .OrderBy(path => path, StringComparer.Ordinal).ToDictionary(path => Path.GetRelativePath(staging, path).Replace('\\', '/'),
-                    path => new { sha256 = Tools.GetFileHash(path), bytes = new FileInfo(path).Length });
-            File.WriteAllText(Path.Combine(staging, "preparation.json"), JsonSerializer.Serialize(new {
-                schemaVersion = 1, gameVersion, pluginSdkSha256 = Tools.GetFileHash(typeof(PluginConfig).Assembly.Location),
-                magnetarVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString(), runtimeIdentifier = Tools.RuntimeIdentifier,
-                pluginConfigurations = configurations, plugins = provenance, files
-            }, new JsonSerializerOptions { WriteIndented = true }));
+            string gameVersion = checked(
+                version.Major * 1000000 + version.Minor * 1000 + version.Build
+            ).ToString(CultureInfo.InvariantCulture);
+            var files = Directory
+                .GetFiles(staging, "*", SearchOption.AllDirectories)
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .ToDictionary(
+                    path => Path.GetRelativePath(staging, path).Replace('\\', '/'),
+                    path => new
+                    {
+                        sha256 = Tools.GetFileHash(path),
+                        bytes = new FileInfo(path).Length,
+                    }
+                );
+            File.WriteAllText(
+                Path.Combine(staging, "preparation.json"),
+                JsonSerializer.Serialize(
+                    new
+                    {
+                        schemaVersion = 1,
+                        gameVersion,
+                        pluginSdkSha256 = Tools.GetFileHash(typeof(PluginConfig).Assembly.Location),
+                        magnetarVersion = Assembly
+                            .GetExecutingAssembly()
+                            .GetName()
+                            .Version.ToString(),
+                        runtimeIdentifier = Tools.RuntimeIdentifier,
+                        pluginConfigurations = configurations,
+                        plugins = provenance,
+                        files,
+                    },
+                    new JsonSerializerOptions { WriteIndented = true }
+                )
+            );
             Directory.Move(staging, output);
             Console.WriteLine("Managed preparation exported: " + output);
         }
-        finally { if (Directory.Exists(staging)) Directory.Delete(staging, true); }
+        finally
+        {
+            if (Directory.Exists(staging))
+                Directory.Delete(staging, true);
+        }
 #endif
     }
 
@@ -147,10 +292,21 @@ internal static class ManagedPreparation
         if (data is GitHubPlugin remote)
         {
             metadata = Tools.DeepCopy(remote);
-            if (profile.GetData(data.Id) is GitHubPluginConfig settings && !string.IsNullOrWhiteSpace(settings.SelectedVersion))
+            if (
+                profile.GetData(data.Id) is GitHubPluginConfig settings
+                && !string.IsNullOrWhiteSpace(settings.SelectedVersion)
+            )
             {
-                var alternate = remote.AlternateVersions?.SingleOrDefault(version => version.Name.Equals(settings.SelectedVersion, StringComparison.OrdinalIgnoreCase))
-                    ?? throw new InvalidDataException("Unknown selected plugin version: " + data.Id);
+                var alternate =
+                    remote.AlternateVersions?.SingleOrDefault(version =>
+                        version.Name.Equals(
+                            settings.SelectedVersion,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                    ?? throw new InvalidDataException(
+                        "Unknown selected plugin version: " + data.Id
+                    );
                 metadata.RepoId = alternate.Repo ?? remote.RepoId;
                 metadata.Commit = alternate.Commit ?? remote.Commit;
             }
@@ -158,38 +314,130 @@ internal static class ManagedPreparation
         else if (data is LocalPlugin local)
         {
             string path = Path.ChangeExtension(local.Dll, ".xml");
-            if (!File.Exists(path)) path = local.Dll + ".xml";
+            if (!File.Exists(path))
+                path = local.Dll + ".xml";
             // RefuseLink reads the file's attributes; a missing file must name the plugin and where
             // its metadata was expected, not crash.
             if (!File.Exists(path))
-                throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id
-                    + " (no metadata file at " + Path.ChangeExtension(local.Dll, ".xml") + " or " + path + ")");
-            RefuseLink(path);
-            using var reader = XmlReader.Create(path, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
-                XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 });
-            metadata = new XmlSerializer(typeof(PluginData)).Deserialize(reader) as GitHubPlugin
-                ?? throw new InvalidDataException("Local plugin needs GitHubPlugin provenance metadata: " + data.Id
-                    + " (" + path + " does not describe a GitHubPlugin)");
+                throw new InvalidDataException(
+                    "Local plugin needs GitHubPlugin provenance metadata: "
+                        + data.Id
+                        + " (no metadata file at "
+                        + Path.ChangeExtension(local.Dll, ".xml")
+                        + " or "
+                        + path
+                        + ")"
+                );
+            metadata = ReadGitHubPlugin(
+                path,
+                "Local plugin needs GitHubPlugin provenance metadata: " + data.Id
+            );
         }
-        else throw new InvalidDataException("Managed preparation requires pinned GitHub source or a metadata-backed local binary: " + data.Id);
-        if (metadata.Id != data.Id || metadata.Commit?.Length != 40 || !metadata.Commit.All(Uri.IsHexDigit)
-            || string.IsNullOrWhiteSpace(metadata.RepoId) || metadata.RepoId.Split('/').Length != 2)
-            throw new InvalidDataException("Plugin provenance requires its exact ID, repository and 40-character commit: " + data.Id);
+        else if (data is LocalFolderPlugin folder)
+        {
+            // Same lookup as PluginList.AddLocalPlugin: the last enabled source for the folder wins.
+            string file = ConfigManager
+                .Instance.Sources.LocalPluginSources.LastOrDefault(source =>
+                    source.Enabled
+                    && source.Folder != null
+                    && Path.GetFullPath(source.Folder) == folder.Folder
+                )
+                ?.File;
+            string path =
+                file == null ? null
+                : Path.IsPathRooted(file) ? file
+                : Path.Combine(folder.Folder, file);
+            if (path == null || !File.Exists(path))
+                throw new InvalidDataException(
+                    "Dev folder needs a GitHubPlugin manifest with its RepoId: "
+                        + Name(data)
+                        + " (no manifest file"
+                        + (path == null ? " in its source" : " at " + path)
+                        + ")"
+                );
+            metadata = ReadGitHubPlugin(
+                path,
+                "Dev folder needs a GitHubPlugin manifest with its RepoId: " + Name(data)
+            );
+            metadata.Commit = DevFolderProvenance.CleanHead(Name(data), folder.Folder);
+        }
+        else
+            throw new InvalidDataException(
+                "Managed preparation requires pinned GitHub source, a metadata-backed local binary or a clean dev folder: "
+                    + data.Id
+            );
+        if (
+            metadata.Id != data.Id
+            || metadata.Commit?.Length != 40
+            || !metadata.Commit.All(Uri.IsHexDigit)
+            || string.IsNullOrWhiteSpace(metadata.RepoId)
+            || metadata.RepoId.Split('/').Length != 2
+        )
+            throw new InvalidDataException(
+                "Plugin provenance requires its exact ID, repository and 40-character commit: "
+                    + data.Id
+            );
         return metadata;
+    }
+
+    private static string Name(PluginData data) =>
+        string.IsNullOrEmpty(data.FriendlyName) || data.FriendlyName == data.Id
+            ? data.Id
+            : data.FriendlyName + " (" + data.Id + ")";
+
+    private static GitHubPlugin ReadGitHubPlugin(string path, string error)
+    {
+        RefuseLink(path);
+        using var reader = XmlReader.Create(
+            path,
+            new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = 1024 * 1024,
+            }
+        );
+        return new XmlSerializer(typeof(PluginData)).Deserialize(reader) as GitHubPlugin
+            ?? throw new InvalidDataException(
+                error + " (" + path + " does not describe a GitHubPlugin)"
+            );
     }
 
     private static void SafeName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || name == "." || name == ".."
-            || name.Any(character => !(character is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_' or '.')))
+        if (
+            string.IsNullOrWhiteSpace(name)
+            || name == "."
+            || name == ".."
+            || name.Any(character =>
+                !(
+                    character
+                    is >= 'A'
+                        and <= 'Z'
+                        or >= 'a'
+                        and <= 'z'
+                        or >= '0'
+                        and <= '9'
+                        or '-'
+                        or '_'
+                        or '.'
+                )
+            )
+        )
             throw new InvalidDataException("Unsafe plugin or asset name: " + name);
     }
 
     private static void RefuseLink(string path)
     {
-        for (string current = Path.GetFullPath(path); current != null; current = Path.GetDirectoryName(current))
+        for (
+            string current = Path.GetFullPath(path);
+            current != null;
+            current = Path.GetDirectoryName(current)
+        )
             if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
-                throw new InvalidDataException("Preparation does not follow symbolic links: " + current);
+                throw new InvalidDataException(
+                    "Preparation does not follow symbolic links: " + current
+                );
     }
 
     private static void CopyTree(string source, string destination, string skip = null)
@@ -197,7 +445,8 @@ internal static class ManagedPreparation
         RefuseLink(source);
         Directory.CreateDirectory(destination);
         foreach (string file in Directory.GetFiles(source))
-            if (file != skip) CopyFile(file, Path.Combine(destination, Path.GetFileName(file)));
+            if (file != skip)
+                CopyFile(file, Path.Combine(destination, Path.GetFileName(file)));
         foreach (string directory in Directory.GetDirectories(source))
             CopyTree(directory, Path.Combine(destination, Path.GetFileName(directory)), skip);
     }

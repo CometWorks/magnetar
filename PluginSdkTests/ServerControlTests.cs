@@ -4,9 +4,7 @@ using Xunit;
 namespace PluginSdk.Tests
 {
     [CollectionDefinition("ServerControl", DisableParallelization = true)]
-    public sealed class ServerControlCollection
-    {
-    }
+    public sealed class ServerControlCollection { }
 
     /// <summary>
     /// Tests for the plugin-facing <see cref="ServerControl"/> facade: that
@@ -22,16 +20,29 @@ namespace PluginSdk.Tests
         [Fact]
         public void Bind_RoutesEachCallToSuppliedDelegate()
         {
-            int saveWorld = 0, reloadConfig = 0, saveAndQuit = 0;
-            int saveAndRestart = 0, quitWithoutSaving = 0, restartWithoutSaving = 0;
+            int saveWorld = 0,
+                reloadConfig = 0,
+                saveAndQuit = 0;
+            int saveAndRestart = 0,
+                quitWithoutSaving = 0,
+                restartWithoutSaving = 0;
 
             ServerControl.Bind(
-                () => { saveWorld++; return true; },
-                () => { reloadConfig++; return true; },
+                () =>
+                {
+                    saveWorld++;
+                    return true;
+                },
+                () =>
+                {
+                    reloadConfig++;
+                    return true;
+                },
                 () => saveAndQuit++,
                 () => saveAndRestart++,
                 () => quitWithoutSaving++,
-                () => restartWithoutSaving++);
+                () => restartWithoutSaving++
+            );
 
             Assert.True(ServerControl.SaveWorld());
             Assert.True(ServerControl.ReloadConfig());

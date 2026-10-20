@@ -18,6 +18,7 @@ namespace PluginSdk.Clustering
         public int SerialId { get; set; }
         public long IdentityId { get; set; }
         public string Name { get; set; }
+
         /// <summary>The attached node's view when it last reported; promotion is replicated separately.</summary>
         public bool IsAdmin { get; set; }
     }
@@ -27,6 +28,7 @@ namespace PluginSdk.Clustering
     {
         public long IdentityId { get; set; }
         public ulong SteamId { get; set; }
+
         /// <summary>The controlled entity or character; 0 when the player has neither.</summary>
         public long EntityId { get; set; }
         public Vector3D Position { get; set; }
@@ -37,10 +39,13 @@ namespace PluginSdk.Clustering
     {
         /// <summary>No such entity in this process.</summary>
         Absent,
+
         /// <summary>Simulated and owned here: this process is the one that may change and persist it.</summary>
         Local,
+
         /// <summary>Owned here but frozen mid-handover: leaving or arriving; do not change it now.</summary>
         Frozen,
+
         /// <summary>Exists here but in no partition this node owns (not yet claimed, or a copy): do not persist changes.</summary>
         Unowned,
     }
@@ -51,9 +56,11 @@ namespace PluginSdk.Clustering
         /// <summary>The top-level entity (the grid group's root, or the character) the lookup resolved to.</summary>
         public long EntityId { get; set; }
         public PluginEntityResidence Residence { get; set; }
+
         /// <summary>The partition holding it on this node; 0 when none (always 0 on a plain server).
         /// <see cref="PluginClusterClient.ResolveOwnerAsync"/> with this partition gives its owner fence.</summary>
         public ulong Partition { get; set; }
+
         /// <summary>This process's node id when the entity is here, else null.</summary>
         public string Node { get; set; }
     }
@@ -79,8 +86,16 @@ namespace PluginSdk.Clustering
         {
             var result = new List<PluginPlayerInfo>();
             foreach (IMyPlayer player in Players())
-                result.Add(new PluginPlayerInfo { Node = Node, SteamId = player.SteamUserId, IdentityId = player.IdentityId,
-                    Name = player.DisplayName ?? string.Empty, IsAdmin = player.PromoteLevel >= VRage.Game.ModAPI.MyPromoteLevel.Admin });
+                result.Add(
+                    new PluginPlayerInfo
+                    {
+                        Node = Node,
+                        SteamId = player.SteamUserId,
+                        IdentityId = player.IdentityId,
+                        Name = player.DisplayName ?? string.Empty,
+                        IsAdmin = player.PromoteLevel >= VRage.Game.ModAPI.MyPromoteLevel.Admin,
+                    }
+                );
             return result;
         }
 
@@ -91,8 +106,15 @@ namespace PluginSdk.Clustering
             foreach (IMyPlayer player in Players())
             {
                 IMyEntity entity = player.Controller?.ControlledEntity?.Entity ?? player.Character;
-                result.Add(new PluginPlayerPosition { IdentityId = player.IdentityId, SteamId = player.SteamUserId,
-                    EntityId = entity?.EntityId ?? 0, Position = entity?.WorldMatrix.Translation ?? player.GetPosition() });
+                result.Add(
+                    new PluginPlayerPosition
+                    {
+                        IdentityId = player.IdentityId,
+                        SteamId = player.SteamUserId,
+                        EntityId = entity?.EntityId ?? 0,
+                        Position = entity?.WorldMatrix.Translation ?? player.GetPosition(),
+                    }
+                );
             }
             return result;
         }
@@ -103,8 +125,17 @@ namespace PluginSdk.Clustering
             IMyEntity entity = MyAPIGateway.Entities?.GetEntityById(entityId);
             IMyEntity top = entity?.GetTopMostParent() ?? entity;
             return top == null || top.MarkedForClose
-                ? new PluginEntityPlacement { EntityId = entityId, Residence = PluginEntityResidence.Absent }
-                : new PluginEntityPlacement { EntityId = top.EntityId, Residence = PluginEntityResidence.Local, Node = Node };
+                ? new PluginEntityPlacement
+                {
+                    EntityId = entityId,
+                    Residence = PluginEntityResidence.Absent,
+                }
+                : new PluginEntityPlacement
+                {
+                    EntityId = top.EntityId,
+                    Residence = PluginEntityResidence.Local,
+                    Node = Node,
+                };
         }
 
         private static List<IMyPlayer> Players()

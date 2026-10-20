@@ -54,19 +54,13 @@ namespace PluginSdk.Tests
                     [1] = "one",
                     [2] = "two",
                 },
-                DictIntDouble = new SerializableDictionary<int, double>
-                {
-                    [10] = 10.5,
-                },
+                DictIntDouble = new SerializableDictionary<int, double> { [10] = 10.5 },
                 DictLongBool = new SerializableDictionary<long, bool>
                 {
                     [1L << 33] = true,
                     [1L << 34] = false,
                 },
-                DictLongLong = new SerializableDictionary<long, long>
-                {
-                    [100L] = 200L,
-                },
+                DictLongLong = new SerializableDictionary<long, long> { [100L] = 200L },
 
                 Quality = Quality.High,
                 QualityList = new List<Quality> { Quality.Low, Quality.High, Quality.Medium },
@@ -84,15 +78,40 @@ namespace PluginSdk.Tests
 
                 StructList = new List<TestStruct>
                 {
-                    new TestStruct { Flag = true,  Integer = 1, Text = "first"  },
-                    new TestStruct { Flag = false, Integer = 2, Text = "second" },
+                    new TestStruct
+                    {
+                        Flag = true,
+                        Integer = 1,
+                        Text = "first",
+                    },
+                    new TestStruct
+                    {
+                        Flag = false,
+                        Integer = 2,
+                        Text = "second",
+                    },
                 },
 
                 TreeNodes = new List<TreeNode>
                 {
-                    new TreeNode { Id = 1, ParentId = 0, Label = "root"   },
-                    new TreeNode { Id = 2, ParentId = 1, Label = "child"  },
-                    new TreeNode { Id = 3, ParentId = 1, Label = "child2" },
+                    new TreeNode
+                    {
+                        Id = 1,
+                        ParentId = 0,
+                        Label = "root",
+                    },
+                    new TreeNode
+                    {
+                        Id = 2,
+                        ParentId = 1,
+                        Label = "child",
+                    },
+                    new TreeNode
+                    {
+                        Id = 3,
+                        ParentId = 1,
+                        Label = "child2",
+                    },
                 },
 
                 Nested = new NestedStruct
@@ -113,7 +132,8 @@ namespace PluginSdk.Tests
                 SpawnPose = new MyPositionAndOrientation(
                     new Vector3D(1000.5, 2000.25, 3000.125),
                     Vector3.Right,
-                    Vector3.Up),
+                    Vector3.Up
+                ),
             };
         }
 
@@ -159,7 +179,10 @@ namespace PluginSdk.Tests
                 Assert.Equal(expected.StructList[i].Integer, actual.StructList[i].Integer);
                 Assert.Equal(expected.StructList[i].LongInteger, actual.StructList[i].LongInteger);
                 Assert.Equal(expected.StructList[i].FloatNumber, actual.StructList[i].FloatNumber);
-                Assert.Equal(expected.StructList[i].DoubleNumber, actual.StructList[i].DoubleNumber);
+                Assert.Equal(
+                    expected.StructList[i].DoubleNumber,
+                    actual.StructList[i].DoubleNumber
+                );
                 Assert.Equal(expected.StructList[i].Text, actual.StructList[i].Text);
             }
 
@@ -193,7 +216,10 @@ namespace PluginSdk.Tests
         public void Xml_RoundTrip_PreservesAllValues()
         {
             var original = MakePopulatedConfig();
-            var path = Path.Combine(Path.GetTempPath(), $"magnetar-xml-{System.Guid.NewGuid():N}.xml");
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                $"magnetar-xml-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
                 ConfigStorage.SaveXml(original, path);
@@ -203,14 +229,18 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path))
+                    File.Delete(path);
             }
         }
 
         [Fact]
         public void Xml_LoadingMissingFile_ReturnsDefaultInstance()
         {
-            var path = Path.Combine(Path.GetTempPath(), $"magnetar-missing-{System.Guid.NewGuid():N}.xml");
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                $"magnetar-missing-{System.Guid.NewGuid():N}.xml"
+            );
             var loaded = ConfigStorage.LoadXml<TestConfig>(path);
             Assert.NotNull(loaded);
             Assert.False(loaded.Flag);
@@ -220,7 +250,10 @@ namespace PluginSdk.Tests
         [Fact]
         public void Xml_SaveWritesAtomicallyViaTempFile()
         {
-            var path = Path.Combine(Path.GetTempPath(), $"magnetar-atomic-{System.Guid.NewGuid():N}.xml");
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                $"magnetar-atomic-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
                 ConfigStorage.SaveXml(new TestConfig(), path);
@@ -229,7 +262,8 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path))
+                    File.Delete(path);
             }
         }
 
@@ -258,7 +292,10 @@ namespace PluginSdk.Tests
             // Quality.High has underlying value 10; storing it by name protects
             // against silent breakage if the enum is later renumbered.
             var c = new TestConfig { Quality = Quality.High };
-            var path = Path.Combine(Path.GetTempPath(), $"magnetar-enum-{System.Guid.NewGuid():N}.xml");
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                $"magnetar-enum-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
                 ConfigStorage.SaveXml(c, path);
@@ -268,7 +305,8 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path))
+                    File.Delete(path);
             }
         }
     }
@@ -282,7 +320,10 @@ namespace PluginSdk.Tests
     {
         private static string WriteXml(TestConfig c)
         {
-            var path = Path.Combine(Path.GetTempPath(), $"magnetar-se-{System.Guid.NewGuid():N}.xml");
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                $"magnetar-se-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
                 ConfigStorage.SaveXml(c, path);
@@ -290,14 +331,18 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path))
+                    File.Delete(path);
             }
         }
 
         [Fact]
         public void Xml_Color_UsesHexRgbaFormat()
         {
-            var c = new TestConfig { SolidColor = new Color((byte)0xAB, (byte)0xCD, (byte)0xEF, (byte)0xFF) };
+            var c = new TestConfig
+            {
+                SolidColor = new Color((byte)0xAB, (byte)0xCD, (byte)0xEF, (byte)0xFF),
+            };
             var text = WriteXml(c);
             Assert.Contains("<SolidColor>#ABCDEFFF</SolidColor>", text);
         }
@@ -334,7 +379,11 @@ namespace PluginSdk.Tests
         {
             var c = new TestConfig
             {
-                SpawnPose = new MyPositionAndOrientation(new Vector3D(1, 2, 3), Vector3.Forward, Vector3.Up),
+                SpawnPose = new MyPositionAndOrientation(
+                    new Vector3D(1, 2, 3),
+                    Vector3.Forward,
+                    Vector3.Up
+                ),
             };
             var text = WriteXml(c);
             Assert.Contains("<SpawnPose>", text);
@@ -361,13 +410,18 @@ namespace PluginSdk.Tests
         {
             // Hand-crafted XML: a 6-hex form (no alpha) must default alpha to 255;
             // an 8-hex form must take the alpha verbatim.
-            var path = Path.Combine(Path.GetTempPath(), $"magnetar-color-mix-{System.Guid.NewGuid():N}.xml");
-            File.WriteAllText(path,
-                "<?xml version=\"1.0\"?>\n" +
-                "<TestConfig>" +
-                "<SolidColor>#102030</SolidColor>" +
-                "<TintColor>#10203040</TintColor>" +
-                "</TestConfig>");
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                $"magnetar-color-mix-{System.Guid.NewGuid():N}.xml"
+            );
+            File.WriteAllText(
+                path,
+                "<?xml version=\"1.0\"?>\n"
+                    + "<TestConfig>"
+                    + "<SolidColor>#102030</SolidColor>"
+                    + "<TintColor>#10203040</TintColor>"
+                    + "</TestConfig>"
+            );
             try
             {
                 var loaded = ConfigStorage.LoadXml<TestConfig>(path);
@@ -379,7 +433,8 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path))
+                    File.Delete(path);
             }
         }
 
@@ -411,7 +466,10 @@ namespace PluginSdk.Tests
             var c = new TestConfig { Facing = Base6Directions.Direction.Left };
             var json = ConfigStorage.SaveJson(c);
             using var doc = System.Text.Json.JsonDocument.Parse(json);
-            Assert.Equal("Left", doc.RootElement.GetProperty("values").GetProperty("facing").GetString());
+            Assert.Equal(
+                "Left",
+                doc.RootElement.GetProperty("values").GetProperty("facing").GetString()
+            );
         }
 
         [Fact]
@@ -419,7 +477,11 @@ namespace PluginSdk.Tests
         {
             var c = new TestConfig
             {
-                SpawnPose = new MyPositionAndOrientation(new Vector3D(1, 2, 3), Vector3.Forward, Vector3.Up),
+                SpawnPose = new MyPositionAndOrientation(
+                    new Vector3D(1, 2, 3),
+                    Vector3.Forward,
+                    Vector3.Up
+                ),
             };
             var json = ConfigStorage.SaveJson(c);
             using var doc = System.Text.Json.JsonDocument.Parse(json);
@@ -435,7 +497,7 @@ namespace PluginSdk.Tests
         {
             var schema = ConfigSchema.Build(typeof(TestConfig));
             var solid = schema.Properties.Single(p => p.Name == nameof(TestConfig.SolidColor));
-            var tint  = schema.Properties.Single(p => p.Name == nameof(TestConfig.TintColor));
+            var tint = schema.Properties.Single(p => p.Name == nameof(TestConfig.TintColor));
 
             Assert.Equal(nameof(Color), solid.Type);
             Assert.False(solid.HasAlpha);
@@ -447,11 +509,26 @@ namespace PluginSdk.Tests
         public void Schema_VectorAndPoseAndDirection_HaveDistinctTypeNames()
         {
             var schema = ConfigSchema.Build(typeof(TestConfig));
-            Assert.Equal(nameof(Vector2D),                 schema.Properties.Single(p => p.Name == "UvOffset").Type);
-            Assert.Equal(nameof(Vector3D),                 schema.Properties.Single(p => p.Name == "WorldOffset").Type);
-            Assert.Equal(nameof(Vector2I),                 schema.Properties.Single(p => p.Name == "TileCoord").Type);
-            Assert.Equal(nameof(Vector3I),                 schema.Properties.Single(p => p.Name == "GridSize").Type);
-            Assert.Equal(nameof(MyPositionAndOrientation), schema.Properties.Single(p => p.Name == "SpawnPose").Type);
+            Assert.Equal(
+                nameof(Vector2D),
+                schema.Properties.Single(p => p.Name == "UvOffset").Type
+            );
+            Assert.Equal(
+                nameof(Vector3D),
+                schema.Properties.Single(p => p.Name == "WorldOffset").Type
+            );
+            Assert.Equal(
+                nameof(Vector2I),
+                schema.Properties.Single(p => p.Name == "TileCoord").Type
+            );
+            Assert.Equal(
+                nameof(Vector3I),
+                schema.Properties.Single(p => p.Name == "GridSize").Type
+            );
+            Assert.Equal(
+                nameof(MyPositionAndOrientation),
+                schema.Properties.Single(p => p.Name == "SpawnPose").Type
+            );
 
             var dir = schema.Properties.Single(p => p.Name == "Facing");
             Assert.Equal(nameof(Base6Directions.Direction), dir.Type);

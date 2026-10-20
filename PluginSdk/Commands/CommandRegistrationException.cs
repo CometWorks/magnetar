@@ -10,6 +10,7 @@ namespace PluginSdk.Commands
     /// </summary>
     public sealed class CommandRegistrationException : Exception
     {
-        public CommandRegistrationException(string message) : base(message) { }
+        public CommandRegistrationException(string message)
+            : base(message) { }
     }
 }

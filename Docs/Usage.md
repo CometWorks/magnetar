@@ -84,16 +84,38 @@ fall back to anonymous until you set `PULSAR_GITHUB_TOKEN`.
 
 ## Client companion mod
 
-By default Magnetar auto-loads the Steam Workshop `MagnetarMod` client companion
-so server-side PluginSdk features can open mission-screen popups on clients. Pass
-`-noimplicitmod` to skip adding it and remove it from the active world mod list
-for that run.
+By default Magnetar adds the Steam Workshop mod `MagnetarMod` (id `3750200326`)
+to the world's mod list. Clients download it with the world like any other mod.
+It is the client-side receiver that lets server plugins built on the PluginSdk
+open mission-screen popups on players' screens. Pass `-noimplicitmod` to skip
+adding it and remove it from the active world mod list for that run.
 
-Magnetar only adds and downloads the companion when Space Engineers has
-registered its Steam Workshop service. Without that service, Magnetar removes
-the implicit mod, logs a warning, and continues loading the server; mission-screen
-popups remain unavailable for that run. Other Workshop update failures are also
-reported as warnings and do not abort startup.
+The server downloads the companion when the world loads, together with the
+world's other mods, into the Workshop cache in the `-path` data folder,
+`content/244850/3750200326`. That cache is separate from the Steam client's
+Workshop folder, and an up-to-date copy is not downloaded again. If the download
+fails, the world doesn't load, as with any other world mod. Magnetar 2.4.3.6 and
+older downloaded it once more before the world load, into the dedicated server's
+install folder, `Content/Workshop`; newer versions don't write there, and that
+leftover folder can be deleted.
+
+Magnetar only adds the companion when Space Engineers has registered its Steam
+Workshop service. Without that service, Magnetar removes the implicit mod, logs a
+warning, and continues loading the server; mission-screen popups remain
+unavailable for that run.
+
+## Mod plugins
+
+A mod plugin is a Steam Workshop mod enabled as a plugin in the Magnetar profile,
+not in the world's mod list. Before the world loads, Magnetar downloads or
+updates the enabled mod plugins into the Workshop cache in the `-path` data
+folder, `content/244850/<workshop-id>`, and loads them from there. Update
+failures are reported as warnings and do not abort startup; a mod plugin that
+could not be downloaded is left out for that run.
+
+Magnetar 2.4.3.7 and older looked for mod plugins in the Steam client's Workshop
+folder instead, so they loaded only when a Steam client on the same machine
+had them.
 
 ## Legacy Workshop mods
 
@@ -102,6 +124,12 @@ archive instead of loose files. Magnetar expands those archives after Workshop
 download/update into the same mod folder before the dedicated server loads
 definitions or scripts. The expanded files live under the DS Workshop cache
 selected by `-path` (`content/244850/<workshop-id>`).
+
+If Steam fails to download such an item (some Windows servers get
+`k_EResultTimeout` for them), Magnetar fetches the archive over HTTPS from
+the Steam CDN address that the public Steam Web API lists for the item, saves
+it where Steam would have put it, and lets the server load it. Newer Workshop
+items have no such address, so their download errors stop the server as before.
 
 ## Telemetry and consent
 
@@ -155,6 +183,13 @@ Do not combine `-daemon` with the dedicated server's `-checkAlive`: one asks the
 server to survive its parent, the other to shut down when the parent exits.
 Magnetar does not reject the combination, but the result depends on timing and
 is not useful.
+
+## Stopping and restarting
+
+`!stop`, `!quit` and `!restart` in chat, SIGTERM and SIGINT on Linux, Ctrl+C
+in the console and plugins such as Essentials all stop or restart the server
+through the same code. See **[Stopping and restarting](ServerControl.md)** for
+what each one does on Linux, on Windows and under Quasar.
 
 ## Configuring the server (MagnetarConfig)
 

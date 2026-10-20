@@ -61,6 +61,64 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # PluginSdk public API checks (Docs/Build.md, "PluginSdk contract version").
+  # Runs on every trigger, building a release or not: the build fails when the
+  # public API and PublicAPI.*.txt disagree, and PluginSdkContract must move
+  # with those files.
+  # ---------------------------------------------------------------------------
+  plugin-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The contract check compares with the latest release tag.
+          fetch-depth: 0
+
+      - name: Check PluginSdkContract against the public API files
+        run: python3 Build/check-plugin-sdk-contract.py
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # PluginSdk references four game DLLs. Any recent DS version compiles it,
+      # so take the newest library set a release build cached (restore only;
+      # the release builds own that cache).
+      - name: Restore Dedicated Server libraries
+        id: dscache
+        uses: actions/cache/restore@v5
+        with:
+          path: ds64
+          key: ds64-linux-any
+          restore-keys: ds64-linux-
+
+      # Only when no release build has cached the library set in the last week.
+      - name: Download Dedicated Server (steamcmd)
+        if: steps.dscache.outputs.cache-matched-key == ''
+        run: |
+          set -euo pipefail
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lib32gcc-s1
+          mkdir -p steamcmd dsfull
+          curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+            | tar -xz -C steamcmd
+          ./steamcmd/steamcmd.sh +quit || true
+          for attempt in 1 2 3 4 5; do
+            ./steamcmd/steamcmd.sh +@sSteamCmdForcePlatformType windows \
+              +force_install_dir "$PWD/dsfull" +login anonymous \
+              +app_update "$SE_DS_APPID" validate +quit || true
+            [ -f dsfull/DedicatedServer64/VRage.Math.dll ] && break
+            echo "steamcmd attempt $attempt did not complete the DS install; retrying..."
+            sleep 5
+          done
+          mv dsfull/DedicatedServer64 ds64
+
+      - name: Build PluginSdk
+        run: dotnet build -c Release PluginSdk/PluginSdk.csproj -p:DS64="$PWD/ds64"
+
+  # ---------------------------------------------------------------------------
   # Gate: decide whether to build, what tag to use, and draft vs latest.
   # ---------------------------------------------------------------------------
   version-check:
@@ -309,8 +367,8 @@ jobs:
       # build silently. Bump both together.
       - name: Fetch Steam dependencies
         env:
-          LINUX_DEPENDENCIES_TAG: v1.0.31
-          STEAM_DEPENDENCIES_SHA256: f512fb57f13f91183b007e750a3c01fc506bcc1202bd08f8fa67be528aa91daa
+          LINUX_DEPENDENCIES_TAG: v1.0.42
+          STEAM_DEPENDENCIES_SHA256: 3331ffab588a055f489f9951a5f7450a14c903144d682f4f4ff23909fb663a65
         run: |
           set -euo pipefail
           mkdir -p steam-deps
@@ -465,7 +523,7 @@ jobs:
   # Release: attach both bundles to a GitHub release.
   # ---------------------------------------------------------------------------
   release:
-    needs: [version-check, build-linux, build-windows]
+    needs: [version-check, plugin-sdk, build-linux, build-windows]
     if: needs.version-check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:

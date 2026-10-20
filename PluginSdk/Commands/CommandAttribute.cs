@@ -10,7 +10,8 @@ namespace PluginSdk.Commands
     /// <c>[Command("grid list")]</c> in a module rooted at <c>"adm"</c> is
     /// invoked as <c>!adm grid list</c>. An empty command string
     /// (<c>[Command("")]</c>) denotes the root-level (default) command, run for
-    /// a bare <c>!adm</c> with no sub-path.
+    /// a bare <c>!adm</c>, and for <c>!adm 30</c> when <c>30</c> names no
+    /// subcommand and the handler has a parameter for it.
     ///
     /// <para><b>Handler signature</b></para>
     /// <para>
@@ -19,7 +20,8 @@ namespace PluginSdk.Commands
     /// and floating-point primitives, <c>bool</c>, and any <c>enum</c>. A
     /// trailing <c>params string[]</c> captures all remaining words. Parameters
     /// with C# default values are optional. Quoted <c>"multi word"</c> tokens
-    /// are kept together.
+    /// are kept together. More words than parameters get an error reply with
+    /// the usage line, and the handler doesn't run.
     /// </para>
     /// <para><b>Replying</b></para>
     /// <para>

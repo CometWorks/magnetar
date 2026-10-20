@@ -23,8 +23,8 @@ The output directory must not exist. The command publishes it atomically after a
 plugins export successfully, and exits nonzero on failure. It resolves the selected
 profile, its transitive declared dependencies, implicit compatibility plugins, and
 `direct-transport`. Missing plugins, unsupported runtime/platforms and failed builds
-abort the export. Workshop mods, development source folders, cluster role plugins,
-and unpinned source references are unsupported. `-daemon`, `-bare`, `-safeMode`,
+abort the export. Workshop mods, development source folders with uncommitted changes,
+cluster role plugins, and unpinned source references are unsupported. `-daemon`, `-bare`, `-safeMode`,
 `-debugCompileAll`, and execution inside a managed cluster process are refused.
 
 ### Existing profiles and argument parsing
@@ -75,8 +75,22 @@ directory containing its DLL, dependencies and `PluginData`/`GitHubPlugin` XML m
 next to the DLL. The DLL must be named `plugin.dll` or match its directory name
 (for example `Local/quasar-agent/quasar-agent.dll` with `quasar-agent.xml`); the
 metadata's ID is the profile's `Local` entry. Local provenance is the supplied metadata's assertion; preparation
-does not reconstruct or attest the original local build. Development-folder builds
-are refused because the manifest commit does not prove the working tree's contents.
+does not reconstruct or attest the original local build.
+
+Since Magnetar 2.4.3.4, a development source folder (a `LocalPlugin` entry in
+`Sources/sources.xml` enabled by the profile's `DevFolder` list) is compiled as usual
+and pinned to its git checkout. Earlier releases refuse it. The repository holding the folder must be clean: `git status --porcelain`
+lists nothing, so no modified, staged or untracked files anywhere in the repository,
+not just in the plugin folder. Ignored files don't count. The exported metadata is
+the dev folder's manifest (its `<File>`), with `RepoId` taken from the manifest and
+`Commit` set to the checkout's HEAD; a `Commit` in the manifest is ignored. The
+manifest's `RepoId` is used rather than the `origin` remote, because a remote URL can
+be SSH, a mirror or a local path and does not always name a GitHub `owner/repo`.
+Preparation does not check that the commit was pushed. A dirty repository fails the
+export with an error naming the plugin and up to ten of the changed paths. The
+check runs again after the build and fails the export if HEAD moved meanwhile.
+Nodes run the exported binary, so the cluster keeps the commit that was HEAD at
+preparation time; deploying a newer commit means preparing again.
 
 Binary directories are copied completely, preserving runtime dependencies and native
 libraries. Named assets outside that directory are copied under `Assets/<name>`.
@@ -118,7 +132,7 @@ rebuildable caches; the exported file hashes identify the frozen deployment byte
 ```
 
 `gameVersion` is the dedicated server's numeric build-version value, expressed as a
-string. `source` is `github` or `local-metadata`. `files` hashes every exported bundle
+string. `source` is `github`, `local-metadata` or `dev-folder`. `files` hashes every exported bundle
 file; it excludes `preparation.json` itself. Consumers must verify hashes and copy the
 bundles into their approved immutable package before deployment.
 
@@ -151,4 +165,5 @@ loaded dynamically from dependencies also require a separately verified deployme
 Validation: `dotnet test PluginSdkTests/PluginSdkTests.csproj --filter
 FullyQualifiedName~PreparationDefaultsTests` covers multiple complete envelopes,
 constructor/getter exclusion, ambiguous/private configuration refusal and unavailable
-game-dependent defaults.
+game-dependent defaults. `FullyQualifiedName~DevFolderProvenanceTests` covers the
+clean-checkout HEAD pin and the refusal of modified, untracked and non-git folders.

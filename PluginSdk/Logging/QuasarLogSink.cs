@@ -31,13 +31,15 @@ namespace PluginSdk.Logging
         // literals; "ffffff" emits exactly six fractional-second digits.
         private const string TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.ffffff'Z'";
 
-        private readonly Action<string> writeLine = writeLine ?? throw new ArgumentNullException(nameof(writeLine));
+        private readonly Action<string> writeLine =
+            writeLine ?? throw new ArgumentNullException(nameof(writeLine));
 
         /// <summary>
         /// Creates a sink that writes JSON lines to standard output. This is the
         /// placeholder transport until the Quasar Agent integration lands.
         /// </summary>
-        public QuasarLogSink() : this(line => Console.Out.WriteLine(line)) { }
+        public QuasarLogSink()
+            : this(line => Console.Out.WriteLine(line)) { }
 
         public void Write(in LogEntry entry)
         {
@@ -63,7 +65,10 @@ namespace PluginSdk.Logging
         {
             var record = new LogRecord
             {
-                Timestamp = entry.UtcTimestamp.ToString(TimestampFormat, CultureInfo.InvariantCulture),
+                Timestamp = entry.UtcTimestamp.ToString(
+                    TimestampFormat,
+                    CultureInfo.InvariantCulture
+                ),
                 Level = entry.Level.ToString(),
                 Plugin = entry.PluginName,
                 Thread = entry.ThreadId,
@@ -77,13 +82,26 @@ namespace PluginSdk.Logging
         // Field order here is the JSON property order.
         private sealed class LogRecord
         {
-            [JsonPropertyName("timestamp")] public string Timestamp { get; set; }
-            [JsonPropertyName("level")] public string Level { get; set; }
-            [JsonPropertyName("plugin")] public string Plugin { get; set; }
-            [JsonPropertyName("thread")] public int Thread { get; set; }
-            [JsonPropertyName("message")] public string Message { get; set; }
-            [JsonPropertyName("data")] public JsonElement? Data { get; set; }
-            [JsonPropertyName("exception")] public string Exception { get; set; }
+            [JsonPropertyName("timestamp")]
+            public string Timestamp { get; set; }
+
+            [JsonPropertyName("level")]
+            public string Level { get; set; }
+
+            [JsonPropertyName("plugin")]
+            public string Plugin { get; set; }
+
+            [JsonPropertyName("thread")]
+            public int Thread { get; set; }
+
+            [JsonPropertyName("message")]
+            public string Message { get; set; }
+
+            [JsonPropertyName("data")]
+            public JsonElement? Data { get; set; }
+
+            [JsonPropertyName("exception")]
+            public string Exception { get; set; }
         }
     }
 }

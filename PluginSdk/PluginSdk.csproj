@@ -1,29 +1,43 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- NU1701: VRage.Math.dll is a .NET Framework assembly; that warning is noise here. -->
+    <NoWarn>NU1701</NoWarn>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- RS0016/RS0017: public API and PublicAPI.*.txt disagree. Fail the build so the files
+             can't go stale; add new API to PublicAPI.Unshipped.txt (the IDE code fix does it). -->
+    <WarningsAsErrors>$(WarningsAsErrors);RS0016;RS0017</WarningsAsErrors>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <LangVersion>latest</LangVersion>
-        <Platforms>x64</Platforms>
-        <PlatformTarget>x64</PlatformTarget>
-        <!-- NU1701: VRage.Math.dll is a .NET Framework assembly; that warning is noise here. -->
-        <NoWarn>NU1701</NoWarn>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!-- Keeps PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt in sync with the public API,
+             so every API change shows in the diff. Build/check-plugin-sdk-contract.py compares
+             them with the previous release to enforce the PluginSdkContract bump. -->
+    <PackageReference
+      Include="Microsoft.CodeAnalysis.PublicApiAnalyzers"
+      Version="4.14.0"
+      PrivateAssets="all"
+    />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="System.Text.Json" Version="8.0.5" />
-    </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <!-- SE plugins always run inside Space Engineers, where VRage.Math.dll is loaded.
+  <ItemGroup>
+    <!-- SE plugins always run inside Space Engineers, where VRage.Math.dll is loaded.
              Reference it via HintPath (Private="False") so the dll is not redistributed. -->
-        <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
-        <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="False" />
-        <!-- VRage.Game provides MyPromoteLevel (permission levels) and MyFontEnum
+    <Reference Include="VRage.Math" HintPath="$(DS64)\VRage.Math.dll" Private="False" />
+    <Reference Include="VRage" HintPath="$(DS64)\VRage.dll" Private="False" />
+    <!-- VRage.Game provides MyPromoteLevel (permission levels) and MyFontEnum
              (chat font/color constants) used by the chat-command API. -->
-        <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="False" />
-        <!-- Sandbox.Common provides MyAPIGateway (the ModAPI), which the plain-server cluster views read
+    <Reference Include="VRage.Game" HintPath="$(DS64)\VRage.Game.dll" Private="False" />
+    <!-- Sandbox.Common provides MyAPIGateway (the ModAPI), which the plain-server cluster views read
              (PluginSdk.Clustering.PluginLocalViews, T-0256). -->
-        <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
-    </ItemGroup>
-
+    <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
+  </ItemGroup>
 </Project>

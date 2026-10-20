@@ -28,7 +28,13 @@ namespace PluginSdk.Commands
         /// <summary>The argument words joined by single spaces.</summary>
         public string RawArgs { get; }
 
-        public CommandContext(in CommandCaller caller, string prefix, IReadOnlyList<string> args, string rawArgs, ICommandResponder responder)
+        public CommandContext(
+            in CommandCaller caller,
+            string prefix,
+            IReadOnlyList<string> args,
+            string rawArgs,
+            ICommandResponder responder
+        )
         {
             Caller = caller;
             Prefix = prefix;
@@ -38,12 +44,12 @@ namespace PluginSdk.Commands
         }
 
         /// <summary>Sends a plain reply to the caller.</summary>
-        public void Respond(string text)
-            => responder.Send(new CommandReply(text, font: MyFontEnum.White, author: Prefix), Caller);
+        public void Respond(string text) =>
+            responder.Send(new CommandReply(text, font: MyFontEnum.White, author: Prefix), Caller);
 
         /// <summary>Sends a coloured reply to the caller.</summary>
-        public void Respond(string text, Color color, string font = MyFontEnum.White)
-            => responder.Send(new CommandReply(text, color, font, Prefix), Caller);
+        public void Respond(string text, Color color, string font = MyFontEnum.White) =>
+            responder.Send(new CommandReply(text, color, font, Prefix), Caller);
 
         /// <summary>Sends a fully specified reply.</summary>
         public void Respond(in CommandReply reply)

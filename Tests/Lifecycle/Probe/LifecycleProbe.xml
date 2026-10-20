@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<PluginData
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:type="GitHubPlugin"
+>
+  <Id>lifecycle-probe</Id>
+  <GroupId>lifecycle-probe</GroupId>
+  <RepoId>local/lifecycle-probe</RepoId>
+
+  <FriendlyName>Lifecycle Probe</FriendlyName>
+  <Author>CometWorks</Author>
+
+  <Tooltip>Test only: lets Tests/Lifecycle drive the server's stop and restart paths</Tooltip>
+  <Description>
+        Test only. Runs the commands that the lifecycle test suite writes into
+        probe-cmd.txt in the DS data folder (chat commands as the console,
+        PluginSdk ServerControl calls, the DS exit, a hang or a crash) and logs
+        what happened to probe.log.
+    </Description>
+
+  <Hidden>true</Hidden>
+
+  <Commit>TODO</Commit>
+</PluginData>

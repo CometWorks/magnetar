@@ -40,8 +40,9 @@ internal static class NativeLibraryPreloader
     // libname asked by [DllImport(...)] -> handle of the underlying .so.
     // Filled in two passes: (1) preload populates the canonical filename,
     // (2) Aliases below add Windows / short / versioned aliases.
-    private static readonly Dictionary<string, IntPtr> Handles =
-        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, IntPtr> Handles = new(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     private static readonly HashSet<AssemblyLoadContext> HookedContexts = new();
 
@@ -51,23 +52,21 @@ internal static class NativeLibraryPreloader
     private static readonly (string Alias, string Target)[] Aliases =
     {
         // Steamworks (Magnetar's bundled Steamworks.NET.dll).
-        ("steam_api64",     "libsteam_api.so"),
+        ("steam_api64", "libsteam_api.so"),
         ("steam_api64.dll", "libsteam_api.so"),
-
         // Epic Online Services SDK (VRage.EOS / Epic.OnlineServices).
         // Required even though the DS uses Steam networking — MyEOSNetworking
         // is initialized from MySteamService.UpdateNetworkThread.
-        ("EOSSDK-Shipping",     "libEOSSDK-Linux-Shipping.so"),
+        ("EOSSDK-Shipping", "libEOSSDK-Linux-Shipping.so"),
         ("EOSSDK-Shipping.dll", "libEOSSDK-Linux-Shipping.so"),
-
         // linux-compat PE-loader wrappers for the Havok / RecastDetour /
         // VRage.Native Windows DLLs.
-        ("Havok.dll",        "libHavok.so"),
+        ("Havok.dll", "libHavok.so"),
         ("RecastDetour.dll", "libRecastDetour.so"),
         ("VRage.Native.dll", "libVRageNative.so"),
     };
 
-    private const int RTLD_NOW    = 0x2;
+    private const int RTLD_NOW = 0x2;
     private const int RTLD_GLOBAL = 0x100;
 
     [DllImport("libdl.so.2", EntryPoint = "dlopen")]
@@ -104,7 +103,8 @@ internal static class NativeLibraryPreloader
         AppDomain.CurrentDomain.AssemblyLoad += (_, args) =>
         {
             var alc = AssemblyLoadContext.GetLoadContext(args.LoadedAssembly);
-            if (alc != null) HookContext(alc);
+            if (alc != null)
+                HookContext(alc);
         };
     }
 

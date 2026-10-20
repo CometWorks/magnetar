@@ -122,6 +122,19 @@ sub-namespace automatically. `!ess grid list` resolves the deepest matching
 path; remaining words become arguments. Intermediate words with no handler of
 their own simply act as grouping.
 
+## Default command
+
+`[Command("")]` is the root's default command. A bare `!prefix` runs it, and
+so does `!prefix <args>` when the first word names no subcommand, so a module
+rooted at `restart` with `Restart(int seconds = 10)` answers both `!restart`
+and `!restart 30`. Subcommand names win over arguments. The default only takes
+as many words as it has parameters (any number with a trailing `params`
+array); with more, the caller gets "Unknown command", so `!stop typo` does
+not run a parameterless `!stop`. A root without a default shows its overview
+for a bare `!prefix`. A root with nothing but a default has no overview:
+`!prefix help` and `!help prefix` show the default's usage, and a caller below
+its level gets the "no permission" reply for those and for a bare `!prefix`.
+
 ## Arguments
 
 Handler parameters are bound positionally from the words after the command
@@ -134,9 +147,12 @@ path:
 - A trailing `params string[]` captures **all** remaining words.
 - Quote `"multi word"` arguments to keep spaces; `\` escapes the next char.
 
-If a required argument is missing or a value does not parse, the caller
-automatically gets an error with the generated usage line, e.g.
-`!ess tp <target> [distance]` — the handler is not called.
+If a required argument is missing, a value does not parse, or there are more
+words than parameters, the caller automatically gets an error with the
+generated usage line, e.g. `!ess tp <target> [distance]` — the handler is not
+called. A handler taking one `string name` refuses `Big Ship` rather than run
+on `Big`: take a name of several words with a trailing `params string[]`, or
+let players quote it.
 
 ## Replying
 
@@ -208,9 +224,28 @@ Levels are Keen's `MyPromoteLevel`: `None`, `Scripter`, `Moderator`,
   the **last registration wins** (it overwrites the earlier one), so a plugin
   can deliberately override another's command.
 
+## Running a command from your own console
+
+A plugin with a console of its own (Quasar.Agent runs the lines typed into
+Quasar's Chat page) runs a line through every registered command with
+`ServerCommands.Execute`, on the game thread:
+
+```csharp
+var console = new CommandCaller(0UL, 0L, "Quasar", MyPromoteLevel.Owner, isConsole: true);
+bool handled = ServerCommands.Execute("!ess playerlist", console, myResponder);
+```
+
+Replies go to `myResponder`, not chat; a reply with `Broadcast` set is still
+yours to send to the players. It returns `false` when the line names no
+registered command. A host older than this method (Magnetar 2.4.3.4 and
+earlier) has no `ServerCommands.Execute`, so the call throws
+`MissingMethodException` there; call it from a separate non-inlined method and
+catch that. A plugin built against an older PluginSdk looks it up by reflection
+instead, as Quasar.Agent does.
+
 ## Notes and limits
 
-- Commands are accepted on the **global** chat channel only.
+- Commands are accepted on the global, faction and private chat channels.
 - Modules are instantiated per invocation; persistent state belongs in your
   plugin, reachable via static members the plugin sets up.
 - The whole pipeline (`CommandRegistry` → `CommandDispatcher`) is independent of

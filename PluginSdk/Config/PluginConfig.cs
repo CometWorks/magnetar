@@ -147,9 +147,14 @@ namespace PluginSdk.Config
         /// the previous one (per <see cref="EqualityComparer{T}.Default"/>).
         /// Returns <c>true</c> if the value was changed.
         /// </summary>
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        protected bool SetField<T>(
+            ref T field,
+            T value,
+            [CallerMemberName] string propertyName = null
+        )
         {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            if (EqualityComparer<T>.Default.Equals(field, value))
+                return false;
             field = value;
             OnPropertyChanged(propertyName);
             return true;
@@ -160,20 +165,32 @@ namespace PluginSdk.Config
 
         XmlSchema IXmlSerializable.GetSchema() => null;
 
-        private static readonly ConcurrentDictionary<(Type Type, string RootName), XmlSerializer> XmlSerializerCache
-            = new ConcurrentDictionary<(Type, string), XmlSerializer>();
+        private static readonly ConcurrentDictionary<
+            (Type Type, string RootName),
+            XmlSerializer
+        > XmlSerializerCache = new ConcurrentDictionary<(Type, string), XmlSerializer>();
 
-        private static XmlSerializer GetXmlSerializer(Type type, string rootName)
-            => XmlSerializerCache.GetOrAdd((type, rootName), key => new XmlSerializer(key.Type, new XmlRootAttribute(key.RootName)));
+        private static XmlSerializer GetXmlSerializer(Type type, string rootName) =>
+            XmlSerializerCache.GetOrAdd(
+                (type, rootName),
+                key => new XmlSerializer(key.Type, new XmlRootAttribute(key.RootName))
+            );
 
-        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> ConfigPropertyCache
-            = new ConcurrentDictionary<Type, PropertyInfo[]>();
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> ConfigPropertyCache =
+            new ConcurrentDictionary<Type, PropertyInfo[]>();
 
-        internal static PropertyInfo[] GetConfigProperties(Type type)
-            => ConfigPropertyCache.GetOrAdd(type, t =>
-                t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                 .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<ConfigOptionAttribute>() != null)
-                 .ToArray());
+        internal static PropertyInfo[] GetConfigProperties(Type type) =>
+            ConfigPropertyCache.GetOrAdd(
+                type,
+                t =>
+                    t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(p =>
+                            p.CanRead
+                            && p.CanWrite
+                            && p.GetCustomAttribute<ConfigOptionAttribute>() != null
+                        )
+                        .ToArray()
+            );
 
         void IXmlSerializable.WriteXml(XmlWriter writer)
         {
@@ -196,7 +213,9 @@ namespace PluginSdk.Config
                 if (!string.IsNullOrWhiteSpace(description))
                 {
                     writer.WriteWhitespace(indent);
-                    writer.WriteComment(" " + Regex.Replace(description.Trim(), "-(?=-)", "- ") + " ");
+                    writer.WriteComment(
+                        " " + Regex.Replace(description.Trim(), "-(?=-)", "- ") + " "
+                    );
                 }
                 writer.WriteWhitespace(indent);
                 writer.WriteComment(DefaultComment(prop, defaultValue, ns, indent));
@@ -210,7 +229,12 @@ namespace PluginSdk.Config
             writer.WriteWhitespace(Environment.NewLine);
         }
 
-        private static void WriteOption(XmlWriter writer, PropertyInfo prop, object value, XmlSerializerNamespaces ns)
+        private static void WriteOption(
+            XmlWriter writer,
+            PropertyInfo prop,
+            object value,
+            XmlSerializerNamespaces ns
+        )
         {
             if (TypeSerialization.IsHandled(prop.PropertyType))
                 TypeSerialization.WriteXml(writer, prop.Name, value);
@@ -249,9 +273,15 @@ namespace PluginSdk.Config
         /// One line for a simple value, the indented element on lines of its
         /// own for a list, dictionary or struct.
         /// </summary>
-        private static string DefaultComment(PropertyInfo prop, object defaultValue, XmlSerializerNamespaces ns, string indent)
+        private static string DefaultComment(
+            PropertyInfo prop,
+            object defaultValue,
+            XmlSerializerNamespaces ns,
+            string indent
+        )
         {
-            if (defaultValue == null) return $" {prop.Name} has no default value ";
+            if (defaultValue == null)
+                return $" {prop.Name} has no default value ";
 
             // A comment must not contain "--". Element names never have a "-",
             // and &#45; reads back as "-" once the element is uncommented.
@@ -268,12 +298,16 @@ namespace PluginSdk.Config
 
             bool isEmpty = reader.IsEmptyElement;
             reader.ReadStartElement();
-            if (isEmpty) return;
+            if (isEmpty)
+                return;
 
             reader.MoveToContent();
             while (reader.NodeType != XmlNodeType.EndElement)
             {
-                if (reader.NodeType == XmlNodeType.Element && props.TryGetValue(reader.Name, out var prop))
+                if (
+                    reader.NodeType == XmlNodeType.Element
+                    && props.TryGetValue(reader.Name, out var prop)
+                )
                 {
                     object value;
                     if (TypeSerialization.IsHandled(prop.PropertyType))
@@ -301,27 +335,34 @@ namespace PluginSdk.Config
         /// </summary>
         internal static bool ValuesEqual(object a, object b)
         {
-            if (ReferenceEquals(a, b)) return true;
-            if (a == null || b == null) return false;
+            if (ReferenceEquals(a, b))
+                return true;
+            if (a == null || b == null)
+                return false;
 
             // Order matters: SerializableDictionary implements IDictionary
             // (via Dictionary<,>) but not IList. Check dictionary first.
             if (a is IDictionary dictA && b is IDictionary dictB)
             {
-                if (dictA.Count != dictB.Count) return false;
+                if (dictA.Count != dictB.Count)
+                    return false;
                 foreach (var key in dictA.Keys)
                 {
-                    if (!dictB.Contains(key)) return false;
-                    if (!ValuesEqual(dictA[key], dictB[key])) return false;
+                    if (!dictB.Contains(key))
+                        return false;
+                    if (!ValuesEqual(dictA[key], dictB[key]))
+                        return false;
                 }
                 return true;
             }
 
             if (a is IList listA && b is IList listB)
             {
-                if (listA.Count != listB.Count) return false;
+                if (listA.Count != listB.Count)
+                    return false;
                 for (int i = 0; i < listA.Count; i++)
-                    if (!ValuesEqual(listA[i], listB[i])) return false;
+                    if (!ValuesEqual(listA[i], listB[i]))
+                        return false;
                 return true;
             }
 
@@ -334,11 +375,14 @@ namespace PluginSdk.Config
             if (ta == b.GetType() && IsUserStructType(ta))
             {
                 foreach (var field in ta.GetFields(BindingFlags.Public | BindingFlags.Instance))
-                    if (!ValuesEqual(field.GetValue(a), field.GetValue(b))) return false;
+                    if (!ValuesEqual(field.GetValue(a), field.GetValue(b)))
+                        return false;
                 foreach (var prop in ta.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
-                    if (!prop.CanRead || prop.GetIndexParameters().Length > 0) continue;
-                    if (!ValuesEqual(prop.GetValue(a), prop.GetValue(b))) return false;
+                    if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
+                        continue;
+                    if (!ValuesEqual(prop.GetValue(a), prop.GetValue(b)))
+                        return false;
                 }
                 return true;
             }
@@ -348,16 +392,23 @@ namespace PluginSdk.Config
 
         private static bool IsUserStructType(Type t)
         {
-            if (!t.IsValueType || t.IsPrimitive || t.IsEnum) return false;
-            if (t.IsGenericType) return false;                 // KeyValuePair<,>, Nullable<>, ...
-            if (t == typeof(decimal) || t == typeof(DateTime)
-                || t == typeof(DateTimeOffset) || t == typeof(TimeSpan)
-                || t == typeof(Guid))
+            if (!t.IsValueType || t.IsPrimitive || t.IsEnum)
+                return false;
+            if (t.IsGenericType)
+                return false; // KeyValuePair<,>, Nullable<>, ...
+            if (
+                t == typeof(decimal)
+                || t == typeof(DateTime)
+                || t == typeof(DateTimeOffset)
+                || t == typeof(TimeSpan)
+                || t == typeof(Guid)
+            )
                 return false;
             // VRage value types (Color, Vector2D, ...) implement IEquatable<T>
             // already — skip the field-by-field walk, which would also confuse
             // itself on Color's aliased X/R, Y/G, Z/B properties.
-            if (TypeSerialization.IsHandled(t)) return false;
+            if (TypeSerialization.IsHandled(t))
+                return false;
             return true;
         }
     }

@@ -9,8 +9,25 @@ public class ServerArgumentsTests
     [Fact]
     public void ServerValuesAreParsedWhileLoaderAndGameArgumentsStaySeparate()
     {
-        string[] original = ["--PREPAREMANAGED", "/export with spaces", "/config", "/bare", "-ds64", "/game",
-            "-profile", "/debug", "-path", "/daemon", "-port", "28000", "-session:/world", "--safeMode", "-consent", "deny"];
+        string[] original =
+        [
+            "--PREPAREMANAGED",
+            "/export with spaces",
+            "/config",
+            "/bare",
+            "-ds64",
+            "/game",
+            "-profile",
+            "/debug",
+            "-path",
+            "/daemon",
+            "-port",
+            "28000",
+            "-session:/world",
+            "--safeMode",
+            "-consent",
+            "deny",
+        ];
         string[] copy = (string[])original.Clone();
         var parsed = ServerArguments.Parse(original);
         Assert.Equal("/export with spaces", parsed.PreparationDirectory);
@@ -18,7 +35,10 @@ public class ServerArgumentsTests
         Assert.Equal("/game", parsed.DedicatedServerDirectory);
         Assert.False(parsed.Daemon);
         Assert.Equal(ConsentChoice.Deny, parsed.Consent);
-        Assert.Equal(new[] { "--safeMode", "-profile=/debug", "-noSplash", "-noPrompt", "-lazySteam" }, parsed.PulsarArguments);
+        Assert.Equal(
+            new[] { "--safeMode", "-profile=/debug", "-noSplash", "-noPrompt", "-lazySteam" },
+            parsed.PulsarArguments
+        );
         Assert.Equal(copy, original);
     }
 
@@ -49,7 +69,14 @@ public class ServerArgumentsTests
         Assert.Equal(ConsentChoice.Deny, parsed.Consent);
         Assert.DoesNotContain("secret", string.Join(" ", parsed.PulsarArguments));
         Assert.DoesNotContain("secret", string.Join(" ", parsed.Warnings));
-        var error = Assert.Throws<ArgumentException>(() => ServerArguments.Parse(["-github-token", "first-secret", "-github-token", "second-secret"]));
+        var error = Assert.Throws<ArgumentException>(() =>
+            ServerArguments.Parse([
+                "-github-token",
+                "first-secret",
+                "-github-token",
+                "second-secret",
+            ])
+        );
         Assert.DoesNotContain("secret", error.Message);
     }
 
@@ -69,11 +96,18 @@ public class ServerArgumentsTests
     [Fact]
     public void InlineValuesRemainLiteralAndDuplicateValuesAreRejected()
     {
-        var parsed = ServerArguments.Parse(["--prepareManaged=/output", "-profile=/folder/a=b.xml", "-daemon", "-noimplicitmod"]);
+        var parsed = ServerArguments.Parse([
+            "--prepareManaged=/output",
+            "-profile=/folder/a=b.xml",
+            "-daemon",
+            "-noimplicitmod",
+        ]);
         Assert.Equal("/output", parsed.PreparationDirectory);
         Assert.Contains("-profile=/folder/a=b.xml", parsed.PulsarArguments);
         Assert.True(parsed.Daemon);
         Assert.True(parsed.NoImplicitMod);
-        Assert.Throws<ArgumentException>(() => ServerArguments.Parse(["-prepareManaged", "/one", "-prepareManaged", "/two"]));
+        Assert.Throws<ArgumentException>(() =>
+            ServerArguments.Parse(["-prepareManaged", "/one", "-prepareManaged", "/two"])
+        );
     }
 }

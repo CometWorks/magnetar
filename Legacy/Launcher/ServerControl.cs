@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -39,6 +41,10 @@ internal static class ServerControl
 {
     private static readonly TimeSpan SaveTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan PreviousProcessTimeout = TimeSpan.FromSeconds(60);
+
+    // Set by a Windows restart for the new process: the PID of the old one.
+    private const string RestartWaitPidVariable = "MAGNETAR_RESTART_WAIT_PID";
 
     // Faithful reproduction of the original launch, captured at the very top of
     // Main before the launcher mutates the working directory and environment.
@@ -54,6 +60,9 @@ internal static class ServerControl
     private static PosixSignalRegistration sigHup;
 #endif
 
+    // Rooted so the GC does not collect the delegate native code calls.
+    private static ConsoleCtrlHandler consoleCtrlHandler;
+
     private static volatile bool terminating;
     private static readonly object terminateLock = new object();
 
@@ -63,6 +72,25 @@ internal static class ServerControl
     [DllImport("libc", SetLastError = true)]
     private static extern int execve(string path, string[] argv, string[] envp);
 
+    private const int Synchronize = 0x100000;
+
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr OpenProcess(int access, bool inheritHandle, int processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern int WaitForSingleObject(IntPtr handle, int milliseconds);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
+
+    private const int CtrlCloseEvent = 2;
+    private const int CtrlShutdownEvent = 6;
+
+    private delegate bool ConsoleCtrlHandler(int ctrlType);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandler handler, bool add);
+
     /// <summary>
     /// Records the original command line, working directory and environment so
     /// a restart can reproduce the launch exactly. Call once at the top of
@@ -70,21 +98,45 @@ internal static class ServerControl
     /// </summary>
     public static void CaptureLaunchState(string[] argv, string cwd, IDictionary env)
     {
-        originalArgv = argv ?? Array.Empty<string>();
+        originalArgv = HostArgv(argv ?? Array.Empty<string>());
         originalCwd = cwd;
 
         var list = new List<string>();
         if (env != null)
             foreach (DictionaryEntry e in env)
-                list.Add($"{e.Key}={e.Value}");
+                if ((string)e.Key != RestartWaitPidVariable)
+                    list.Add($"{e.Key}={e.Value}");
         originalEnv = list.ToArray();
     }
 
     /// <summary>
-    /// Binds the plugin SDK facade and, on .NET (Core), installs the POSIX
-    /// signal handlers. Safe to call before a session exists — the handlers
-    /// tolerate a null <see cref="MySession.Static"/>. The .NET Framework
-    /// (Legacy) build has no POSIX signals, so it only binds the facade.
+    /// After a Windows restart, waits for the old process to be gone. It may
+    /// still be exiting and holding the patched game assemblies, which the
+    /// preloader rewrites on startup. Call at the top of <c>Main</c>.
+    /// </summary>
+    public static void WaitForPreviousProcess()
+    {
+        string pid = Environment.GetEnvironmentVariable(RestartWaitPidVariable);
+        if (pid == null)
+            return;
+
+        Environment.SetEnvironmentVariable(RestartWaitPidVariable, null);
+
+        // Not Process.GetProcessById: it treats a process as gone once its exit
+        // code is set, while the DS's native teardown still runs.
+        IntPtr previous = OpenProcess(Synchronize, false, int.Parse(pid));
+        if (previous == IntPtr.Zero)
+            return;
+        WaitForSingleObject(previous, (int)PreviousProcessTimeout.TotalMilliseconds);
+        CloseHandle(previous);
+    }
+
+    /// <summary>
+    /// Binds the plugin SDK facade, installs the POSIX signal handlers on .NET
+    /// (Core) and the console close and shutdown handler on Windows. Safe to
+    /// call before a session exists — the handlers tolerate a null
+    /// <see cref="MySession.Static"/>. The .NET Framework (Legacy) build has no
+    /// POSIX signals.
     /// </summary>
     public static void InstallSignalHandlers()
     {
@@ -94,7 +146,8 @@ internal static class ServerControl
             SaveAndQuit,
             SaveAndRestart,
             QuitWithoutSaving,
-            RestartWithoutSaving);
+            RestartWithoutSaving
+        );
 
 #if NETCOREAPP
         sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, OnTerminate);
@@ -104,6 +157,37 @@ internal static class ServerControl
         if (OperatingSystem.IsLinux())
             sigHup = PosixSignalRegistration.Create(PosixSignal.SIGHUP, OnReload);
 #endif
+
+        // Registered after SIGTERM, which .NET maps to the shutdown event on
+        // Windows, because Windows calls the last registered handler first.
+        if (!IsLinux)
+        {
+            consoleCtrlHandler = OnConsoleCtrl;
+            SetConsoleCtrlHandler(consoleCtrlHandler, true);
+        }
+    }
+
+    // Windows ends the process when the handler returns after the console
+    // window was closed or Windows is shutting down, or when its time runs
+    // out (5 s for a closed window). So save and quit, and hold the handler
+    // until that exits the process. The logoff event is left alone: a server
+    // running as a service gets it whenever any user logs off.
+    private static bool OnConsoleCtrl(int ctrlType)
+    {
+        // Ctrl+C and Ctrl+Break go on to the dedicated server's own handler.
+        if (ctrlType != CtrlCloseEvent && ctrlType != CtrlShutdownEvent)
+            return false;
+
+        LogFile.WriteLine(
+            ctrlType == CtrlCloseEvent
+                ? "Console window closed: saving world and quitting"
+                : "Windows is shutting down: saving world and quitting"
+        );
+        // Closing the window asks for a stop; a shutdown is the host going
+        // down, which, like a signal, a supervisor should recover from.
+        Task.Run(() => SaveAndQuit(requested: ctrlType == CtrlCloseEvent));
+        Thread.Sleep(Timeout.Infinite);
+        return true;
     }
 
 #if NETCOREAPP
@@ -112,8 +196,7 @@ internal static class ServerControl
         // Cancel the default disposition (process termination) so the save can
         // finish, and keep the signal-dispatch thread fast by handing off.
         context.Cancel = true;
-        LogFile.WriteLine($"Received {context.Signal}: saving world and quitting");
-        Task.Run(SaveAndQuit);
+        QuitOnSignal(context.Signal.ToString());
     }
 
     private static void OnReload(PosixSignalContext context)
@@ -183,9 +266,11 @@ internal static class ServerControl
         if (WaitForSaveIdle(stopwatch, limit))
             return true;
 
-        LogFile.Warn(startedOwnSave
-            ? "World save did not finish within the timeout"
-            : "In-progress world save did not finish within the timeout");
+        LogFile.Warn(
+            startedOwnSave
+                ? "World save did not finish within the timeout"
+                : "In-progress world save did not finish within the timeout"
+        );
         return false;
     }
 
@@ -240,7 +325,9 @@ internal static class ServerControl
                 // server name is the only value that needs an explicit push.
                 try
                 {
-                    MyGameService.GameServer?.SetServerName(MySandboxGame.ConfigDedicated.ServerName);
+                    MyGameService.GameServer?.SetServerName(
+                        MySandboxGame.ConfigDedicated.ServerName
+                    );
                 }
                 catch (Exception e)
                 {
@@ -274,15 +361,29 @@ internal static class ServerControl
         return ok;
     }
 
+    /// <summary>Saves the world, then quits with exit code 0, for a signal:
+    /// on a worker thread and without Terminating. On Linux one Ctrl+C reaches
+    /// two handlers, so only the call that begins the shutdown logs.</summary>
+    public static void QuitOnSignal(string signal) =>
+        Task.Run(() =>
+            SaveAndQuit(requested: false, $"Received {signal}: saving world and quitting")
+        );
+
     /// <summary>Saves the world, then quits with exit code 0.</summary>
-    public static void SaveAndQuit()
+    public static void SaveAndQuit() => SaveAndQuit(requested: true);
+
+    // A signal comes from outside the server, under a supervisor mostly
+    // because the host shuts down, so it raises no Terminating: a supervisor
+    // that keeps a server off after a requested stop must start it again.
+    private static void SaveAndQuit(bool requested, string reason = null)
     {
         if (!BeginTerminate())
             return;
 
-        // Deliberately does NOT raise Terminating: this backs SIGTERM/SIGINT and
-        // SE's internal ExitThreadSafe path, neither of which is an admin stop
-        // intent. Only the in-game !quit/!stop command (QuitWithoutSaving) does.
+        if (reason != null)
+            LogFile.WriteLine(reason);
+        if (requested)
+            PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Shutdown);
         LogFile.WriteLine("Saving world before shutdown");
         SaveWorld();
         DisposePlugins();
@@ -312,8 +413,8 @@ internal static class ServerControl
         PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Restart);
         LogFile.WriteLine("Saving world before restart");
         SaveWorld();
+        LogFile.WriteLine($"Restarting: {originalArgv.FirstOrDefault()}");
         DisposePlugins();
-        FlushAll();
         RestartProcess();
     }
 
@@ -324,9 +425,8 @@ internal static class ServerControl
             return;
 
         PluginSdk.ServerControl.RaiseTerminating(PluginSdk.ServerTerminationKind.Restart);
-        LogFile.WriteLine("Restarting without saving");
+        LogFile.WriteLine($"Restarting without saving: {originalArgv.FirstOrDefault()}");
         DisposePlugins();
-        FlushAll();
         RestartProcess();
     }
 
@@ -343,10 +443,23 @@ internal static class ServerControl
 
     private static void DisposePlugins()
     {
+        PluginLoader loader = PluginLoader.Instance;
+        if (loader == null)
+            return;
+
         try
         {
-            // Bound the wait so a misbehaving plugin cannot hang shutdown.
-            Task dispose = Task.Run(() => PluginLoader.Instance?.Dispose());
+            // The loader's Update and HandleInput drop disposed plugins from the
+            // list Dispose walks, so Dispose must not run while the game thread
+            // updates plugins: run it there, or on a worker while the game
+            // thread waits here. Without a session the game loop isn't running
+            // yet: the world loads at the end of the loader's Init. Bound the
+            // wait so a misbehaving plugin cannot hang shutdown.
+            Task dispose = new Task(loader.Dispose);
+            if (OnUpdateThread() || MySandboxGame.Static == null || MySession.Static == null)
+                dispose.Start();
+            else
+                Game.RunOnGameThread(dispose.RunSynchronously);
             if (!dispose.Wait(DisposeTimeout))
                 LogFile.Warn("Plugin disposal timed out");
         }
@@ -366,7 +479,11 @@ internal static class ServerControl
     /// </summary>
     public static void FlushOnFatalExit()
     {
-        try { FlushAll(); } catch { }
+        try
+        {
+            FlushAll();
+        }
+        catch { }
     }
 
     private static void FlushAll()
@@ -376,11 +493,31 @@ internal static class ServerControl
         // through FlushOnFatalExit; anything that kills the process outright
         // (SIGKILL, a native abort) still leaves a stale file behind, which the
         // reader detects by probing the (now dead) pid.
-        try { PidFile.Delete(); } catch { }
-        try { Console.Out.Flush(); } catch { }
-        try { Console.Error.Flush(); } catch { }
-        try { MyLog.Default?.Flush(); } catch { }
-        try { LogFile.Dispose(); } catch { }
+        try
+        {
+            PidFile.Delete();
+        }
+        catch { }
+        try
+        {
+            Console.Out.Flush();
+        }
+        catch { }
+        try
+        {
+            Console.Error.Flush();
+        }
+        catch { }
+        try
+        {
+            MyLog.Default?.Flush();
+        }
+        catch { }
+        try
+        {
+            LogFile.Dispose();
+        }
+        catch { }
     }
 
     private static void ExitProcess(int code)
@@ -389,17 +526,44 @@ internal static class ServerControl
         // finalizer or static destructor, unlike Environment.Exit.
         if (IsLinux)
         {
-            try { LibcExit(code); } catch { }
+            try
+            {
+                LibcExit(code);
+            }
+            catch { }
         }
 
         Environment.Exit(code);
     }
 
+    // On .NET, element 0 of Environment.GetCommandLineArgs() is the managed
+    // MagnetarInterim.dll, not the apphost that was launched, and neither execve
+    // nor CreateProcess can start a .dll. Restart through the host binary, and
+    // keep the .dll as its first argument when the dotnet muxer ran it.
+    private static string[] HostArgv(string[] argv)
+    {
+#if NETCOREAPP
+        string host = Environment.ProcessPath;
+        if (argv.Length > 0 && !string.IsNullOrEmpty(host))
+        {
+            bool muxer = Path.GetFileNameWithoutExtension(host) == "dotnet";
+            var hostArgv = new List<string> { host };
+            hostArgv.AddRange(muxer ? argv : argv.Skip(1));
+            return hostArgv.ToArray();
+        }
+#endif
+        return argv;
+    }
+
+    // Disposing the plugins has closed the log file by now, so failures go to
+    // stderr.
     private static void RestartProcess()
     {
+        FlushAll();
+
         if (originalArgv.Length == 0)
         {
-            LogFile.Error("Cannot restart: original launch state was not captured");
+            Console.Error.WriteLine("Cannot restart: original launch state was not captured");
             ExitProcess(1);
             return;
         }
@@ -414,7 +578,11 @@ internal static class ServerControl
             // null-terminated for libc.
             if (!string.IsNullOrEmpty(originalCwd))
             {
-                try { Environment.CurrentDirectory = originalCwd; } catch { }
+                try
+                {
+                    Environment.CurrentDirectory = originalCwd;
+                }
+                catch { }
             }
 
             string[] argv = new string[originalArgv.Length + 1];
@@ -428,13 +596,21 @@ internal static class ServerControl
             execve(path, argv, envp);
 
             // Only reached if execve failed.
-            LogFile.Error($"execve failed: {Marshal.GetLastWin32Error()}");
+            Console.Error.WriteLine(
+                $"Restart failed: execve {path}: errno {Marshal.GetLastWin32Error()}"
+            );
             ExitProcess(1);
             return;
         }
 
+        // The new process starts while this one is still exiting.
+        originalEnv = originalEnv
+            .Append($"{RestartWaitPidVariable}={Process.GetCurrentProcess().Id}")
+            .ToArray();
+
         try
         {
+#if NETCOREAPP
             var startInfo = new ProcessStartInfo
             {
                 FileName = path,
@@ -442,14 +618,8 @@ internal static class ServerControl
                 UseShellExecute = false,
             };
 
-#if NETCOREAPP
             for (int i = 1; i < originalArgv.Length; i++)
                 startInfo.ArgumentList.Add(originalArgv[i]);
-#else
-            // .NET Framework's ProcessStartInfo has no ArgumentList, so paste
-            // the args into the legacy Arguments string with the same quoting.
-            startInfo.Arguments = PasteArguments(originalArgv);
-#endif
 
             startInfo.EnvironmentVariables.Clear();
             foreach (string entry in originalEnv)
@@ -461,10 +631,13 @@ internal static class ServerControl
             }
 
             Process.Start(startInfo);
+#else
+            StartWithoutInheritedHandles(path);
+#endif
         }
         catch (Exception e)
         {
-            LogFile.Error($"Failed to restart process: {e}");
+            Console.Error.WriteLine($"Restart failed: {path}: {e}");
             Environment.Exit(1);
             return;
         }
@@ -472,9 +645,9 @@ internal static class ServerControl
         Environment.Exit(0);
     }
 
-    private static bool OnUpdateThread()
-        => MyPrecalcComponent.UpdateThreadManagedId != 0
-           && Environment.CurrentManagedThreadId == MyPrecalcComponent.UpdateThreadManagedId;
+    private static bool OnUpdateThread() =>
+        MyPrecalcComponent.UpdateThreadManagedId != 0
+        && Environment.CurrentManagedThreadId == MyPrecalcComponent.UpdateThreadManagedId;
 
 #if NETCOREAPP
     private static bool IsLinux => OperatingSystem.IsLinux();
@@ -484,17 +657,89 @@ internal static class ServerControl
 
     private static readonly char[] ArgumentDelimiters = { ' ', '\t', '\n', '\v', '"' };
 
-    // Reproduces the Windows command-line quoting that ProcessStartInfo's
-    // ArgumentList applies on .NET (Core), skipping argv[0] (the executable
-    // path, passed separately via FileName).
-    private static string PasteArguments(string[] argv)
+    private const int CreateUnicodeEnvironment = 0x400;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct StartupInfo
     {
-        var sb = new StringBuilder();
-        for (int i = 1; i < argv.Length; i++)
-            AppendArgument(sb, argv[i]);
-        return sb.ToString();
+        public int cb;
+        public string lpReserved,
+            lpDesktop,
+            lpTitle;
+        public int dwX,
+            dwY,
+            dwXSize,
+            dwYSize,
+            dwXCountChars,
+            dwYCountChars,
+            dwFillAttribute,
+            dwFlags;
+        public short wShowWindow,
+            cbReserved2;
+        public IntPtr lpReserved2,
+            hStdInput,
+            hStdOutput,
+            hStdError;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessInformation
+    {
+        public IntPtr hProcess,
+            hThread;
+        public int dwProcessId,
+            dwThreadId;
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool CreateProcess(
+        string applicationName,
+        StringBuilder commandLine,
+        IntPtr processAttributes,
+        IntPtr threadAttributes,
+        bool inheritHandles,
+        int creationFlags,
+        string environment,
+        string currentDirectory,
+        ref StartupInfo startupInfo,
+        out ProcessInformation processInformation
+    );
+
+    // .NET Framework creates sockets inheritable, and Process.Start passes every
+    // inheritable handle to the child. The new server then holds the old one's
+    // game port and fails to bind it ("Error binding server endpoint", 0x2740).
+    // CreateProcess without handle inheritance avoids that; the child still
+    // attaches to the same console.
+    private static void StartWithoutInheritedHandles(string path)
+    {
+        var commandLine = new StringBuilder();
+        foreach (string argument in originalArgv)
+            AppendArgument(commandLine, argument);
+
+        string environment = string.Join("\0", originalEnv) + "\0\0";
+        var startupInfo = new StartupInfo { cb = Marshal.SizeOf(typeof(StartupInfo)) };
+        if (
+            !CreateProcess(
+                path,
+                commandLine,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                false,
+                CreateUnicodeEnvironment,
+                environment,
+                originalCwd,
+                ref startupInfo,
+                out ProcessInformation process
+            )
+        )
+            throw new System.ComponentModel.Win32Exception();
+
+        CloseHandle(process.hThread);
+        CloseHandle(process.hProcess);
+    }
+
+    // The Windows command-line quoting that ProcessStartInfo's ArgumentList
+    // applies on .NET (Core).
     private static void AppendArgument(StringBuilder sb, string argument)
     {
         if (sb.Length != 0)

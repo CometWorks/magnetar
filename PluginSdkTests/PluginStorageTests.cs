@@ -35,9 +35,11 @@ namespace PluginSdkTests
         private const string Id = "Cluster State.dll";
         private static string Folder => PluginStorage.FolderName(Id);
 
-        public PluginStorageTests() => PluginCluster.BindOwner(Id, typeof(PluginStorageTests).Assembly);
+        public PluginStorageTests() =>
+            PluginCluster.BindOwner(Id, typeof(PluginStorageTests).Assembly);
 
-        private static string TempRoot() => Path.Combine(Path.GetTempPath(), "plugin-storage-" + Guid.NewGuid().ToString("N"));
+        private static string TempRoot() =>
+            Path.Combine(Path.GetTempPath(), "plugin-storage-" + Guid.NewGuid().ToString("N"));
 
         [Fact]
         public void PlainServerUsesTheLaunchersLocalRoot()
@@ -45,32 +47,53 @@ namespace PluginSdkTests
             string root = TempRoot();
             try
             {
-                WithEnvironment(null, Path.Combine(root, "ignored-shared"), () =>
-                {
-                    PluginStorage.ConfigureStandalone(root);
-                    Assert.False(PluginStorage.IsClusterShared);
-                    string directory = PluginStorage.GetSharedDirectory(Id);
-                    Assert.Equal(Path.Combine(Path.GetFullPath(root), "plugins", Folder), directory);
-                    Assert.True(Directory.Exists(directory));
-                });
+                WithEnvironment(
+                    null,
+                    Path.Combine(root, "ignored-shared"),
+                    () =>
+                    {
+                        PluginStorage.ConfigureStandalone(root);
+                        Assert.False(PluginStorage.IsClusterShared);
+                        string directory = PluginStorage.GetSharedDirectory(Id);
+                        Assert.Equal(
+                            Path.Combine(Path.GetFullPath(root), "plugins", Folder),
+                            directory
+                        );
+                        Assert.True(Directory.Exists(directory));
+                    }
+                );
             }
-            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
         }
 
         [Fact]
         public void ClusterProcessUsesTheSharedRootOnEveryNode()
         {
-            string local = TempRoot(), shared = TempRoot();
+            string local = TempRoot(),
+                shared = TempRoot();
             try
             {
                 PluginStorage.ConfigureStandalone(local);
-                string fromNode1 = null, fromWa = null;
-                WithEnvironment("node-1", shared, () => fromNode1 = PluginStorage.GetSharedDirectory(Id));
-                WithEnvironment("wa-1", shared, () =>
-                {
-                    Assert.True(PluginStorage.IsClusterShared);
-                    fromWa = PluginStorage.GetSharedDirectory(Id);
-                });
+                string fromNode1 = null,
+                    fromWa = null;
+                WithEnvironment(
+                    "node-1",
+                    shared,
+                    () => fromNode1 = PluginStorage.GetSharedDirectory(Id)
+                );
+                WithEnvironment(
+                    "wa-1",
+                    shared,
+                    () =>
+                    {
+                        Assert.True(PluginStorage.IsClusterShared);
+                        fromWa = PluginStorage.GetSharedDirectory(Id);
+                    }
+                );
                 Assert.Equal(Path.Combine(Path.GetFullPath(shared), "plugins", Folder), fromNode1);
                 Assert.Equal(fromNode1, fromWa);
                 Assert.False(Directory.Exists(local));
@@ -78,7 +101,8 @@ namespace PluginSdkTests
             finally
             {
                 foreach (string root in new[] { local, shared })
-                    if (Directory.Exists(root)) Directory.Delete(root, true);
+                    if (Directory.Exists(root))
+                        Directory.Delete(root, true);
             }
         }
 
@@ -89,14 +113,24 @@ namespace PluginSdkTests
             try
             {
                 PluginStorage.ConfigureStandalone(local);
-                WithEnvironment("node-1", null, () =>
-                {
-                    Assert.Null(PluginStorage.Root);
-                    Assert.Throws<InvalidOperationException>(() => PluginStorage.GetSharedDirectory(Id));
-                });
+                WithEnvironment(
+                    "node-1",
+                    null,
+                    () =>
+                    {
+                        Assert.Null(PluginStorage.Root);
+                        Assert.Throws<InvalidOperationException>(() =>
+                            PluginStorage.GetSharedDirectory(Id)
+                        );
+                    }
+                );
                 Assert.False(Directory.Exists(local));
             }
-            finally { if (Directory.Exists(local)) Directory.Delete(local, true); }
+            finally
+            {
+                if (Directory.Exists(local))
+                    Directory.Delete(local, true);
+            }
         }
 
         [Fact]
@@ -106,11 +140,21 @@ namespace PluginSdkTests
             try
             {
                 PluginStorage.ConfigureStandalone(root);
-                WithEnvironment(null, null, () =>
-                    Assert.Throws<InvalidOperationException>(() => PluginStorage.GetSharedDirectory("someone-else")));
+                WithEnvironment(
+                    null,
+                    null,
+                    () =>
+                        Assert.Throws<InvalidOperationException>(() =>
+                            PluginStorage.GetSharedDirectory("someone-else")
+                        )
+                );
                 Assert.False(Directory.Exists(Path.Combine(root, "plugins", "someone-else")));
             }
-            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
         }
 
         [Theory]
@@ -146,10 +190,11 @@ namespace PluginSdkTests
         [InlineData("my.plugin", "My.Plugin")]
         [InlineData("my.plugin", "MY.PLUGIN")]
         [InlineData("a b", "a_b")]
-        [InlineData("plugin", "...")]   // an all-dot id falls back to the "plugin" prefix
+        [InlineData("plugin", "...")] // an all-dot id falls back to the "plugin" prefix
         public void DistinctIdsNeverShareAFolderEvenIgnoringCase(string first, string second)
         {
-            string a = PluginStorage.FolderName(first), b = PluginStorage.FolderName(second);
+            string a = PluginStorage.FolderName(first),
+                b = PluginStorage.FolderName(second);
             Assert.False(string.Equals(a, b, StringComparison.OrdinalIgnoreCase), a + " == " + b);
         }
     }
