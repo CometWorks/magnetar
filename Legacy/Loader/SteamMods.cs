@@ -35,24 +35,20 @@ public static class SteamMods
         }
     }
 
-    /// <summary>
-    /// Downloads or updates the items before the world loads. Returns false if
-    /// any of them failed; startup continues either way.
-    /// </summary>
-    public static bool Update(IEnumerable<ulong> ids)
+    public static void Update(IEnumerable<ulong> ids)
     {
         var modItems = new List<MyObjectBuilder_Checkpoint.ModItem>(
             ids.Select(x => new MyObjectBuilder_Checkpoint.ModItem(x, "Steam"))
         );
         if (modItems.Count == 0)
-            return true;
+            return;
 
         if (!IsSteamWorkshopAvailable())
         {
             LogFile.Warn(
                 $"Steam Workshop service unavailable; skipping update for {modItems.Count} workshop items. Server startup will continue."
             );
-            return false;
+            return;
         }
 
         // Until the world loads, the DS keeps its Workshop folder inside the
@@ -87,24 +83,18 @@ public static class SteamMods
                 foreach (Exception e in exceptions)
                     sb.Append(e);
                 LogFile.Warn(sb.ToString());
-                return false;
             }
-
-            if (result.Result != MyGameServiceCallResult.OK)
+            else if (result.Result != MyGameServiceCallResult.OK)
             {
                 LogFile.Warn(
                     "Unable to update workshop items; server startup will continue. Result: "
                         + result.Result
                 );
-                return false;
             }
-
-            return true;
         }
         catch (Exception e)
         {
             LogFile.Warn("Unable to update workshop items; server startup will continue: " + e);
-            return false;
         }
     }
 

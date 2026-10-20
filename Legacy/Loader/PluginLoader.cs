@@ -171,6 +171,7 @@ public class PluginLoader : IHandleInputPlugin
         PluginList list = ConfigManager.Instance.List;
         Profile current = ConfigManager.Instance.Profiles.Current;
 
+        // Mod plugins only; MagnetarMod is a world mod, the world load downloads it.
         // Not GetModPlugins: it skips the mods that aren't downloaded yet.
         SteamMods.Update(
             list[current]
@@ -178,7 +179,6 @@ public class PluginLoader : IHandleInputPlugin
                 .Where(x => x.IsSupportedEnvironment())
                 .Select(x => x.WorkshopId)
         );
-        MagnetarClientMod.Download();
 
         Magnetar.Legacy.Patch.Patch_DeferInitialWorld.LoadInitialWorld();
     }

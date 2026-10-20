@@ -19,42 +19,6 @@ internal static class MagnetarClientMod
 
     private const string WorkshopService = "Steam";
     private static bool steamUnavailableWarningLogged;
-    private static bool downloadFailed;
-
-    /// <summary>
-    /// Downloads the companion before the world loads. If that fails, the mod
-    /// stays out of the world mods for this run, so a Workshop problem can't
-    /// stop the world from loading.
-    /// </summary>
-    public static void Download()
-    {
-        if (ServerFlags.NoImplicitMod)
-        {
-            LogFile.WriteLine("MagnetarMod client companion disabled by -noimplicitmod.");
-            return;
-        }
-
-        if (IsCrossplayEnabled())
-        {
-            LogFile.WriteLine("Crossplay enabled; skipping MagnetarMod client companion.");
-            return;
-        }
-
-        if (!SteamMods.IsSteamWorkshopAvailable())
-        {
-            WarnSteamUnavailable();
-            return;
-        }
-
-        LogFile.WriteLine($"Checking MagnetarMod client companion ({WorkshopId}) for updates.");
-        if (SteamMods.Update([WorkshopId]))
-            return;
-
-        downloadFailed = true;
-        LogFile.Warn(
-            $"MagnetarMod client companion ({WorkshopId}) could not be downloaded from the Steam Workshop; leaving it out of the world mods so the server can start. Mission-screen popups will be unavailable."
-        );
-    }
 
     public static void ApplyToCheckpoint(MyObjectBuilder_Checkpoint checkpoint)
     {
@@ -104,15 +68,12 @@ internal static class MagnetarClientMod
             return;
         }
 
-        if (downloadFailed)
-        {
-            mods.RemoveAll(IsMagnetarMod);
-            return;
-        }
-
         if (mods.Any(IsMagnetarMod))
             return;
 
+        // The DS downloads it with the world mods, after it has moved its
+        // Workshop folder to the -path data folder, and the world doesn't
+        // load if that download fails, as with any other world mod.
         mods.Add(CreateModItem());
         LogFile.WriteLine(
             $"Added MagnetarMod client companion ({WorkshopId}) to world mods. {Purpose}"
