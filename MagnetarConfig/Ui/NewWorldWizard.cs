@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -19,7 +19,10 @@ internal static class NewWorldWizard
         DsInstance instance = shell.Instance;
         if (instance.Templates.Templates.Count == 0)
         {
-            Dialogs.Error("New World", "No world templates found. A DS install (Content/CustomWorlds) is required; set it with -ds64.");
+            Dialogs.Error(
+                "New World",
+                "No world templates found. A DS install (Content/CustomWorlds) is required; set it with -ds64."
+            );
             return;
         }
 
@@ -33,11 +36,11 @@ internal static class NewWorldWizard
 
         string question = $"Create world '{name}' from template '{template.DisplayName}'?";
         string details =
-            "Copies the template into Saves/ (no server start):\n" +
-            $"  • Saves/{name}/  ← copy of '{template.FolderName}'\n" +
-            $"  • Sandbox_config.sbc SessionName ← {name}\n" +
-            "  • activated (LastSession.sbl) so the DS loads it next\n\n" +
-            "The world appears immediately and can be edited before first start.";
+            "Copies the template into Saves/ (no server start):\n"
+            + $"  • Saves/{name}/  ← copy of '{template.FolderName}'\n"
+            + $"  • Sandbox_config.sbc SessionName ← {name}\n"
+            + "  • activated (LastSession.sbl) so the DS loads it next\n\n"
+            + "The world appears immediately and can be edited before first start.";
 
         if (!Dialogs.ConfirmDetails("Create world", question, details, "Create", "Cancel"))
             return;
@@ -50,10 +53,13 @@ internal static class NewWorldWizard
                 shell.ReloadInstance();
                 ActivateCreatedWorld(shell, name);
                 shell.ShowWorlds(); // rebuild the Worlds list so the new world is visible immediately
-                Dialogs.Info("World created",
-                    $"'{name}' was created under Saves/ and activated.\n" +
-                    "Edit it under Worlds, or start the server to run it.");
-            });
+                Dialogs.Info(
+                    "World created",
+                    $"'{name}' was created under Saves/ and activated.\n"
+                        + "Edit it under Worlds, or start the server to run it."
+                );
+            }
+        );
     }
 
     /// <summary>Points the DS at the freshly created world (LastSession.sbl), mirroring WorldsView.ActivateWorld.</summary>
@@ -65,7 +71,8 @@ internal static class NewWorldWizard
             if (world == null)
                 return; // copy reported success but the folder isn't visible — leave selection untouched
 
-            LastSessionFile.ForWorld(world, shell.Instance.Binding.SavesPath)
+            LastSessionFile
+                .ForWorld(world, shell.Instance.Binding.SavesPath)
                 .Write(shell.Writer, LastSessionFile.PathFor(shell.Instance.Binding.SavesPath));
 
             DedicatedConfigDocument cfg = shell.Instance.Config;
@@ -80,18 +87,26 @@ internal static class NewWorldWizard
         }
         catch (Exception e)
         {
-            Dialogs.Error("Activate failed",
-                $"The world was created but could not be activated: {e.Message}\n" +
-                "Activate it manually under Worlds (F5).");
+            Dialogs.Error(
+                "Activate failed",
+                $"The world was created but could not be activated: {e.Message}\n"
+                    + "Activate it manually under Worlds (F5)."
+            );
         }
     }
 
     private static WorldTemplate PickTemplate(DsInstance instance)
     {
         var dlg = new Dialog("Pick a template", 60, 18) { ColorScheme = TurboVisionTheme.Dialog };
-        var list = new ListView(instance.Templates.Templates.Select(t => $"{t.DisplayName}   ({t.FolderName})").ToList())
+        var list = new ListView(
+            instance.Templates.Templates.Select(t => $"{t.DisplayName}   ({t.FolderName})").ToList()
+        )
         {
-            X = 1, Y = 1, Width = Dim.Fill(2), Height = Dim.Fill(3), ColorScheme = TurboVisionTheme.Dialog,
+            X = 1,
+            Y = 1,
+            Width = Dim.Fill(2),
+            Height = Dim.Fill(3),
+            ColorScheme = TurboVisionTheme.Dialog,
         };
         WorldTemplate result = null;
         var ok = new Button("Select", true);
@@ -104,7 +119,10 @@ internal static class NewWorldWizard
         };
         var cancel = new Button("Cancel");
         cancel.Clicked += () => Application.RequestStop(dlg);
-        dlg.Add(new Label("Templates from the DS install (Content/CustomWorlds):") { X = 1, Y = 0 }, list);
+        dlg.Add(
+            new Label("Templates from the DS install (Content/CustomWorlds):") { X = 1, Y = 0 },
+            list
+        );
         dlg.AddButton(ok);
         dlg.AddButton(cancel);
         list.SetFocus();
@@ -115,8 +133,19 @@ internal static class NewWorldWizard
     private static string PromptName(WorldTemplate template, DsInstance instance)
     {
         var dlg = new Dialog("World name", 56, 10) { ColorScheme = TurboVisionTheme.Dialog };
-        var field = new TextField(template.DisplayName) { X = 1, Y = 2, Width = Dim.Fill(2) };
-        var warn = new Label("") { X = 1, Y = 4, Width = Dim.Fill(2), ColorScheme = TurboVisionTheme.Dialog };
+        var field = new TextField(template.DisplayName)
+        {
+            X = 1,
+            Y = 2,
+            Width = Dim.Fill(2),
+        };
+        var warn = new Label("")
+        {
+            X = 1,
+            Y = 4,
+            Width = Dim.Fill(2),
+            ColorScheme = TurboVisionTheme.Dialog,
+        };
         string result = null;
 
         void Validate()
@@ -124,9 +153,12 @@ internal static class NewWorldWizard
             string n = field.Text.ToString();
             if (n.IndexOfAny(new[] { '/', '\\', ':' }) >= 0)
                 warn.Text = "Name must not contain / \\ or :";
-            else if (instance.Worlds.Worlds.Any(w =>
-                         string.Equals(w.SessionName, n, StringComparison.OrdinalIgnoreCase)
-                         || Io.PlatformPaths.PathComparer.Equals(w.FolderName, n)))
+            else if (
+                instance.Worlds.Worlds.Any(w =>
+                    string.Equals(w.SessionName, n, StringComparison.OrdinalIgnoreCase)
+                    || Io.PlatformPaths.PathComparer.Equals(w.FolderName, n)
+                )
+            )
                 warn.Text = "A world with this name already exists.";
             else
                 warn.Text = string.Empty;

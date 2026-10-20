@@ -9,7 +9,11 @@ public class RegistryTests
     [Fact]
     public void Ids_are_unique()
     {
-        var dupes = OptionRegistry.All.GroupBy(o => o.Id).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        var dupes = OptionRegistry
+            .All.GroupBy(o => o.Id)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
         Assert.Empty(dupes);
     }
 
@@ -19,8 +23,14 @@ public class RegistryTests
         foreach (OptionScope scope in new[] { OptionScope.DedicatedRoot, OptionScope.Session })
         {
             var list = OptionRegistry.All.Where(o => o.Scope == scope);
-            var dupes = list.GroupBy(o => o.XmlName).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
-            Assert.True(dupes.Count == 0, $"Duplicate XML names in {scope}: {string.Join(",", dupes)}");
+            var dupes = list.GroupBy(o => o.XmlName)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            Assert.True(
+                dupes.Count == 0,
+                $"Duplicate XML names in {scope}: {string.Join(",", dupes)}"
+            );
         }
     }
 
@@ -51,8 +61,10 @@ public class RegistryTests
     public void Online_and_hostility_enums_use_exact_xml_names()
     {
         OptionDefinition online = OptionRegistry.ById("Session.OnlineMode");
-        Assert.Equal(new[] { "OFFLINE", "PUBLIC", "FRIENDS", "PRIVATE" },
-            online.Choices.OrderBy(c => c.Value).Select(c => c.XmlName).ToArray());
+        Assert.Equal(
+            new[] { "OFFLINE", "PUBLIC", "FRIENDS", "PRIVATE" },
+            online.Choices.OrderBy(c => c.Value).Select(c => c.XmlName).ToArray()
+        );
 
         OptionDefinition host = OptionRegistry.ById("Session.EnvironmentHostility");
         Assert.Equal("CATACLYSM_UNREAL", host.Choices.Single(c => c.Value == 3).XmlName);

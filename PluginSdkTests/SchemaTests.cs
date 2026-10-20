@@ -229,26 +229,35 @@ namespace PluginSdk.Tests
 #pragma warning disable CS0649
         private struct NonStringCaption
         {
-            [StructMember, StructCaption] public int Bad;
+            [StructMember, StructCaption]
+            public int Bad;
         }
 
         private struct CaptionWithoutStructMember
         {
-            [StructMember] public string Good;
-            [StructCaption] public string Caption { get; set; }
+            [StructMember]
+            public string Good;
+
+            [StructCaption]
+            public string Caption { get; set; }
         }
 
         private struct TwoCaptions
         {
-            [StructMember, StructCaption] public string First;
-            [StructMember, StructCaption] public string Second;
+            [StructMember, StructCaption]
+            public string First;
+
+            [StructMember, StructCaption]
+            public string Second;
         }
 #pragma warning restore CS0649
 
         private class NonStringCaptionConfig : PluginConfig
         {
             private NonStringCaption value;
-            [StructOption] public NonStringCaption Value
+
+            [StructOption]
+            public NonStringCaption Value
             {
                 get => value;
                 set => SetField(ref this.value, value);
@@ -258,7 +267,9 @@ namespace PluginSdk.Tests
         private class CaptionWithoutStructMemberConfig : PluginConfig
         {
             private CaptionWithoutStructMember value;
-            [StructOption] public CaptionWithoutStructMember Value
+
+            [StructOption]
+            public CaptionWithoutStructMember Value
             {
                 get => value;
                 set => SetField(ref this.value, value);
@@ -268,7 +279,9 @@ namespace PluginSdk.Tests
         private class TwoCaptionsConfig : PluginConfig
         {
             private TwoCaptions value;
-            [StructOption] public TwoCaptions Value
+
+            [StructOption]
+            public TwoCaptions Value
             {
                 get => value;
                 set => SetField(ref this.value, value);
@@ -278,24 +291,27 @@ namespace PluginSdk.Tests
         [Fact]
         public void Build_StructCaption_OnNonStringMember_Throws()
         {
-            var ex = Assert.Throws<System.InvalidOperationException>(
-                () => ConfigSchema.Build(typeof(NonStringCaptionConfig)));
+            var ex = Assert.Throws<System.InvalidOperationException>(() =>
+                ConfigSchema.Build(typeof(NonStringCaptionConfig))
+            );
             Assert.Contains("must be of type string", ex.Message);
         }
 
         [Fact]
         public void Build_StructCaption_WithoutStructMember_Throws()
         {
-            var ex = Assert.Throws<System.InvalidOperationException>(
-                () => ConfigSchema.Build(typeof(CaptionWithoutStructMemberConfig)));
+            var ex = Assert.Throws<System.InvalidOperationException>(() =>
+                ConfigSchema.Build(typeof(CaptionWithoutStructMemberConfig))
+            );
             Assert.Contains("lacks [StructMember]", ex.Message);
         }
 
         [Fact]
         public void Build_StructCaption_DuplicateOnSameStruct_Throws()
         {
-            var ex = Assert.Throws<System.InvalidOperationException>(
-                () => ConfigSchema.Build(typeof(TwoCaptionsConfig)));
+            var ex = Assert.Throws<System.InvalidOperationException>(() =>
+                ConfigSchema.Build(typeof(TwoCaptionsConfig))
+            );
             Assert.Contains("more than one [StructCaption]", ex.Message);
         }
     }
@@ -328,17 +344,44 @@ namespace PluginSdk.Tests
             var values = doc.RootElement.GetProperty("values");
 
             // PascalCase property names become camelCase in JSON.
-            foreach (var name in new[] {
-                "flag", "integer", "longInteger", "floatNumber", "doubleNumber", "text",
-                "boolList", "intList", "longList", "floatList", "doubleList", "stringList",
-                "dictStringInt", "dictStringString", "dictStringDouble",
-                "dictIntString", "dictIntDouble", "dictLongBool", "dictLongLong",
-                "quality", "qualityList",
-                "structValue", "structList", "treeNodes", "nested",
-                "solidColor", "tintColor",
-                "uvOffset", "worldOffset", "tileCoord", "gridSize",
-                "facing", "spawnPose",
-            })
+            foreach (
+                var name in new[]
+                {
+                    "flag",
+                    "integer",
+                    "longInteger",
+                    "floatNumber",
+                    "doubleNumber",
+                    "text",
+                    "boolList",
+                    "intList",
+                    "longList",
+                    "floatList",
+                    "doubleList",
+                    "stringList",
+                    "dictStringInt",
+                    "dictStringString",
+                    "dictStringDouble",
+                    "dictIntString",
+                    "dictIntDouble",
+                    "dictLongBool",
+                    "dictLongLong",
+                    "quality",
+                    "qualityList",
+                    "structValue",
+                    "structList",
+                    "treeNodes",
+                    "nested",
+                    "solidColor",
+                    "tintColor",
+                    "uvOffset",
+                    "worldOffset",
+                    "tileCoord",
+                    "gridSize",
+                    "facing",
+                    "spawnPose",
+                }
+            )
             {
                 Assert.True(values.TryGetProperty(name, out _), $"values is missing '{name}'");
             }
@@ -395,7 +438,9 @@ namespace PluginSdk.Tests
             Assert.True(properties.GetArrayLength() >= 20);
 
             // Spot-check: integer carries min/max
-            var integerProp = properties.EnumerateArray().Single(p => p.GetProperty("name").GetString() == "Integer");
+            var integerProp = properties
+                .EnumerateArray()
+                .Single(p => p.GetProperty("name").GetString() == "Integer");
             Assert.Equal(0, integerProp.GetProperty("min").GetDouble());
             Assert.Equal(100, integerProp.GetProperty("max").GetDouble());
 
@@ -427,13 +472,20 @@ namespace PluginSdk.Tests
     public class SparseXmlTests
     {
         // Names of the written option elements; the default comments do not count.
-        internal static string[] OptionElements(string xml)
-            => System.Xml.Linq.XDocument.Parse(xml).Root.Elements().Select(e => e.Name.LocalName).ToArray();
+        internal static string[] OptionElements(string xml) =>
+            System
+                .Xml.Linq.XDocument.Parse(xml)
+                .Root.Elements()
+                .Select(e => e.Name.LocalName)
+                .ToArray();
 
         [Fact]
         public void SaveXml_EmptyConfigWritesNoPropertyElements()
         {
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"sparse-empty-{System.Guid.NewGuid():N}.xml");
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"sparse-empty-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
                 ConfigStorage.SaveXml(new TestConfig(), path);
@@ -445,7 +497,8 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+                if (System.IO.File.Exists(path))
+                    System.IO.File.Delete(path);
             }
         }
 
@@ -458,7 +511,10 @@ namespace PluginSdk.Tests
                 Text = "hello",
                 IntList = new System.Collections.Generic.List<int> { 1, 2, 3 },
             };
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"sparse-some-{System.Guid.NewGuid():N}.xml");
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"sparse-some-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
                 ConfigStorage.SaveXml(c, path);
@@ -477,7 +533,8 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+                if (System.IO.File.Exists(path))
+                    System.IO.File.Delete(path);
             }
         }
 
@@ -486,9 +543,14 @@ namespace PluginSdk.Tests
         {
             // Hand-crafted XML that only mentions Integer; other properties
             // must come from the parameterless ctor.
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"sparse-load-{System.Guid.NewGuid():N}.xml");
-            System.IO.File.WriteAllText(path,
-                "<?xml version=\"1.0\"?>\n<TestConfig><Integer>123</Integer></TestConfig>");
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"sparse-load-{System.Guid.NewGuid():N}.xml"
+            );
+            System.IO.File.WriteAllText(
+                path,
+                "<?xml version=\"1.0\"?>\n<TestConfig><Integer>123</Integer></TestConfig>"
+            );
             try
             {
                 var loaded = ConfigStorage.LoadXml<TestConfig>(path);
@@ -500,24 +562,32 @@ namespace PluginSdk.Tests
             }
             finally
             {
-                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+                if (System.IO.File.Exists(path))
+                    System.IO.File.Delete(path);
             }
         }
 
         [Fact]
         public void SaveXml_StructAtDefaultIsOmitted_BothFieldAndContents()
         {
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"sparse-struct-{System.Guid.NewGuid():N}.xml");
+            var path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"sparse-struct-{System.Guid.NewGuid():N}.xml"
+            );
             try
             {
-                ConfigStorage.SaveXml(new TestConfig { StructValue = new TestStruct { Integer = 7 } }, path);
+                ConfigStorage.SaveXml(
+                    new TestConfig { StructValue = new TestStruct { Integer = 7 } },
+                    path
+                );
                 var text = System.IO.File.ReadAllText(path);
                 Assert.Contains("<StructValue>", text);
                 Assert.Contains("<Integer>7</Integer>", text);
             }
             finally
             {
-                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+                if (System.IO.File.Exists(path))
+                    System.IO.File.Delete(path);
             }
         }
     }

@@ -31,17 +31,29 @@ namespace PluginSdk.Clustering
         public ulong CallerId { get; }
         public string Reason { get; }
 
-        public ClusterLifecycleRequest(Guid requestId, ServerTerminationKind kind,
-            ClusterLifecycleOrigin origin, bool saveFirst, ulong callerId = 0, string reason = "")
+        public ClusterLifecycleRequest(
+            Guid requestId,
+            ServerTerminationKind kind,
+            ClusterLifecycleOrigin origin,
+            bool saveFirst,
+            ulong callerId = 0,
+            string reason = ""
+        )
         {
             if (requestId == Guid.Empty)
-                throw new ArgumentException("Lifecycle request id cannot be empty", nameof(requestId));
+                throw new ArgumentException(
+                    "Lifecycle request id cannot be empty",
+                    nameof(requestId)
+                );
             if (!Enum.IsDefined(typeof(ServerTerminationKind), kind))
                 throw new ArgumentOutOfRangeException(nameof(kind));
             if (!Enum.IsDefined(typeof(ClusterLifecycleOrigin), origin))
                 throw new ArgumentOutOfRangeException(nameof(origin));
             if (reason != null && reason.Length > 512)
-                throw new ArgumentException("Lifecycle reason cannot exceed 512 characters", nameof(reason));
+                throw new ArgumentException(
+                    "Lifecycle reason cannot exceed 512 characters",
+                    nameof(reason)
+                );
 
             RequestId = requestId;
             Kind = kind;
@@ -62,11 +74,20 @@ namespace PluginSdk.Clustering
         public string Message { get; }
         public string NodeState { get; }
 
-        public ClusterLifecycleAcknowledgement(Guid requestId, ClusterLifecycleDisposition disposition,
-            Guid operationId, string reasonCode, string message, string nodeState = "")
+        public ClusterLifecycleAcknowledgement(
+            Guid requestId,
+            ClusterLifecycleDisposition disposition,
+            Guid operationId,
+            string reasonCode,
+            string message,
+            string nodeState = ""
+        )
         {
             if (requestId == Guid.Empty)
-                throw new ArgumentException("Lifecycle acknowledgement request id cannot be empty", nameof(requestId));
+                throw new ArgumentException(
+                    "Lifecycle acknowledgement request id cannot be empty",
+                    nameof(requestId)
+                );
             if (!Enum.IsDefined(typeof(ClusterLifecycleDisposition), disposition))
                 throw new ArgumentOutOfRangeException(nameof(disposition));
 
@@ -78,9 +99,18 @@ namespace PluginSdk.Clustering
             NodeState = nodeState ?? string.Empty;
         }
 
-        public static ClusterLifecycleAcknowledgement Unavailable(Guid requestId, string reasonCode, string message) =>
-            new ClusterLifecycleAcknowledgement(requestId, ClusterLifecycleDisposition.Unavailable,
-                Guid.Empty, reasonCode, message);
+        public static ClusterLifecycleAcknowledgement Unavailable(
+            Guid requestId,
+            string reasonCode,
+            string message
+        ) =>
+            new ClusterLifecycleAcknowledgement(
+                requestId,
+                ClusterLifecycleDisposition.Unavailable,
+                Guid.Empty,
+                reasonCode,
+                message
+            );
     }
 
     /// <summary>
@@ -90,7 +120,9 @@ namespace PluginSdk.Clustering
     public interface IClusterLifecycleProvider
     {
         Task<ClusterLifecycleAcknowledgement> RequestAsync(
-            ClusterLifecycleRequest request, CancellationToken cancellationToken);
+            ClusterLifecycleRequest request,
+            CancellationToken cancellationToken
+        );
     }
 
     /// <summary>
@@ -115,16 +147,21 @@ namespace PluginSdk.Clustering
             if (provider == null)
                 return false;
 
-            return ReferenceEquals(Interlocked.CompareExchange(ref current, null, provider), provider);
+            return ReferenceEquals(
+                Interlocked.CompareExchange(ref current, null, provider),
+                provider
+            );
         }
 
         /// <summary>
         /// Routes through the registered provider. Returns false only when the process is standalone
         /// and no provider exists; provider errors become fail-closed unavailable acknowledgements.
         /// </summary>
-        public static bool TryRequest(ClusterLifecycleRequest request,
+        public static bool TryRequest(
+            ClusterLifecycleRequest request,
             out Task<ClusterLifecycleAcknowledgement> acknowledgement,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -133,8 +170,14 @@ namespace PluginSdk.Clustering
             if (provider == null)
             {
                 acknowledgement = PluginCluster.IsClusterProcess
-                    ? Task.FromResult(ClusterLifecycleAcknowledgement.Unavailable(request.RequestId,
-                        "provider_missing", "Cluster lifecycle provider is unavailable; local termination denied.")) : null;
+                    ? Task.FromResult(
+                        ClusterLifecycleAcknowledgement.Unavailable(
+                            request.RequestId,
+                            "provider_missing",
+                            "Cluster lifecycle provider is unavailable; local termination denied."
+                        )
+                    )
+                    : null;
                 return acknowledgement != null;
             }
 
@@ -143,31 +186,50 @@ namespace PluginSdk.Clustering
         }
 
         private static async Task<ClusterLifecycleAcknowledgement> RequestProtected(
-            IClusterLifecycleProvider provider, ClusterLifecycleRequest request,
-            CancellationToken cancellationToken)
+            IClusterLifecycleProvider provider,
+            ClusterLifecycleRequest request,
+            CancellationToken cancellationToken
+        )
         {
             try
             {
-                Task<ClusterLifecycleAcknowledgement> pending =
-                    provider.RequestAsync(request, cancellationToken);
+                Task<ClusterLifecycleAcknowledgement> pending = provider.RequestAsync(
+                    request,
+                    cancellationToken
+                );
                 if (pending == null)
-                    throw new InvalidOperationException("Cluster lifecycle provider returned no acknowledgement task");
+                    throw new InvalidOperationException(
+                        "Cluster lifecycle provider returned no acknowledgement task"
+                    );
 
-                ClusterLifecycleAcknowledgement acknowledgement = await pending.ConfigureAwait(false);
+                ClusterLifecycleAcknowledgement acknowledgement = await pending.ConfigureAwait(
+                    false
+                );
                 if (acknowledgement == null || acknowledgement.RequestId != request.RequestId)
-                    throw new InvalidOperationException("Cluster lifecycle provider returned an invalid acknowledgement");
+                    throw new InvalidOperationException(
+                        "Cluster lifecycle provider returned an invalid acknowledgement"
+                    );
                 return acknowledgement;
             }
             catch (OperationCanceledException)
             {
-                return ClusterLifecycleAcknowledgement.Unavailable(request.RequestId,
-                    "request_cancelled", "Cluster lifecycle request was cancelled.");
+                return ClusterLifecycleAcknowledgement.Unavailable(
+                    request.RequestId,
+                    "request_cancelled",
+                    "Cluster lifecycle request was cancelled."
+                );
             }
             catch (Exception exception)
             {
-                MyLog.Default?.Error("Cluster lifecycle request failed; denying local termination", exception);
-                return ClusterLifecycleAcknowledgement.Unavailable(request.RequestId,
-                    "provider_failure", "Cluster lifecycle provider failed.");
+                MyLog.Default?.Error(
+                    "Cluster lifecycle request failed; denying local termination",
+                    exception
+                );
+                return ClusterLifecycleAcknowledgement.Unavailable(
+                    request.RequestId,
+                    "provider_failure",
+                    "Cluster lifecycle provider failed."
+                );
             }
         }
     }

@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using PluginSdk.Logging;
 
 namespace PluginSdk.Stats
@@ -24,8 +24,8 @@ namespace PluginSdk.Stats
     {
         private static readonly Logger Log = Logger.Create("PluginStats");
 
-        private static readonly ConcurrentDictionary<string, StatsSnapshot> Current
-            = new ConcurrentDictionary<string, StatsSnapshot>();
+        private static readonly ConcurrentDictionary<string, StatsSnapshot> Current =
+            new ConcurrentDictionary<string, StatsSnapshot>();
 
         /// <summary>
         /// Raised after each <see cref="Publish"/>, with the provider name and
@@ -42,8 +42,10 @@ namespace PluginSdk.Stats
         /// </summary>
         public static void Publish(string provider, StatsSnapshot snapshot)
         {
-            if (string.IsNullOrEmpty(provider)) throw new ArgumentException("Provider name is required.", nameof(provider));
-            if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+            if (string.IsNullOrEmpty(provider))
+                throw new ArgumentException("Provider name is required.", nameof(provider));
+            if (snapshot == null)
+                throw new ArgumentNullException(nameof(snapshot));
 
             Current[provider] = snapshot;
 
@@ -69,13 +71,12 @@ namespace PluginSdk.Stats
         /// <summary>Gets the latest snapshot for <paramref name="provider"/>.
         /// Returns <c>false</c> when the provider has published nothing (or was
         /// cleared).</summary>
-        public static bool TryGetSnapshot(string provider, out StatsSnapshot snapshot)
-            => Current.TryGetValue(provider, out snapshot);
+        public static bool TryGetSnapshot(string provider, out StatsSnapshot snapshot) =>
+            Current.TryGetValue(provider, out snapshot);
 
         /// <summary>The provider names that currently have a snapshot. The list
         /// is a point-in-time copy.</summary>
-        public static IReadOnlyList<string> Providers
-            => new List<string>(Current.Keys);
+        public static IReadOnlyList<string> Providers => new List<string>(Current.Keys);
 
         /// <summary>Removes <paramref name="provider"/>'s snapshot, e.g. when its
         /// plugin is disabled at runtime. Idempotent; does not raise

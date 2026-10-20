@@ -14,7 +14,12 @@ internal sealed class LaunchSpec
 {
     private static readonly string[] ForbiddenExtra =
     {
-        "-session:", "-ignorelastsession", "-path", "-config", "-daemon", "-ds64",
+        "-session:",
+        "-ignorelastsession",
+        "-path",
+        "-config",
+        "-daemon",
+        "-ds64",
     };
 
     public InstanceBinding Binding { get; set; }

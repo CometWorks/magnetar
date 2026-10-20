@@ -1,7 +1,7 @@
 using System.Text;
-using Terminal.Gui;
 using Magnetar.Config.Model;
 using Magnetar.Config.Process;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -15,13 +15,21 @@ internal sealed class DashboardView : Window
     private readonly Label statusLine;
     private readonly TextView summary;
 
-    public DashboardView(AppShell shell) : base("Dashboard")
+    public DashboardView(AppShell shell)
+        : base("Dashboard")
     {
         this.shell = shell;
         ColorScheme = TurboVisionTheme.Window;
         Border.BorderStyle = BorderStyle.Double;
 
-        statusLine = new Label(" ") { X = 1, Y = 0, Width = Dim.Fill(1), Height = 1, ColorScheme = TurboVisionTheme.Window };
+        statusLine = new Label(" ")
+        {
+            X = 1,
+            Y = 0,
+            Width = Dim.Fill(1),
+            Height = 1,
+            ColorScheme = TurboVisionTheme.Window,
+        };
 
         summary = new TextView
         {
@@ -68,20 +76,26 @@ internal sealed class DashboardView : Window
         sb.AppendLine($"Instance data dir : {shell.Binding.DataDir}");
         sb.AppendLine($"Magnetar config   : {shell.Binding.MagnetarConfigDir}");
         sb.AppendLine($"Launcher          : {shell.Binding.MagnetarExePath}");
-        sb.AppendLine($"DS install        : {shell.Binding.Ds64Dir ?? "(not found — templates disabled)"}");
+        sb.AppendLine(
+            $"DS install        : {shell.Binding.Ds64Dir ?? "(not found — templates disabled)"}"
+        );
         sb.AppendLine();
 
         if (cfg != null)
         {
             sb.AppendLine($"Server name : {Val(cfg, "Dedicated.ServerName")}");
-            sb.AppendLine($"Ports       : game {Val(cfg, "Dedicated.ServerPort")}  steam {Val(cfg, "Dedicated.SteamPort")}  api {Val(cfg, "Dedicated.RemoteApiPort")}");
+            sb.AppendLine(
+                $"Ports       : game {Val(cfg, "Dedicated.ServerPort")}  steam {Val(cfg, "Dedicated.SteamPort")}  api {Val(cfg, "Dedicated.RemoteApiPort")}"
+            );
             sb.AppendLine($"Network     : {Val(cfg, "Dedicated.NetworkType")}");
             sb.AppendLine($"Password    : {(cfg.HasPassword ? "set" : "not set")}");
         }
 
         WorldInfo active = instance.ActiveWorld;
         sb.AppendLine();
-        sb.AppendLine($"Active world : {(active != null ? active.SessionName : "(none selected)")}");
+        sb.AppendLine(
+            $"Active world : {(active != null ? active.SessionName : "(none selected)")}"
+        );
         sb.AppendLine($"Worlds on disk : {instance.Worlds.Worlds.Count}");
         sb.AppendLine($"Templates      : {instance.Templates.Templates.Count}");
 

@@ -14,14 +14,15 @@ internal static class XmlOut
 {
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
-    public static XmlWriterSettings Settings() => new()
-    {
-        Indent = true,
-        Encoding = Utf8NoBom,
-        OmitXmlDeclaration = false,
-        NewLineChars = "\n",
-        NewLineHandling = NewLineHandling.Replace,
-    };
+    public static XmlWriterSettings Settings() =>
+        new()
+        {
+            Indent = true,
+            Encoding = Utf8NoBom,
+            OmitXmlDeclaration = false,
+            NewLineChars = "\n",
+            NewLineHandling = NewLineHandling.Replace,
+        };
 
     /// <summary>Serializes a document to a string using the shared settings.</summary>
     public static string ToXmlString(XDocument document)

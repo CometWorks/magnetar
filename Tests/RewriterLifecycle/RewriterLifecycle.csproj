@@ -8,8 +8,14 @@
   <ItemGroup>
     <Compile Include="../../Legacy/Loader/PluginInstance.cs" Link="PluginInstance.cs" />
     <Compile Include="../../Pulsar/Legacy/Patch/Patch_Rewriter.cs" Link="Patch_Rewriter.cs" />
-    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.dll" />
-    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll" />
+    <Reference
+      Include="Microsoft.CodeAnalysis"
+      HintPath="$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.dll"
+    />
+    <Reference
+      Include="Microsoft.CodeAnalysis.CSharp"
+      HintPath="$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll"
+    />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
     <PackageReference Include="NLog" Version="6.0.3" />
   </ItemGroup>

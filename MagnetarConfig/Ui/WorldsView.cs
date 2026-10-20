@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Terminal.Gui;
 using Magnetar.Config.Model;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -17,7 +17,8 @@ internal sealed class WorldsView : Window
     private readonly ListView list;
     private List<WorldInfo> worlds;
 
-    public WorldsView(AppShell shell) : base("Worlds")
+    public WorldsView(AppShell shell)
+        : base("Worlds")
     {
         this.shell = shell;
         ColorScheme = TurboVisionTheme.Window;
@@ -25,23 +26,38 @@ internal sealed class WorldsView : Window
 
         list = new ListView(Array.Empty<string>())
         {
-            X = 1, Y = 1, Width = Dim.Fill(1), Height = Dim.Fill(3),
+            X = 1,
+            Y = 1,
+            Width = Dim.Fill(1),
+            Height = Dim.Fill(3),
             ColorScheme = TurboVisionTheme.Window,
         };
         list.OpenSelectedItem += _ => OpenSettings();
 
         var header = new Label(Row("Name", "Last saved", "Mods", "Config", "Active"))
-        { X = 1, Y = 0, ColorScheme = TurboVisionTheme.Window };
+        {
+            X = 1,
+            Y = 0,
+            ColorScheme = TurboVisionTheme.Window,
+        };
 
         var settings = new Button("_Settings") { X = 1, Y = Pos.AnchorEnd(2) };
         settings.Clicked += OpenSettings;
         var mods = new Button("_Mods") { X = Pos.Right(settings) + 1, Y = Pos.AnchorEnd(2) };
         mods.Clicked += () => OpenMods(Selected);
-        var activate = new Button("_Activate (F6)") { X = Pos.Right(mods) + 1, Y = Pos.AnchorEnd(2) };
+        var activate = new Button("_Activate (F6)")
+        {
+            X = Pos.Right(mods) + 1,
+            Y = Pos.AnchorEnd(2),
+        };
         activate.Clicked += ActivateWorld;
         var refresh = new Button("_Refresh") { X = Pos.Right(activate) + 1, Y = Pos.AnchorEnd(2) };
         refresh.Clicked += Reload;
-        var newWorld = new Button("_New World") { X = Pos.Right(refresh) + 1, Y = Pos.AnchorEnd(2) };
+        var newWorld = new Button("_New World")
+        {
+            X = Pos.Right(refresh) + 1,
+            Y = Pos.AnchorEnd(2),
+        };
         newWorld.Clicked += shell.ShowNewWorldWizard;
         var delete = new Button("_Delete") { X = Pos.Right(newWorld) + 1, Y = Pos.AnchorEnd(2) };
         delete.Clicked += DeleteWorld;
@@ -69,7 +85,7 @@ internal sealed class WorldsView : Window
 
     // Single column layout shared by the header and the data rows so they stay aligned.
     private static string Row(string name, string saved, string mods, string cfg, string active) =>
-        $"{name,-28}{saved,-22}{mods,-7}{cfg,-9}{active}";
+        $"{name, -28}{saved, -22}{mods, -7}{cfg, -9}{active}";
 
     private static string Format(WorldInfo w)
     {
@@ -88,7 +104,8 @@ internal sealed class WorldsView : Window
     private void OpenSettings()
     {
         WorldInfo w = Selected;
-        if (w == null) return;
+        if (w == null)
+            return;
 
         WorldConfigDocument doc = WorldConfigDocument.Open(w.WorldConfigPath);
         var view = new OptionFormView(
@@ -98,14 +115,16 @@ internal sealed class WorldsView : Window
             new EditSession(doc, OptionRegistry.SessionOptions),
             shell.Writer,
             Reload,
-            editMods: () => OpenMods(w));
+            editMods: () => OpenMods(w)
+        );
         // Reuse the shell's content host.
         shell.ShowWorldContent(view);
     }
 
     private void OpenMods(WorldInfo w)
     {
-        if (w == null) return;
+        if (w == null)
+            return;
         shell.ShowWorldContent(new ModListView(w, shell.Writer));
     }
 
@@ -134,8 +153,10 @@ internal sealed class WorldsView : Window
 
         string question = $"Activate '{w.SessionName}'?";
         var details = "Writes:\n  • Saves/LastSession.sbl";
-        if (willClearIgnore) details += "\n  • cfg IgnoreLastSession → false";
-        if (loadWorldSet) details += "\n  • cfg LoadWorld → cleared";
+        if (willClearIgnore)
+            details += "\n  • cfg IgnoreLastSession → false";
+        if (loadWorldSet)
+            details += "\n  • cfg LoadWorld → cleared";
         details += "\n\nTakes effect on the next server start.";
 
         if (!Dialogs.ConfirmDetails("Activate world", question, details, "Activate", "Cancel"))
@@ -148,13 +169,18 @@ internal sealed class WorldsView : Window
 
             if (willClearIgnore || loadWorldSet)
             {
-                if (willClearIgnore) cfg.IgnoreLastSession = false;
-                if (loadWorldSet) cfg.LoadWorld = string.Empty;
+                if (willClearIgnore)
+                    cfg.IgnoreLastSession = false;
+                if (loadWorldSet)
+                    cfg.LoadWorld = string.Empty;
                 cfg.Save(shell.Writer);
             }
 
             Reload();
-            Dialogs.Info("Activated", $"'{w.SessionName}' will load on the next start.\nNote: a -session: on the command line overrides this.");
+            Dialogs.Info(
+                "Activated",
+                $"'{w.SessionName}' will load on the next start.\nNote: a -session: on the command line overrides this."
+            );
         }
         catch (Exception e)
         {
@@ -172,13 +198,25 @@ internal sealed class WorldsView : Window
         }
 
         string details =
-            "Permanently deletes the world folder and everything in it:\n" +
-            $"  • {w.FolderPath}\n\n" +
-            (w.IsActive ? "This is the ACTIVE world — the world selection will be cleared too.\n\n" : "") +
-            "This cannot be undone.";
+            "Permanently deletes the world folder and everything in it:\n"
+            + $"  • {w.FolderPath}\n\n"
+            + (
+                w.IsActive
+                    ? "This is the ACTIVE world — the world selection will be cleared too.\n\n"
+                    : ""
+            )
+            + "This cannot be undone.";
 
         // Destructive confirm: defaults to Keep (safe on stray Enter/Esc).
-        if (!Dialogs.ConfirmDestructive("Delete world", $"Delete world '{w.SessionName}'?", details, "Delete", "Keep"))
+        if (
+            !Dialogs.ConfirmDestructive(
+                "Delete world",
+                $"Delete world '{w.SessionName}'?",
+                details,
+                "Delete",
+                "Keep"
+            )
+        )
             return;
 
         try
@@ -222,9 +260,14 @@ internal sealed class WorldsView : Window
         try
         {
             DedicatedConfigDocument cfg = shell.Instance.Config;
-            if (cfg != null && !string.IsNullOrEmpty(cfg.LoadWorld)
+            if (
+                cfg != null
+                && !string.IsNullOrEmpty(cfg.LoadWorld)
                 && Io.PlatformPaths.PathComparer.Equals(
-                    Path.GetFileName(cfg.LoadWorld.TrimEnd('/', '\\')), deleted.FolderName))
+                    Path.GetFileName(cfg.LoadWorld.TrimEnd('/', '\\')),
+                    deleted.FolderName
+                )
+            )
             {
                 cfg.LoadWorld = string.Empty;
                 cfg.Save(shell.Writer);
@@ -238,8 +281,12 @@ internal sealed class WorldsView : Window
 
     private static bool TargetsFolder(LastSessionFile ls, string folderName)
     {
-        string rel = string.IsNullOrEmpty(ls.RelativePath) ? null : Path.GetFileName(ls.RelativePath.TrimEnd('/', '\\'));
-        string abs = string.IsNullOrEmpty(ls.Path) ? null : Path.GetFileName(ls.Path.TrimEnd('/', '\\'));
+        string rel = string.IsNullOrEmpty(ls.RelativePath)
+            ? null
+            : Path.GetFileName(ls.RelativePath.TrimEnd('/', '\\'));
+        string abs = string.IsNullOrEmpty(ls.Path)
+            ? null
+            : Path.GetFileName(ls.Path.TrimEnd('/', '\\'));
         return (rel != null && Io.PlatformPaths.PathComparer.Equals(rel, folderName))
             || (abs != null && Io.PlatformPaths.PathComparer.Equals(abs, folderName));
     }

@@ -120,11 +120,25 @@ namespace PluginSdk
             RequestOrRun(ServerTerminationKind.Restart, false, restartWithoutSaving);
         }
 
-        private static void RequestOrRun(ServerTerminationKind kind, bool saveFirst, Action standaloneAction)
+        private static void RequestOrRun(
+            ServerTerminationKind kind,
+            bool saveFirst,
+            Action standaloneAction
+        )
         {
-            var request = new ClusterLifecycleRequest(Guid.NewGuid(), kind,
-                ClusterLifecycleOrigin.Plugin, saveFirst, reason: "PluginSdk ServerControl");
-            if (!ClusterLifecycle.TryRequest(request, out Task<ClusterLifecycleAcknowledgement> acknowledgement))
+            var request = new ClusterLifecycleRequest(
+                Guid.NewGuid(),
+                kind,
+                ClusterLifecycleOrigin.Plugin,
+                saveFirst,
+                reason: "PluginSdk ServerControl"
+            );
+            if (
+                !ClusterLifecycle.TryRequest(
+                    request,
+                    out Task<ClusterLifecycleAcknowledgement> acknowledgement
+                )
+            )
             {
                 standaloneAction();
                 return;
@@ -142,9 +156,19 @@ namespace PluginSdk
             if (PluginCluster.IsClusterProcess)
                 return false;
 
-            var request = new ClusterLifecycleRequest(Guid.NewGuid(), ServerTerminationKind.Restart,
-                ClusterLifecycleOrigin.Plugin, saveFirst: true, reason: reason);
-            if (!ClusterLifecycle.TryRequest(request, out Task<ClusterLifecycleAcknowledgement> acknowledgement))
+            var request = new ClusterLifecycleRequest(
+                Guid.NewGuid(),
+                ServerTerminationKind.Restart,
+                ClusterLifecycleOrigin.Plugin,
+                saveFirst: true,
+                reason: reason
+            );
+            if (
+                !ClusterLifecycle.TryRequest(
+                    request,
+                    out Task<ClusterLifecycleAcknowledgement> acknowledgement
+                )
+            )
                 return false;
 
             _ = ObserveClusterAcknowledgement(acknowledgement);
@@ -152,12 +176,18 @@ namespace PluginSdk
         }
 
         private static async Task ObserveClusterAcknowledgement(
-            Task<ClusterLifecycleAcknowledgement> pending)
+            Task<ClusterLifecycleAcknowledgement> pending
+        )
         {
             ClusterLifecycleAcknowledgement acknowledgement = await pending.ConfigureAwait(false);
-            if (acknowledgement.Disposition is ClusterLifecycleDisposition.Rejected
-                or ClusterLifecycleDisposition.Unavailable)
-                MyLog.Default?.WriteLine($"Cluster lifecycle request denied: {acknowledgement.ReasonCode}: {acknowledgement.Message}");
+            if (
+                acknowledgement.Disposition
+                is ClusterLifecycleDisposition.Rejected
+                    or ClusterLifecycleDisposition.Unavailable
+            )
+                MyLog.Default?.WriteLine(
+                    $"Cluster lifecycle request denied: {acknowledgement.ReasonCode}: {acknowledgement.Message}"
+                );
         }
 
         /// <summary>Host-only: raises <see cref="Terminating"/>, isolating each
@@ -175,7 +205,7 @@ namespace PluginSdk
                 {
                     ((Action<ServerTerminationKind>)subscriber)(kind);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     // A plugin handler must never block or break teardown.
                     MyLog.Default.Error("Exception in Terminating handler", e);
@@ -191,7 +221,8 @@ namespace PluginSdk
             Action saveAndQuit,
             Action saveAndRestart,
             Action quitWithoutSaving,
-            Action restartWithoutSaving)
+            Action restartWithoutSaving
+        )
         {
             ServerControl.saveWorld = saveWorld ?? (() => false);
             ServerControl.reloadConfig = reloadConfig ?? (() => false);

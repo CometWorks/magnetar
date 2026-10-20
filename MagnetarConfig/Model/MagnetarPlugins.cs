@@ -9,7 +9,7 @@ namespace Magnetar.Config.Model;
 /// <summary>A DLL discovered in the Magnetar instance's Local/ folder.</summary>
 internal sealed class LocalDllInfo
 {
-    public string FileName;   // == the plugin Id (filename WITH extension)
+    public string FileName; // == the plugin Id (filename WITH extension)
     public string FullPath;
     public bool Enabled;
 }
@@ -17,10 +17,10 @@ internal sealed class LocalDllInfo
 /// <summary>A registered dev-folder source (sources.xml), joined with its enabled state.</summary>
 internal sealed class DevFolderPlugin
 {
-    public string Id;         // folder name
-    public string Folder;     // absolute source folder (from sources.xml)
-    public string DataFile;   // manifest filename (hint from sources.xml, may be null)
-    public bool Enabled;      // id present in Profile.DevFolder (per-profile selection)
+    public string Id; // folder name
+    public string Folder; // absolute source folder (from sources.xml)
+    public string DataFile; // manifest filename (hint from sources.xml, may be null)
+    public bool Enabled; // id present in Profile.DevFolder (per-profile selection)
     public bool SourceEnabled; // the registration's <Enabled> flag (sources.xml)
     public bool SourceMissing; // registered, but the folder is gone on disk
 }
@@ -33,9 +33,9 @@ internal sealed class DevFolderPlugin
 internal sealed class HubPluginView
 {
     public HubPluginInfo Info;
-    public bool Enabled;      // named in Profile.GitHub, or Profile.DevFolder for dev folders
-    public bool IsDevFolder;  // a registered dev folder rather than a hub/remote plugin
-    public string DataFile;   // manifest filename for dev folders (for enabling)
+    public bool Enabled; // named in Profile.GitHub, or Profile.DevFolder for dev folders
+    public bool IsDevFolder; // a registered dev folder rather than a hub/remote plugin
+    public string DataFile; // manifest filename for dev folders (for enabling)
     public string Id => Info.Id;
 }
 
@@ -51,7 +51,9 @@ internal sealed class MagnetarPlugins
     // Infrastructure DLLs Magnetar deploys into Local/ — not user plugins.
     private static readonly HashSet<string> ImplicitIds = new(StringComparer.OrdinalIgnoreCase)
     {
-        "0Harmony.dll", "Magnetar.Protocol.dll", "Quasar.Agent.dll",
+        "0Harmony.dll",
+        "Magnetar.Protocol.dll",
+        "Quasar.Agent.dll",
     };
 
     private readonly string configDir;
@@ -89,7 +91,14 @@ internal sealed class MagnetarPlugins
                 string name = Path.GetFileName(path);
                 if (ImplicitIds.Contains(name))
                     continue;
-                result.Add(new LocalDllInfo { FileName = name, FullPath = path, Enabled = enabled.Contains(name) });
+                result.Add(
+                    new LocalDllInfo
+                    {
+                        FileName = name,
+                        FullPath = path,
+                        Enabled = enabled.Contains(name),
+                    }
+                );
             }
         }
 
@@ -98,8 +107,19 @@ internal sealed class MagnetarPlugins
         {
             if (ImplicitIds.Contains(name))
                 continue;
-            if (!result.Any(r => string.Equals(r.FileName, name, StringComparison.OrdinalIgnoreCase)))
-                result.Add(new LocalDllInfo { FileName = name, FullPath = null, Enabled = true });
+            if (
+                !result.Any(r =>
+                    string.Equals(r.FileName, name, StringComparison.OrdinalIgnoreCase)
+                )
+            )
+                result.Add(
+                    new LocalDllInfo
+                    {
+                        FileName = name,
+                        FullPath = null,
+                        Enabled = true,
+                    }
+                );
         }
 
         return result.OrderBy(r => r.FileName, StringComparer.OrdinalIgnoreCase).ToList();
@@ -107,7 +127,9 @@ internal sealed class MagnetarPlugins
 
     public bool SetLocalDllEnabled(string dllFileName, bool enabled)
     {
-        bool changed = enabled ? profile.EnableLocalDll(dllFileName) : profile.DisableLocalDll(dllFileName);
+        bool changed = enabled
+            ? profile.EnableLocalDll(dllFileName)
+            : profile.DisableLocalDll(dllFileName);
         if (changed)
             profile.Save(writer);
         return changed;
@@ -122,7 +144,9 @@ internal sealed class MagnetarPlugins
     public IReadOnlyList<DevFolderPlugin> DevFolderPlugins()
     {
         var enabled = new HashSet<string>(
-            profile.DevFolders.Select(d => d.Id ?? string.Empty), StringComparer.OrdinalIgnoreCase);
+            profile.DevFolders.Select(d => d.Id ?? string.Empty),
+            StringComparer.OrdinalIgnoreCase
+        );
 
         var result = new List<DevFolderPlugin>();
         foreach (LocalPluginSource src in sources.LocalPlugins)
@@ -130,15 +154,17 @@ internal sealed class MagnetarPlugins
             if (src.Folder == null)
                 continue;
             string id = Path.GetFileName(src.Folder.TrimEnd('/', '\\'));
-            result.Add(new DevFolderPlugin
-            {
-                Id = id,
-                Folder = src.Folder,
-                DataFile = src.DataFile,
-                Enabled = enabled.Contains(id),
-                SourceEnabled = src.Enabled,
-                SourceMissing = !Directory.Exists(src.Folder),
-            });
+            result.Add(
+                new DevFolderPlugin
+                {
+                    Id = id,
+                    Folder = src.Folder,
+                    DataFile = src.DataFile,
+                    Enabled = enabled.Contains(id),
+                    SourceEnabled = src.Enabled,
+                    SourceMissing = !Directory.Exists(src.Folder),
+                }
+            );
         }
         return result.OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -154,25 +180,28 @@ internal sealed class MagnetarPlugins
         foreach (DevFolderPlugin p in DevFolderPlugins())
         {
             string dataFile = p.DataFile ?? PluginManifest.FindInFolder(p.Folder);
-            PluginManifest m = dataFile != null
-                ? PluginManifest.Read(Path.Combine(p.Folder ?? string.Empty, dataFile))
-                : new PluginManifest();
+            PluginManifest m =
+                dataFile != null
+                    ? PluginManifest.Read(Path.Combine(p.Folder ?? string.Empty, dataFile))
+                    : new PluginManifest();
 
-            result.Add(new HubPluginView
-            {
-                Info = new HubPluginInfo
+            result.Add(
+                new HubPluginView
                 {
-                    Id = p.Id,
-                    FriendlyName = string.IsNullOrEmpty(m.FriendlyName) ? p.Id : m.FriendlyName,
-                    Author = m.Author,
-                    Tooltip = m.Tooltip,
-                    Description = m.Description,
-                    Kind = HubPluginKind.GitHub,
-                },
-                Enabled = p.Enabled,
-                IsDevFolder = true,
-                DataFile = dataFile,
-            });
+                    Info = new HubPluginInfo
+                    {
+                        Id = p.Id,
+                        FriendlyName = string.IsNullOrEmpty(m.FriendlyName) ? p.Id : m.FriendlyName,
+                        Author = m.Author,
+                        Tooltip = m.Tooltip,
+                        Description = m.Description,
+                        Kind = HubPluginKind.GitHub,
+                    },
+                    Enabled = p.Enabled,
+                    IsDevFolder = true,
+                    DataFile = dataFile,
+                }
+            );
         }
         return result;
     }
@@ -214,7 +243,10 @@ internal sealed class MagnetarPlugins
             if (source != null && string.IsNullOrEmpty(source.DataFile))
             {
                 string manifest = dataFile ?? PluginManifest.FindInFolder(source.Folder);
-                if (!string.IsNullOrEmpty(manifest) && sources.SetLocalPluginFile(source.Folder, manifest))
+                if (
+                    !string.IsNullOrEmpty(manifest)
+                    && sources.SetLocalPluginFile(source.Folder, manifest)
+                )
                     sources.Save(writer);
             }
 
@@ -274,8 +306,8 @@ internal sealed class MagnetarPlugins
             }
         }
 
-        return byId.Values
-            .Select(p => new HubPluginView { Info = p, Enabled = enabled.Contains(p.Id) })
+        return byId
+            .Values.Select(p => new HubPluginView { Info = p, Enabled = enabled.Contains(p.Id) })
             .OrderBy(v => v.Info.FriendlyName, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
@@ -290,7 +322,8 @@ internal sealed class MagnetarPlugins
         var touched = new List<string>();
         if (enabled)
         {
-            var catalog = HubCatalogPlugins().ToDictionary(v => v.Id, v => v.Info, StringComparer.OrdinalIgnoreCase);
+            var catalog = HubCatalogPlugins()
+                .ToDictionary(v => v.Id, v => v.Info, StringComparer.OrdinalIgnoreCase);
             var toEnable = new List<string> { id };
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < toEnable.Count; i++)
@@ -318,7 +351,9 @@ internal sealed class MagnetarPlugins
     // --- plugin sources (remote hub / remote plugin / local hub) ---
 
     public IReadOnlyList<RemoteHubSource> RemoteHubs() => sources.RemoteHubs;
+
     public IReadOnlyList<RemotePluginSource> RemotePlugins() => sources.RemotePlugins;
+
     public IReadOnlyList<LocalHubSource> LocalHubs() => sources.LocalHubs;
 
     /// <summary>
@@ -327,56 +362,102 @@ internal sealed class MagnetarPlugins
     /// are labelled. Null when no hub source is configured.
     /// </summary>
     public string DefaultHubLabel =>
-        sources.RemoteHubs.FirstOrDefault()?.Name
-        ?? sources.LocalHubs.FirstOrDefault()?.Name;
+        sources.RemoteHubs.FirstOrDefault()?.Name ?? sources.LocalHubs.FirstOrDefault()?.Name;
 
     public bool AddRemoteHub(string name, string repo, string branch)
     {
         bool added = sources.AddRemoteHub(name, repo, branch);
-        if (added) sources.Save(writer);
+        if (added)
+            sources.Save(writer);
         return added;
     }
 
     public bool AddRemotePlugin(string name, string repo, string branch, string file)
     {
         bool added = sources.AddRemotePlugin(name, repo, branch, file);
-        if (added) sources.Save(writer);
+        if (added)
+            sources.Save(writer);
         return added;
     }
 
     public bool AddLocalHub(string name, string folder)
     {
         bool added = sources.AddLocalHub(name, folder);
-        if (added) sources.Save(writer);
+        if (added)
+            sources.Save(writer);
         return added;
     }
 
-    public void RemoveRemoteHub(string repo) { if (sources.RemoveRemoteHub(repo)) sources.Save(writer); }
-    public void RemoveRemotePlugin(string repo) { if (sources.RemoveRemotePlugin(repo)) sources.Save(writer); }
-    public void RemoveLocalHub(string folder) { if (sources.RemoveLocalHub(folder)) sources.Save(writer); }
+    public void RemoveRemoteHub(string repo)
+    {
+        if (sources.RemoveRemoteHub(repo))
+            sources.Save(writer);
+    }
 
-    public void SetRemoteHubEnabled(string repo, bool on) { if (sources.SetRemoteHubEnabled(repo, on)) sources.Save(writer); }
-    public void SetRemotePluginEnabled(string repo, bool on) { if (sources.SetRemotePluginEnabled(repo, on)) sources.Save(writer); }
-    public void SetLocalHubEnabled(string folder, bool on) { if (sources.SetLocalHubEnabled(folder, on)) sources.Save(writer); }
+    public void RemoveRemotePlugin(string repo)
+    {
+        if (sources.RemoveRemotePlugin(repo))
+            sources.Save(writer);
+    }
+
+    public void RemoveLocalHub(string folder)
+    {
+        if (sources.RemoveLocalHub(folder))
+            sources.Save(writer);
+    }
+
+    public void SetRemoteHubEnabled(string repo, bool on)
+    {
+        if (sources.SetRemoteHubEnabled(repo, on))
+            sources.Save(writer);
+    }
+
+    public void SetRemotePluginEnabled(string repo, bool on)
+    {
+        if (sources.SetRemotePluginEnabled(repo, on))
+            sources.Save(writer);
+    }
+
+    public void SetLocalHubEnabled(string folder, bool on)
+    {
+        if (sources.SetLocalHubEnabled(folder, on))
+            sources.Save(writer);
+    }
 
     /// <summary>Toggles a dev-folder registration's own <c>Enabled</c> flag (sources.xml).
     /// Independent of the per-profile selection — Magnetar AND-s the two at load time.</summary>
-    public void SetLocalPluginEnabled(string folder, bool on) { if (sources.SetLocalPluginEnabled(folder, on)) sources.Save(writer); }
+    public void SetLocalPluginEnabled(string folder, bool on)
+    {
+        if (sources.SetLocalPluginEnabled(folder, on))
+            sources.Save(writer);
+    }
 
     // --- helpers ---
 
-    private IEnumerable<(string dir, IReadOnlyList<(string repo, string name)> labels)> HubBinFiles()
+    private IEnumerable<(
+        string dir,
+        IReadOnlyList<(string repo, string name)> labels
+    )> HubBinFiles()
     {
         yield return (HubDir, sources.RemoteHubs.Select(h => (h.Repo, h.Name)).ToList());
-        yield return (RemotePluginDir, sources.RemotePlugins.Select(p => (p.Repo, p.Name)).ToList());
+        yield return (
+            RemotePluginDir,
+            sources.RemotePlugins.Select(p => (p.Repo, p.Name)).ToList()
+        );
     }
 
-    private static string LabelForBin(string binPath, IReadOnlyList<(string repo, string name)> labels)
+    private static string LabelForBin(
+        string binPath,
+        IReadOnlyList<(string repo, string name)> labels
+    )
     {
         string stem = Path.GetFileNameWithoutExtension(binPath);
         foreach ((string repo, string name) in labels)
         {
-            if (repo != null && string.Equals(repo.Replace('/', '-'), stem, StringComparison.OrdinalIgnoreCase))
+            if (
+                repo != null
+                && string.Equals(repo.Replace('/', '-'), stem, StringComparison.OrdinalIgnoreCase)
+            )
                 return name ?? stem;
         }
         return stem;

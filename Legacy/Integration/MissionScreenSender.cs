@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Magnetar.Legacy.Loader;
 using PluginSdk;
 using ProtoBuf;
-using Magnetar.Legacy.Loader;
 using Pulsar.Shared;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
@@ -29,8 +29,14 @@ internal static class MissionScreenSender
 
     public static bool ShowToSteam(ulong steamId, MissionScreenContent content)
     {
-        if (steamId == 0UL || !content.HasContent || MyAPIGateway.Multiplayer == null ||
-            MyAPIGateway.Utilities == null || MySession.Static == null || !ReceiverModLoaded())
+        if (
+            steamId == 0UL
+            || !content.HasContent
+            || MyAPIGateway.Multiplayer == null
+            || MyAPIGateway.Utilities == null
+            || MySession.Static == null
+            || !ReceiverModLoaded()
+        )
             return false;
 
         byte[] payload = Serialize(content);
@@ -40,8 +46,13 @@ internal static class MissionScreenSender
 
     public static bool ShowToAll(MissionScreenContent content)
     {
-        if (!content.HasContent || MySession.Static == null || MyAPIGateway.Multiplayer == null ||
-            MyAPIGateway.Utilities == null || !ReceiverModLoaded())
+        if (
+            !content.HasContent
+            || MySession.Static == null
+            || MyAPIGateway.Multiplayer == null
+            || MyAPIGateway.Utilities == null
+            || !ReceiverModLoaded()
+        )
             return false;
 
         byte[] payload = Serialize(content);
@@ -71,7 +82,12 @@ internal static class MissionScreenSender
             if (MyAPIGateway.Multiplayer == null)
                 return;
 
-            MyAPIGateway.Multiplayer.SendMessageTo(MissionScreens.ChannelId, payload, steamId, true);
+            MyAPIGateway.Multiplayer.SendMessageTo(
+                MissionScreens.ChannelId,
+                payload,
+                steamId,
+                true
+            );
         }
         catch (Exception e)
         {
@@ -86,18 +102,20 @@ internal static class MissionScreenSender
 
         foreach (MyObjectBuilder_Checkpoint.ModItem mod in MySession.Static.Mods)
         {
-            if (mod.PublishedFileId == MagnetarClientMod.WorkshopId ||
-                ContainsModName(mod.Name) ||
-                ContainsModName(mod.FriendlyName))
+            if (
+                mod.PublishedFileId == MagnetarClientMod.WorkshopId
+                || ContainsModName(mod.Name)
+                || ContainsModName(mod.FriendlyName)
+            )
                 return true;
         }
 
         return false;
     }
 
-    private static bool ContainsModName(string value)
-        => !string.IsNullOrEmpty(value) &&
-           value.IndexOf("MagnetarMod", StringComparison.OrdinalIgnoreCase) >= 0;
+    private static bool ContainsModName(string value) =>
+        !string.IsNullOrEmpty(value)
+        && value.IndexOf("MagnetarMod", StringComparison.OrdinalIgnoreCase) >= 0;
 
     private static byte[] Serialize(MissionScreenContent content)
     {
@@ -109,7 +127,7 @@ internal static class MissionScreenSender
             CurrentObjectivePrefix = content.CurrentObjectivePrefix ?? string.Empty,
             CurrentObjective = content.CurrentObjective ?? string.Empty,
             ScreenDescription = content.ScreenDescription ?? string.Empty,
-            OkButtonCaption = content.OkButtonCaption ?? string.Empty
+            OkButtonCaption = content.OkButtonCaption ?? string.Empty,
         };
 
         return MyAPIGateway.Utilities.SerializeToBinary(packet);

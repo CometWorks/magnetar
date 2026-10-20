@@ -27,7 +27,13 @@ public sealed class ServerCommandResponder : ICommandResponder
         if (reply.Color.HasValue)
         {
             Color color = reply.Color.Value;
-            MyVisualScriptLogicProvider.SendChatMessageColored(reply.Text, color, author, target, font);
+            MyVisualScriptLogicProvider.SendChatMessageColored(
+                reply.Text,
+                color,
+                author,
+                target,
+                font
+            );
         }
         else
         {

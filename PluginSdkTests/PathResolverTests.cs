@@ -16,12 +16,42 @@ namespace PluginSdk.Tests
         private sealed class FakeResolver : IPathResolver
         {
             public string LastCall;
-            public string Normalize(string path) { LastCall = "Normalize"; return "N:" + path; }
-            public string ToWindowsPath(string path) { LastCall = "ToWindowsPath"; return "W:" + path; }
-            public string GetFileName(string path) { LastCall = "GetFileName"; return "F:" + path; }
-            public string GetFileNameWithoutExtension(string path) { LastCall = "GetFileNameWithoutExtension"; return "E:" + path; }
-            public string ResolveContentFilePath(string relativePath, string rootPath) { LastCall = "ResolveContentFilePath"; return "C:" + relativePath + "|" + rootPath; }
-            public string ResolveAbsolute(string absolutePath) { LastCall = "ResolveAbsolute"; return "A:" + absolutePath; }
+
+            public string Normalize(string path)
+            {
+                LastCall = "Normalize";
+                return "N:" + path;
+            }
+
+            public string ToWindowsPath(string path)
+            {
+                LastCall = "ToWindowsPath";
+                return "W:" + path;
+            }
+
+            public string GetFileName(string path)
+            {
+                LastCall = "GetFileName";
+                return "F:" + path;
+            }
+
+            public string GetFileNameWithoutExtension(string path)
+            {
+                LastCall = "GetFileNameWithoutExtension";
+                return "E:" + path;
+            }
+
+            public string ResolveContentFilePath(string relativePath, string rootPath)
+            {
+                LastCall = "ResolveContentFilePath";
+                return "C:" + relativePath + "|" + rootPath;
+            }
+
+            public string ResolveAbsolute(string absolutePath)
+            {
+                LastCall = "ResolveAbsolute";
+                return "A:" + absolutePath;
+            }
         }
 
         [Fact]
@@ -46,10 +76,14 @@ namespace PluginSdk.Tests
         {
             PathResolver.Install(null);
 
-            Assert.Equal(Path.GetFileName("dir/file.sbc"), PathResolver.GetFileName("dir/file.sbc"));
+            Assert.Equal(
+                Path.GetFileName("dir/file.sbc"),
+                PathResolver.GetFileName("dir/file.sbc")
+            );
             Assert.Equal(
                 Path.GetFileNameWithoutExtension("dir/file.sbc"),
-                PathResolver.GetFileNameWithoutExtension("dir/file.sbc"));
+                PathResolver.GetFileNameWithoutExtension("dir/file.sbc")
+            );
         }
 
         [Fact]
@@ -60,7 +94,8 @@ namespace PluginSdk.Tests
             Assert.Equal("rel.sbc", PathResolver.ResolveContentFilePath("rel.sbc", ""));
             Assert.Equal(
                 Path.Combine("root", "rel.sbc"),
-                PathResolver.ResolveContentFilePath("rel.sbc", "root"));
+                PathResolver.ResolveContentFilePath("rel.sbc", "root")
+            );
         }
 
         [Fact]

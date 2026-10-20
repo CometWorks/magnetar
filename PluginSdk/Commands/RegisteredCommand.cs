@@ -30,9 +30,16 @@ namespace PluginSdk.Commands
         /// <summary>Auto-generated usage string, e.g. <c>!ess tp &lt;target&gt; [distance]</c>.</summary>
         public string Syntax { get; }
 
-        public RegisteredCommand(string ownerId, string prefix, IReadOnlyList<string> path,
-            string description, string helpText, MyPromoteLevel minPromoteLevel,
-            Type moduleType, MethodInfo method)
+        public RegisteredCommand(
+            string ownerId,
+            string prefix,
+            IReadOnlyList<string> path,
+            string description,
+            string helpText,
+            MyPromoteLevel minPromoteLevel,
+            Type moduleType,
+            MethodInfo method
+        )
         {
             OwnerId = ownerId;
             Prefix = prefix;
@@ -50,9 +57,12 @@ namespace PluginSdk.Commands
 
         /// <summary>True when the handler has a parameter for each of
         /// <paramref name="count"/> arguments, or a <c>params</c> array.</summary>
-        public bool CanTake(int count)
-            => count <= Parameters.Length
-               || (Parameters.Length > 0 && ArgumentBinder.IsParamsArray(Parameters[Parameters.Length - 1]));
+        public bool CanTake(int count) =>
+            count <= Parameters.Length
+            || (
+                Parameters.Length > 0
+                && ArgumentBinder.IsParamsArray(Parameters[Parameters.Length - 1])
+            );
 
         public object Invoke(CommandContext context, object[] values)
         {
@@ -61,7 +71,11 @@ namespace PluginSdk.Commands
             return Method.Invoke(module, values);
         }
 
-        private static string BuildSyntax(string prefix, IReadOnlyList<string> path, ParameterInfo[] parameters)
+        private static string BuildSyntax(
+            string prefix,
+            IReadOnlyList<string> path,
+            ParameterInfo[] parameters
+        )
         {
             var sb = new StringBuilder();
             sb.Append('!').Append(prefix);

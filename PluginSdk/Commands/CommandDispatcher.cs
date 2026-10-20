@@ -89,15 +89,25 @@ namespace PluginSdk.Commands
 
             if (!root.TryResolve(rest, out RegisteredCommand command, out int consumed))
             {
-                Reply(responder, caller, CommandReply.Error(
-                    $"Unknown command. Try !{root.Prefix} help").WithAuthor(root.Title));
+                Reply(
+                    responder,
+                    caller,
+                    CommandReply
+                        .Error($"Unknown command. Try !{root.Prefix} help")
+                        .WithAuthor(root.Title)
+                );
                 return true;
             }
 
             if (!command.IsVisibleTo(caller.PromoteLevel))
             {
-                Reply(responder, caller, CommandReply.Error(
-                    "You do not have permission to use that command.").WithAuthor(root.Title));
+                Reply(
+                    responder,
+                    caller,
+                    CommandReply
+                        .Error("You do not have permission to use that command.")
+                        .WithAuthor(root.Title)
+                );
                 return true;
             }
 
@@ -106,17 +116,40 @@ namespace PluginSdk.Commands
             return true;
         }
 
-        private void ExecuteCommand(CommandRoot root, RegisteredCommand command,
-            List<string> args, in CommandCaller caller, ICommandResponder responder)
+        private void ExecuteCommand(
+            CommandRoot root,
+            RegisteredCommand command,
+            List<string> args,
+            in CommandCaller caller,
+            ICommandResponder responder
+        )
         {
-            if (!ArgumentBinder.TryBind(command.Parameters, args, out object[] values, out string bindError))
+            if (
+                !ArgumentBinder.TryBind(
+                    command.Parameters,
+                    args,
+                    out object[] values,
+                    out string bindError
+                )
+            )
             {
-                Reply(responder, caller, CommandReply.Error(
-                    $"{bindError}. Usage: {command.Syntax}").WithAuthor(root.Title));
+                Reply(
+                    responder,
+                    caller,
+                    CommandReply
+                        .Error($"{bindError}. Usage: {command.Syntax}")
+                        .WithAuthor(root.Title)
+                );
                 return;
             }
 
-            var context = new CommandContext(caller, root.Prefix, args, string.Join(" ", args), responder);
+            var context = new CommandContext(
+                caller,
+                root.Prefix,
+                args,
+                string.Join(" ", args),
+                responder
+            );
             try
             {
                 object result = command.Invoke(context, values);
@@ -124,11 +157,19 @@ namespace PluginSdk.Commands
             }
             catch (Exception ex)
             {
-                Exception actual = (ex is System.Reflection.TargetInvocationException tie && tie.InnerException != null)
-                    ? tie.InnerException : ex;
+                Exception actual =
+                    (
+                        ex is System.Reflection.TargetInvocationException tie
+                        && tie.InnerException != null
+                    )
+                        ? tie.InnerException
+                        : ex;
                 onError?.Invoke($"Command '{command.Syntax}' failed", actual);
-                Reply(responder, caller, CommandReply.Error(
-                    $"Command failed: {actual.Message}").WithAuthor(root.Title));
+                Reply(
+                    responder,
+                    caller,
+                    CommandReply.Error($"Command failed: {actual.Message}").WithAuthor(root.Title)
+                );
             }
         }
 
@@ -171,15 +212,13 @@ namespace PluginSdk.Commands
         {
             const string author = "Help";
 
-            var roots = registry.EnumerateRoots()
+            var roots = registry
+                .EnumerateRoots()
                 .Where(r => r.IsAvailableTo(caller.PromoteLevel))
                 .OrderBy(r => r.Prefix, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var lines = new List<string>
-            {
-                "=== Server Commands ==="
-            };
+            var lines = new List<string> { "=== Server Commands ===" };
 
             if (roots.Count == 0)
             {
@@ -206,9 +245,15 @@ namespace PluginSdk.Commands
             ReplyLines(responder, caller, author, lines);
         }
 
-        private static void SendOverview(CommandRoot root, CommandCaller caller, ICommandResponder responder)
+        private static void SendOverview(
+            CommandRoot root,
+            CommandCaller caller,
+            ICommandResponder responder
+        )
         {
-            var visible = root.EnumerateCommands().Where(c => c.IsVisibleTo(caller.PromoteLevel)).ToList();
+            var visible = root.EnumerateCommands()
+                .Where(c => c.IsVisibleTo(caller.PromoteLevel))
+                .ToList();
 
             // A root with nothing but its default command, like !restart, has no
             // overview: show its usage, or tell a caller who may not use it.
@@ -217,18 +262,20 @@ namespace PluginSdk.Commands
                 if (root.Default.IsVisibleTo(caller.PromoteLevel))
                     SendUsage(root, root.Default, caller, responder);
                 else
-                    Reply(responder, caller, CommandReply.Error(
-                        "You do not have permission to use that command.").WithAuthor(root.Title));
+                    Reply(
+                        responder,
+                        caller,
+                        CommandReply
+                            .Error("You do not have permission to use that command.")
+                            .WithAuthor(root.Title)
+                    );
                 return;
             }
 
             string header = string.IsNullOrEmpty(root.Description)
                 ? $"=== {root.Title} ==="
                 : $"=== {root.Title} - {root.Description} ===";
-            var lines = new List<string>
-            {
-                header
-            };
+            var lines = new List<string> { header };
 
             if (visible.Count == 0)
             {
@@ -255,7 +302,12 @@ namespace PluginSdk.Commands
             ReplyLines(responder, caller, root.Title, lines);
         }
 
-        private static void SendHelp(CommandRoot root, List<string> path, CommandCaller caller, ICommandResponder responder)
+        private static void SendHelp(
+            CommandRoot root,
+            List<string> path,
+            CommandCaller caller,
+            ICommandResponder responder
+        )
         {
             if (path.Count == 0)
             {
@@ -263,22 +315,32 @@ namespace PluginSdk.Commands
                 return;
             }
 
-            if (!root.TryResolve(path, out RegisteredCommand command, out _) || !command.IsVisibleTo(caller.PromoteLevel))
+            if (
+                !root.TryResolve(path, out RegisteredCommand command, out _)
+                || !command.IsVisibleTo(caller.PromoteLevel)
+            )
             {
-                Reply(responder, caller, CommandReply.Error(
-                    $"No such command: !{root.Prefix} {string.Join(" ", path)}").WithAuthor(root.Title));
+                Reply(
+                    responder,
+                    caller,
+                    CommandReply
+                        .Error($"No such command: !{root.Prefix} {string.Join(" ", path)}")
+                        .WithAuthor(root.Title)
+                );
                 return;
             }
 
             SendUsage(root, command, caller, responder);
         }
 
-        private static void SendUsage(CommandRoot root, RegisteredCommand command, CommandCaller caller, ICommandResponder responder)
+        private static void SendUsage(
+            CommandRoot root,
+            RegisteredCommand command,
+            CommandCaller caller,
+            ICommandResponder responder
+        )
         {
-            var lines = new List<string>
-            {
-                $"Usage: {command.Syntax}"
-            };
+            var lines = new List<string> { $"Usage: {command.Syntax}" };
             if (!string.IsNullOrEmpty(command.HelpText))
                 lines.Add(command.HelpText);
 
@@ -292,7 +354,8 @@ namespace PluginSdk.Commands
             CommandCaller caller,
             string screenTitle,
             string currentObjective,
-            List<string> lines)
+            List<string> lines
+        )
         {
             if (!PluginSdk.MissionScreens.IsHostSenderAvailable)
                 return false;
@@ -307,20 +370,25 @@ namespace PluginSdk.Commands
                 null,
                 currentObjective,
                 body.ToString(),
-                "Close");
+                "Close"
+            );
         }
 
         private static void ReplyLines(
             ICommandResponder responder,
             CommandCaller caller,
             string author,
-            List<string> lines)
+            List<string> lines
+        )
         {
             foreach (string line in lines)
                 Reply(responder, caller, CommandReply.Info(line).WithAuthor(author));
         }
 
-        private static void Reply(ICommandResponder responder, CommandCaller caller, in CommandReply reply)
-            => responder.Send(reply, caller);
+        private static void Reply(
+            ICommandResponder responder,
+            CommandCaller caller,
+            in CommandReply reply
+        ) => responder.Send(reply, caller);
     }
 }

@@ -66,11 +66,15 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor
             }
             catch (CommandRegistrationException e)
             {
-                LogFile.Error($"Failed to register command module {moduleType} from {ownerId}: {e.Message}");
+                LogFile.Error(
+                    $"Failed to register command module {moduleType} from {ownerId}: {e.Message}"
+                );
             }
             catch (Exception e)
             {
-                LogFile.Error($"Unexpected error registering command module {moduleType} from {ownerId}: {e}");
+                LogFile.Error(
+                    $"Unexpected error registering command module {moduleType} from {ownerId}: {e}"
+                );
             }
         }
 
@@ -102,8 +106,12 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor
 
     /// <summary>Runs a command line for a plugin's own console, see
     /// <see cref="ServerCommands.Execute"/>.</summary>
-    public bool Execute(string commandLine, in CommandCaller caller, ICommandResponder responder)
-        => dispatcher.Handle(commandLine, caller, responder ?? throw new ArgumentNullException(nameof(responder)));
+    public bool Execute(string commandLine, in CommandCaller caller, ICommandResponder responder) =>
+        dispatcher.Handle(
+            commandLine,
+            caller,
+            responder ?? throw new ArgumentNullException(nameof(responder))
+        );
 
     private static CommandCaller BuildCaller(ulong steamId)
     {
@@ -114,6 +122,6 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor
         return new CommandCaller(steamId, identityId, name, level);
     }
 
-    private static void OnHandlerError(string message, Exception ex)
-        => LogFile.Error($"{message}: {ex}");
+    private static void OnHandlerError(string message, Exception ex) =>
+        LogFile.Error($"{message}: {ex}");
 }

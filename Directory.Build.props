@@ -35,8 +35,10 @@
   <!-- Local developer overrides for the settings above; ignored by Git (*.user).
        Copy the first PropertyGroup of this file into Directory.Build.props.user
        and fill in your local paths there. -->
-  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.props.user"
-          Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')" />
+  <Import
+    Project="$(MSBuildThisFileDirectory)Directory.Build.props.user"
+    Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')"
+  />
 
   <!-- Default Project Settings.
        These apply to Magnetar's own projects only. Projects under the Pulsar/
@@ -44,14 +46,19 @@
        are forwarded on the ProjectReferences in Legacy/Legacy.csproj. -->
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
     <Magnetar Condition="'$(Magnetar)' == '' and '$(APPDATA)' != ''">$(APPDATA)\Magnetar</Magnetar>
-    <DS64 Condition="'$(DS64)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
-    <DS64 Condition="'$(DS64)' == '\DedicatedServer64'">C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
+    <DS64 Condition="'$(DS64)' == ''"
+      >$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 298740@InstallLocation)\DedicatedServer64</DS64>
+    <DS64 Condition="'$(DS64)' == '\DedicatedServer64'"
+      >C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineersDedicatedServer\DedicatedServer64</DS64>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-    <Magnetar Condition="'$(Magnetar)' == '' and '$(XDG_CONFIG_HOME)' != ''">$(XDG_CONFIG_HOME)/Magnetar</Magnetar>
-    <Magnetar Condition="'$(Magnetar)' == '' and '$(HOME)' != ''">$(HOME)/.config/Magnetar</Magnetar>
-    <DS64 Condition="'$(DS64)' == '' and '$(HOME)' != ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(XDG_CONFIG_HOME)' != ''"
+      >$(XDG_CONFIG_HOME)/Magnetar</Magnetar>
+    <Magnetar Condition="'$(Magnetar)' == '' and '$(HOME)' != ''"
+      >$(HOME)/.config/Magnetar</Magnetar>
+    <DS64 Condition="'$(DS64)' == '' and '$(HOME)' != ''"
+      >$(HOME)/.steam/steam/steamapps/common/SpaceEngineersDedicatedServer/DedicatedServer64</DS64>
   </PropertyGroup>
 
   <PropertyGroup>

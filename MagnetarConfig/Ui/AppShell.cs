@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Terminal.Gui;
 using Magnetar.Config.Io;
 using Magnetar.Config.Model;
 using Magnetar.Config.Process;
 using Magnetar.Config.State;
+using Terminal.Gui;
 
 namespace Magnetar.Config.Ui;
 
@@ -48,20 +48,26 @@ internal sealed class AppShell : Toplevel
         ShowWorlds();
 
         monitor.Changed += _ => RefreshStatus();
-        Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(2), _ =>
-        {
-            monitor.Poll();
-            RefreshStatus();
-            return true;
-        });
+        Application.MainLoop.AddTimeout(
+            TimeSpan.FromSeconds(2),
+            _ =>
+            {
+                monitor.Poll();
+                RefreshStatus();
+                return true;
+            }
+        );
         // Auto-save tick: flushes the current panel's pending changes at most once
         // a second, so an edit is never on screen unsaved for longer than that. A
         // no-op when the panel is clean, so it is cheap to run every second.
-        Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(1), _ =>
-        {
-            (content as IAutoSaveContent)?.FlushPendingSave();
-            return true;
-        });
+        Application.MainLoop.AddTimeout(
+            TimeSpan.FromSeconds(1),
+            _ =>
+            {
+                (content as IAutoSaveContent)?.FlushPendingSave();
+                return true;
+            }
+        );
         monitor.Poll();
         RefreshStatus();
     }
@@ -75,47 +81,61 @@ internal sealed class AppShell : Toplevel
 
     private MenuBar BuildMenu()
     {
-        return new MenuBar(new[]
-        {
-            new MenuBarItem("_File", new[]
+        return new MenuBar(
+            new[]
             {
-                new MenuItem("_Open Instance…", "", ReopenInstance),
-                new MenuItem("_Quit", "", () => RequestQuit()),
-            }),
-            new MenuBarItem("_Server", new[]
-            {
-                new MenuItem("_Settings", "", ShowServerSettings),
-                new MenuItem("_Access Lists", "", ShowAccessLists),
-                new MenuItem("Server _Password…", "", ShowPasswordDialog),
-                new MenuItem("_New-World Defaults", "", ShowNewWorldDefaults),
-                new MenuItem(null, null, null),
-                new MenuItem("S_tart", "", () => StartServer()),
-                new MenuItem("Sto_p", "", StopServer),
-                new MenuItem("_Restart", "", RestartServer),
-                new MenuItem("Reload _Config", "", ReloadServer),
-            }),
-            new MenuBarItem("_Worlds", new[]
-            {
-                new MenuItem("_List (Saves)", "", ShowWorlds),
-                new MenuItem("_New World…", "", ShowNewWorldWizard),
-            }),
-            new MenuBarItem("_Plugins", new[]
-            {
-                new MenuItem("_Hub", "", ShowHubPlugins),
-                new MenuItem("_Profiles", "", ShowProfiles),
-                new MenuItem("_Local & Dev Folders", "", ShowPlugins),
-                new MenuItem("_Sources", "", ShowPluginSources),
-            }),
-            new MenuBarItem("_Tools", new[]
-            {
-                new MenuItem("_Logs", "", ShowLogs),
-                new MenuItem("_Dashboard", "", ShowDashboard),
-            }),
-            new MenuBarItem("_Help", new[]
-            {
-                new MenuItem("_About", "", ShowAbout),
-            }),
-        });
+                new MenuBarItem(
+                    "_File",
+                    new[]
+                    {
+                        new MenuItem("_Open Instance…", "", ReopenInstance),
+                        new MenuItem("_Quit", "", () => RequestQuit()),
+                    }
+                ),
+                new MenuBarItem(
+                    "_Server",
+                    new[]
+                    {
+                        new MenuItem("_Settings", "", ShowServerSettings),
+                        new MenuItem("_Access Lists", "", ShowAccessLists),
+                        new MenuItem("Server _Password…", "", ShowPasswordDialog),
+                        new MenuItem("_New-World Defaults", "", ShowNewWorldDefaults),
+                        new MenuItem(null, null, null),
+                        new MenuItem("S_tart", "", () => StartServer()),
+                        new MenuItem("Sto_p", "", StopServer),
+                        new MenuItem("_Restart", "", RestartServer),
+                        new MenuItem("Reload _Config", "", ReloadServer),
+                    }
+                ),
+                new MenuBarItem(
+                    "_Worlds",
+                    new[]
+                    {
+                        new MenuItem("_List (Saves)", "", ShowWorlds),
+                        new MenuItem("_New World…", "", ShowNewWorldWizard),
+                    }
+                ),
+                new MenuBarItem(
+                    "_Plugins",
+                    new[]
+                    {
+                        new MenuItem("_Hub", "", ShowHubPlugins),
+                        new MenuItem("_Profiles", "", ShowProfiles),
+                        new MenuItem("_Local & Dev Folders", "", ShowPlugins),
+                        new MenuItem("_Sources", "", ShowPluginSources),
+                    }
+                ),
+                new MenuBarItem(
+                    "_Tools",
+                    new[]
+                    {
+                        new MenuItem("_Logs", "", ShowLogs),
+                        new MenuItem("_Dashboard", "", ShowDashboard),
+                    }
+                ),
+                new MenuBarItem("_Help", new[] { new MenuItem("_About", "", ShowAbout) }),
+            }
+        );
     }
 
     private StatusBar BuildStatusBar()
@@ -129,16 +149,18 @@ internal sealed class AppShell : Toplevel
             ColorScheme = TurboVisionTheme.Menu,
         };
 
-        var bar = new StatusBar(new[]
-        {
-            new StatusItem(Key.F1, "~F1~ Help", ShowAbout),
-            new StatusItem(Key.F3, "~F3~ Worlds", ShowWorlds),
-            new StatusItem(Key.F4, "~F4~ Logs", ShowLogs),
-            new StatusItem(Key.F5, "~F5~ Start/Stop", ToggleServer),
-            new StatusItem(Key.F7, "~F7~ Settings", ShowServerSettings),
-            new StatusItem(Key.F8, "~F8~ Plugins", ShowPlugins),
-            new StatusItem(Key.F10, "~F10~ Quit", () => RequestQuit()),
-        });
+        var bar = new StatusBar(
+            new[]
+            {
+                new StatusItem(Key.F1, "~F1~ Help", ShowAbout),
+                new StatusItem(Key.F3, "~F3~ Worlds", ShowWorlds),
+                new StatusItem(Key.F4, "~F4~ Logs", ShowLogs),
+                new StatusItem(Key.F5, "~F5~ Start/Stop", ToggleServer),
+                new StatusItem(Key.F7, "~F7~ Settings", ShowServerSettings),
+                new StatusItem(Key.F8, "~F8~ Plugins", ShowPlugins),
+                new StatusItem(Key.F10, "~F10~ Quit", () => RequestQuit()),
+            }
+        );
         // The status bar owns the bottom row; the live state line sits just above it.
         statusLabel.Y = Pos.AnchorEnd(2);
         return bar;
@@ -162,12 +184,18 @@ internal sealed class AppShell : Toplevel
             _ => "○",
         };
         string label = showStarting ? "STARTING…" : s.ToString();
-        string world = instance.ActiveWorld?.SessionName ?? instance.Config?.WorldName ?? "(no world selected)";
-        string port = s.State == ServerState.Running && instance.Config != null
-            ? $"  ·  UDP {instance.Config.ServerPort}"
-            : string.Empty;
+        string world =
+            instance.ActiveWorld?.SessionName
+            ?? instance.Config?.WorldName
+            ?? "(no world selected)";
+        string port =
+            s.State == ServerState.Running && instance.Config != null
+                ? $"  ·  UDP {instance.Config.ServerPort}"
+                : string.Empty;
         statusLabel.Text = $" {glyph} {label} — {world}{port}";
-        dashboard?.UpdateStatus(showStarting ? new ServerStatus { State = ServerState.Starting } : s);
+        dashboard?.UpdateStatus(
+            showStarting ? new ServerStatus { State = ServerState.Starting } : s
+        );
     }
 
     // --- content hosting ---
@@ -179,14 +207,20 @@ internal sealed class AppShell : Toplevel
         if (content is IAutoSaveContent auto)
         {
             auto.FlushPendingSave();
-            if (auto.InvalidFields.Count > 0 &&
-                !Dialogs.Confirm("Invalid fields",
-                    "These fields are invalid and were not saved:\n" +
-                    string.Join("\n", auto.InvalidFields.Select(f => " • " + f)) +
-                    "\n\nLeave this panel anyway?", "Leave", "Stay"))
+            if (
+                auto.InvalidFields.Count > 0
+                && !Dialogs.Confirm(
+                    "Invalid fields",
+                    "These fields are invalid and were not saved:\n"
+                        + string.Join("\n", auto.InvalidFields.Select(f => " • " + f))
+                        + "\n\nLeave this panel anyway?",
+                    "Leave",
+                    "Stay"
+                )
+            )
             {
                 view.Dispose(); // discard the panel we were about to show
-                return;         // abort the switch; stay on the current panel
+                return; // abort the switch; stay on the current panel
             }
         }
 
@@ -220,7 +254,8 @@ internal sealed class AppShell : Toplevel
             instance.Config,
             new EditSession(instance.Config, OptionRegistry.DedicatedOptions),
             writer,
-            OnConfigSaved);
+            OnConfigSaved
+        );
         SetContent(view);
     }
 
@@ -233,11 +268,13 @@ internal sealed class AppShell : Toplevel
             new EditSession(instance.Config, OptionRegistry.SessionOptions),
             writer,
             OnConfigSaved,
-            banner: "These are defaults for NEW worlds. Existing worlds keep their own settings.");
+            banner: "These are defaults for NEW worlds. Existing worlds keep their own settings."
+        );
         SetContent(view);
     }
 
-    public void ShowAccessLists() => SetContent(new AccessListView(instance.Config, writer, OnConfigSaved));
+    public void ShowAccessLists() =>
+        SetContent(new AccessListView(instance.Config, writer, OnConfigSaved));
 
     public void ShowPasswordDialog() => PasswordDialog.Show(instance.Config, writer, OnConfigSaved);
 
@@ -248,13 +285,17 @@ internal sealed class AppShell : Toplevel
 
     public void ShowLogs() => SetContent(new LogViewerView(binding));
 
-    public void ShowPlugins() => SetContent(new PluginsView(binding.MagnetarConfigDir, writer, settings));
+    public void ShowPlugins() =>
+        SetContent(new PluginsView(binding.MagnetarConfigDir, writer, settings));
 
-    public void ShowHubPlugins() => SetContent(new HubPluginsView(binding.MagnetarConfigDir, writer));
+    public void ShowHubPlugins() =>
+        SetContent(new HubPluginsView(binding.MagnetarConfigDir, writer));
 
-    public void ShowPluginSources() => SetContent(new PluginSourcesView(binding.MagnetarConfigDir, writer));
+    public void ShowPluginSources() =>
+        SetContent(new PluginSourcesView(binding.MagnetarConfigDir, writer));
 
-    public void ShowProfiles() => SetContent(new ProfilesView(binding.MagnetarConfigDir, writer, OnConfigSaved));
+    public void ShowProfiles() =>
+        SetContent(new ProfilesView(binding.MagnetarConfigDir, writer, OnConfigSaved));
 
     public void ShowNewWorldWizard() => NewWorldWizard.Run(this);
 
@@ -298,7 +339,8 @@ internal sealed class AppShell : Toplevel
                 // No success popup: the status bar already shows the running state.
                 if (!result.Ok)
                     Dialogs.Error("Start failed", result.Message);
-            });
+            }
+        );
     }
 
     /// <summary>
@@ -318,7 +360,13 @@ internal sealed class AppShell : Toplevel
         AppendList(details, "Plugins", CollectPlugins());
         AppendList(details, "Mods", CollectMods());
 
-        return Dialogs.ConfirmDetails("Start server", question, details.ToString().TrimEnd(), "Start", "Cancel");
+        return Dialogs.ConfirmDetails(
+            "Start server",
+            question,
+            details.ToString().TrimEnd(),
+            "Start",
+            "Cancel"
+        );
     }
 
     private List<string> CollectPlugins()
@@ -333,13 +381,20 @@ internal sealed class AppShell : Toplevel
             // Resolve enabled hub plugins to friendly names via the cached catalog;
             // any enabled id the catalog doesn't know falls back to its raw id.
             var plugins = new MagnetarPlugins(binding.MagnetarConfigDir, writer);
-            var byId = plugins.HubCatalogPlugins()
+            var byId = plugins
+                .HubCatalogPlugins()
                 .Where(v => v.Enabled)
-                .ToDictionary(v => v.Id, v => v.Info.FriendlyName, StringComparer.OrdinalIgnoreCase);
+                .ToDictionary(
+                    v => v.Id,
+                    v => v.Info.FriendlyName,
+                    StringComparer.OrdinalIgnoreCase
+                );
             foreach (string id in profile.GitHubPlugins)
                 names.Add($"{(byId.TryGetValue(id, out string friendly) ? friendly : id)} (hub)");
         }
-        catch { /* best-effort summary */ }
+        catch
+        { /* best-effort summary */
+        }
         return names;
     }
 
@@ -351,21 +406,28 @@ internal sealed class AppShell : Toplevel
         try
         {
             ModList mods = WorldConfigDocument.Open(world.WorldConfigPath).ReadMods();
-            return mods.Items
-                .Select(m => string.IsNullOrEmpty(m.FriendlyName) ? m.PublishedFileId.ToString() : m.FriendlyName)
+            return mods
+                .Items.Select(m =>
+                    string.IsNullOrEmpty(m.FriendlyName)
+                        ? m.PublishedFileId.ToString()
+                        : m.FriendlyName
+                )
                 .ToList();
         }
-        catch { return new List<string>(); }
+        catch
+        {
+            return new List<string>();
+        }
     }
 
     private static void AppendList(StringBuilder sb, string label, IReadOnlyList<string> items)
     {
         if (items.Count == 0)
         {
-            sb.AppendLine($"{label,-8}: (none)");
+            sb.AppendLine($"{label, -8}: (none)");
             return;
         }
-        sb.AppendLine($"{label,-8}: {items.Count}");
+        sb.AppendLine($"{label, -8}: {items.Count}");
         foreach (string name in items.Take(12))
             sb.AppendLine($"  • {name}");
         if (items.Count > 12)
@@ -387,15 +449,19 @@ internal sealed class AppShell : Toplevel
         {
             if (!warnedNoSafeStop)
             {
-                Dialogs.Info("Stop server",
-                    "Safe stop is not available on Windows in this build. A Magnetar instance can only be force-killed, which loses any progress since the last save.");
+                Dialogs.Info(
+                    "Stop server",
+                    "Safe stop is not available on Windows in this build. A Magnetar instance can only be force-killed, which loses any progress since the last save."
+                );
                 warnedNoSafeStop = true;
             }
             ForceKillServer();
             return;
         }
 
-        if (!Dialogs.Confirm("Stop server", "Send SIGTERM so the server saves the world and quits?"))
+        if (
+            !Dialogs.Confirm("Stop server", "Send SIGTERM so the server saves the world and quits?")
+        )
             return;
 
         Dialogs.RunBackground(
@@ -407,18 +473,33 @@ internal sealed class AppShell : Toplevel
                 // No success popup: the status bar already shows the stopped state.
                 if (!result.Ok)
                     OfferForceKill(result.Message);
-            });
+            }
+        );
     }
 
     private void OfferForceKill(string message)
     {
-        if (Dialogs.Confirm("Stop timed out", message + "\n\nForce-kill the process? Progress since the last save will be LOST.", "Force kill", "Wait"))
+        if (
+            Dialogs.Confirm(
+                "Stop timed out",
+                message + "\n\nForce-kill the process? Progress since the last save will be LOST.",
+                "Force kill",
+                "Wait"
+            )
+        )
             ForceKill();
     }
 
     private void ForceKillServer()
     {
-        if (Dialogs.Confirm("Force-kill server", "Force-kill the server now? Progress since the last save will be LOST.", "Force kill", "Cancel"))
+        if (
+            Dialogs.Confirm(
+                "Force-kill server",
+                "Force-kill the server now? Progress since the last save will be LOST.",
+                "Force kill",
+                "Cancel"
+            )
+        )
             ForceKill();
     }
 
@@ -426,7 +507,14 @@ internal sealed class AppShell : Toplevel
     {
         Dialogs.RunBackground(
             () => process.ForceKill(TimeSpan.FromSeconds(15)),
-            r => { monitor.Poll(); RefreshStatus(); if (!r.Ok) Dialogs.Error("Force-kill", r.Message); });
+            r =>
+            {
+                monitor.Poll();
+                RefreshStatus();
+                if (!r.Ok)
+                    Dialogs.Error("Force-kill", r.Message);
+            }
+        );
     }
 
     public void RestartServer()
@@ -440,14 +528,17 @@ internal sealed class AppShell : Toplevel
                 monitor.Poll();
                 RefreshStatus();
                 StartServer();
-            });
+            }
+        );
     }
 
     public void ReloadServer()
     {
         OpResult r = process.Reload();
-        if (r.Ok) Dialogs.Info("Reload", r.Message);
-        else Dialogs.Error("Reload", r.Message);
+        if (r.Ok)
+            Dialogs.Info("Reload", r.Message);
+        else
+            Dialogs.Error("Reload", r.Message);
     }
 
     private void ReopenInstance()
@@ -472,10 +563,11 @@ internal sealed class AppShell : Toplevel
         // the way out; fold any invalid-field warning into the single Quit dialog.
         var auto = content as IAutoSaveContent;
         auto?.FlushPendingSave();
-        string note = auto != null && auto.InvalidFields.Count > 0
-            ? "\n\nNote: these fields are invalid and were not saved:\n" +
-              string.Join("\n", auto.InvalidFields.Select(f => " • " + f))
-            : "";
+        string note =
+            auto != null && auto.InvalidFields.Count > 0
+                ? "\n\nNote: these fields are invalid and were not saved:\n"
+                    + string.Join("\n", auto.InvalidFields.Select(f => " • " + f))
+                : "";
 
         if (Dialogs.Confirm("Quit", "Exit MagnetarConfig?" + note))
         {

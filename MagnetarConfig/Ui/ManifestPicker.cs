@@ -13,5 +13,6 @@ internal static class ManifestPicker
             "Add dev-folder plugin",
             "Select the plugin's .xml manifest file",
             initialFolder,
-            new[] { ".xml" });
+            new[] { ".xml" }
+        );
 }

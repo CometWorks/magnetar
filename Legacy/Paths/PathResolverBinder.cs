@@ -29,11 +29,15 @@ internal static class PathResolverBinder
             Type pathHelpers = FindType(PathHelpersTypeName);
             Type pathCache = FindType(PathCacheTypeName);
 
-            ReflectionPathResolver backend = ReflectionPathResolver.TryCreate(pathHelpers, pathCache);
+            ReflectionPathResolver backend = ReflectionPathResolver.TryCreate(
+                pathHelpers,
+                pathCache
+            );
             if (backend == null)
             {
                 LogFile.WriteLine(
-                    "PathResolver: LinuxCompat path cache not found, using pass-through shim");
+                    "PathResolver: LinuxCompat path cache not found, using pass-through shim"
+                );
                 return;
             }
 

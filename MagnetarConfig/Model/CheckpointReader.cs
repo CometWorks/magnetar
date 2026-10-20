@@ -29,7 +29,12 @@ internal static class CheckpointReader
         {
             using Stream raw = File.OpenRead(sandboxSbcPath);
             using Stream stream = Decompress(raw);
-            var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Ignore, IgnoreComments = true, IgnoreWhitespace = true };
+            var settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Ignore,
+                IgnoreComments = true,
+                IgnoreWhitespace = true,
+            };
             using XmlReader reader = XmlReader.Create(stream, settings);
 
             var info = new CheckpointInfo();

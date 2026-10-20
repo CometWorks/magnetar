@@ -40,23 +40,36 @@ namespace PluginSdk.Logging
         /// Nested logging from a handler is delivered to its sink without notifying observers again.</summary>
         public static event Action<LogEntry> EntryEmitted;
 
-        [ThreadStatic] private static bool notifying;
+        [ThreadStatic]
+        private static bool notifying;
 
         private static void Observe(LogEntry entry)
         {
-            if (notifying) return;
+            if (notifying)
+                return;
             var handlers = EntryEmitted;
-            if (handlers == null) return;
+            if (handlers == null)
+                return;
             notifying = true;
             try
             {
                 foreach (Action<LogEntry> handler in handlers.GetInvocationList())
-                    try { handler(entry); } catch { /* Diagnostics must never break the game. */ }
+                    try
+                    {
+                        handler(entry);
+                    }
+                    catch
+                    { /* Diagnostics must never break the game. */
+                    }
             }
-            finally { notifying = false; }
+            finally
+            {
+                notifying = false;
+            }
         }
 
-        private readonly string pluginName = pluginName ?? throw new ArgumentNullException(nameof(pluginName));
+        private readonly string pluginName =
+            pluginName ?? throw new ArgumentNullException(nameof(pluginName));
         private readonly ILogSink sink = sink ?? throw new ArgumentNullException(nameof(sink));
 
         /// <summary>
@@ -64,19 +77,32 @@ namespace PluginSdk.Logging
         /// appropriate for the current environment (see
         /// <see cref="LogEnvironment"/>).
         /// </summary>
-        public static Logger Create(string pluginName)
-            => new(pluginName, LogEnvironment.CreateDefaultSink());
+        public static Logger Create(string pluginName) =>
+            new(pluginName, LogEnvironment.CreateDefaultSink());
 
         /// <summary>Name of the plugin this logger stamps onto every entry.</summary>
         public string PluginName => pluginName;
 
-        public void Debug(string message, object data = null) => Write(LogLevel.Debug, message, null, data);
-        public void Info(string message, object data = null) => Write(LogLevel.Info, message, null, data);
-        public void Warning(string message, object data = null) => Write(LogLevel.Warning, message, null, data);
-        public void Error(string message, object data = null) => Write(LogLevel.Error, message, null, data);
-        public void Error(string message, Exception exception, object data = null) => Write(LogLevel.Error, message, exception, data);
-        public void Critical(string message, object data = null) => Write(LogLevel.Critical, message, null, data);
-        public void Critical(string message, Exception exception, object data = null) => Write(LogLevel.Critical, message, exception, data);
+        public void Debug(string message, object data = null) =>
+            Write(LogLevel.Debug, message, null, data);
+
+        public void Info(string message, object data = null) =>
+            Write(LogLevel.Info, message, null, data);
+
+        public void Warning(string message, object data = null) =>
+            Write(LogLevel.Warning, message, null, data);
+
+        public void Error(string message, object data = null) =>
+            Write(LogLevel.Error, message, null, data);
+
+        public void Error(string message, Exception exception, object data = null) =>
+            Write(LogLevel.Error, message, exception, data);
+
+        public void Critical(string message, object data = null) =>
+            Write(LogLevel.Critical, message, null, data);
+
+        public void Critical(string message, Exception exception, object data = null) =>
+            Write(LogLevel.Critical, message, exception, data);
 
         /// <summary>
         /// Writes an entry at <paramref name="level"/> with an optional
@@ -85,8 +111,12 @@ namespace PluginSdk.Logging
         /// (<see cref="Info"/>, <see cref="Error(string, object)"/>, ...)
         /// delegate here.
         /// </summary>
-        public void Log(LogLevel level, string message, Exception exception = null, object data = null)
-            => Write(level, message, exception, data);
+        public void Log(
+            LogLevel level,
+            string message,
+            Exception exception = null,
+            object data = null
+        ) => Write(level, message, exception, data);
 
         private void Write(LogLevel level, string message, Exception exception, object data)
         {
@@ -97,7 +127,8 @@ namespace PluginSdk.Logging
                 Environment.CurrentManagedThreadId,
                 message ?? string.Empty,
                 exception,
-                data);
+                data
+            );
             Observe(entry);
             sink.Write(in entry);
         }

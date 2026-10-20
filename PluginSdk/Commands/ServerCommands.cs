@@ -29,8 +29,7 @@ namespace PluginSdk.Commands
         /// Registers every command module in <paramref name="assembly"/> — the
         /// usual call is <c>ServerCommands.Register(Assembly.GetExecutingAssembly())</c>.
         /// </summary>
-        public static void Register(Assembly assembly)
-            => Require().Register(assembly);
+        public static void Register(Assembly assembly) => Require().Register(assembly);
 
         /// <summary>
         /// Registers the named <see cref="CommandModule"/> types explicitly,
@@ -38,8 +37,8 @@ namespace PluginSdk.Commands
         /// Prefer this over the assembly scan when you want the set of command
         /// classes to be obvious and compiler-checked.
         /// </summary>
-        public static void Register(Assembly assembly, params Type[] moduleTypes)
-            => Require().Register(assembly, moduleTypes);
+        public static void Register(Assembly assembly, params Type[] moduleTypes) =>
+            Require().Register(assembly, moduleTypes);
 
         /// <summary>
         /// Runs <paramref name="commandLine"/>, including its <c>!</c>, through
@@ -52,16 +51,24 @@ namespace PluginSdk.Commands
         /// </summary>
         /// <exception cref="InvalidOperationException">The host can't run
         /// commands.</exception>
-        public static bool Execute(string commandLine, in CommandCaller caller, ICommandResponder responder)
+        public static bool Execute(
+            string commandLine,
+            in CommandCaller caller,
+            ICommandResponder responder
+        )
         {
             if (!(Require() is ICommandExecutor executor))
-                throw new InvalidOperationException("This host can't run chat commands for plugins.");
+                throw new InvalidOperationException(
+                    "This host can't run chat commands for plugins."
+                );
             return executor.Execute(commandLine, caller, responder);
         }
 
-        private static ICommandRegistrar Require()
-            => Registrar ?? throw new InvalidOperationException(
-                "No command registrar is available. ServerCommands.Register requires a host " +
-                "that supports chat commands.");
+        private static ICommandRegistrar Require() =>
+            Registrar
+            ?? throw new InvalidOperationException(
+                "No command registrar is available. ServerCommands.Register requires a host "
+                    + "that supports chat commands."
+            );
     }
 }

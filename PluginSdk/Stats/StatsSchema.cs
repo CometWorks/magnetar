@@ -23,11 +23,11 @@ namespace PluginSdk.Stats
     /// </summary>
     public sealed class StatsSchema
     {
-        private static readonly ConcurrentDictionary<Type, StatsSchema> Cache
-            = new ConcurrentDictionary<Type, StatsSchema>();
+        private static readonly ConcurrentDictionary<Type, StatsSchema> Cache =
+            new ConcurrentDictionary<Type, StatsSchema>();
 
-        private readonly PropertyInfo labelProp;     // null when no [StatLabel]
-        private readonly PropertyInfo[] valueProps;  // parallel to Data.Fields
+        private readonly PropertyInfo labelProp; // null when no [StatLabel]
+        private readonly PropertyInfo[] valueProps; // parallel to Data.Fields
 
         /// <summary>The serializable schema description for a consumer.</summary>
         public StatsSchemaData Data { get; }
@@ -42,7 +42,8 @@ namespace PluginSdk.Stats
         /// <summary>Builds (and caches) the schema for <paramref name="pocoType"/>.</summary>
         public static StatsSchema Build(Type pocoType)
         {
-            if (pocoType == null) throw new ArgumentNullException(nameof(pocoType));
+            if (pocoType == null)
+                throw new ArgumentNullException(nameof(pocoType));
             return Cache.GetOrAdd(pocoType, BuildUncached);
         }
 
@@ -51,20 +52,26 @@ namespace PluginSdk.Stats
             PropertyInfo labelProp = null;
             string labelDescription = null;
 
-            foreach (var prop in pocoType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (
+                var prop in pocoType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            )
             {
-                if (!prop.CanRead) continue;
+                if (!prop.CanRead)
+                    continue;
                 var label = prop.GetCustomAttribute<StatLabelAttribute>();
-                if (label == null) continue;
+                if (label == null)
+                    continue;
 
                 if (labelProp != null)
                     throw new InvalidOperationException(
-                        $"{pocoType.Name} has more than one [StatLabel] property " +
-                        $"('{labelProp.Name}' and '{prop.Name}'); only one is allowed.");
+                        $"{pocoType.Name} has more than one [StatLabel] property "
+                            + $"('{labelProp.Name}' and '{prop.Name}'); only one is allowed."
+                    );
                 if (prop.PropertyType != typeof(string))
                     throw new InvalidOperationException(
-                        $"{pocoType.Name}.{prop.Name} is marked [StatLabel] but is {prop.PropertyType.Name}; " +
-                        "the label property must be of type string.");
+                        $"{pocoType.Name}.{prop.Name} is marked [StatLabel] but is {prop.PropertyType.Name}; "
+                            + "the label property must be of type string."
+                    );
 
                 labelProp = prop;
                 labelDescription = label.Description;
@@ -73,23 +80,29 @@ namespace PluginSdk.Stats
             var valueProps = new List<PropertyInfo>();
             var fields = new List<StatFieldInfo>();
 
-            foreach (var prop in pocoType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (
+                var prop in pocoType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            )
             {
-                if (!prop.CanRead) continue;
+                if (!prop.CanRead)
+                    continue;
                 var stat = prop.GetCustomAttribute<StatAttribute>();
-                if (stat == null) continue;
+                if (stat == null)
+                    continue;
 
                 valueProps.Add(prop);
-                fields.Add(new StatFieldInfo
-                {
-                    Name = prop.Name,
-                    Kind = stat.Kind,
-                    Description = stat.Description,
-                    Unit = stat.Unit,
-                    Parent = stat.Parent,
-                    AcrossInstances = stat.AcrossInstances.ToString(),
-                    OverTime = stat.OverTime.ToString(),
-                });
+                fields.Add(
+                    new StatFieldInfo
+                    {
+                        Name = prop.Name,
+                        Kind = stat.Kind,
+                        Description = stat.Description,
+                        Unit = stat.Unit,
+                        Parent = stat.Parent,
+                        AcrossInstances = stat.AcrossInstances.ToString(),
+                        OverTime = stat.OverTime.ToString(),
+                    }
+                );
             }
 
             var data = new StatsSchemaData
@@ -107,7 +120,8 @@ namespace PluginSdk.Stats
         /// <see cref="Convert.ToDouble(object)"/>.</summary>
         public StatInstance Capture(object poco)
         {
-            if (poco == null) throw new ArgumentNullException(nameof(poco));
+            if (poco == null)
+                throw new ArgumentNullException(nameof(poco));
 
             var values = new double[valueProps.Length];
             for (int i = 0; i < valueProps.Length; i++)
@@ -124,7 +138,8 @@ namespace PluginSdk.Stats
         /// <see cref="StatGroup"/> carrying this schema.</summary>
         public StatGroup CaptureGroup(IEnumerable instances)
         {
-            if (instances == null) throw new ArgumentNullException(nameof(instances));
+            if (instances == null)
+                throw new ArgumentNullException(nameof(instances));
 
             var captured = new List<StatInstance>();
             foreach (var instance in instances)

@@ -23,26 +23,37 @@ namespace PluginSdk.Tests
         {
             var client = Client();
             var seen = new List<string>();
-            Action<PluginClusterEvent> broken = _ => throw new InvalidOperationException("observer fault");
-            Action<PluginClusterEvent> observer = change => seen.Add(change.Kind + ":" + change.Node);
+            Action<PluginClusterEvent> broken = _ =>
+                throw new InvalidOperationException("observer fault");
+            Action<PluginClusterEvent> observer = change =>
+                seen.Add(change.Kind + ":" + change.Node);
             client.ClusterEvent += broken;
             client.ClusterEvent += observer;
             var provider = new EventProvider();
             try
             {
                 Assert.True(PluginCluster.Register(provider));
-                provider.Raise(new PluginClusterEvent { Kind = PluginClusterEventKind.NodeUp, Node = "node-2" });
-                Assert.Equal(new[] { "NodeUp:node-2" }, seen);   // the throwing observer did not starve this one
+                provider.Raise(
+                    new PluginClusterEvent { Kind = PluginClusterEventKind.NodeUp, Node = "node-2" }
+                );
+                Assert.Equal(new[] { "NodeUp:node-2" }, seen); // the throwing observer did not starve this one
                 var nodes = await client.NodesAsync();
                 Assert.Equal("node-9", Assert.Single(nodes).Node);
                 Assert.True(PluginCluster.Unregister(provider));
-                provider.Raise(new PluginClusterEvent { Kind = PluginClusterEventKind.NodeDown, Node = "node-2" });
+                provider.Raise(
+                    new PluginClusterEvent
+                    {
+                        Kind = PluginClusterEventKind.NodeDown,
+                        Node = "node-2",
+                    }
+                );
                 Assert.Single(seen);
             }
             finally
             {
                 PluginCluster.Unregister(provider);
-                client.ClusterEvent -= broken; client.ClusterEvent -= observer;
+                client.ClusterEvent -= broken;
+                client.ClusterEvent -= observer;
             }
         }
 
@@ -54,7 +65,7 @@ namespace PluginSdk.Tests
             Assert.True(PluginCluster.Register(provider));
             try
             {
-                Assert.False(provider.Subscribed);                       // registered, nobody listening: no roster poll
+                Assert.False(provider.Subscribed); // registered, nobody listening: no roster poll
                 Action<PluginClusterEvent> observer = _ => { };
                 client.ClusterEvent += observer;
                 Assert.True(provider.Subscribed);
@@ -64,12 +75,15 @@ namespace PluginSdk.Tests
                 Assert.True(PluginCluster.Unregister(provider));
                 Assert.False(provider.Subscribed);
                 var next = new EventProvider();
-                Assert.True(PluginCluster.Register(next));                  // an existing subscriber attaches at registration
+                Assert.True(PluginCluster.Register(next)); // an existing subscriber attaches at registration
                 Assert.True(next.Subscribed);
                 client.ClusterEvent -= observer;
                 PluginCluster.Unregister(next);
             }
-            finally { PluginCluster.Unregister(provider); }
+            finally
+            {
+                PluginCluster.Unregister(provider);
+            }
         }
 
         [Fact]
@@ -79,25 +93,57 @@ namespace PluginSdk.Tests
             Assert.Equal("standalone", Assert.Single(await client.NodesAsync()).Node);
             string previous = Environment.GetEnvironmentVariable("CLUSTER_NODE_ID");
             Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", "node-1");
-            try { Assert.Null(await client.NodesAsync()); }
-            finally { Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous); }
+            try
+            {
+                Assert.Null(await client.NodesAsync());
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("CLUSTER_NODE_ID", previous);
+            }
         }
 
         private sealed class EventProvider : IPluginClusterProvider, IPluginClusterEventProvider
         {
             public event Action<PluginClusterEvent> ClusterEvent;
             public bool Subscribed => ClusterEvent != null;
+
             public void Raise(PluginClusterEvent change) => ClusterEvent?.Invoke(change);
-            public Task<IReadOnlyList<PluginNodeInfo>> NodesAsync(CancellationToken cancellationToken) =>
-                Task.FromResult<IReadOnlyList<PluginNodeInfo>>(new[] { new PluginNodeInfo { Node = "node-9" } });
+
+            public Task<IReadOnlyList<PluginNodeInfo>> NodesAsync(
+                CancellationToken cancellationToken
+            ) =>
+                Task.FromResult<IReadOnlyList<PluginNodeInfo>>(
+                    new[] { new PluginNodeInfo { Node = "node-9" } }
+                );
+
             public NodeContext Context => new NodeContext { Node = "node-1", Available = true };
-            public event Action ContextChanged { add { } remove { } }
-            public Task<PluginResult> ExecuteAsync(PluginRequest request, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public Task<PluginResult> RequestAsync(string plugin, PluginTarget target, string topic, byte[] payload,
-                Guid operationId, TimeSpan timeout, CancellationToken cancellationToken) =>
-                Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
-            public IDisposable RegisterHandler(string plugin, string topic, Func<PluginMessage, Task<byte[]>> handler) => null;
+            public event Action ContextChanged
+            {
+                add { }
+                remove { }
+            }
+
+            public Task<PluginResult> ExecuteAsync(
+                PluginRequest request,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public Task<PluginResult> RequestAsync(
+                string plugin,
+                PluginTarget target,
+                string topic,
+                byte[] payload,
+                Guid operationId,
+                TimeSpan timeout,
+                CancellationToken cancellationToken
+            ) => Task.FromResult(PluginResult.Failure(PluginResultCode.Unsupported));
+
+            public IDisposable RegisterHandler(
+                string plugin,
+                string topic,
+                Func<PluginMessage, Task<byte[]>> handler
+            ) => null;
         }
     }
 }

@@ -30,11 +30,19 @@ internal sealed class AtomicFile
 
         string tempPath = Path.Combine(
             directory ?? ".",
-            $".{Path.GetFileName(path)}.{Guid.NewGuid():N}.tmp");
+            $".{Path.GetFileName(path)}.{Guid.NewGuid():N}.tmp"
+        );
 
         try
         {
-            using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (
+                var stream = new FileStream(
+                    tempPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None
+                )
+            )
             using (var writer = new StreamWriter(stream, Utf8NoBom))
             {
                 writer.Write(content);
@@ -76,8 +84,6 @@ internal sealed class AtomicFile
             if (File.Exists(path))
                 File.Delete(path);
         }
-        catch
-        {
-        }
+        catch { }
     }
 }

@@ -29,16 +29,24 @@ internal static class WorldCreator
     /// The copy is assembled in a hidden staging folder and moved into place, so a
     /// failure never leaves a half-populated world in the list.
     /// </summary>
-    public static string CreateFromTemplate(WorldTemplate template, string worldName, string savesPath)
+    public static string CreateFromTemplate(
+        WorldTemplate template,
+        string worldName,
+        string savesPath
+    )
     {
-        if (template == null) throw new ArgumentNullException(nameof(template));
-        if (string.IsNullOrWhiteSpace(worldName)) throw new ArgumentException("World name is required.", nameof(worldName));
+        if (template == null)
+            throw new ArgumentNullException(nameof(template));
+        if (string.IsNullOrWhiteSpace(worldName))
+            throw new ArgumentException("World name is required.", nameof(worldName));
 
         string targetDir = Path.Combine(savesPath, worldName);
         if (Directory.Exists(targetDir))
             throw new IOException($"A world folder already exists: {targetDir}");
         if (!Directory.Exists(template.FolderPath))
-            throw new DirectoryNotFoundException($"Template folder not found: {template.FolderPath}");
+            throw new DirectoryNotFoundException(
+                $"Template folder not found: {template.FolderPath}"
+            );
 
         Directory.CreateDirectory(savesPath);
 
@@ -55,7 +63,12 @@ internal static class WorldCreator
         }
         catch
         {
-            try { if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, recursive: true); } catch { }
+            try
+            {
+                if (Directory.Exists(stagingDir))
+                    Directory.Delete(stagingDir, recursive: true);
+            }
+            catch { }
             throw;
         }
     }

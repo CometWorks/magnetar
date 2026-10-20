@@ -42,13 +42,23 @@ internal static class MiniJson
             char c = s[i];
             switch (c)
             {
-                case '{': return ParseObject();
-                case '[': return ParseArray();
-                case '"': return JsonValue.Of(ParseString());
-                case 't': Expect("true"); return JsonValue.Of(true);
-                case 'f': Expect("false"); return JsonValue.Of(false);
-                case 'n': Expect("null"); return JsonValue.Null();
-                default: return ParseNumber();
+                case '{':
+                    return ParseObject();
+                case '[':
+                    return ParseArray();
+                case '"':
+                    return JsonValue.Of(ParseString());
+                case 't':
+                    Expect("true");
+                    return JsonValue.Of(true);
+                case 'f':
+                    Expect("false");
+                    return JsonValue.Of(false);
+                case 'n':
+                    Expect("null");
+                    return JsonValue.Null();
+                default:
+                    return ParseNumber();
             }
         }
 
@@ -57,7 +67,11 @@ internal static class MiniJson
             var obj = new Dictionary<string, JsonValue>(StringComparer.Ordinal);
             i++; // {
             SkipWhitespace();
-            if (i < s.Length && s[i] == '}') { i++; return JsonValue.Of(obj); }
+            if (i < s.Length && s[i] == '}')
+            {
+                i++;
+                return JsonValue.Of(obj);
+            }
             while (true)
             {
                 SkipWhitespace();
@@ -72,8 +86,16 @@ internal static class MiniJson
                 SkipWhitespace();
                 if (i >= s.Length)
                     throw new FormatException("Unterminated object.");
-                if (s[i] == ',') { i++; continue; }
-                if (s[i] == '}') { i++; break; }
+                if (s[i] == ',')
+                {
+                    i++;
+                    continue;
+                }
+                if (s[i] == '}')
+                {
+                    i++;
+                    break;
+                }
                 throw new FormatException("Expected ',' or '}' in object.");
             }
             return JsonValue.Of(obj);
@@ -84,15 +106,27 @@ internal static class MiniJson
             var arr = new List<JsonValue>();
             i++; // [
             SkipWhitespace();
-            if (i < s.Length && s[i] == ']') { i++; return JsonValue.Of(arr); }
+            if (i < s.Length && s[i] == ']')
+            {
+                i++;
+                return JsonValue.Of(arr);
+            }
             while (true)
             {
                 arr.Add(ParseValue());
                 SkipWhitespace();
                 if (i >= s.Length)
                     throw new FormatException("Unterminated array.");
-                if (s[i] == ',') { i++; continue; }
-                if (s[i] == ']') { i++; break; }
+                if (s[i] == ',')
+                {
+                    i++;
+                    continue;
+                }
+                if (s[i] == ']')
+                {
+                    i++;
+                    break;
+                }
                 throw new FormatException("Expected ',' or ']' in array.");
             }
             return JsonValue.Of(arr);
@@ -109,27 +143,53 @@ internal static class MiniJson
                     return sb.ToString();
                 if (c == '\\')
                 {
-                    if (i >= s.Length) break;
+                    if (i >= s.Length)
+                        break;
                     char e = s[i++];
                     switch (e)
                     {
-                        case '"': sb.Append('"'); break;
-                        case '\\': sb.Append('\\'); break;
-                        case '/': sb.Append('/'); break;
-                        case 'b': sb.Append('\b'); break;
-                        case 'f': sb.Append('\f'); break;
-                        case 'n': sb.Append('\n'); break;
-                        case 'r': sb.Append('\r'); break;
-                        case 't': sb.Append('\t'); break;
+                        case '"':
+                            sb.Append('"');
+                            break;
+                        case '\\':
+                            sb.Append('\\');
+                            break;
+                        case '/':
+                            sb.Append('/');
+                            break;
+                        case 'b':
+                            sb.Append('\b');
+                            break;
+                        case 'f':
+                            sb.Append('\f');
+                            break;
+                        case 'n':
+                            sb.Append('\n');
+                            break;
+                        case 'r':
+                            sb.Append('\r');
+                            break;
+                        case 't':
+                            sb.Append('\t');
+                            break;
                         case 'u':
-                            if (i + 4 <= s.Length &&
-                                ushort.TryParse(s.Substring(i, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ushort code))
+                            if (
+                                i + 4 <= s.Length
+                                && ushort.TryParse(
+                                    s.Substring(i, 4),
+                                    NumberStyles.HexNumber,
+                                    CultureInfo.InvariantCulture,
+                                    out ushort code
+                                )
+                            )
                             {
                                 sb.Append((char)code);
                                 i += 4;
                             }
                             break;
-                        default: sb.Append(e); break;
+                        default:
+                            sb.Append(e);
+                            break;
                     }
                 }
                 else
@@ -146,7 +206,14 @@ internal static class MiniJson
             while (i < s.Length && "+-0123456789.eE".IndexOf(s[i]) >= 0)
                 i++;
             string token = s.Substring(start, i - start);
-            if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
+            if (
+                double.TryParse(
+                    token,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double d
+                )
+            )
                 return JsonValue.Of(d);
             throw new FormatException("Invalid number: " + token);
         }
@@ -163,7 +230,15 @@ internal static class MiniJson
 /// <summary>A parsed JSON value with lenient, null-safe accessors.</summary>
 internal sealed class JsonValue
 {
-    private enum Kind { Null, Bool, Number, String, Array, Object }
+    private enum Kind
+    {
+        Null,
+        Bool,
+        Number,
+        String,
+        Array,
+        Object,
+    }
 
     private readonly Kind kind;
     private readonly bool boolValue;
@@ -172,17 +247,33 @@ internal sealed class JsonValue
     private readonly List<JsonValue> arrayValue;
     private readonly Dictionary<string, JsonValue> objectValue;
 
-    private JsonValue(Kind k, bool b = false, double n = 0, string s = null,
-        List<JsonValue> a = null, Dictionary<string, JsonValue> o = null)
+    private JsonValue(
+        Kind k,
+        bool b = false,
+        double n = 0,
+        string s = null,
+        List<JsonValue> a = null,
+        Dictionary<string, JsonValue> o = null
+    )
     {
-        kind = k; boolValue = b; numberValue = n; stringValue = s; arrayValue = a; objectValue = o;
+        kind = k;
+        boolValue = b;
+        numberValue = n;
+        stringValue = s;
+        arrayValue = a;
+        objectValue = o;
     }
 
     public static JsonValue Null() => new(Kind.Null);
+
     public static JsonValue Of(bool b) => new(Kind.Bool, b: b);
+
     public static JsonValue Of(double n) => new(Kind.Number, n: n);
+
     public static JsonValue Of(string s) => new(Kind.String, s: s);
+
     public static JsonValue Of(List<JsonValue> a) => new(Kind.Array, a: a);
+
     public static JsonValue Of(Dictionary<string, JsonValue> o) => new(Kind.Object, o: o);
 
     public bool IsNull => kind == Kind.Null;
@@ -201,10 +292,14 @@ internal sealed class JsonValue
     {
         switch (kind)
         {
-            case Kind.String: return stringValue;
-            case Kind.Number: return numberValue.ToString(CultureInfo.InvariantCulture);
-            case Kind.Bool: return boolValue ? "true" : "false";
-            default: return null;
+            case Kind.String:
+                return stringValue;
+            case Kind.Number:
+                return numberValue.ToString(CultureInfo.InvariantCulture);
+            case Kind.Bool:
+                return boolValue ? "true" : "false";
+            default:
+                return null;
         }
     }
 
@@ -212,10 +307,19 @@ internal sealed class JsonValue
     {
         switch (kind)
         {
-            case Kind.Number: return (long)numberValue;
+            case Kind.Number:
+                return (long)numberValue;
             case Kind.String:
-                return long.TryParse(stringValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out long v) ? v : fallback;
-            default: return fallback;
+                return long.TryParse(
+                    stringValue,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out long v
+                )
+                    ? v
+                    : fallback;
+            default:
+                return fallback;
         }
     }
 

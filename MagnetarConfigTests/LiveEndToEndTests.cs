@@ -22,6 +22,7 @@ namespace Magnetar.Config.Tests;
 public class LiveEndToEndTests
 {
     private readonly ITestOutputHelper output;
+
     public LiveEndToEndTests(ITestOutputHelper output) => this.output = output;
 
     [Fact]
@@ -54,8 +55,9 @@ public class LiveEndToEndTests
         try
         {
             DsInstance instance = DsInstance.Open(binding);
-            WorldTemplate template = instance.Templates.Templates
-                .FirstOrDefault(t => t.FolderName.Equals(templateName, StringComparison.OrdinalIgnoreCase));
+            WorldTemplate template = instance.Templates.Templates.FirstOrDefault(t =>
+                t.FolderName.Equals(templateName, StringComparison.OrdinalIgnoreCase)
+            );
             Assert.True(template != null, $"template '{templateName}' not found");
             Log($"Using template: {template.DisplayName} ({template.FolderName})");
 
@@ -75,14 +77,19 @@ public class LiveEndToEndTests
             cfg.LoadWorld = string.Empty;
             cfg.IgnoreLastSession = false;
             cfg.Save(writer);
-            Log($"Staged world '{worldName}' (PremadeCheckpointPath set, MaxPlayers={cfg.Get(maxPlayers)}).");
+            Log(
+                $"Staged world '{worldName}' (PremadeCheckpointPath set, MaxPlayers={cfg.Get(maxPlayers)})."
+            );
 
             // --- start with -ignorelastsession so the DS runs its new-world branch ---
             var spec = new LaunchSpec { Binding = binding, IgnoreLastSession = true };
             OpResult startResult = process.Start(spec, TimeSpan.FromSeconds(120));
             started = true;
             Log($"Start: ok={startResult.Ok} msg={startResult.Message}");
-            Assert.True(startResult.Ok, "server did not report its pid (patched launcher / pid file)");
+            Assert.True(
+                startResult.Ok,
+                "server did not report its pid (patched launcher / pid file)"
+            );
 
             ServerStatus running = process.Query();
             Assert.Equal(ServerState.Running, running.State);
@@ -109,25 +116,46 @@ public class LiveEndToEndTests
             // Best-effort cleanup so we never leave the user's server running.
             if (started)
             {
-                try { process.Stop(TimeSpan.FromMinutes(2)); } catch { }
-                try { process.ForceKill(TimeSpan.FromSeconds(20)); } catch { }
+                try
+                {
+                    process.Stop(TimeSpan.FromMinutes(2));
+                }
+                catch { }
+                try
+                {
+                    process.ForceKill(TimeSpan.FromSeconds(20));
+                }
+                catch { }
             }
 
             // Restore cfg + LastSession and remove the created test world.
-            try { if (cfgBackup != null) File.WriteAllBytes(cfgPath, cfgBackup); } catch { }
             try
             {
-                if (sblBackup != null) File.WriteAllBytes(sblPath, sblBackup);
-                else if (File.Exists(sblPath)) File.Delete(sblPath);
+                if (cfgBackup != null)
+                    File.WriteAllBytes(cfgPath, cfgBackup);
+            }
+            catch { }
+            try
+            {
+                if (sblBackup != null)
+                    File.WriteAllBytes(sblPath, sblBackup);
+                else if (File.Exists(sblPath))
+                    File.Delete(sblPath);
             }
             catch { }
             try
             {
                 string created = Path.Combine(binding.SavesPath, worldName);
-                if (Directory.Exists(created)) Directory.Delete(created, true);
+                if (Directory.Exists(created))
+                    Directory.Delete(created, true);
             }
             catch { }
-            try { if (File.Exists(cfgPath + ".bak")) File.Delete(cfgPath + ".bak"); } catch { }
+            try
+            {
+                if (File.Exists(cfgPath + ".bak"))
+                    File.Delete(cfgPath + ".bak");
+            }
+            catch { }
             Log("Restored cfg + LastSession, removed test world.");
         }
     }
