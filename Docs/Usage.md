@@ -120,10 +120,12 @@ had them.
 ## Legacy Workshop mods
 
 Some early Space Engineers Workshop mods download as a single `*_legacy.bin`
-archive instead of loose files. Magnetar expands those archives after Workshop
-download/update into the same mod folder before the dedicated server loads
-definitions or scripts. The expanded files live under the DS Workshop cache
-selected by `-path` (`content/244850/<workshop-id>`).
+archive instead of loose files. Steam points the server at that archive, and on
+Linux the server then skips the scripts in it. Magnetar expands those archives
+after Workshop download/update into the same mod folder and loads the mod from
+that folder, before the dedicated server loads definitions or scripts. The
+expanded files live under the DS Workshop cache selected by `-path`
+(`content/244850/<workshop-id>`).
 
 If Steam fails to download such an item (some Windows servers get
 `k_EResultTimeout` for them), Magnetar fetches the archive over HTTPS from

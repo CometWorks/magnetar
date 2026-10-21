@@ -3,15 +3,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
+using HarmonyLib;
 using Pulsar.Shared;
+using VRage.GameServices;
 
 namespace Magnetar.Legacy.Integration;
 
 public static class LegacyWorkshopArchive
 {
-    private const string LegacyArchivePattern = "*_legacy.bin";
+    private const string LegacyArchiveSuffix = "_legacy.bin";
+    private const string LegacyArchivePattern = "*" + LegacyArchiveSuffix;
     private const string DataDirectory = "Data";
     private const string MarkerFile = ".magnetar-legacy-extract";
+
+    private static readonly MethodInfo FolderSetter = AccessTools.PropertySetter(
+        typeof(MyWorkshopItem),
+        nameof(MyWorkshopItem.Folder)
+    );
 
     public static string FindLegacyArchive(string modFolder)
     {
@@ -24,22 +33,44 @@ public static class LegacyWorkshopArchive
             .FirstOrDefault();
     }
 
-    public static bool TryRepair(ulong workshopId, string modFolder)
+    /// <summary>
+    /// Expands the legacy archive of a Workshop mod and returns the folder to
+    /// load the mod from. Steam points a legacy item at its archive file, so
+    /// for those that is the archive's folder. Returns <paramref name="modPath"/>
+    /// unchanged when there is nothing to expand or the expansion failed.
+    /// </summary>
+    public static string Repair(ulong workshopId, string modPath)
     {
-        if (string.IsNullOrWhiteSpace(modFolder) || !Directory.Exists(modFolder))
-            return false;
+        if (string.IsNullOrWhiteSpace(modPath))
+            return modPath;
+
+        string modFolder = modPath;
+        string legacyArchive;
+        if (modPath.EndsWith(LegacyArchiveSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!File.Exists(modPath))
+                return modPath;
+            legacyArchive = modPath;
+            modFolder = Path.GetDirectoryName(modPath);
+        }
+        else
+        {
+            legacyArchive = FindLegacyArchive(modPath);
+            if (legacyArchive is null)
+                return modPath;
+        }
 
         string dataPath = Path.Combine(modFolder, DataDirectory);
-        string legacyArchive = FindLegacyArchive(modFolder);
-        if (legacyArchive is null)
-            return Directory.Exists(dataPath);
-
         string markerPath = Path.Combine(modFolder, MarkerFile);
         if (Directory.Exists(dataPath) && IsMarkerCurrent(markerPath, legacyArchive))
-            return true;
+            return modFolder;
 
-        return TryExtract(workshopId, legacyArchive, modFolder);
+        return TryExtract(workshopId, legacyArchive, modFolder) ? modFolder : modPath;
     }
+
+    // Folder has a protected setter
+    internal static void SetFolder(MyWorkshopItem item, string folder) =>
+        FolderSetter.Invoke(item, [folder]);
 
     public static bool TryExtract(ulong workshopId, string legacyArchive, string targetFolder)
     {

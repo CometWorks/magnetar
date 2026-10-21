@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
-using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using Pulsar.Legacy.Launcher;
 using Pulsar.Shared;
@@ -26,12 +24,6 @@ public static class LegacyWorkshopDownload
         "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/";
 
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromMinutes(2) };
-
-    // Folder has a protected setter
-    private static readonly MethodInfo FolderSetter = AccessTools.PropertySetter(
-        typeof(MyWorkshopItem),
-        nameof(MyWorkshopItem.Folder)
-    );
 
     /// <summary>
     /// Downloads the legacy archive of the item into the DS Workshop folder,
@@ -76,7 +68,7 @@ public static class LegacyWorkshopDownload
                 File.Move(partial, archive);
             }
 
-            FolderSetter.Invoke(item, [archive]);
+            LegacyWorkshopArchive.SetFolder(item, archive);
             LogFile.WriteLine($"Loading legacy workshop item {item.Id} from {archive}");
             return true;
         }

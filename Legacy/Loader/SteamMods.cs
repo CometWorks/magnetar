@@ -187,8 +187,16 @@ public static class SteamMods
 
             try
             {
-                string folder = mod.GetModData().Folder;
-                LegacyWorkshopArchive.TryRepair(mod.PublishedFileId, folder);
+                MyWorkshopItem item = mod.GetModData();
+                string folder = LegacyWorkshopArchive.Repair(mod.PublishedFileId, item.Folder);
+                if (folder != item.Folder)
+                {
+                    // The game loads the mod from Folder, which still names the archive
+                    LegacyWorkshopArchive.SetFolder(item, folder);
+                    LogFile.WriteLine(
+                        "Loading legacy workshop mod " + mod.PublishedFileId + " from " + folder
+                    );
+                }
             }
             catch (Exception e)
             {
