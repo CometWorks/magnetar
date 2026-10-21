@@ -62,10 +62,10 @@ The Workshop cache is in this data root too. Steam stores the world mods, the
 mod plugins and Magnetar's `MagnetarMod` client companion under
 `content/244850/<workshop-id>`, apart from the Steam client's own Workshop folder
 (see [Client companion mod](Usage.md#client-companion-mod) and
-[Mod plugins](Usage.md#mod-plugins)). If Steam returns an early
-`*_legacy.bin` package, Magnetar expands it in that folder and loads the mod
-from there before the server loads definitions. When Steam fails to download such a package, Magnetar fetches it
-over HTTPS from the Steam CDN into the same folder (see [Legacy Workshop mods](Usage.md#legacy-workshop-mods)).
+[Mod plugins](Usage.md#mod-plugins)). An early Workshop item comes as a single
+`*_legacy.bin` package, which the server loads as it is. When Steam fails to download
+such a package, Magnetar fetches it over HTTPS from the Steam CDN into the same
+folder (see [Legacy Workshop mods](Usage.md#legacy-workshop-mods)).
 
 ```sh
 MagnetarInterim -path "D:\SE\MyServerInstance"
