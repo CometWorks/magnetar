@@ -222,6 +222,21 @@ static class Program
         LogFile.WriteLine($"Flavour: {asmName.Name}");
         LogFile.WriteLine($"Platform: {Tools.Platform}");
         LogFile.WriteLine($"Runtime: {Tools.Runtime}");
+#if NETFRAMEWORK
+        // Mono only shows up here under Wine or Proton, where a prefix without
+        // .NET Framework runs .NET Framework programs on Wine Mono. Neither the
+        // required Error Reporting plugin nor the DS is supported on it.
+        if (Tools.IsMono())
+        {
+            ShowStartupError(
+                "MagnetarLegacy needs .NET Framework 4.8, but it is running on Mono "
+                    + "(Wine Mono in a Wine or Proton prefix). Install .NET Framework 4.8 "
+                    + "into the prefix, or run MagnetarInterim with the .NET 10 runtime. "
+                    + "See \"Running under Proton or Wine\" in Magnetar's Docs/Usage.md."
+            );
+            Environment.Exit(1);
+        }
+#endif
 
         Parser.LogChanged();
         ServerFlags.LogFlags();
@@ -411,6 +426,24 @@ static class Program
         }
 #endif
 
+        if (Tools.IsWindows() && !IsVcRedistInstalled())
+        {
+            // The DS checks this registry key, then logs a one-line request
+            // and returns without running, which looks like a clean exit.
+            ShowStartupError(
+                Tools.IsProton()
+                    ? "The Visual C++ 2015-2019 x64 redistributable is not registered in this "
+                        + "prefix. Wine has the DLLs; the dedicated server only checks the "
+                        + "registry key. Add it with `reg add "
+                        + "\"HKLM\\SOFTWARE\\Classes\\Installer\\Dependencies\\"
+                        + "Microsoft.VS.VC_RuntimeMinimumVSU_amd64,v14\" /f`, "
+                        + "run in the prefix with `wine` or `proton run`."
+                    : "The Visual C++ 2015-2019 x64 redistributable is not installed. "
+                        + "Install the latest x64 Visual C++ redistributable from Microsoft."
+            );
+            Environment.Exit(1);
+        }
+
         if (!launcher.CanStart())
         {
             // CanStart's own dialog is auto-cancelled by the forced -noPrompt
@@ -423,6 +456,22 @@ static class Program
             Environment.Exit(1);
         }
     }
+
+    // Same keys as DedicatedServer.IsVcRedist2019Installed.
+#pragma warning disable CA1416
+    private static bool IsVcRedistInstalled()
+    {
+        using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+            @"SOFTWARE\Classes\Installer\Dependencies"
+        );
+        if (key is null)
+            return false;
+
+        using var additional = key.OpenSubKey("Microsoft.VS.VC_RuntimeAdditionalVSU_amd64,v14");
+        using var minimum = key.OpenSubKey("Microsoft.VS.VC_RuntimeMinimumVSU_amd64,v14");
+        return additional is not null || minimum is not null;
+    }
+#pragma warning restore CA1416
 
     private static void SetupSteam()
     {
