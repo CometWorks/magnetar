@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using HarmonyLib;
-using Magnetar.Legacy.Integration;
 using ParallelTasks;
 using Pulsar.Shared;
 using Pulsar.Shared.Data;
@@ -158,47 +157,15 @@ public static class SteamMods
                     "DownloadModsBlocking"
                 );
 
-            MyWorkshop.ResultData resultData = (MyWorkshop.ResultData)
+            return (MyWorkshop.ResultData)
                 DownloadModsBlocking.Invoke(
                     mods,
                     [mods, new MyWorkshop.ResultData(), list, new MyWorkshop.CancelToken()]
                 );
-
-            if (resultData.Result == MyGameServiceCallResult.OK)
-                RepairLegacyArchives(mods);
-
-            return resultData;
         }
         finally
         {
             MyLog.Default.DecreaseIndent();
-        }
-    }
-
-    public static void RepairLegacyArchives(IEnumerable<MyObjectBuilder_Checkpoint.ModItem> mods)
-    {
-        if (mods is null)
-            return;
-
-        foreach (MyObjectBuilder_Checkpoint.ModItem mod in mods)
-        {
-            if (mod.PublishedFileId == 0 || !mod.IsModData())
-                continue;
-
-            try
-            {
-                string folder = mod.GetModData().Folder;
-                LegacyWorkshopArchive.TryRepair(mod.PublishedFileId, folder);
-            }
-            catch (Exception e)
-            {
-                LogFile.Error(
-                    "Failed checking legacy workshop mod "
-                        + mod.PublishedFileId
-                        + " for extraction: "
-                        + e
-                );
-            }
         }
     }
 }
