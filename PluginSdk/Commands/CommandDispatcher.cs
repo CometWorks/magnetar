@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PluginSdk.Commands
 {
@@ -17,6 +18,13 @@ namespace PluginSdk.Commands
     /// </summary>
     public sealed class CommandDispatcher
     {
+        private sealed class Alias
+        {
+            internal string[] Source;
+            internal string[] Target;
+        }
+
+        private volatile Alias[] aliases = Array.Empty<Alias>();
         private readonly CommandRegistry registry;
         private readonly Action<string, Exception> onError;
 
@@ -35,6 +43,39 @@ namespace PluginSdk.Commands
         }
 
         /// <summary>
+        /// Replaces the alias snapshot atomically. Paths include ! and contain only letters,
+        /// digits, underscores, hyphens and spaces/tabs. Longest whole-token source wins,
+        /// before registered commands. Expansion happens once; caller and responder are unchanged.
+        /// Invalid, duplicate, self-referencing or !help source aliases reject the entire update.
+        /// Call on the game thread. An empty collection clears aliases.
+        /// </summary>
+        public void SetAliases(IEnumerable<KeyValuePair<string, string>> values)
+        {
+            if (values == null) throw new ArgumentNullException(nameof(values));
+            var updated = new List<Alias>();
+            var sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var value in values)
+            {
+                string[] source = AliasPath(value.Key);
+                string[] target = AliasPath(value.Value);
+                if (updated.Count >= 64 || !sources.Add(string.Join(" ", source))
+                    || source[0].Equals("help", StringComparison.OrdinalIgnoreCase)
+                    || source.SequenceEqual(target, StringComparer.OrdinalIgnoreCase))
+                    throw new ArgumentException("Aliases must be unique, cannot alias themselves or replace !help, and are limited to 64.", nameof(values));
+                updated.Add(new Alias { Source = source, Target = target });
+            }
+            aliases = updated.OrderByDescending(alias => alias.Source.Length).ToArray();
+        }
+
+        private static string[] AliasPath(string path)
+        {
+            if (path == null || path.Length > 512
+                || !Regex.IsMatch(path, @"\A![a-zA-Z0-9_-]+(?:[ \t]+[a-zA-Z0-9_-]+)*\z"))
+                throw new ArgumentException("Alias paths must start with ! and contain command words made of letters, digits, underscores or hyphens (maximum 512 characters).");
+            return CommandLine.Tokenize(path.Substring(1)).ToArray();
+        }
+
+        /// <summary>
         /// Handles a chat <paramref name="message"/>. Returns <c>true</c> when
         /// it was recognised as a command for a registered root (and therefore
         /// should be consumed/suppressed from normal chat), or <c>false</c> when
@@ -48,6 +89,17 @@ namespace PluginSdk.Commands
             List<string> tokens = CommandLine.Tokenize(message.Substring(1));
             if (tokens.Count == 0)
                 return false;
+
+            bool expanded = false;
+            foreach (var alias in aliases)
+            {
+                if (tokens.Count < alias.Source.Length
+                    || !tokens.Take(alias.Source.Length).SequenceEqual(alias.Source, StringComparer.OrdinalIgnoreCase))
+                    continue;
+                tokens = alias.Target.Concat(tokens.Skip(alias.Source.Length)).ToList();
+                expanded = true;
+                break;
+            }
 
             // '!help' is the built-in command that lists every top-level command
             // available to the caller. It is not tied to a registered root, so it
@@ -65,7 +117,11 @@ namespace PluginSdk.Commands
 
             string prefix = tokens[0];
             if (!registry.TryGetRoot(prefix, out CommandRoot root))
-                return false;
+            {
+                if (expanded)
+                    Reply(responder, caller, CommandReply.Error("Alias target is unavailable. Ask an administrator to check the configured command alias."));
+                return expanded;
+            }
 
             var rest = tokens.GetRange(1, tokens.Count - 1);
 

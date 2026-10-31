@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using PluginSdk.Commands;
 using Pulsar.Shared;
@@ -15,7 +16,7 @@ namespace Magnetar.Legacy.Commands;
 /// host's <see cref="ICommandRegistrar"/>; ownership of each command is taken
 /// from the registering plugin's assembly.
 /// </summary>
-public sealed class CommandService : ICommandRegistrar, ICommandExecutor
+public sealed class CommandService : ICommandRegistrar, ICommandExecutor, ICommandAliasConfigurator
 {
     private readonly CommandRegistry registry = new();
     private readonly CommandDispatcher dispatcher;
@@ -112,6 +113,8 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor
             caller,
             responder ?? throw new ArgumentNullException(nameof(responder))
         );
+
+    public void SetAliases(IEnumerable<KeyValuePair<string, string>> aliases) => dispatcher.SetAliases(aliases);
 
     private static CommandCaller BuildCaller(ulong steamId)
     {

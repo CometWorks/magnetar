@@ -127,3 +127,14 @@ and the controlling flags). Two pieces of state live in the **Magnetar config di
 | `DS64`               | Build-time override for the DS reference path.                   |
 
 Build-time overrides are covered in full in **[Build.md](Build.md)**.
+
+## Command aliases managed by Quasar
+
+Quasar administrators can configure `!` command aliases per configuration profile,
+such as `!grids list` to `!ess grids list`. Quasar.Agent applies the configured
+snapshot through `ServerCommands.SetAliases` on startup. This requires PluginSdk
+contract 1.1 and a matching Agent. Magnetar keeps parsing, caller identity and target
+permissions in its normal command dispatcher. It does not read a separate global
+alias file or add aliases to plugins. See the
+[SDK alias contract](../skills/se-dev-plugin-sdk/Commands.md#administrator-command-aliases)
+for matching, collision, validation and recursion rules.

@@ -1,0 +1,4 @@
+PluginSdk.Commands.ICommandAliasConfigurator
+PluginSdk.Commands.ICommandAliasConfigurator.SetAliases(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> aliases) -> void
+PluginSdk.Commands.CommandDispatcher.SetAliases(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> values) -> void
+static PluginSdk.Commands.ServerCommands.SetAliases(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> aliases) -> void
