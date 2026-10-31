@@ -21,7 +21,7 @@ the quasar repository (`Tests/Lifecycle`) and uses this folder's rig and probe.
   its caller, `Terminating` events, and the process exit code where .NET runs
   exit handlers (Windows). Commands: `chat <text>` (a chat command as the
   server console), `sdk <ServerControl method>`, `exit`
-  (`MySandboxGame.ExitThreadSafe`), `update` (Keen's auto-update stop falls
+  (`MySandboxGame.ExitThreadSafe`), `envexit <code>` (`Environment.Exit`), `update` (Keen's auto-update stop falls
   due: an update is pending and its countdown is over), `slowsave <seconds>` (the next saves take
   that long, so a command can arrive during one), `hang <seconds>` (blocks the
   game thread) and `crash` (an unhandled exception). A `probe-hold-init.txt`

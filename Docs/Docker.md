@@ -42,7 +42,7 @@ docker compose up -d
 | Path | Holds |
 | ---- | ----- |
 | `/data/DedicatedServer` | The dedicated server install, kept up to date by steamcmd. |
-| `/data/Instance` | The DS data folder (`-path`): `SpaceEngineers-Dedicated.cfg`, `Saves/`, workshop mods, DS logs. |
+| `/data/Instance` | The DS data folder (`-path`): `SpaceEngineers-Dedicated.cfg`, `Saves/`, workshop mods, DS logs, the .NET JIT profile. |
 | `/data/Magnetar` | The Magnetar config folder (`-config`): `config.xml`, plugin sources and profiles, `info.log`. |
 | `/data/NuGet` | NuGet packages that plugins pull in when they compile. |
 

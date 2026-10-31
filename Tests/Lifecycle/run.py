@@ -136,6 +136,8 @@ def run_case(case, platform, args, port, gate):
     server = Server(work, platform, args.template, port, case.essentials, case.auto_restart)
     log, result = [], {"id": case.id, "state": case.state, "command": case.command, "platform": platform.name}
     failures = []
+    ds_profile = platform.ds64 / "ProfileOptimization/Startup.profile"
+    ds_profile_before = ds_profile.exists() and ds_profile.stat().st_mtime_ns
     try:
         server.setup()
         with gate:
@@ -174,6 +176,11 @@ def run_case(case, platform, args, port, gate):
             failures.append(f"{len(runs) - 1} restarts, expected {case.restarts}")
         if case.saved is not None and marked and result["saved"] != case.saved:
             failures.append(f"saved={result['saved']}, expected {case.saved}")
+        if case.jit_profile:
+            if not (server.data / "ProfileOptimization/Startup.profile").exists():
+                failures.append("no JIT profile in the data folder")
+            if (ds_profile.exists() and ds_profile.stat().st_mtime_ns) != ds_profile_before:
+                failures.append("the JIT profile changed in the DS folder")
         replies = [m[len("reply ") :] for _, _, m in server.events() if m.startswith("reply ")]
         result["replies"] = replies
         for text in case.replies:

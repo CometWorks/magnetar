@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text;
 using HarmonyLib;
@@ -658,12 +659,29 @@ static class Program
         // an aborted startup never leaves a stale magnetar.pid behind.
         string[] finalArgs = EnsureDataPathApplied(args, ds64Dir);
 
+        SetProfileRoot(args, ds64Dir);
+
         // Publish this instance's pid so an external tool (MagnetarConfig) can
         // discover and verify it. Written after the daemon detach (the pid is
         // final) and removed by ServerControl.FlushAll on every clean exit.
         PidFile.Write(ConfigManager.Instance.PulsarDir, ResolveDataDir(args, ds64Dir));
 
         Game.StartDedicatedServer(finalArgs);
+    }
+
+    // The DS roots the runtime's JIT profile in its empty app data path, which is
+    // the working directory, so a server would write Startup.profile into the DS
+    // binaries' folder at some exits. That folder can be shared between servers
+    // or frozen (a cluster deployment refuses a file it didn't list). The
+    // runtime keeps the first root it gets, so the DS's own call has no effect.
+    private static void SetProfileRoot(string[] args, string ds64Dir)
+    {
+        string root = Path.Combine(
+            ResolveDataDir(args, ds64Dir) ?? DefaultDataDir,
+            "ProfileOptimization"
+        );
+        Directory.CreateDirectory(root);
+        ProfileOptimization.SetProfileRoot(root);
     }
 
     // The DS's default instance, used without "-path" (DedicatedServer.GetUserDataPath).
