@@ -16,6 +16,7 @@ Expectations:
   reload     start the server again afterwards and expect the world to load
   replies    text each of which some reply to the probe's chat commands contains
   essentials_src  the case needs an Essentials newer than MagnetarHub's (run.py --essentials-src)
+  jit_profile  the runtime's JIT profile must land in the data folder and not change in the DS folder
 """
 
 from dataclasses import dataclass, field
@@ -37,6 +38,7 @@ class Case:
     reload: bool = False
     replies: list = field(default_factory=list)
     essentials_src: bool = False
+    jit_profile: bool = False
     platforms: tuple = ALL
     essentials: str = "none"
     auto_restart: bool = False
@@ -223,6 +225,17 @@ def _running():
             "SIGHUP (save and reload config)",
             [READY, ("signal", "HUP")],
             saved=True,
+            platforms=LINUX,
+        ),
+        Case(
+            "run-environment-exit",
+            "running",
+            "`Environment.Exit` from a plugin, the only exit where .NET writes the JIT profile on Linux",
+            [READY, ("probe", "worker envexit 3")],
+            exit="any",
+            jit_profile=True,
+            reload=True,
+            notes="Exits 139 after the exit handlers saw code 3: native teardown crashes on a loaded session",
             platforms=LINUX,
         ),
         Case(

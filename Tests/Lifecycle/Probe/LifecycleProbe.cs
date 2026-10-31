@@ -145,6 +145,9 @@ public class Plugin : IPlugin
                 case "exit":
                     MySandboxGame.ExitThreadSafe();
                     break;
+                case "envexit":
+                    Environment.Exit(int.Parse(arg));
+                    break;
                 case "update":
                     PendUpdate();
                     break;

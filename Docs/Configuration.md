@@ -7,7 +7,7 @@ line:
 | ------ | ----- | ------- | -------- |
 | **Magnetar config dir** | Magnetar's own config (`config.xml`), logs, preloader cache, telemetry `instance.id` | `<install>/Magnetar`, next to the binaries — the counterpart of Pulsar's per-flavour `Legacy`/`Modern` folders, shared by both launchers. Magnetar is portable, so its state travels with the install folder. `-useHome` puts the folder under `%APPDATA%\Magnetar` (Windows) or `~/.config/Magnetar` (Linux) instead. | `-config <dir>` |
 | **DS install dir** | The dedicated-server binaries (`DedicatedServer64/`) | Auto-detected (see below) | `-ds64 <dir>` |
-| **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg` **and the world saves** (`Saves/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
+| **DS data dir (AppData)** | `SpaceEngineers-Dedicated.cfg`, **the world saves** (`Saves/`) and the .NET JIT profile (`ProfileOptimization/`) | Windows: `%APPDATA%\SpaceEngineersDedicated`<br>(`%APPDATA%` = roaming AppData) | `-path <dir>` |
 
 ## Command-line parameters that change folders
 
