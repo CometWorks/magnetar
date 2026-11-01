@@ -2,3 +2,6 @@ PluginSdk.Commands.ICommandAliasConfigurator
 PluginSdk.Commands.ICommandAliasConfigurator.SetAliases(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> aliases) -> void
 PluginSdk.Commands.CommandDispatcher.SetAliases(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> values) -> void
 static PluginSdk.Commands.ServerCommands.SetAliases(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> aliases) -> void
+PluginSdk.Clustering.IPluginClusterOfflineProvider
+PluginSdk.Clustering.IPluginClusterOfflineProvider.RegisterOfflineBlocker(string plugin, System.Func<long, string> blocker) -> System.IDisposable
+PluginSdk.Clustering.PluginClusterClient.RegisterOfflineBlocker(System.Func<long, string> blocker) -> System.IDisposable
