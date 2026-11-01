@@ -561,6 +561,24 @@ namespace PluginSdk.Clustering
                 : PluginGridHandover.NoRegistration.Instance;
         }
 
+        /// <summary>
+        /// Keep partitions online (one blocker per plugin; dispose to stop). The node asks it about each member of
+        /// a partition it could take offline, by entity id; a reason, not null or empty, keeps that partition online.
+        /// Runs on the game thread for every member every few seconds, so keep it fast; an exception counts as a
+        /// reason. On a plain server the registration succeeds and never fires. Null when this cluster build offers
+        /// no blocker, or its provider has not started yet: see <see cref="PluginCluster.Current"/>.
+        /// </summary>
+        public IDisposable RegisterOfflineBlocker(Func<long, string> blocker)
+        {
+            if (blocker == null)
+                throw new ArgumentNullException(nameof(blocker));
+            if (PluginCluster.Current is IPluginClusterOfflineProvider provider)
+                return provider.RegisterOfflineBlocker(PluginId, blocker);
+            return PluginCluster.IsClusterProcess
+                ? null
+                : PluginGridHandover.NoRegistration.Instance;
+        }
+
         public IDisposable RegisterHandler(
             string topic,
             Func<PluginMessage, Task<byte[]>> handler
