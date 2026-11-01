@@ -13,6 +13,9 @@
 #            MagnetarInterim.bin) from the "magnetar" build context:
 #            docker build --build-arg MAGNETAR_SOURCE=local \
 #              --build-context magnetar=<install tree> Docker
+#
+# MAGNETARCONFIG_VERSION picks the MagnetarConfig release from config-tools,
+# such as 1.0.4, or latest. It is checked against GitHub's digest as well.
 ARG MAGNETAR_SOURCE=release
 
 FROM ubuntu:24.04 AS bundle-release
@@ -39,6 +42,30 @@ FROM scratch AS bundle-local
 COPY --from=magnetar . /Magnetar/
 
 FROM bundle-${MAGNETAR_SOURCE} AS bundle
+
+FROM ubuntu:24.04 AS config-tool
+ARG MAGNETARCONFIG_VERSION=latest
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl jq \
+    && rm -rf /var/lib/apt/lists/*
+# config-tools also releases PulsarConfig, so its "latest" release may be the
+# wrong tool: pick the newest magnetarconfig-v* release instead.
+RUN set -eu; \
+    api=https://api.github.com/repos/CometWorks/config-tools/releases; \
+    case "$MAGNETARCONFIG_VERSION" in \
+      latest) curl -fsSL "$api?per_page=100" \
+        | jq -e '[.[] | select((.draft or .prerelease | not) and (.tag_name | startswith("magnetarconfig-v")))][0]' \
+        > /tmp/release.json ;; \
+      ''|*[!0-9.]*) echo "Invalid MAGNETARCONFIG_VERSION: $MAGNETARCONFIG_VERSION" >&2; exit 1 ;; \
+      *) curl -fsSL "$api/tags/magnetarconfig-v$MAGNETARCONFIG_VERSION" -o /tmp/release.json ;; \
+    esac; \
+    asset='.assets[] | select(.name == "MagnetarConfig-linux-x64.bin")'; \
+    url="$(jq -er "$asset | .browser_download_url" /tmp/release.json)"; \
+    digest="$(jq -er "$asset | .digest" /tmp/release.json)"; \
+    mkdir /MagnetarConfig; \
+    curl -fsSL "$url" -o /MagnetarConfig/MagnetarConfig.bin; \
+    echo "${digest#sha256:}  /MagnetarConfig/MagnetarConfig.bin" | sha256sum --check --strict -; \
+    chmod 755 /MagnetarConfig/MagnetarConfig.bin
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0
 
@@ -71,6 +98,7 @@ RUN mkdir /opt/steamcmd \
     && rm -rf /root/Steam /root/.steam
 
 COPY --from=bundle /Magnetar/ /opt/magnetar/
+COPY --from=config-tool /MagnetarConfig/ /opt/magnetar-config/
 COPY --chmod=755 entrypoint.sh /usr/local/bin/magnetar-entrypoint
 COPY --chmod=755 magnetar-config /usr/local/bin/magnetar-config
 
