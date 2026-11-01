@@ -35,7 +35,10 @@ partition. Keep the set of reasons small: it isn't a place for ids.
 - **It only holds a partition that is online.** A partition already offline stays there until a player
   or an explicit load brings it back. A node restart keeps nothing from going offline before the blocker
   is back only through the usual `offline.minOnlineSeconds` and `offline.graceSeconds`.
-- **A cluster stop takes every partition offline regardless**, which is how a stop saves the world.
+- **A cluster stop honors it.** A partition with a reason at the stop is saved and released instead of
+  going offline, so the next start loads it with nobody near, and the plugin has to answer for it again
+  from there. A stop doesn't wait for a job to finish. Partitions with no reason go offline as usual.
+  A cluster without this (before SE-904) takes every partition offline at a stop, and the job waits for a visit.
 
 ## Plain dedicated server and the World Authority
 
