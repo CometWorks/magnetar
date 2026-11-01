@@ -340,3 +340,13 @@ Prune leftover draft releases with
 `gh release delete <tag> -R CometWorks/magnetar --yes`. Merging or closing a
 pull request leaves its `-pr.<number>` draft behind; drafts publish no git tag,
 so deleting one removes it completely.
+
+### Command alias checks
+
+The administrator alias API raises the PluginSdk contract from 1.0 to 1.1. Run
+`dotnet test PluginSdkTests/PluginSdkTests.csproj --filter 'FullyQualifiedName~CommandAliasTests|FullyQualifiedName~ServerCommandsExecuteTests'`
+and `python3 Build/check-plugin-sdk-contract.py origin/main`. Tests cover token
+matching, quoted arguments, permissions and caller identity, collisions, cycles,
+missing targets, snapshot replacement and the facade/host capability boundary.
+No game process is required. Quasar's matching change uses the SDK configuration
+transport; verify both revisions together before a live acceptance check.

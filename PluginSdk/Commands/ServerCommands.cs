@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace PluginSdk.Commands
@@ -62,6 +63,15 @@ namespace PluginSdk.Commands
                     "This host can't run chat commands for plugins."
                 );
             return executor.Execute(commandLine, caller, responder);
+        }
+
+        /// <summary>Replaces administrator command aliases on the game thread. Empty clears them.
+        /// The host must support aliases. See <see cref="CommandDispatcher.SetAliases"/>.</summary>
+        public static void SetAliases(IEnumerable<KeyValuePair<string, string>> aliases)
+        {
+            if (!(Require() is ICommandAliasConfigurator configurator))
+                throw new InvalidOperationException("This host cannot configure command aliases. Update Magnetar.");
+            configurator.SetAliases(aliases);
         }
 
         private static ICommandRegistrar Require() =>

@@ -31,7 +31,7 @@ namespace PluginSdk.Tests
         }
 
         // What a host does: one object that registers and runs commands.
-        private sealed class Host : ICommandRegistrar, ICommandExecutor
+        private sealed class Host : ICommandRegistrar, ICommandExecutor, ICommandAliasConfigurator
         {
             private readonly CommandRegistry registry = new CommandRegistry();
             private readonly CommandDispatcher dispatcher;
@@ -40,6 +40,8 @@ namespace PluginSdk.Tests
             {
                 dispatcher = new CommandDispatcher(registry);
             }
+
+            public void SetAliases(IEnumerable<KeyValuePair<string, string>> aliases) => dispatcher.SetAliases(aliases);
 
             public void Register(Assembly assembly) => registry.RegisterAssembly(assembly);
 
@@ -83,6 +85,9 @@ namespace PluginSdk.Tests
 
                 Assert.True(ServerCommands.Execute("!run 3", Console, responder));
                 Assert.Equal("ran 3 as Quasar, console=True", Assert.Single(responder.Texts));
+                ServerCommands.SetAliases(new[] { new KeyValuePair<string, string>("!alias", "!run") });
+                Assert.True(ServerCommands.Execute("!alias 4", Console, responder));
+                Assert.Equal("ran 4 as Quasar, console=True", responder.Texts[1]);
                 Assert.False(ServerCommands.Execute("!nosuchroot", Console, responder));
                 Assert.False(ServerCommands.Execute("plain chat", Console, responder));
             }
@@ -99,6 +104,7 @@ namespace PluginSdk.Tests
             try
             {
                 ServerCommands.Registrar = new RegistrarOnly();
+                Assert.Throws<InvalidOperationException>(() => ServerCommands.SetAliases(new[] { new KeyValuePair<string, string>("!alias", "!run") }));
                 Assert.Throws<InvalidOperationException>(() =>
                     ServerCommands.Execute("!run", Console, new Responder())
                 );

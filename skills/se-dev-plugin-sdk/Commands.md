@@ -251,3 +251,35 @@ instead, as Quasar.Agent does.
 - The whole pipeline (`CommandRegistry` → `CommandDispatcher`) is independent of
   the game session, so command logic can be unit-tested against a fake
   `ICommandResponder`.
+
+## Administrator command aliases
+
+A control plane can replace the host's alias snapshot on the game thread with
+`ServerCommands.SetAliases(IEnumerable<KeyValuePair<string, string>>)`. The host
+implements the optional `ICommandAliasConfigurator` capability alongside its registrar.
+Unsupported hosts throw `InvalidOperationException`; this API requires PluginSdk
+contract **1.1**. Magnetar's command service forwards it to the existing dispatcher.
+The control plane owns persistence. Quasar stores aliases per configuration profile
+and applies them through Quasar.Agent configuration, including canonical cluster
+configuration. Plugins should continue to register their own namespaced commands.
+
+For example, mapping `!grids list` to `!ess grids list` lets a player type
+`!grids list "Big Ship"`. The dispatcher expands the longest matching whole-token
+prefix, ignoring case, then appends the already-tokenized remaining arguments.
+Quotes and escapes retain their argument grouping. Alias matching takes precedence
+over registered command paths, so an admin can intentionally override a collision.
+An empty snapshot removes all aliases.
+
+Paths start with `!` and contain ASCII letters, digits, underscores or hyphens,
+separated by spaces or tabs. A snapshot supports at most 64 entries, each path at
+most 512 characters. Duplicate sources (including case/whitespace variants), exact
+self aliases and sources rooted at `!help` are rejected. Validation rejects the
+whole update before replacing the previous snapshot.
+
+Expansion happens once. Aliases do not chain, so cycles cannot recurse. A missing
+target root consumes the alias and replies privately with an error. A missing
+subcommand receives the normal command error. The dispatcher preserves the
+original `CommandCaller` and `ICommandResponder`; the target command's normal
+permission checks and reply rules still apply. Player aliases never gain console
+identity or Owner privileges. Aliases are not added to generated `!help` listings;
+the target commands remain visible according to their permissions.
