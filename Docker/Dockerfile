@@ -46,7 +46,7 @@ ARG MAGNETAR_VERSION
 LABEL org.opencontainers.image.title="Magnetar" \
       org.opencontainers.image.description="Space Engineers 1 Dedicated Server launcher and plugin loader" \
       org.opencontainers.image.source="https://github.com/CometWorks/magnetar" \
-      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
       org.opencontainers.image.version="$MAGNETAR_VERSION"
 
 # lib32gcc-s1: steamcmd is a 32-bit program. tini: PID 1 that forwards
