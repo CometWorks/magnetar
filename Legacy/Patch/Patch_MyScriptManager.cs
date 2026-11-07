@@ -1,3 +1,4 @@
+// Parts of this file were contributed by yurei-so (PR #63) under the MIT License, see LICENSE-MIT.
 using System;
 using System.Collections.Generic;
 using System.Linq;
