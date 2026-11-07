@@ -123,3 +123,9 @@ configured native and managed crash dumps to be produced. Dump capture policy is
 supervisor; the plugin never forces process exit. Release builds publish separate
 `MagnetarSymbolsForLinux-*.7z` and `MagnetarSymbolsForWindows-*.7z` archives with matching binary
 hashes and the source commit. Keep these with each deployed release for crash symbolication.
+
+## License
+
+AGPL-3.0, see [LICENSE](LICENSE). Code from before 2026-11-07 was MIT licensed, see [LICENSE-MIT](LICENSE-MIT).
+
+Please contact us for alternate licensing.
