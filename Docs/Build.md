@@ -96,7 +96,7 @@ $(Magnetar)/
   MagnetarLegacy.exe                 Windows only
   MagnetarInterim.exe | .bin         plus its .dll/.deps.json/.runtimeconfig.json
   MagnetarConfig.exe | .bin          the config tool, same triplet convention
-  LICENSE, LICENSE-MIT, README.md
+  LICENSE, README.md
   Libraries/
     MagnetarLegacy/                  per-launcher managed dependencies
     MagnetarInterim/                 (Pulsar.Shared, PluginSdk, Harmony, ...)
