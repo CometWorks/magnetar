@@ -273,6 +273,11 @@ def main():
     )
     ap.add_argument("--display", default=":1")
     ap.add_argument(
+        "--steam-compat-proton",
+        action="store_true",
+        help="set STEAM_COMPAT_PROTON for the server, as Steam does; left out by default",
+    )
+    ap.add_argument(
         "--essentials-src",
         help="Essentials working copy to compile as a DevFolder instead of the MagnetarHub version; "
         "the cases marked essentials_src need it",
@@ -288,6 +293,7 @@ def main():
         Path(args.proton),
         None,
         args.display,
+        args.steam_compat_proton,
     )
     prefixes = [Path(p).expanduser() for p in args.prefix.split(",")] if args.prefix else [None]
     if platform.windows and len(prefixes) < args.jobs:

@@ -36,6 +36,7 @@ class Platform:
     proton: Path | None = None  # Proton folder
     prefix: Path | None = None  # STEAM_COMPAT_DATA_PATH
     display: str = ":1"
+    steam_compat_proton: bool = False  # set STEAM_COMPAT_PROTON, as Steam does
 
     @property
     def windows(self):
@@ -219,8 +220,11 @@ class Server:
                 SteamGameId="298740",
             )
             env.pop("WAYLAND_DISPLAY", None)
-            # STEAM_COMPAT_PROTON makes Magnetar report Platform: Proton and stop (SE1-0186).
-            env.pop("STEAM_COMPAT_PROTON", None)
+            # Magnetar detects Wine either way; Steam sets this, a plain `proton run` doesn't.
+            if p.steam_compat_proton:
+                env["STEAM_COMPAT_PROTON"] = str(p.proton)
+            else:
+                env.pop("STEAM_COMPAT_PROTON", None)
             # Proton kills its caller's process group, so give it its own session and wait on it.
             cmd = [
                 "setsid",
