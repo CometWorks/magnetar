@@ -384,7 +384,8 @@
       Condition="'@(DeployLicenseFile)' != ''"
     />
     <Copy SourceFiles="$(SourceExecutable)" DestinationFiles="$(DestinationExecutable)" />
-    <Copy SourceFiles="$(LicensePath)" DestinationFolder="$(Magnetar)" />
+    <Copy SourceFiles="$(LicensePath);$(MSBuildProjectDirectory)/../LICENSE.MIT;$(MSBuildProjectDirectory)/../LICENSING.md"
+          DestinationFolder="$(Magnetar)" />
     <Copy SourceFiles="$(ReadmePath)" DestinationFolder="$(Magnetar)" />
   </Target>
 </Project>
