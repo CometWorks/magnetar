@@ -42,7 +42,8 @@
     <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="../LICENSE.MIT" Link="LICENSE.MIT" Pack="true" PackagePath=""
+    <None Include="../LICENSE;../LICENSE.MIT;../LICENSING.md;../EXCEPTION.md"
+          Link="%(Filename)%(Extension)" Pack="true" PackagePath=""
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
