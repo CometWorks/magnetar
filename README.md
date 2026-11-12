@@ -126,6 +126,12 @@ hashes and the source commit. Keep these with each deployed release for crash sy
 
 ## License
 
-AGPL-3.0 with an independent-extension exception. Plugins and integrations
-using supported APIs may use their own licences, including proprietary terms.
-See [licensing](LICENSING.md) for the exception and source obligations. PluginSdk is MIT.
+AGPL-3.0, with the [CometWorks Independent Extension Exception](LICENSING.md).
+Only qualifying Independent Extensions receive the additional permission to use
+proprietary terms. A plugin label, wrapper or separate process does not exempt
+covered core code or internal patches. See the exception's definitions,
+conditions and exclusions; applicable AGPL source obligations remain in force.
+PluginSdk and the listed examples are additionally available under MIT.
+
+[Alternative licensing](LICENSING.md#alternative-licensing) remains available by
+separate written agreement with the relevant copyright holders.
