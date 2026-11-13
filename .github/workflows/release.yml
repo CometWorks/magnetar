@@ -396,7 +396,7 @@ jobs:
           dotnet test --no-build -c Release PluginSdkTests/PluginSdkTests.csproj
           dotnet test --no-build -c Release MagnetarConfigTests/MagnetarConfigTests.csproj
 
-          for f in MagnetarInterim.bin MagnetarInterim.dll LICENSE README.md \
+          for f in MagnetarInterim.bin MagnetarInterim.dll LICENSE LICENSE.MIT LICENSING.md EXCEPTION.md README.md \
                    Libraries/MagnetarInterim/Pulsar.Shared.dll \
                    Libraries/MagnetarInterim/libsteam_api.so \
                    Libraries/MagnetarInterim/Steamworks.NET.dll \
@@ -501,7 +501,7 @@ jobs:
           dotnet test --no-build -c Release MagnetarConfigTests/MagnetarConfigTests.csproj
           if ($LASTEXITCODE -ne 0) { throw "Configuration tests failed" }
 
-          foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE",
+          foreach ($f in @("MagnetarLegacy.exe", "MagnetarInterim.exe", "LICENSE", "LICENSE.MIT", "LICENSING.md", "EXCEPTION.md",
                            "Libraries\MagnetarLegacy\Pulsar.Shared.dll",
                            "Libraries\MagnetarInterim\Pulsar.Shared.dll",
                            "Libraries\Compiler\Compiler.exe",

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <LangVersion>latest</LangVersion>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
@@ -39,5 +40,10 @@
     <!-- Sandbox.Common provides MyAPIGateway (the ModAPI), which the plain-server cluster views read
              (PluginSdk.Clustering.PluginLocalViews, T-0256). -->
     <Reference Include="Sandbox.Common" HintPath="$(DS64)\Sandbox.Common.dll" Private="False" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../LICENSE;../LICENSE.MIT;../LICENSING.md;../EXCEPTION.md"
+          Link="%(Filename)%(Extension)" Pack="true" PackagePath=""
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

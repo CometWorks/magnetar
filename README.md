@@ -126,6 +126,9 @@ hashes and the source commit. Keep these with each deployed release for crash sy
 
 ## License
 
-AGPL-3.0, see [LICENSE](LICENSE).
+AGPL-3.0. Your own plugins can stay closed under the [plugin exception](EXCEPTION.md)
+when they use our documented APIs without copying core code or using private
+hooks. See the [licensing guide](LICENSING.md) for scope and source requirements.
+PluginSdk and the listed examples are also available under MIT.
 
-Please contact us for alternate licensing.
+[Alternative licensing](LICENSING.md#alternative-licensing) is available case by case.
