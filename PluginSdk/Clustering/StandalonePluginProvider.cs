@@ -1,11 +1,11 @@
 #nullable disable
 using System;
-using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using PluginSdk.Storage;
 
 namespace PluginSdk.Clustering
 {
@@ -67,33 +67,8 @@ namespace PluginSdk.Clustering
 
         private void Save()
         {
-            using (
-                var output = new FileStream(
-                    path + ".tmp",
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.None
-                )
-            )
-            {
-                byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(store);
-                output.Write(bytes, 0, bytes.Length);
-                output.Flush(true);
-            }
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH.
-                if (!MoveFileEx(path + ".tmp", path, 9))
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-            else
-            {
-                if (File.Exists(path))
-                    File.Replace(path + ".tmp", path, null);
-                else
-                    File.Move(path + ".tmp", path);
-                SyncDirectory(Path.GetDirectoryName(path));
-            }
+            byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(store);
+            DurableFile.Write(path, output => output.Write(bytes, 0, bytes.Length));
         }
 
         private static void CreateDirectory(string path)
@@ -109,36 +84,8 @@ namespace PluginSdk.Clustering
                 !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 && !string.IsNullOrEmpty(parent)
             )
-                SyncDirectory(parent);
+                DurableFile.SyncDirectory(parent);
         }
-
-        private static void SyncDirectory(string path)
-        {
-            int directory = open(path, 0);
-            if (directory < 0)
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            try
-            {
-                if (fsync(directory) != 0)
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-            finally
-            {
-                close(directory);
-            }
-        }
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool MoveFileEx(string source, string destination, int flags);
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern int open(string path, int flags);
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern int fsync(int descriptor);
-
-        [DllImport("libc")]
-        private static extern int close(int descriptor);
 
         public Task<PluginResult> ExecuteAsync(
             PluginRequest request,
