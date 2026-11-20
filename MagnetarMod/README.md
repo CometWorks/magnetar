@@ -1,8 +1,20 @@
 # MagnetarMod
 
-Magnetar's companion world mod provides mission-screen popups and the **Magnetar Player Teleporter** for Space Engineers 1. The game loads the definitions, models and scripts from [src](src). For local testing, install that directory as a named local mod and enable it in an offline world. Magnetar normally adds the released companion to the world by Workshop ID. An unpublished checkout must be staged on both server and clients for multiplayer testing.
+Magnetar's companion world mod provides mission-screen popups, combat region boundaries and the **Magnetar Player Teleporter** for Space Engineers 1. The game loads the definitions, models and scripts from [src](src). For local testing, install that directory as a named local mod and enable it in an offline world. Magnetar normally adds the released companion to the world by Workshop ID. An unpublished checkout must be staged on both server and clients for multiplayer testing.
 
 Server plugins can use `PluginSdk.MissionScreens` to open a player's local mission screen. The existing secure channel for that feature is `48731`.
+
+## Combat region boundaries
+
+Essentials on a standalone server can define sphere and box combat regions. The companion draws a translucent cyan grid or the selected stock safe-zone texture along nearby active borders, visible from inside and outside. The grid follows the surface even on regions hundreds of kilometres across. It creates no game entities or collision surfaces. Essentials sends the HUD warnings separately and enforces the rules on the server.
+
+These in-game captures show the [Hexagon skin at 750 m](validation/region-hexagon.png) and a player approaching a [spherical region](validation/region-sphere.png), a [box around a shipyard](validation/region-box.png) and the [middle of a 250 km box face](validation/region-box-face.png).
+
+Use `!ess region skin "Trade Harbor" Hexagon 750` to set the skin and texture repeat size in metres. The companion references the installed game's safe-zone masks. In Essentials, `RegionBarrierDistanceKm` controls the maximum viewing distance from the border (default 50 km). The client builds a limited patch around the nearest point on the surface. Geometry generation stays local even when the zone or visibility distance is hundreds of kilometres across.
+
+Secure channel `48733` carries up to four nearby shapes. Version 1 starts with the version and count bytes, followed by seven little-endian doubles per shape (first XYZ, second XYZ, radius in metres). A sphere uses its center for both points. A box uses minimum and maximum corners and zero radius. Version 2 adds a little-endian unsigned 16-bit visibility range in kilometres after the count. It appends a skin byte and unsigned 16-bit pattern size in metres to each shape. Skin 0 selects Grid. The remaining IDs follow the stock texture order in `RegionBarriers.Skins`.
+
+Essentials sends the v1 geometry before the v2 appearance on the same reliable channel. Earlier companions retain their close-range grid. Earlier servers continue to work with the updated companion. The server refreshes an active snapshot every two simulation seconds and sends an empty v1 snapshot to clear it. The client accepts only server snapshots and expires them after six simulation seconds without a refresh.
 
 ## Place and link teleporter pads
 
@@ -48,7 +60,7 @@ A cluster integration can map the confirmed directed route to a lobby-state tran
 
 ## Development and verification
 
-Build the mod project directly with `dotnet build MagnetarMod/MagnetarMod.csproj -c Release` from the repository root. The project targets .NET Framework 4.8 and C# 6 with MDK2 references and analyzers. The current solution, `Magnetar.slnx`, omits the mod project. Space Engineers compiles the world scripts on load.
+Build the mod project directly with `dotnet build MagnetarMod/MagnetarMod.csproj -c Release` from the repository root. The project targets .NET Framework 4.8 and C# 6 with MDK2 references and analyzers. The current solution, `Magnetar.slnx`, omits the mod project. Space Engineers compiles the world scripts on load. Run `dotnet test Tests/RegionBarriers/RegionBarriers.Tests.csproj` for the snapshot decoder and large-region surface tests. The test project reads the game assemblies from `DS64` (see `Directory.Build.props.user.template`).
 
 The maintained [Blender source](assets/teleporter/PlayerTeleporter.blend) contains the finished mesh, a weld stage, an original convex standing surface and the orthographic icon camera. The meshes use native SEUT materials. The model is Z-up in Blender, Y-up in the game, and centered on a 2.5 m cell. The deck is 0.304 m above the cell bottom. On another workstation, relink the material library to the installed SEUT `Materials/Materials.blend` if necessary.
 
