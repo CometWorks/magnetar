@@ -106,6 +106,8 @@ unavailable for that run.
 
 The development companion also includes a placeable player teleporter with server-configured, same-world destinations. See the [pad setup and server completion event](../MagnetarMod/README.md#place-and-link-teleporter-pads) for local staging and route configuration.
 
+For standalone Essentials combat regions, the development companion draws a local grid on nearby sphere and box borders. The updated Essentials plugin also provides HUD warnings on servers that omit the companion. See the [combat region boundary protocol](../MagnetarMod/README.md#combat-region-boundaries).
+
 ## Mod plugins
 
 A mod plugin is a Steam Workshop mod enabled as a plugin in the Magnetar profile,
