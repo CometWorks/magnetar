@@ -6,6 +6,10 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
+      login_only:
+        description: "Verify Steam login without publishing"
+        type: boolean
+        default: false
       changenote:
         description: "Steam Workshop change note"
         required: false
@@ -19,16 +23,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate required secrets
-        env:
-          STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
-        run: |
-          [ -n "${{ secrets.STEAM_USERNAME }}" ] || { echo "Missing secret: STEAM_USERNAME"; exit 1; }
-          [ -n "${STEAM_CONFIG_VDF:-}" ] || { echo "Missing secret: STEAM_CONFIG_VDF"; exit 1; }
-          echo "::add-mask::$STEAM_CONFIG_VDF"
-          echo "Using cached SteamCMD host config authentication for workshop upload."
-
       - name: Build upload content
+        if: ${{ !inputs.login_only }}
         run: |
           set -euo pipefail
 
@@ -66,6 +62,7 @@ jobs:
         uses: andriivitiv/setup-steamcmd@v1.2.0
 
       - name: Create SteamCMD upload script
+        if: ${{ !inputs.login_only }}
         env:
           CHANGE_NOTE: ${{ github.event.inputs.changenote }}
         run: |
@@ -87,19 +84,40 @@ jobs:
 
       - name: Install SteamCMD cached credentials config
         env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
           STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        shell: python
         run: |
-          set -euo pipefail
-          echo "::add-mask::$STEAM_CONFIG_VDF"
+          import os
+          import re
+          from pathlib import Path
 
-          mkdir -p "$HOME/Steam/config"
-          printf '%s' "$STEAM_CONFIG_VDF" > "$HOME/Steam/config/config.vdf"
-          chmod 600 "$HOME/Steam/config/config.vdf"
-          echo "Wrote Steam cached credentials config to: $HOME/Steam/config/config.vdf"
+          username = os.environ["STEAM_USERNAME"]
+          config = os.environ["STEAM_CONFIG_VDF"]
+          if not username.strip() or username != username.strip():
+              raise SystemExit("Check STEAM_USERNAME for a missing value or surrounding whitespace.")
+          accounts = re.search(r'"Accounts"\s*\{\s*"([^"]+)"\s*\{', config, re.I)
+          if not accounts:
+              raise SystemExit("STEAM_CONFIG_VDF must contain the raw SteamCMD config.vdf with a saved account.")
+          if not re.search(r'"' + re.escape(username) + r'"\s*\{', config, re.I):
+              raise SystemExit("STEAM_USERNAME does not match a saved account in STEAM_CONFIG_VDF.")
+          if not re.search(r'"ConnectCache"\s*\{\s*"[^"]+"\s*"[^"]+"', config, re.I):
+              raise SystemExit("STEAM_CONFIG_VDF has no cached Steam login.")
 
-      - name: Upload to Steam Workshop item
+          os.umask(0o077)
+          path = Path.home() / "Steam/config/config.vdf"
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(config)
+          print("Installed SteamCMD config with a matching saved account and credential cache.")
+
+      - name: Run SteamCMD
         env:
           STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          LOGIN_ONLY: ${{ inputs.login_only }}
         run: |
           set -euo pipefail
-          steamcmd +login "$STEAM_USERNAME" +workshop_build_item "$RUNNER_TEMP/workshop_item.vdf" +quit
+          args=(+@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +login "$STEAM_USERNAME")
+          if [[ "$LOGIN_ONLY" != true ]]; then
+            args+=(+workshop_build_item "$RUNNER_TEMP/workshop_item.vdf")
+          fi
+          steamcmd "${args[@]}" +quit
