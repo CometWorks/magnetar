@@ -6,11 +6,15 @@ Server plugins can use `PluginSdk.MissionScreens` to open a player's local missi
 
 ## Combat region boundaries
 
-Essentials on a standalone server can define sphere and box combat regions. The companion draws a translucent cyan grid along nearby active borders, visible from inside and outside. The grid follows the surface even on regions hundreds of kilometres across. It creates no game entities or collision surfaces. Essentials sends the HUD warnings separately and enforces the rules on the server.
+Essentials on a standalone server can define sphere and box combat regions. The companion draws a translucent cyan grid or the selected stock safe-zone texture along nearby active borders, visible from inside and outside. The grid follows the surface even on regions hundreds of kilometres across. It creates no game entities or collision surfaces. Essentials sends the HUD warnings separately and enforces the rules on the server.
 
-These in-game captures show a player approaching a [spherical region](validation/region-sphere.png), a [box around a shipyard](validation/region-box.png) and the [middle of a 250 km box face](validation/region-box-face.png).
+These in-game captures show the [Hexagon skin at 750 m](validation/region-hexagon.png) and a player approaching a [spherical region](validation/region-sphere.png), a [box around a shipyard](validation/region-box.png) and the [middle of a 250 km box face](validation/region-box-face.png).
 
-Secure channel `48733` carries a per-player snapshot. Version 1 starts with two bytes (version, shape count), followed by seven little-endian doubles per shape (first XYZ, second XYZ, radius in metres). A sphere uses its center for both points. A box uses minimum and maximum corners and zero radius. Essentials sends up to four nearest borders within 2.5 km and refreshes active snapshots every two simulation seconds. An empty snapshot clears the grid. The client accepts server snapshots only and expires them after six simulation seconds without a refresh.
+Use `!ess region skin "Trade Harbor" Hexagon 750` to set the skin and texture repeat size in metres. The companion references the installed game's safe-zone masks. In Essentials, `RegionBarrierDistanceKm` controls the maximum viewing distance from the border (default 50 km). The client builds a limited patch around the nearest point on the surface. Geometry generation stays local even when the zone or visibility distance is hundreds of kilometres across.
+
+Secure channel `48733` carries up to four nearby shapes. Version 1 starts with the version and count bytes, followed by seven little-endian doubles per shape (first XYZ, second XYZ, radius in metres). A sphere uses its center for both points. A box uses minimum and maximum corners and zero radius. Version 2 adds a little-endian unsigned 16-bit visibility range in kilometres after the count. It appends a skin byte and unsigned 16-bit pattern size in metres to each shape. Skin 0 selects Grid. The remaining IDs follow the stock texture order in `RegionBarriers.Skins`.
+
+Essentials sends the v1 geometry before the v2 appearance on the same reliable channel. Earlier companions retain their close-range grid. Earlier servers continue to work with the updated companion. The server refreshes an active snapshot every two simulation seconds and sends an empty v1 snapshot to clear it. The client accepts only server snapshots and expires them after six simulation seconds without a refresh.
 
 ## Place and link teleporter pads
 

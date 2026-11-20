@@ -34,6 +34,56 @@ public class RegionSurfaceTests
         Assert.Empty(empty);
     }
 
+    private static byte[] Styled(Vector3D first, Vector3D second, double radius, ushort range, byte skin, ushort pitch)
+    {
+        return new byte[] { 2, 1 }.Concat(BitConverter.GetBytes(range))
+            .Concat(Packet(first, second, radius).Skip(2)).Append(skin)
+            .Concat(BitConverter.GetBytes(pitch)).ToArray();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DistantSkinsUseABoundedSurfacePatchAndTileTheStockMask(bool sphere)
+    {
+        var center = new Vector3D(3e6, 0, 0);
+        const double size = 250000;
+        foreach (ushort pitch in new ushort[] { 64, 500, 8192 })
+        {
+            var data = Styled(sphere ? center : center - size, sphere ? center : center + size,
+                sphere ? size : 0, 50, 8, pitch);
+            Assert.True(RegionSurface.TryDecode(true, data, out var surfaces));
+            foreach (int sign in new[] { 1, -1 })
+            {
+                var tiles = new List<RegionSurface.Tile>();
+                surfaces[0].Collect(center + Vector3D.UnitX * (size + sign * 51000), tiles);
+                Assert.Empty(tiles);
+                surfaces[0].Collect(center + Vector3D.UnitX * (size + sign * 45000), tiles);
+                Assert.InRange(tiles.Count, 1, 1500);
+                Assert.All(tiles, t =>
+                {
+                    Assert.Equal(8, t.Skin);
+                    Assert.Equal(50000, t.ViewDistance);
+                    Assert.InRange(t.UvMin.X, 0, 1);
+                    Assert.InRange(t.UvMin.Y, 0, 1);
+                    Assert.InRange(t.UvMax.X, t.UvMin.X, 1.00001f);
+                    Assert.InRange(t.UvMax.Y, t.UvMin.Y, 1.00001f);
+                    if (!sphere)
+                        Assert.Equal(Vector3D.Distance(t.Quad.Point0, t.Quad.Point1),
+                            pitch * (t.UvMax.X - t.UvMin.X), 2);
+                });
+            }
+        }
+    }
+
+    [Fact]
+    public void InvalidStyleOrRangeRejectsWholeSnapshot()
+    {
+        foreach (var bad in new[] { Styled(Vector3D.Zero,Vector3D.One,0,50,17,500),
+            Styled(Vector3D.Zero,Vector3D.One,0,501,1,500), Styled(Vector3D.Zero,Vector3D.One,0,50,1,63) })
+            Assert.False(RegionSurface.TryDecode(true,bad,out _));
+    }
+
     [Fact]
     public void SubdividedBoxFacesIncludeTheirOuterGridLines()
     {

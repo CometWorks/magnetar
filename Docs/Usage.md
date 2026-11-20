@@ -106,7 +106,7 @@ unavailable for that run.
 
 The development companion also includes a placeable player teleporter with server-configured, same-world destinations. See the [pad setup and server completion event](../MagnetarMod/README.md#place-and-link-teleporter-pads) for local staging and route configuration.
 
-For standalone Essentials combat regions, the development companion draws a local grid on nearby sphere and box borders. The updated Essentials plugin also provides HUD warnings on servers that omit the companion. See the [combat region boundary protocol](../MagnetarMod/README.md#combat-region-boundaries).
+For standalone Essentials combat regions, the development companion draws a local grid or safe-zone pattern on nearby sphere and box borders. Essentials controls the per-region texture size and the server-wide visibility range (50 km by default). The updated Essentials plugin also provides HUD warnings on servers that omit the companion. See the [combat region boundary protocol](../MagnetarMod/README.md#combat-region-boundaries).
 
 ## Mod plugins
 
