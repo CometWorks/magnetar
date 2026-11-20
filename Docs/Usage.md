@@ -104,6 +104,8 @@ Workshop service. Without that service, Magnetar removes the implicit mod, logs 
 warning, and continues loading the server; mission-screen popups remain
 unavailable for that run.
 
+The development companion also includes a placeable player teleporter with server-configured, same-world destinations. See the [pad setup and server completion event](../MagnetarMod/README.md#place-and-link-teleporter-pads) for local staging and route configuration.
+
 ## Mod plugins
 
 A mod plugin is a Steam Workshop mod enabled as a plugin in the Magnetar profile,
