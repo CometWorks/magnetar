@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<Model Name="MagnetarMod_PlayerTeleporter">
+	<Parameter Name="RescaleFactor">1.0</Parameter>
+	<Parameter Name="Centered">false</Parameter>
+	<Parameter Name="RescaleToLengthInMeters">false</Parameter>
+	<MaterialRef Name="PaintedMetalScratched_Darker"/>
+	<MaterialRef Name="PaintedMetal_VeryDark"/>
+	<MaterialRef Name="Chrome"/>
+	<MaterialRef Name="BlueFrostedMetal"/>
+	<MaterialRef Name="PaintedMetal_Yellow"/>
+	<MaterialRef Name="Atlas3_Darker"/>
+</Model>
