@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using Pulsar.Shared;
 
@@ -160,13 +161,22 @@ internal static class Daemon
     private static void DetachWindows()
     {
         // Detach from the inherited console so a parent console-close event cannot
-        // terminate us. Returns false when no console is attached (already
-        // detached, or launched without one) — not an error for our purposes.
+        // terminate us. FreeConsole also succeeds when already detached.
         // Note: this does not break a parent Job Object set to kill on close;
         // that can only be avoided at process-creation time.
         if (FreeConsole())
             LogFile.WriteLine("Daemon: detached from parent console");
         else
-            LogFile.WriteLine("Daemon: no console to detach from");
+            LogFile.Warn("Daemon: could not detach from the parent console");
+
+        // Console.Out and Console.Error can cache handles that FreeConsole
+        // invalidates. Recheck each native handle through the runtime and keep
+        // working redirected streams, such as the supervisor's capture pipes.
+        using var stdout = Console.OpenStandardOutput();
+        using var stderr = Console.OpenStandardError();
+        if (stdout == Stream.Null)
+            Console.SetOut(TextWriter.Null);
+        if (stderr == Stream.Null)
+            Console.SetError(TextWriter.Null);
     }
 }
