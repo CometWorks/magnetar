@@ -93,3 +93,17 @@ Xwayland (`weston --backend=headless --renderer=noop --xwayland`) and pass
 its X display with `--display`. `STEAM_COMPAT_PROTON` stays out of the
 environment, or Magnetar reports `Platform: Proton` and stops (SE1-0186).
 Signals don't apply to Windows, so those cases only run on Linux.
+
+## Windows daemon console regression
+
+Run from a Windows terminal. The probe exercises the launcher detach with a
+primed console, supervisor-style redirected pipes, and a missing stdout handle
+with working stderr. It checks that startup can continue writing to a file
+after detaching and that live redirections still receive output. The probe runs
+independently of the dedicated server and uses the .NET 10 SDK and the runtime
+for each framework.
+
+```powershell
+dotnet run --project Tests/Lifecycle/WindowsDaemonConsole -f net10.0
+dotnet run --project Tests/Lifecycle/WindowsDaemonConsole -f net48
+```

@@ -175,7 +175,9 @@ parent terminating does not take the server down with it.
   exits. When the process is itself a process-group leader (e.g. a wrapper
   script that `exec`s it), `setsid()` is not permitted in place, so it re-execs
   a detached child and the original exits.
-* **Windows** — it detaches from the inherited console.
+* **Windows** — it detaches from the inherited console. Output to a console
+  handle that becomes unavailable is discarded. Working stdout and stderr
+  redirections and both the Magnetar and dedicated server file logs continue.
 
 When Magnetar detaches, it also writes `magnetar.pid` (PID + resolved data dir)
 in its config dir so tools can find and verify the running instance; it is
