@@ -88,6 +88,8 @@ jobs:
           STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
         shell: python
         run: |
+          import base64
+          import binascii
           import os
           import re
           from pathlib import Path
@@ -96,6 +98,16 @@ jobs:
           config = os.environ["STEAM_CONFIG_VDF"]
           if not username.strip() or username != username.strip():
               raise SystemExit("Check STEAM_USERNAME for a missing value or surrounding whitespace.")
+          if not config.lstrip().startswith('"'):
+              try:
+                  decoded = base64.b64decode("".join(config.split()), validate=True).decode()
+              except (binascii.Error, UnicodeError, ValueError):
+                  decoded = ""
+              if '"InstallConfigStore"' in decoded:
+                  print("Decoded base64 SteamCMD config.")
+                  config = decoded
+              else:
+                  raise SystemExit("STEAM_CONFIG_VDF contains neither raw VDF text nor its base64 encoding.")
           accounts = re.search(r'"Accounts"\s*\{\s*"([^"]+)"\s*\{', config, re.I)
           if not accounts:
               raise SystemExit("STEAM_CONFIG_VDF must contain the raw SteamCMD config.vdf with a saved account.")
