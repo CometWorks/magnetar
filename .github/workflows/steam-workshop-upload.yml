@@ -23,6 +23,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install SteamCMD cached credentials config
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        shell: python
+        run: |
+          import os
+          import re
+          from pathlib import Path
+
+          username = os.environ["STEAM_USERNAME"]
+          config = os.environ["STEAM_CONFIG_VDF"]
+          if not username.strip() or username != username.strip():
+              raise SystemExit("Check STEAM_USERNAME for a missing value or surrounding whitespace.")
+          accounts = re.search(r'"Accounts"\s*\{\s*"[^"]+"\s*\{', config, re.I)
+          if not accounts:
+              raise SystemExit("STEAM_CONFIG_VDF must contain the raw SteamCMD config.vdf with a saved account.")
+          if not re.search(r'"ConnectCache"\s*\{\s*"[^"]+"\s*"[^"]+"', config, re.I):
+              raise SystemExit("STEAM_CONFIG_VDF has no cached Steam login.")
+
+          os.umask(0o077)
+          path = Path.home() / "Steam/config/config.vdf"
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(config)
+          print("Installed SteamCMD config with a saved account and credential cache.")
+
       - name: Build upload content
         if: ${{ !inputs.login_only }}
         run: |
@@ -81,46 +107,6 @@ jobs:
             echo "  \"changenote\" \"${SAFE_CHANGE_NOTE}\""
             echo '}'
           } > "$RUNNER_TEMP/workshop_item.vdf"
-
-      - name: Install SteamCMD cached credentials config
-        env:
-          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
-          STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
-        shell: python
-        run: |
-          import base64
-          import binascii
-          import os
-          import re
-          from pathlib import Path
-
-          username = os.environ["STEAM_USERNAME"]
-          config = os.environ["STEAM_CONFIG_VDF"]
-          if not username.strip() or username != username.strip():
-              raise SystemExit("Check STEAM_USERNAME for a missing value or surrounding whitespace.")
-          if not config.lstrip().startswith('"'):
-              try:
-                  decoded = base64.b64decode("".join(config.split()), validate=True).decode()
-              except (binascii.Error, UnicodeError, ValueError):
-                  decoded = ""
-              if '"InstallConfigStore"' in decoded:
-                  print("Decoded base64 SteamCMD config.")
-                  config = decoded
-              else:
-                  raise SystemExit("STEAM_CONFIG_VDF contains neither raw VDF text nor its base64 encoding.")
-          accounts = re.search(r'"Accounts"\s*\{\s*"([^"]+)"\s*\{', config, re.I)
-          if not accounts:
-              raise SystemExit("STEAM_CONFIG_VDF must contain the raw SteamCMD config.vdf with a saved account.")
-          if not re.search(r'"' + re.escape(username) + r'"\s*\{', config, re.I):
-              raise SystemExit("STEAM_USERNAME does not match a saved account in STEAM_CONFIG_VDF.")
-          if not re.search(r'"ConnectCache"\s*\{\s*"[^"]+"\s*"[^"]+"', config, re.I):
-              raise SystemExit("STEAM_CONFIG_VDF has no cached Steam login.")
-
-          os.umask(0o077)
-          path = Path.home() / "Steam/config/config.vdf"
-          path.parent.mkdir(parents=True, exist_ok=True)
-          path.write_text(config)
-          print("Installed SteamCMD config with a matching saved account and credential cache.")
 
       - name: Run SteamCMD
         env:

@@ -60,3 +60,9 @@ blender --background MagnetarMod/assets/teleporter/PlayerTeleporter.blend \
 ```
 
 See the [in-game verification record](validation/Teleporter.md) for installation, interaction and multiplayer results.
+
+## Workshop authentication
+
+The **Upload MagnetarMod to Steam Workshop** workflow uses `STEAM_USERNAME` and the raw contents of the publishing account’s SteamCMD `config.vdf`. After logging in and quitting SteamCMD, upload the saved file directly from its Steam home. For example, run `gh secret set STEAM_CONFIG_VDF --repo CometWorks/magnetar < /path/to/Steam/config/config.vdf` with the actual path.
+
+Select **Verify Steam login without publishing** when dispatching the workflow to test a new secret. A successful check authenticates on a GitHub-hosted runner and skips staging and publication. Leave the option unchecked to upload the mod.
