@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using HarmonyLib;
 using VRage;
@@ -47,7 +46,8 @@ internal static class Patch_ReleaseAsserts
                 text += $"\n{file}:{line}";
             if (!string.IsNullOrEmpty(detail))
                 text += "\n\nDetail: " + detail;
-            MyLog.Default?.AppendToClosedLog(text + "\n\n" + Environment.StackTrace);
+            // Skip this method, the listener method and MyDebug's, like the game does.
+            MyLog.Default?.AppendToClosedLog(text + "\n\n" + new StackTrace(3, true));
         }
     }
 }
