@@ -37,6 +37,10 @@ cd Docker
 docker compose up -d
 ```
 
+Docker 29.4.2 doesn't work: its default seccomp profile blocks `socketcall`,
+so steamcmd, a 32-bit program, can't connect and the dedicated server never
+installs. Use Docker 29.4.3 or later.
+
 ### The data folder
 
 | Path | Holds |

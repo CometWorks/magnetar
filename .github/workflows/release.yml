@@ -617,6 +617,14 @@ jobs:
           name: magnetar-linux
           path: dist
 
+      # The runner's Docker 29.4.2 blocks socketcall in its default seccomp
+      # profile, so the 32-bit steamcmd can't download its update in the
+      # image build (moby/moby#52506, fixed in 29.4.3).
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v5
+        with:
+          version: v29.10.0
+
       - name: Build and smoke test
         env:
           VERSION: ${{ needs.version-check.outputs.version }}
