@@ -108,6 +108,17 @@ The development companion also includes a placeable player teleporter with serve
 
 For standalone Essentials combat regions, the development companion draws a local grid or safe-zone pattern on nearby sphere and box borders. Essentials controls the per-region texture size and the server-wide visibility range (50 km by default). The updated Essentials plugin also provides HUD warnings on servers that omit the companion. See the [combat region boundary protocol](../MagnetarMod/README.md#combat-region-boundaries).
 
+## Old dedicated server logs
+
+Every start writes a new `SpaceEngineersDedicated_<date>.log` into the `-path`
+data folder, and the game itself never deletes the old ones. Once the new log is
+open, Magnetar deletes the logs older than `-logMaxAgeDays` (default 14), then
+the oldest ones until all of them, the current log included, fit in
+`-logMaxSizeMB` (default 1024). The current log is never deleted. `0` turns
+either limit off. The deleted files are listed in the new log. With
+`-stableLogs` the game overwrites one `SpaceEngineersDedicated.log` instead, and
+there is nothing to delete.
+
 ## Mod plugins
 
 A mod plugin is a Steam Workshop mod enabled as a plugin in the Magnetar profile,

@@ -17,6 +17,8 @@ public static class ServerFlags
     public static string PreparationDirectory => current.PreparationDirectory;
     public static string ConfigDirectory => current.ConfigDirectory;
     public static string DedicatedServerDirectory => current.DedicatedServerDirectory;
+    public static int LogMaxAgeDays => current.LogMaxAgeDays;
+    public static int LogMaxSizeMB => current.LogMaxSizeMB;
     public static string[] PulsarArguments => current.PulsarArguments;
 
     // Called after the assembly resolver is installed, before native bootstrap.
@@ -81,6 +83,18 @@ public static class ServerFlags
         );
         Console.WriteLine(
             "  -noimplicitmod      Do not auto-load the MagnetarMod client companion mod"
+        );
+        Console.WriteLine(
+            "  -logMaxAgeDays <n>  Delete dedicated server logs older than n days at start"
+        );
+        Console.WriteLine(
+            $"                      (default {Magnetar.Legacy.DedicatedLogRetention.DefaultMaxAgeDays}, 0 keeps them regardless of age)"
+        );
+        Console.WriteLine(
+            "  -logMaxSizeMB <n>   Then delete the oldest ones until all fit in n MB"
+        );
+        Console.WriteLine(
+            $"                      (default {Magnetar.Legacy.DedicatedLogRetention.DefaultMaxSizeMB}, 0 for no size limit)"
         );
         Console.WriteLine();
         // Only the Pulsar flags that change something on a dedicated server are
