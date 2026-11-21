@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<PluginData
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:type="GitHubPlugin"
+>
+  <Id>release-assert-probe</Id>
+  <GroupId>release-assert-probe</GroupId>
+  <RepoId>local/release-assert-probe</RepoId>
+
+  <FriendlyName>Release Assert Probe</FriendlyName>
+  <Author>CometWorks</Author>
+
+  <Tooltip>Test only: fires a release assert once the world runs</Tooltip>
+  <Description>
+        Test only. Calls MyDebug.FailRelease once the session is ready and logs
+        whether the game thread came back from it. Used by Tests/ReleaseAsserts.
+    </Description>
+
+  <Hidden>true</Hidden>
+
+  <Commit>TODO</Commit>
+</PluginData>
