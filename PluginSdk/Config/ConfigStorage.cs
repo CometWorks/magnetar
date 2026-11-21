@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
+using PluginSdk.Storage;
 
 namespace PluginSdk.Config
 {
@@ -108,9 +109,11 @@ namespace PluginSdk.Config
 
         /// <summary>
         /// Writes <paramref name="config"/> to <paramref name="path"/> as XML
-        /// via a temporary file + rename, so a crash mid-write cannot leave
-        /// a truncated config behind. Only non-default values are emitted;
-        /// each option's description and default go into comments.
+        /// via a temporary file, flushed to disk and then swapped in for
+        /// <paramref name="path"/> in one step, so a crash or kill at any
+        /// point leaves either the old config or the new one. Only non-default
+        /// values are emitted; each option's description and default go into
+        /// comments.
         /// </summary>
         public static void SaveXml<T>(T config, string path)
             where T : PluginConfig
@@ -130,13 +133,13 @@ namespace PluginSdk.Config
                 Directory.CreateDirectory(dir);
 
             var serializer = new XmlSerializer(typeof(T));
-            var tmp = path + ".tmp";
-            using (var fs = File.Create(tmp))
-                serializer.Serialize(fs, config);
-
-            if (File.Exists(path))
-                File.Delete(path);
-            File.Move(tmp, path);
+            // A filesystem that can't sync a folder does not fail a config save,
+            // which never synced one before.
+            DurableFile.Write(
+                path,
+                output => serializer.Serialize(output, config),
+                directorySyncRequired: false
+            );
         }
 
         /// <summary>
@@ -157,8 +160,8 @@ namespace PluginSdk.Config
                 return Loaded(new T());
 
             var serializer = new XmlSerializer(typeof(T));
-            using (var fs = File.OpenRead(path))
-                return Loaded((T)serializer.Deserialize(fs));
+            // Windows can't replace a file that is open, so a load waits for a save to the same file.
+            return Loaded(DurableFile.Read(path, input => (T)serializer.Deserialize(input)));
         }
 
         // -------- JSON --------------------------------------------------

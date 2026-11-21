@@ -46,8 +46,19 @@ Properties of the XML format:
   elements alike, are written as `&#xD;`/`&#xA;`. These read back as the
   original characters. An option whose default is `null` gets
   `<!-- Name has no default value -->` instead.
-- **Atomic write.** The serializer writes to `path + ".tmp"` and renames over
-  `path`. A crash mid-write cannot leave a truncated config behind.
+- **Atomic write.** The serializer writes to `path + ".tmp"`, flushes it to
+  disk and swaps it in for `path` in one step. A crash or kill at any point
+  leaves either the old config or the new one, never none.
+- **Save errors.** A failed swap throws what `File.Move` with overwrite
+  throws on newer .NET: `UnauthorizedAccessException` when access is denied,
+  including a config another program holds open, otherwise `IOException`.
+  Catch both. On a filesystem that can't sync a folder, the save still
+  succeeds and PluginSdk logs one warning for that folder, since the file is
+  then less certain to survive a power cut.
+- **Saves from several threads.** Saves and loads of the same file run one
+  at a time, so they never collide, and the file holds whatever the config
+  was when the last save started. Another program holding the file open can
+  still make a save fail.
 - **Forgiving load.** Missing elements leave the corresponding property at
   its default (the value the parameterless constructor produced).
   Unrecognized elements are skipped, so removing an option in a newer version
