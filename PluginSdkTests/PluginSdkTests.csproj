@@ -33,6 +33,10 @@
     />
     <Compile Include="..\Legacy\Preparation\DevFolderProvenance.cs" Link="DevFolderProvenance.cs" />
     <Compile Include="..\Legacy\Arguments\ServerArguments.cs" Link="ServerArguments.cs" />
+    <Compile
+      Include="..\Legacy\Tools\DedicatedLogRetention.cs"
+      Link="DedicatedLogRetention.cs"
+    />
   </ItemGroup>
 
   <ItemGroup>

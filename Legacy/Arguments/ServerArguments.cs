@@ -26,6 +26,8 @@ internal sealed class ServerArguments
     public string PreparationDirectory { get; private set; }
     public string ConfigDirectory { get; private set; }
     public string DedicatedServerDirectory { get; private set; }
+    public int LogMaxAgeDays { get; private set; } = DedicatedLogRetention.DefaultMaxAgeDays;
+    public int LogMaxSizeMB { get; private set; } = DedicatedLogRetention.DefaultMaxSizeMB;
     public string[] PulsarArguments { get; private set; }
     public List<string> Warnings { get; } = [];
 
@@ -47,6 +49,8 @@ internal sealed class ServerArguments
         var config = Value("config");
         var ds64 = Value("ds64");
         var consent = Value("consent");
+        var logMaxAgeDays = Value("logMaxAgeDays");
+        var logMaxSizeMB = Value("logMaxSizeMB");
         var noConsent = Flag("noconsent");
         var withdraw = Flag("withdraw-consent");
         var retiredToken = Value("github-token");
@@ -77,6 +81,10 @@ internal sealed class ServerArguments
         result.PreparationDirectory = preparation.Value();
         result.ConfigDirectory = config.Value();
         result.DedicatedServerDirectory = ds64.Value();
+        if (logMaxAgeDays.HasValue())
+            result.LogMaxAgeDays = NonNegative(logMaxAgeDays);
+        if (logMaxSizeMB.HasValue())
+            result.LogMaxSizeMB = NonNegative(logMaxSizeMB);
         if (consent.HasValue() && !result.Warnings.Contains(BareConsentWarning))
             result.Consent = consent.Value().ToLowerInvariant() switch
             {
@@ -117,6 +125,13 @@ internal sealed class ServerArguments
         ];
         return result;
     }
+
+    private static int NonNegative(CommandOption option) =>
+        int.TryParse(option.Value(), out int value) && value >= 0
+            ? value
+            : throw new ArgumentException(
+                $"-{option.ShortName} needs a whole number, 0 or more (0 turns the limit off)."
+            );
 
     private static string[] Normalize(
         string[] args,
