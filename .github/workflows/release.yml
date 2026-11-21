@@ -23,7 +23,9 @@ name: Release
 #                          regardless of what is already released. The "draft"
 #                          input (default true) decides whether the result is a
 #                          DRAFT build (not marked latest) or a real, public
-#                          "latest" release.
+#                          "latest" release. A public run for a version that
+#                          is already released keeps that release unchanged
+#                          and only builds and pushes the container image.
 #
 # No repository secrets are needed. The Linux bundle carries only the Steam
 # pair (Steamworks.NET.dll + libsteam_api.so), fetched below from a pinned
@@ -584,6 +586,11 @@ jobs:
               --title "Magnetar $tag" \
               --notes "Manual draft build of Magnetar $VERSION." \
               dist/*.7z
+          elif gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            # A manual public run for a version that is already released, such
+            # as one whose container job failed: keep the release and its
+            # bundles as they are, and let the container job publish the image.
+            echo "Release $tag already exists, leaving it unchanged."
           else
             gh release create "$tag" \
               --repo "${{ github.repository }}" \
