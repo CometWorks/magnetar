@@ -126,6 +126,10 @@ hashes and the source commit. Keep these with each deployed release for crash sy
 
 ## License
 
-AGPL-3.0, see [LICENSE](LICENSE).
+[AGPL v3 only](LICENSE) (`AGPL-3.0-only`). Your own plugins can stay closed under
+the [plugin exception](EXCEPTION.md), including plugins that patch internals at
+runtime. Copied core code still follows AGPL. See the
+[licensing guide](LICENSING.md) for scope and source requirements.
+PluginSdk and the listed examples are also available under MIT.
 
-Please contact us for alternate licensing.
+[Alternative licensing](LICENSING.md#alternative-licensing) is available case by case.
