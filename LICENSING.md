@@ -7,6 +7,15 @@ and follow the documentation. Private core patches fall outside the
 If you need a core change to fix a bug or add support, consider sending it
 upstream or keeping it in a separate AGPL fork.
 
+## Integration interfaces
+
+- [PluginSdk](skills/se-dev-plugin-sdk/SKILL.md#third-party-interfaces), including
+  clustering, shared state and handover.
+- [Plugin lifecycle hooks](Docs/Plugins.md#third-party-lifecycle-hooks).
+
+If you are reading this in a binary package, open this guide in the source
+for your release or build revision. [Find releases](https://github.com/CometWorks/magnetar/releases).
+
 ## MIT SDKs and contracts
 
 The code and libraries built from these paths are also [MIT-licensed](LICENSE.MIT):
