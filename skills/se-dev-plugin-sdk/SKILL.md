@@ -67,6 +67,17 @@ When Magnetar compiles a plugin it defines a **platform preprocessor symbol**
 plugin can pick platform-specific code paths and know which SDK behaviour to
 expect. See [Platform.md](Platform.md).
 
+## Third-party interfaces
+
+For the plugin exception, use the `PluginSdk` types and members this handbook
+documents for plugins to call or implement. These include
+[`PluginCluster.ForPlugin` and the shared-state API](SharedState.md#consumer-api)
+and [`RegisterGridHandover` and `IPluginGridHandover`](GridHandover.md).
+
+The [shipped API list](../../PluginSdk/PublicAPI.Shipped.txt) and
+[unshipped API list](../../PluginSdk/PublicAPI.Unshipped.txt) give the signatures
+for this revision. This handbook identifies which members plugins can use.
+
 ## When to read what
 
 | Document | When you need it |

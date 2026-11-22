@@ -1,5 +1,10 @@
 # Plugins
 
+## Third-party lifecycle hooks
+
+Plugins can use the `IPlugin.Init` entry point and the static `Rewrite` hook
+described here. The plugin exception covers these hooks for their documented use.
+
 The dedicated server loads its initial world in `MySandboxGame.Initialize`, before
 it initializes plugins. Magnetar defers that world load until after the plugins'
 `Init`, so server plugins see the order a client plugin does: `Init` runs with no
