@@ -186,9 +186,14 @@ namespace PluginSdk.Commands
         }
 
         /// <summary>Builds one module, or throws a <see cref="CommandRegistrationException"/>
-        /// naming every problem found in it.</summary>
+        /// naming every problem found in it. A null <paramref name="moduleType"/> is a
+        /// caller mistake, not a problem with a module, so it throws
+        /// <see cref="ArgumentNullException"/>.</summary>
         private static PendingModule BuildOrThrow(Type moduleType, string ownerId, object ownerKey)
         {
+            if (moduleType == null)
+                throw new ArgumentNullException(nameof(moduleType));
+
             var errors = new List<string>();
             PendingModule module = Build(moduleType, ownerId, ownerKey, errors);
             ThrowIfAny(errors);

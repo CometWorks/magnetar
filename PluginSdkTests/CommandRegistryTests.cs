@@ -553,6 +553,27 @@ namespace PluginSdk.Tests
         }
 
         /// <summary>
+        /// A null module type is refused with ArgumentNullException naming the argument, not a
+        /// NullReferenceException, on both RegisterModule overloads, and registers nothing.
+        /// </summary>
+        [Fact]
+        public void RegisterModule_NullType_Throws()
+        {
+            var registry = new CommandRegistry();
+
+            var byOwner = Assert.Throws<ArgumentNullException>(() =>
+                registry.RegisterModule(null, "owner")
+            );
+            var byAssembly = Assert.Throws<ArgumentNullException>(() =>
+                registry.RegisterModule(null, typeof(ModA).Assembly)
+            );
+
+            Assert.Equal("moduleType", byOwner.ParamName);
+            Assert.Equal("moduleType", byAssembly.ParamName);
+            Assert.Empty(registry.Prefixes);
+        }
+
+        /// <summary>
         /// With three owners at one path, removing the top ones restores the next most recent each time.
         /// </summary>
         [Fact]
