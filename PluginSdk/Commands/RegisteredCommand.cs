@@ -13,7 +13,16 @@ namespace PluginSdk.Commands
     /// </summary>
     internal sealed class RegisteredCommand
     {
+        /// <summary>Display name of the owner, for logs and messages only.</summary>
         public string OwnerId { get; }
+
+        /// <summary>
+        /// Identity of the owner: the registering <see cref="System.Reflection.Assembly"/>
+        /// (by reference), or the caller's string for <see cref="CommandRegistry.RegisterModule(Type, string)"/>.
+        /// Two owners with the same display name stay distinct.
+        /// </summary>
+        public object OwnerKey { get; }
+
         public string Prefix { get; }
 
         /// <summary>Command path relative to the root, e.g. <c>["grid","list"]</c>.</summary>
@@ -27,11 +36,16 @@ namespace PluginSdk.Commands
         public MethodInfo Method { get; }
         public ParameterInfo[] Parameters { get; }
 
+        // Whether the last parameter is a params array. Worked out once here
+        // because CanTake runs under the registry lock and should not reflect.
+        private readonly bool takesParamsArray;
+
         /// <summary>Auto-generated usage string, e.g. <c>!ess tp &lt;target&gt; [distance]</c>.</summary>
         public string Syntax { get; }
 
         public RegisteredCommand(
             string ownerId,
+            object ownerKey,
             string prefix,
             IReadOnlyList<string> path,
             string description,
@@ -42,6 +56,7 @@ namespace PluginSdk.Commands
         )
         {
             OwnerId = ownerId;
+            OwnerKey = ownerKey ?? throw new ArgumentNullException(nameof(ownerKey));
             Prefix = prefix;
             Path = path;
             Description = description;
@@ -50,6 +65,9 @@ namespace PluginSdk.Commands
             ModuleType = moduleType;
             Method = method;
             Parameters = method.GetParameters();
+            takesParamsArray =
+                Parameters.Length > 0
+                && ArgumentBinder.IsParamsArray(Parameters[Parameters.Length - 1]);
             Syntax = BuildSyntax(prefix, path, Parameters);
         }
 
@@ -57,12 +75,7 @@ namespace PluginSdk.Commands
 
         /// <summary>True when the handler has a parameter for each of
         /// <paramref name="count"/> arguments, or a <c>params</c> array.</summary>
-        public bool CanTake(int count) =>
-            count <= Parameters.Length
-            || (
-                Parameters.Length > 0
-                && ArgumentBinder.IsParamsArray(Parameters[Parameters.Length - 1])
-            );
+        public bool CanTake(int count) => count <= Parameters.Length || takesParamsArray;
 
         public object Invoke(CommandContext context, object[] values)
         {

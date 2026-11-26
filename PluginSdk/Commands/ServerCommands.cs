@@ -29,6 +29,8 @@ namespace PluginSdk.Commands
         /// <summary>
         /// Registers every command module in <paramref name="assembly"/> — the
         /// usual call is <c>ServerCommands.Register(Assembly.GetExecutingAssembly())</c>.
+        /// If any module in the assembly is invalid, none of its commands are
+        /// registered and the host logs the error; nothing is thrown.
         /// </summary>
         public static void Register(Assembly assembly) => Require().Register(assembly);
 
@@ -36,7 +38,8 @@ namespace PluginSdk.Commands
         /// Registers the named <see cref="CommandModule"/> types explicitly,
         /// e.g. <c>ServerCommands.Register(Assembly.GetExecutingAssembly(), typeof(AdminCommands), typeof(InfoCommands))</c>.
         /// Prefer this over the assembly scan when you want the set of command
-        /// classes to be obvious and compiler-checked.
+        /// classes to be obvious and compiler-checked. Each named module is
+        /// registered on its own: an invalid one is logged and skipped.
         /// </summary>
         public static void Register(Assembly assembly, params Type[] moduleTypes) =>
             Require().Register(assembly, moduleTypes);

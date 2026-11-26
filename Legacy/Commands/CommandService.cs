@@ -28,7 +28,7 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor, IComma
 
     /// <summary>Scans <paramref name="assembly"/> for command modules,
     /// attributing them to that assembly. Conflicting commands are
-    /// overwritten (last registration wins).</summary>
+    /// overridden (last registration wins).</summary>
     public void Register(Assembly assembly)
     {
         string ownerId = assembly.GetName().Name;
@@ -40,16 +40,20 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor, IComma
         }
         catch (CommandRegistrationException e)
         {
-            LogFile.Error($"Failed to register commands from {ownerId}: {e.Message}");
+            LogFile.Error(
+                $"Failed to register commands from {ownerId}, so none of its commands were registered: {e.Message}"
+            );
         }
         catch (Exception e)
         {
-            LogFile.Error($"Unexpected error registering commands from {ownerId}: {e}");
+            LogFile.Error(
+                $"Unexpected error registering commands from {ownerId}, so none of its commands were registered: {e}"
+            );
         }
     }
 
     /// <summary>Registers the explicitly named module types, attributing them
-    /// to <paramref name="assembly"/>. Conflicting commands are overwritten
+    /// to <paramref name="assembly"/>. Conflicting commands are overridden
     /// (last registration wins).</summary>
     public void Register(Assembly assembly, params Type[] moduleTypes)
     {
@@ -62,7 +66,9 @@ public sealed class CommandService : ICommandRegistrar, ICommandExecutor, IComma
         {
             try
             {
-                registry.RegisterModule(moduleType, ownerId);
+                // The assembly itself is the owner, not its name, so plugins that
+                // share an assembly name stay separate when they are removed later.
+                registry.RegisterModule(moduleType, assembly);
                 count++;
             }
             catch (CommandRegistrationException e)

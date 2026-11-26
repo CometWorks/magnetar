@@ -15,12 +15,13 @@ namespace PluginSdk.Commands
     {
         /// <summary>Registers every <see cref="CommandModule"/> in
         /// <paramref name="assembly"/> that carries a
-        /// <see cref="CommandRootAttribute"/>, owned by that assembly.</summary>
+        /// <see cref="CommandRootAttribute"/>, owned by that assembly. If any module is
+        /// invalid, none of the assembly's commands are registered.</summary>
         void Register(Assembly assembly);
 
         /// <summary>Registers the given <see cref="CommandModule"/> types
         /// explicitly (skipping the assembly scan), owned by
-        /// <paramref name="assembly"/>.</summary>
+        /// <paramref name="assembly"/>. Each type is registered on its own.</summary>
         void Register(Assembly assembly, params Type[] moduleTypes);
     }
 }
