@@ -436,6 +436,45 @@ namespace PluginSdk.Tests
         }
 
         /// <summary>
+        /// Every problem in an assembly is reported in one exception, and nothing is registered.
+        /// </summary>
+        [Fact]
+        public void RegisterAssembly_SeveralProblems_AreAllReportedTogether()
+        {
+            AssemblyBuilder assembly = EmitAssembly(
+                ("allbadone", "help a"),
+                ("asmfine", "ping"),
+                ("allbadtwo", "help b")
+            );
+            var registry = new CommandRegistry();
+
+            var error = Assert.Throws<CommandRegistrationException>(() =>
+                registry.RegisterAssembly(assembly)
+            );
+
+            Assert.Contains("2 problems", error.Message);
+            Assert.Contains("!allbadone help", error.Message);
+            Assert.Contains("!allbadtwo help", error.Message);
+            Assert.Empty(registry.Prefixes);
+        }
+
+        /// <summary>
+        /// One problem keeps its own plain message, with no problem count added.
+        /// </summary>
+        [Fact]
+        public void RegisterAssembly_OneProblem_KeepsItsPlainMessage()
+        {
+            AssemblyBuilder assembly = EmitAssembly(("onlybad", "help a"));
+
+            var error = Assert.Throws<CommandRegistrationException>(() =>
+                new CommandRegistry().RegisterAssembly(assembly)
+            );
+
+            Assert.DoesNotContain("problems", error.Message);
+            Assert.Contains("'!onlybad help' is reserved", error.Message);
+        }
+
+        /// <summary>
         /// A null assembly is refused with ArgumentNullException.
         /// </summary>
         [Fact]

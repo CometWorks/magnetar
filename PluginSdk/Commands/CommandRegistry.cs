@@ -58,18 +58,23 @@ namespace PluginSdk.Commands
                 throw new ArgumentNullException(nameof(assembly));
             string ownerId = assembly.GetName().Name;
 
-            // Validate and reflect over every module first, outside the lock. If any
-            // one throws, nothing has been registered yet, so the assembly adds all
-            // of its commands or none.
+            // Validate and reflect over every module first, outside the lock, and
+            // collect every problem found so the author gets them all at once. If
+            // there is any, nothing has been registered yet, so the assembly adds
+            // all of its commands or none.
             var modules = new List<PendingModule>();
+            var errors = new List<string>();
             foreach (Type type in assembly.GetTypes())
             {
                 if (type.IsAbstract || !typeof(CommandModule).IsAssignableFrom(type))
                     continue;
                 if (!type.IsDefined(typeof(CommandRootAttribute), false))
                     continue;
-                modules.Add(Build(type, ownerId, assembly));
+                PendingModule module = Build(type, ownerId, assembly, errors);
+                if (module != null)
+                    modules.Add(module);
             }
+            ThrowIfAny(errors);
 
             // Then add them all in one hold of the lock, so a reader never sees half
             // an assembly.
@@ -88,7 +93,7 @@ namespace PluginSdk.Commands
         /// null <paramref name="ownerId"/> is the same owner as the empty string.
         /// </summary>
         public void RegisterModule(Type moduleType, string ownerId) =>
-            Add(Build(moduleType, ownerId, ownerId ?? string.Empty));
+            Add(BuildOrThrow(moduleType, ownerId, ownerId ?? string.Empty));
 
         /// <summary>
         /// Registers a single module type for <paramref name="assembly"/>. The
@@ -99,7 +104,7 @@ namespace PluginSdk.Commands
         {
             if (assembly == null)
                 throw new ArgumentNullException(nameof(assembly));
-            Add(Build(moduleType, assembly.GetName().Name, assembly));
+            Add(BuildOrThrow(moduleType, assembly.GetName().Name, assembly));
         }
 
         /// <summary>
@@ -180,32 +185,79 @@ namespace PluginSdk.Commands
                 root.Add(command);
         }
 
+        /// <summary>Builds one module, or throws a <see cref="CommandRegistrationException"/>
+        /// naming every problem found in it.</summary>
+        private static PendingModule BuildOrThrow(Type moduleType, string ownerId, object ownerKey)
+        {
+            var errors = new List<string>();
+            PendingModule module = Build(moduleType, ownerId, ownerKey, errors);
+            ThrowIfAny(errors);
+            return module;
+        }
+
+        /// <summary>
+        /// Throws one <see cref="CommandRegistrationException"/> carrying every message in
+        /// <paramref name="errors"/>. A single problem keeps its own message unchanged.
+        /// </summary>
+        private static void ThrowIfAny(List<string> errors)
+        {
+            if (errors.Count == 0)
+                return;
+            if (errors.Count == 1)
+                throw new CommandRegistrationException(errors[0]);
+
+            throw new CommandRegistrationException(
+                errors.Count + " problems: " + string.Concat(errors.Select(e => "\n- " + e))
+            );
+        }
+
         /// <summary>
         /// Validates a module and reflects over it. Takes no lock and changes
-        /// nothing, so a failure leaves the registry as it was.
+        /// nothing, so a failure leaves the registry as it was. Every problem is
+        /// added to <paramref name="errors"/> and null is returned when there is
+        /// any. A problem with the module as a whole (not a module, no root, a bad
+        /// prefix) ends the check of that module, since its commands can't be
+        /// judged without a valid prefix; problems with individual commands are all
+        /// reported.
         /// </summary>
-        private static PendingModule Build(Type moduleType, string ownerId, object ownerKey)
+        private static PendingModule Build(
+            Type moduleType,
+            string ownerId,
+            object ownerKey,
+            List<string> errors
+        )
         {
             if (!typeof(CommandModule).IsAssignableFrom(moduleType))
-                throw new CommandRegistrationException($"{moduleType.Name} is not a CommandModule");
+            {
+                errors.Add($"{moduleType.Name} is not a CommandModule");
+                return null;
+            }
 
             var rootAttr = moduleType.GetCustomAttribute<CommandRootAttribute>(false);
             if (rootAttr == null)
-                throw new CommandRegistrationException($"{moduleType.Name} has no [CommandRoot]");
+            {
+                errors.Add($"{moduleType.Name} has no [CommandRoot]");
+                return null;
+            }
 
             string prefix = rootAttr.Prefix?.Trim();
             if (string.IsNullOrEmpty(prefix) || prefix.IndexOf(' ') >= 0)
-                throw new CommandRegistrationException(
-                    $"{moduleType.Name} has an invalid command prefix '{rootAttr.Prefix}'"
-                );
+            {
+                errors.Add($"{moduleType.Name} has an invalid command prefix '{rootAttr.Prefix}'");
+                return null;
+            }
 
             // '!help' is the built-in command that lists every top-level command,
             // so plugins may not claim it as a root prefix.
             if (string.Equals(prefix, "help", StringComparison.OrdinalIgnoreCase))
-                throw new CommandRegistrationException(
+            {
+                errors.Add(
                     $"{moduleType.Name} uses the reserved prefix 'help'; '!help' is the built-in command list"
                 );
+                return null;
+            }
 
+            int errorsBefore = errors.Count;
             var commands = new List<RegisteredCommand>();
             foreach (
                 MethodInfo method in moduleType.GetMethods(
@@ -225,9 +277,12 @@ namespace PluginSdk.Commands
                     path.Count > 0
                     && string.Equals(path[0], "help", StringComparison.OrdinalIgnoreCase)
                 )
-                    throw new CommandRegistrationException(
+                {
+                    errors.Add(
                         $"'!{prefix} help' is reserved and cannot be defined by {moduleType.Name}.{method.Name}"
                     );
+                    continue;
+                }
 
                 var permAttr = method.GetCustomAttribute<PermissionAttribute>(false);
                 MyPromoteLevel level = permAttr?.Level ?? DefaultPermission;
@@ -247,6 +302,8 @@ namespace PluginSdk.Commands
                 );
             }
 
+            if (errors.Count > errorsBefore)
+                return null;
             return new PendingModule(prefix, rootAttr.Title, rootAttr.Description, ownerKey, commands);
         }
 
