@@ -179,6 +179,27 @@ namespace PluginSdk.Tests
 
         // Invalid: "help" is a reserved word in a command path, so registering this
         // module must be refused as a whole, including its valid "fine" command.
+        // Two reserved "help" commands in one module, to check that every bad command
+        // in a module is reported, not only the first.
+        [CommandRoot("regbadtwo", "Bad", "two invalid commands")]
+        public sealed class TwoBadCommands : CommandModule
+        {
+            [Command("help a", "reserved word")]
+            public string First() => "no";
+
+            [Command("help b", "reserved word")]
+            public string Second() => "no";
+        }
+
+        // Module-level problems: no [CommandRoot], the reserved prefix, a prefix with a space.
+        public sealed class NoRootModule : CommandModule { }
+
+        [CommandRoot("help", "Reserved", "reserved prefix")]
+        public sealed class ReservedPrefixModule : CommandModule { }
+
+        [CommandRoot("two words", "Spaced", "invalid prefix")]
+        public sealed class SpacedPrefixModule : CommandModule { }
+
         [CommandRoot("regbad", "Bad", "invalid")]
         public sealed class BadModule : CommandModule
         {
@@ -472,6 +493,52 @@ namespace PluginSdk.Tests
 
             Assert.DoesNotContain("problems", error.Message);
             Assert.Contains("'!onlybad help' is reserved", error.Message);
+        }
+
+        /// <summary>
+        /// Every invalid command in one module is reported together, and none is registered.
+        /// </summary>
+        [Fact]
+        public void RegisterModule_TwoBadCommands_AreBothReported()
+        {
+            var registry = new CommandRegistry();
+
+            var error = Assert.Throws<CommandRegistrationException>(() =>
+                registry.RegisterModule(typeof(TwoBadCommands), "owner")
+            );
+
+            Assert.StartsWith("2 problems:", error.Message);
+            Assert.Contains("TwoBadCommands.First", error.Message);
+            Assert.Contains("TwoBadCommands.Second", error.Message);
+            Assert.Empty(registry.Prefixes);
+        }
+
+        /// <summary>
+        /// A problem with the module as a whole is refused with its own message and registers nothing.
+        /// </summary>
+        [Fact]
+        public void RegisterModule_ModuleLevelProblems_AreRefusedWithTheirOwnMessage()
+        {
+            var cases = new[]
+            {
+                (typeof(string), "is not a CommandModule"),
+                (typeof(NoRootModule), "has no [CommandRoot]"),
+                (typeof(ReservedPrefixModule), "uses the reserved prefix 'help'"),
+                (typeof(SpacedPrefixModule), "has an invalid command prefix 'two words'"),
+            };
+
+            foreach ((Type module, string expected) in cases)
+            {
+                var registry = new CommandRegistry();
+
+                var error = Assert.Throws<CommandRegistrationException>(() =>
+                    registry.RegisterModule(module, "owner")
+                );
+
+                Assert.Contains(expected, error.Message);
+                Assert.DoesNotContain("problems", error.Message);
+                Assert.Empty(registry.Prefixes);
+            }
         }
 
         /// <summary>

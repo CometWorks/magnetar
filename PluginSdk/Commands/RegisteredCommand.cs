@@ -18,7 +18,8 @@ namespace PluginSdk.Commands
 
         /// <summary>
         /// Identity of the owner: the registering <see cref="System.Reflection.Assembly"/>
-        /// (by reference), or the caller's string for <see cref="CommandRegistry.RegisterModule(Type, string)"/>.
+        /// (by reference), or the caller's string for <see cref="CommandRegistry.RegisterModule(Type, string)"/>
+        /// (a null string counts as the empty string).
         /// Two owners with the same display name stay distinct.
         /// </summary>
         public object OwnerKey { get; }

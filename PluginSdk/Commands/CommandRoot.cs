@@ -22,11 +22,12 @@ namespace PluginSdk.Commands
     /// it. Multi-word command paths form nested nodes, so intermediate words
     /// act as sub-namespaces.
     /// <para>
-    /// Every registration is kept at its path: the last one is the command that
-    /// runs, and removing an owner brings back whatever it had overridden. All
-    /// members take the lock shared with the owning <see cref="CommandRegistry"/>,
-    /// so callers never see a half-edited tree. No handler, responder or other
-    /// plugin code runs while it is held.
+    /// One registration per owner is kept at each path: the last one is the command
+    /// that runs, and removing an owner brings back whatever it had overridden.
+    /// Every member except <see cref="Prefix"/>, which never changes, takes the lock
+    /// shared with the owning <see cref="CommandRegistry"/>, so callers never see a
+    /// half-edited tree. No handler, responder or other plugin code runs while it
+    /// is held.
     /// </para>
     /// </summary>
     internal sealed class CommandRoot
@@ -186,7 +187,7 @@ namespace PluginSdk.Commands
         {
             // The whole walk and the default fallback happen in one hold, so a
             // concurrent registration can't change the tree between steps. The
-            // returned command is immutable and safe to use after the lock is gone.
+            // returned command is never modified after it is built, so it is safe to use after the lock is gone.
             lock (sync)
             {
                 command = null;

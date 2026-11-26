@@ -30,7 +30,7 @@ namespace PluginSdk.Commands
         /// Registers every command module in <paramref name="assembly"/> — the
         /// usual call is <c>ServerCommands.Register(Assembly.GetExecutingAssembly())</c>.
         /// If any module in the assembly is invalid, none of its commands are
-        /// registered and the host logs the error; nothing is thrown.
+        /// registered and the host logs the error; nothing is thrown for an invalid module.
         /// </summary>
         public static void Register(Assembly assembly) => Require().Register(assembly);
 

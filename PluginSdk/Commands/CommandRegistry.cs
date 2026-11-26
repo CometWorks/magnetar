@@ -207,7 +207,7 @@ namespace PluginSdk.Commands
                 throw new CommandRegistrationException(errors[0]);
 
             throw new CommandRegistrationException(
-                errors.Count + " problems: " + string.Concat(errors.Select(e => "\n- " + e))
+                errors.Count + " problems:" + string.Concat(errors.Select(e => "\n- " + e))
             );
         }
 
