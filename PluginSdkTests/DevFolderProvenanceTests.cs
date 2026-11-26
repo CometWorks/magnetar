@@ -17,16 +17,44 @@ public sealed class DevFolderProvenanceTests : IDisposable
     public DevFolderProvenanceTests()
     {
         plugin = Path.Combine(repository, "world", "plugin");
-        Directory.CreateDirectory(plugin);
-        File.WriteAllText(Path.Combine(plugin, "Plugin.cs"), "class Plugin {}\n");
-        File.WriteAllText(Path.Combine(repository, ".gitignore"), "bin/\n");
-        Git("init -q");
-        Git("add -A");
-        Git("-c user.name=Test -c user.email=test@example.com commit -q -m Initial");
+        try
+        {
+            Directory.CreateDirectory(plugin);
+            File.WriteAllText(Path.Combine(plugin, "Plugin.cs"), "class Plugin {}\n");
+            File.WriteAllText(Path.Combine(repository, ".gitignore"), "bin/\n");
+            Git("init -q");
+            Git("add -A");
+
+            // A throwaway repository, deleted when the test ends. The commit is not signed:
+            // the global commit.gpgsign would otherwise sign it through gpg, which can wait on
+            // a passphrase prompt, and signing is not what these tests check.
+            Git(
+                "-c user.name=Test -c user.email=test@example.com -c commit.gpgsign=false commit -q -m Initial"
+            );
+        }
+        catch
+        {
+            // xunit does not call Dispose when the constructor throws, so a failed setup
+            // would leave the repository behind. Clean it up here, without letting a
+            // cleanup error hide the setup error.
+            try
+            {
+                Delete();
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            throw;
+        }
     }
 
-    public void Dispose()
+    public void Dispose() => Delete();
+
+    private void Delete()
     {
+        if (!Directory.Exists(repository))
+            return;
+
+        // Git makes its object files read-only, which would stop the delete on Windows.
         foreach (string file in Directory.GetFiles(repository, "*", SearchOption.AllDirectories))
             File.SetAttributes(file, FileAttributes.Normal);
         Directory.Delete(repository, true);
