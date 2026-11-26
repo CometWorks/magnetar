@@ -130,8 +130,11 @@ namespace PluginSdk.Commands
                 // A bare '!prefix' runs the root's default command when it has
                 // one the caller may use; otherwise it prints the overview (for a
                 // root with only a default, the permission reply).
-                if (root.Default != null && root.Default.IsVisibleTo(caller.PromoteLevel))
-                    ExecuteCommand(root, root.Default, rest, caller, responder);
+                // Read once: the root can change between two reads of Default, and the
+                // command that passes the permission check must be the one that runs.
+                RegisteredCommand rootDefault = root.Default;
+                if (rootDefault != null && rootDefault.IsVisibleTo(caller.PromoteLevel))
+                    ExecuteCommand(root, rootDefault, rest, caller, responder);
                 else
                     SendOverview(root, caller, responder);
                 return true;
@@ -288,9 +291,11 @@ namespace PluginSdk.Commands
 
             foreach (CommandRoot root in roots)
             {
-                string line = string.IsNullOrEmpty(root.Description)
+                // Read once so the check and the text use the same value.
+                string description = root.Description;
+                string line = string.IsNullOrEmpty(description)
                     ? $"!{root.Prefix}"
-                    : $"!{root.Prefix} - {root.Description}";
+                    : $"!{root.Prefix} - {description}";
                 lines.Add(line);
             }
 
@@ -307,39 +312,43 @@ namespace PluginSdk.Commands
             ICommandResponder responder
         )
         {
-            var visible = root.EnumerateCommands()
+            // One consistent read of the heading, default and commands, so the screen
+            // never mixes two registry states.
+            CommandRoot.Overview overview = root.GetOverview();
+            var visible = overview.Commands
                 .Where(c => c.IsVisibleTo(caller.PromoteLevel))
                 .ToList();
 
             // A root with nothing but its default command, like !restart, has no
             // overview: show its usage, or tell a caller who may not use it.
-            if (visible.Count == 0 && root.Default != null)
+            RegisteredCommand rootDefault = overview.Default;
+            if (visible.Count == 0 && rootDefault != null)
             {
-                if (root.Default.IsVisibleTo(caller.PromoteLevel))
-                    SendUsage(root, root.Default, caller, responder);
+                if (rootDefault.IsVisibleTo(caller.PromoteLevel))
+                    SendUsage(overview.Title, rootDefault, caller, responder);
                 else
                     Reply(
                         responder,
                         caller,
                         CommandReply
                             .Error("You do not have permission to use that command.")
-                            .WithAuthor(root.Title)
+                            .WithAuthor(overview.Title)
                     );
                 return;
             }
 
-            string header = string.IsNullOrEmpty(root.Description)
-                ? $"=== {root.Title} ==="
-                : $"=== {root.Title} - {root.Description} ===";
+            string header = string.IsNullOrEmpty(overview.Description)
+                ? $"=== {overview.Title} ==="
+                : $"=== {overview.Title} - {overview.Description} ===";
             var lines = new List<string> { header };
 
             if (visible.Count == 0)
             {
                 lines.Add("No server commands available");
-                if (TryShowMissionHelp(caller, root.Title, "Command Overview", lines))
+                if (TryShowMissionHelp(caller, overview.Title, "Command Overview", lines))
                     return;
 
-                ReplyLines(responder, caller, root.Title, lines);
+                ReplyLines(responder, caller, overview.Title, lines);
                 return;
             }
 
@@ -352,10 +361,10 @@ namespace PluginSdk.Commands
             }
 
             lines.Add($"Type !{root.Prefix} help <command> for details.");
-            if (TryShowMissionHelp(caller, root.Title, "Command Overview", lines))
+            if (TryShowMissionHelp(caller, overview.Title, "Command Overview", lines))
                 return;
 
-            ReplyLines(responder, caller, root.Title, lines);
+            ReplyLines(responder, caller, overview.Title, lines);
         }
 
         private static void SendHelp(
@@ -371,6 +380,8 @@ namespace PluginSdk.Commands
                 return;
             }
 
+            // Read once and reused by both replies below.
+            string title = root.Title;
             if (
                 !root.TryResolve(path, out RegisteredCommand command, out _)
                 || !command.IsVisibleTo(caller.PromoteLevel)
@@ -381,16 +392,16 @@ namespace PluginSdk.Commands
                     caller,
                     CommandReply
                         .Error($"No such command: !{root.Prefix} {string.Join(" ", path)}")
-                        .WithAuthor(root.Title)
+                        .WithAuthor(title)
                 );
                 return;
             }
 
-            SendUsage(root, command, caller, responder);
+            SendUsage(title, command, caller, responder);
         }
 
         private static void SendUsage(
-            CommandRoot root,
+            string title,
             RegisteredCommand command,
             CommandCaller caller,
             ICommandResponder responder
@@ -400,10 +411,10 @@ namespace PluginSdk.Commands
             if (!string.IsNullOrEmpty(command.HelpText))
                 lines.Add(command.HelpText);
 
-            if (TryShowMissionHelp(caller, root.Title, "Command Help", lines))
+            if (TryShowMissionHelp(caller, title, "Command Help", lines))
                 return;
 
-            ReplyLines(responder, caller, root.Title, lines);
+            ReplyLines(responder, caller, title, lines);
         }
 
         private static bool TryShowMissionHelp(

@@ -100,9 +100,17 @@ Registration is **explicit**: the host never silently discovers command
 classes. Because ownership comes from the assembly you pass — not from a host
 time window — you may register from `Init()` or at any later point (e.g. when a
 feature is enabled). `Init()` is the natural place, since it runs once at
-startup and the registry persists for the host's lifetime. Calling `Register`
-with no host present (no registrar installed) throws
-`InvalidOperationException`.
+startup and the registry persists for the host's lifetime. Registration is safe
+from any thread, including while commands run.
+
+`Register(assembly)` is all or nothing: if any module in the assembly is invalid
+(for example it defines a `help` command or has a bad prefix), none of that
+assembly's commands are registered and every problem found is logged in one
+message, so you can fix them all at once. With
+`Register(assembly, params Type[])` each named module is registered on its own, so
+a bad one is logged and skipped while the others still register. Neither overload
+throws for an invalid module. Calling `Register` with no host present (no
+registrar installed) throws `InvalidOperationException`.
 
 ## The pieces
 
@@ -221,8 +229,10 @@ Levels are Keen's `MyPromoteLevel`: `None`, `Scripter`, `Moderator`,
   screen through `MagnetarMod`; otherwise it falls back to chat.
 - Several modules — even from different plugins — may share one prefix; their
   commands merge under the same root. If two commands resolve to the same path,
-  the **last registration wins** (it overwrites the earlier one), so a plugin
-  can deliberately override another's command.
+  the **last registration wins**, so a plugin can deliberately override another's
+  command. Overriding is not a lock-down: the host keeps the overridden command,
+  and once plugins can be unloaded, removing the overriding plugin brings it back
+  at its own permission level.
 
 ## Running a command from your own console
 
